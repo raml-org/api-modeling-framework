@@ -1,4 +1,4 @@
-lein: lein
+lein: lein2
 
 install:
   - lein npm install
