@@ -1,6 +1,7 @@
 lein: lein
 
 install:
+  - lein npm install
   - lein compile
   - lein cljsbuild test
 
