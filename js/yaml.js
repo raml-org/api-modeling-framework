@@ -24,7 +24,7 @@ var resolveFile = function (location, cb) {
 var resolvePath = function (location, path) {
     var lastComponent = location.split("/").pop();
     var base = location.replace(lastComponent, "");
-    if (path.startsWith("/") || path.indexOf("://") !== -1) {
+    if (path.indexOf("/") === 0 || path.indexOf("://") !== -1) {
         // console.log("RESOLVING PATH (" + base + " + " + path + ") --> " + path);
         return path;
     } else {
@@ -88,7 +88,7 @@ var FragmentType = new yaml.Type("!include", {
         }
 
         var fragmentInfo = fragment.data.split("\n")[0];
-        if (!fragmentInfo.startsWith("#%RAML")) {
+        if (!fragmentInfo.indexOf("#%RAML") === 0) {
             fragmentInfo = null;
         }
 
