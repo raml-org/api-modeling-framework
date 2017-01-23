@@ -1,0 +1,42 @@
+#%RAML 1.0
+title: World Music API
+baseUri: http://example.api.com/{version}/{lala}
+version: v1
+baseUriParameters:
+  lala:
+    description: The name of the bucket
+    type: Songs.LP
+
+uses:
+  Songs: songs-library.raml
+
+annotationTypes:
+  monitoringInterval: integer
+
+traits:
+  secured: !include secured/accessToken.raml
+
+/songs:
+  is: [ secured ]
+  get:
+    (monitoringInterval): 30
+    queryParameters:
+      genre:
+        description: filter the songs by genre
+  post:
+  /{songId}:
+    get:
+      queryString:
+        type: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: Songs.Publication
+            text/text:
+                type: Songs.Album
+            text/text:
+                type: Songs.Album
+            application/xml:
+              type: !include schemas/songs.xsd
+              example: !include examples/songs.xml

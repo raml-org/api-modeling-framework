@@ -1,0 +1,31 @@
+#%RAML 1.0 Library
+
+types:
+  Song:
+    properties:
+      title: string
+      length: number
+  Album:
+    properties:
+      title: string
+      songs: Song[]
+  LP:
+    type: Song
+    properties:
+      duration: string
+  Publication:
+    type: [Album, LP, C]
+    properties:
+      date: string
+  Musician:
+    properties:
+      name: string
+      discography: (Song | Album)[]
+  C:
+    type: object
+    properties:
+      other: integer
+  Constrained:
+    type: array
+    items: string
+    minItems: 10
