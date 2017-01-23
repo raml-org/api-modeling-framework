@@ -1,9 +1,8 @@
-lein: lein2
+language: clojure
 
 install:
   - lein npm install
-  - lein compile
-  - lein cljsbuild test
 
 script:
+  - lein test raml-framework.parser.syntax.yaml-test
   - lein doo node test once

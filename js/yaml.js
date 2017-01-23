@@ -44,7 +44,7 @@ var cacheFragments = function (file, cb, pending) {
         } else {
             var matches = data.match(/!include\s+(.+)/g) || [];
             var files = matches.map(function (f) {
-                var filePath = f.split(/!include\s+/)[1];
+                var filePath = f.split(/!include\s+/)[1].toString();
                 var location = resolvePath(file.location, filePath);
                 return {
                     "path": filePath,
