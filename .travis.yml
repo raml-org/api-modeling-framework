@@ -1,0 +1,8 @@
+lein: lein
+
+install:
+  - lein compile
+  - lein cljsbuild test
+
+script:
+  - lein doo node test once
