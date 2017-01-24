@@ -167,22 +167,24 @@
       not))
 
 (defn resolve-references [refs]
-  (go (loop [refs refs
-             acc {}]
-        (if (empty? refs)
-          acc
-          (let [ref (first refs)
-                resolved (platform/decode-json (<! (platform/read-location ref)))
-                pointed (if (string/index-of ref "#")
-                          (json-pointer (str "#" (last (string/split ref #"#"))) resolved )
-                          resolved)]
-            (recur (rest refs)
-                   (assoc acc ref (if (absolute-uri? ref)
-                                    {"@location" ref
-                                     "id" ref
-                                     "@data" pointed}
-                                    {"@location" ref
-                                     "@data" pointed}))))))))
+  (go (try (loop [refs refs
+                  acc {}]
+             (if (empty? refs)
+               acc
+               (let [ref (first refs)
+                     resolved (platform/decode-json (<! (platform/read-location ref)))
+                     pointed (if (string/index-of ref "#")
+                               (json-pointer (str "#" (last (string/split ref #"#"))) resolved )
+                               resolved)]
+                 (recur (rest refs)
+                        (assoc acc ref (if (absolute-uri? ref)
+                                         {"@location" ref
+                                          "id" ref
+                                          "@data" pointed}
+                                         {"@location" ref
+                                          "@data" pointed}))))))
+           (catch #?(:clj Exception :cljs js/Error) ex
+             ex))))
 (defn parse-json [location]
   (go (try
         (let [id (->id location)

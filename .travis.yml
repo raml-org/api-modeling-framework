@@ -4,7 +4,6 @@ install:
   - lein npm install
 
 script:
-  - lein with-profile default test
   - lein test raml-framework.parser.syntax.yaml-test
   - lein test raml-framework.parser.syntax.json-test
   - lein doo node test once
