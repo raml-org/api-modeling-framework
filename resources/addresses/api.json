@@ -1,0 +1,9 @@
+{
+  "allOf": [
+    { "$ref": "./aux.json#/definitions/address" },
+    { "properties": {
+        "type": { "enum": [ "residential", "business" ] }
+      }
+    }
+  ]
+}
