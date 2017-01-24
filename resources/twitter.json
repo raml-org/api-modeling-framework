@@ -1,0 +1,220 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Twitter API",
+        "apiVersion": "1.1",
+        "description": "Twitter RESTful API V1.1"
+    },
+    "basePath": "\/1.1",
+    "host": "api.twitter.com",
+    "schemes": [ "https" ],
+    "paths": {
+        "\/followers\/list.json": {
+            "get": {
+                "operationId": "get_followers_list",
+                "summary": "Returns a cursored collection of user objects for users following the specified user.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "user_id",
+                        "description": "The ID of the user for whom to return results for."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "screen_name",
+                        "description": "The screen name of the user for whom to return results for."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "cursor",
+                        "description": "Causes the list of connections to be broken into pages of no more than 5000 IDs at a time. The number of IDs returned is not guaranteed to be 5000 as suspended users are filtered out after connections are queried. If no cursor is provided, a value of -1 will be assumed, which is the first \"page.\"  The response from the API will include a previous_cursor and next_cursor to allow paging back and forth. See Using cursors to navigate collections for more information."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "skip_status",
+                        "description": "When set to either true, t or 1 statuses will not be included in the returned user objects."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "count",
+                        "description": "Specifies the number of IDs attempt retrieval of, up to a maximum of 5,000 per distinct request. The value of count is best thought of as a limit to the number of results to return. When using the count parameter with this method, it is wise to use a consistent count value across all requests to the same user's collection. Usage of this parameter is encouraged in environments where all 5,000 IDs constitutes too large of a response."
+                    }
+                ]
+            }
+        },
+        "\/friends\/list.json": {
+            "get": {
+                "operationId": "get_friends_list",
+                "summary": "Returns a cursored collection of user objects for every user the specified user is following (otherwise known as their “friends”).",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "user_id",
+                        "description": "The ID of the user for whom to return results for."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "screen_name",
+                        "description": "The screen name of the user for whom to return results for."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "cursor",
+                        "description": "Causes the list of connections to be broken into pages of no more than 5000 IDs at a time. The number of IDs returned is not guaranteed to be 5000 as suspended users are filtered out after connections are queried. If no cursor is provided, a value of -1 will be assumed, which is the first \"page.\"  The response from the API will include a previous_cursor and next_cursor to allow paging back and forth. See Using cursors to navigate collections for more information."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "cursor",
+                        "description": "Causes the list of connections to be broken into pages of no more than 5000 IDs at a time. The number of IDs returned is not guaranteed to be 5000 as suspended users are filtered out after connections are queried. If no cursor is provided, a value of -1 will be assumed, which is the first \"page.\"  The response from the API will include a previous_cursor and next_cursor to allow paging back and forth. See Using cursors to navigate collections for more information."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "skip_status",
+                        "description": "When set to either true, t or 1 statuses will not be included in the returned user objects."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "include_user_entities",
+                        "description": "The user object entities node will be disincluded when set to false."
+                    }
+                ]
+            }
+        },
+        "\/users\/lookup.json": {
+            "get": {
+                "summary": "Returns fully-hydrated user objects for up to 100 users per request, as specified by comma-separated values passed to the user_id and/or screen_name parameters.",
+                "operationId": "get_users_lookup",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "screen_name",
+                        "description": "A comma separated list of screen names, up to 100 are allowed in a single request. You are strongly encouraged to use a POST for larger (up to 100 screen names) requests."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "user_id",
+                        "description": "A comma separated list of user IDs, up to 100 are allowed in a single request.  You are strongly encouraged to use a POST for larger requests."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "include_entities",
+                        "description": "The entities node that may appear within embedded statuses will be disincluded when set to false."
+                    }
+                ]
+            }
+        },
+        "\/search\/tweets.json": {
+            "get": {
+                "summary": "Returns a collection of relevant Tweets matching a specified query.",
+                "operationId": "get_search_tweets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": true,
+                        "name": "q",
+                        "description": "A UTF-8, URL-encoded search query of 1,000 characters maximum, including operators.  Queries may additionally be limited by complexity."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "geocode",
+                        "description": "Returns tweets by users located within a given radius of the given latitude/longitude. The location is preferentially taking from the Geotagging API, but will fall back to their Twitter profile. The parameter value is specified by \"latitude,longitude,radius\", where radius units must be specified as either \"mi\" (miles) or \"km\" (kilometers). Note that you cannot use the near operator via the API to geocode arbitrary locations; however you can use this geocode parameter to search near geocodes directly. A maximum of 1,000 distinct \"sub-regions\" will be considered when using the radius modifier."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "lang",
+                        "description": "Restricts tweets to the given language, given by an ISO 639-1 code. Language detection is best-effort."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "locale",
+                        "description": "Specify the language of the query you are sending (only ja is currently effective). This is intended for language-specific consumers and the default should work in the majority of cases."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "result_type",
+                        "description": "Optional. Specifies what type of search results you would prefer to receive. The current default is \"mixed.\" Valid values include: \u00a0\u00a0* mixed: Include both popular and real time results in the response. \u00a0\u00a0* recent: return only the most recent results in the response \u00a0\u00a0* popular: return only the most popular results in the response."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "count",
+                        "description": "The number of tweets to return per page, up to a maximum of 100. Defaults to 15. This was formerly the \"rpp\" parameter in the old Search API."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "until",
+                        "description": "Returns tweets generated before the given date. Date should be formatted as YYYY-MM-DD. Keep in mind that the search index may not go back as far as the date you specify here."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "since_id",
+                        "description": "Returns results with an ID greater than (that is, more recent than) the specified ID. There are limits to the number of Tweets which can be accessed through the API. If the limit of Tweets has occured since the since_id, the since_id will be forced to the oldest ID available."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "max_id",
+                        "description": "Returns results with an ID less than (that is, older than) or equal to the specified ID."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "include_entities",
+                        "description": "The entities node will be disincluded when set to false."
+                    },
+                    {
+                        "type": "string",
+                        "in": "query",
+                        "required": false,
+                        "name": "callback",
+                        "description": "If supplied, the response will use the JSONP format with a callback of the given name. The usefulness of this parameter is somewhat diminished by the requirement of authentication for requests to this endpoint."
+                    }
+                ]
+            }
+        }
+    }
+}

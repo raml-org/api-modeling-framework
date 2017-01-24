@@ -8,6 +8,8 @@
                  [org.clojure/clojurescript "1.9.293"]
                  [io.swagger/swagger-parser "1.0.21"]
                  [org.clojure/core.async "0.2.395"]
+                 [cheshire "5.6.3"]
+                 [com.cemerick/url "0.1.1"]
                  [clj-yaml "0.4.0" :exclusions [[org.yaml/snakeyaml]]]]
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-npm "0.6.2"]
