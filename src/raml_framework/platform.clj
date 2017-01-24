@@ -1,14 +1,15 @@
 (ns raml-framework.platform
-  (:require [clojure.core.async :refer [go >! <! <!! thread chan]]
+  (:require [clojure.core.async :refer [go >! <!! <! thread chan]]
             [clojure.string :as string]
             [cheshire.core :as json]))
 
-(defn <?? [c]
-  (let [returned (<!! c)]
-    (cond
-      (instance? Throwable returned) (throw (Exception. returned))
-      (some? (:error returned))      (throw (Exception. (str (:error returned))))
-      :else returned)))
+(comment
+  (defn <?? [c]
+    (let [returned (<!! c)]
+      (cond
+        (instance? Throwable returned) (throw (Exception. returned))
+        (some? (:error returned))      (throw (Exception. (str (:error returned))))
+        :else returned))))
 
 
 (defmacro async [s body]

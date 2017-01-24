@@ -36,7 +36,6 @@
 (defn json-pointer
   "Returns the pointed object by a JSON pointer, provided a path and a parent document"
   [path object]
-  (println "\n\n\n JSON POINTER " path "\n\n\n")
   (cond
     (= path "") object
     (= path "/") (json-pointer* [""] object)
@@ -64,8 +63,6 @@
 (defn join-path [id path]
   (let [id-parts (url/url id)
         path-parts (url/url (->id path))]
-    (prn id-parts)
-    (prn path-parts)
     (if (or
          (and (some? (string/index-of path "://"))
               (not= (:protocol path-parts) (:protocol id-parts)))
@@ -78,13 +75,13 @@
         (or (= ".#" (:host path-parts))
             (and (= "" (:path path-parts))
                  (some? (:anchor path-parts)))) (str (-> id
-                                                         (string/split #"\#")
+                                                         (string/split #"#")
                                                          first)
                                                      "#"
                                                      (:anchor path-parts))
         (and (= "." (:host path-parts))
              (some? (:path path-parts)))  (let [base-path (-> (:path id-parts)
-                                                              (string/split #"\/")
+                                                              (string/split #"/")
                                                               (->> (drop-last 1)
                                                                    (string/join "/")))]
                                             (str (-> id
@@ -96,7 +93,7 @@
                                                  (if (:anchor path-parts) (str "#" (:anchor path-parts)) "")))
         (and (= ".." (:host path-parts))
              (some? (:path path-parts)))  (let [base-path (-> (:path id-parts)
-                                                              (string/split #"\/")
+                                                              (string/split #"/")
                                                               (->> (drop-last 2)
                                                                    (string/join "/")))]
                                             (str (-> id
@@ -147,7 +144,6 @@
   ([id json acc]
    (cond
      (external-reference? json) (let [next-id (join-path id (get json "$ref"))]
-                                  (println "CHEKCING IF " next-id " IS IN " (keys acc))
                                   (get acc next-id))
      (map? json)                (let [current-id (if (get json "id")
                                                    (join-path id (get json "id"))
@@ -176,7 +172,7 @@
         (if (empty? refs)
           acc
           (let [ref (first refs)
-                resolved (platform/decode-json (platform/<?? (platform/read-location ref)))
+                resolved (platform/decode-json (<! (platform/read-location ref)))
                 pointed (if (string/index-of ref "#")
                           (json-pointer (str "#" (last (string/split ref #"#"))) resolved )
                           resolved)]
@@ -190,23 +186,17 @@
 (defn parse-json [location]
   (go (try
         (let [id (->id location)
-              [id data] (try [id (platform/<?? (platform/read-location id))]
-                             (catch #?(:cljs js/Error :clj Exception) ex
-                               [(str id ".json") (platform/<?? (platform/read-location (str id ".json")))]))
+              data (<! (platform/read-location id))
               parsed (platform/decode-json data)
-              [processed-acc processed] (find-references id parsed)
-              _ (println "GOT REFERS")
-              _ (println (count @processed-acc))]
+              [processed-acc processed] (find-references id parsed)]
           (loop [processed processed
                  processed-acc @processed-acc]
             (if (empty? processed-acc)
               (clojure.walk/keywordize-keys {"@location" id
                                              "@data" processed})
-              (let [references-map (platform/<?? (resolve-references processed-acc))
+              (let [references-map (<! (resolve-references processed-acc))
                     processed (fill-references id processed references-map)
-                    [processed-acc processed] (find-references id processed)
-                    _ (println "GOT REFERS")
-                    _ (println (count @processed-acc))]
+                    [processed-acc processed] (find-references id processed)]
                 ;; we recur until we have resolved all references
                 (recur processed @processed-acc)))))
         (catch #?(:cljs js/Error :clj Exception) ex ex))))

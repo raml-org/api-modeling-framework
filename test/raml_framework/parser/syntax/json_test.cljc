@@ -81,7 +81,6 @@
 (deftest json-parse-2-test
   (async done
          (go (let [result (<! (json/parse-json "resources/addresses/api.json"))]
-               (clojure.pprint/pprint result)
                (is (= "file://./resources/addresses/aux.json#/definitions/address"
                       (-> result
                           (get (keyword "@data"))
@@ -102,7 +101,6 @@
 (deftest json-parse-3-test
   (async done
          (go (let [result (<! (json/parse-json "resources/addresses/api2.json"))]
-               (clojure.pprint/pprint result)
                (is (= "file://./resources/addresses/aux2.json#/definitions/address"
                       (-> result
                           (get (keyword "@data"))
