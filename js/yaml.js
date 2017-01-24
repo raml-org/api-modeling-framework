@@ -69,6 +69,14 @@ var cacheFragments = function (file, cb, pending) {
 
 };
 
+var getFragmentInfo = function (fragment) {
+    var fragmentInfo = fragment.data.split("\n")[0];
+    if (!fragmentInfo.indexOf("#%RAML") === 0) {
+        fragmentInfo = null;
+    }
+    return fragmentInfo;
+};
+
 var FragmentType = new yaml.Type("!include", {
     kind: "scalar",
 
@@ -87,10 +95,7 @@ var FragmentType = new yaml.Type("!include", {
             parsed = fragment.data;
         }
 
-        var fragmentInfo = fragment.data.split("\n")[0];
-        if (!fragmentInfo.indexOf("#%RAML") === 0) {
-            fragmentInfo = null;
-        }
+        var fragmentInfo = getFragmentInfo(fragment);
 
         var location = fragment.location;
 
@@ -111,6 +116,7 @@ var parseYaml = function (location, cb) {
         try {
             var result = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
             result["@location"] = location;
+            result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
             cb(null, result);
         } catch (e) {
             cb(e);

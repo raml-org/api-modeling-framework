@@ -15,8 +15,10 @@
                (is (not (nil? result)))
                (is (-> result
                        (get (keyword "@location"))
-                       (string/ends-with? "api.raml")
-                       ))
+                       (string/ends-with? "api.raml")))
+               (is (-> result
+                       (get (keyword "@fragment"))
+                       (string/starts-with? "#%RAML 1.0")))
                (is (-> result
                        (get :traits)
                        (get :secured)

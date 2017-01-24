@@ -6,7 +6,8 @@
                      [cljs.core.async :refer [<! >! chan]]))
 
   #?(:clj (:require [clj-yaml.core :refer [decode]]
-                    [clojure.core.async :refer [<! >! go]]))
+                    [clojure.core.async :refer [<! >! go]]
+                    [clojure.string :as string]))
 
   #?(:clj (:import [raml_framework.java IncludeConstructor])))
 
@@ -24,9 +25,15 @@
                                                (>! ch (->> result js->clj keywordize-keys))))))
              ch))
    :clj (defn parse-yaml [location]
-          (go (let [file (java.io.File. location)
+          (go (let [header (with-open [rdr (clojure.java.io/reader location)] (.readLine rdr))
+                    header (if (string/starts-with? (or header "") "#%RAML")
+                             header
+                             nil)
+                    file (java.io.File. location)
                     include-constructor (IncludeConstructor. file)
                     yaml (org.yaml.snakeyaml.Yaml. include-constructor)
                     raw (.load yaml (java.io.FileInputStream. file))
                     parsed (decode raw)]
-                (assoc parsed (keyword "@location") (.getAbsolutePath file))))))
+                (-> parsed
+                    (assoc (keyword "@location") (.getAbsolutePath file))
+                    (assoc (keyword "@fragment") header))))))
