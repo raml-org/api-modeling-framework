@@ -1,4 +1,4 @@
-(ns raml-framework.parser.model.raml
+(ns raml-framework.parser.model.openapi
   (:require [clojure.string :as string]
             [raml-framework.model.document :as document]))
 
@@ -6,7 +6,7 @@
   (cond
     (and (nil? type)
          (some? (get node "@location"))
-         (some? (get node "@fragment")))      (string/trim (get node "@fragment"))
+         (some? (get node "@fragment")))      :root
     (and (nil? type)
          (some? (get node "@location")))      :fragment
     (and (nil? type)
@@ -16,10 +16,10 @@
 
 (defmulti parse-ast (fn [node] (parse-ast-dispatch-function node)))
 
-(defmethod parse-ast "#%RAML 1.0" [_ node]
+(defmethod parse-ast :root [_ node]
   (let [location (get node "@location")]
-    (document/->Document location nil nil "RAML")))
+    (document/->Document location nil nil "OpenApi")))
 
 (defmethod parse-ast :fragment [_ node]
   (let [location (get node "@location")]
-    (document/->Fragment location nil "RAML")))
+    (document/->Fragment location nil "OpenApi")))

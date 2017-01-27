@@ -195,6 +195,7 @@
                  processed-acc @processed-acc]
             (if (empty? processed-acc)
               (clojure.walk/keywordize-keys {"@location" id
+                                             "@fragment" "root"
                                              "@data" processed})
               (let [references-map (<! (resolve-references processed-acc))
                     processed (fill-references id processed references-map)
