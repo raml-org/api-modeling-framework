@@ -6,7 +6,6 @@
   (name [this] "A string readable title for this node")
   (description [this] "A human readable description of this node")
   (sources [this] "Collection of source maps for this node")
-  (to-jsonld [this source-maps?] "Returns a JSON-LD representation for this node")
   (valid? [this] "Checks if this node is valid"))
 
 (defprotocol SourceMap
@@ -24,7 +23,6 @@
   (name [this] "Document source map")
   (description [this] (str "Source map for a document located at " location))
   (sources [this] [])
-  (to-jsonld [this source-maps?] nil)
   (valid? [this] true))
 
 (defprotocol Tag
@@ -42,7 +40,6 @@
   (name [this] "File parsed tag")
   (description [this] (str "This node was generating parsing a file located at " location))
   (sources [this] [])
-  (to-jsonld [this source-maps?] nil)
   (valid? [this] true))
 
 (def document-type-tag "document-type")
@@ -56,7 +53,6 @@
   (name [this] "Document type tag")
   (description [this] (str "This node was generating parsing a file of type " document-type))
   (sources [this] [])
-  (to-jsonld [this source-maps?] nil)
   (valid? [this] true))
 
 
@@ -85,8 +81,18 @@
   (name [this] location)
   (description [this] (str "Document parsed from " location " encoding " document-type " information "))
   (sources [this] (generate-document-sources location document-type))
-  (to-jsonld [this source-maps?] nil)
   (valid? [this] true)
   DocumentUnit
   (encodes [this] encodes)
   (declares [this] declares))
+
+(defrecord Fragment [location encodes document-type]
+  Node
+  (id [this] location)
+  (name [this] location)
+  (description [this] (str "Fragment parsed from " location " encoding " document-type " information "))
+  (sources [this] (generate-document-sources location document-type))
+  (valid? [this] true)
+  DocumentUnit
+  (encodes [this] encodes)
+  (declares [this] nil))

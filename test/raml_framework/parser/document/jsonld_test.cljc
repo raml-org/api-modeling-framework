@@ -17,3 +17,14 @@
         parsed (parser/from-jsonld generated)]
     (is (parser/has-class? generated v/model:Document))
     (is (= doc parsed))))
+
+
+(deftest fragment-test
+  (let [location "http://test.com/location.json"
+        doc (document/map->Fragment {:location location
+                                     :encodes nil
+                                     :document-type "open-api"})
+        generated (generator/to-jsonld doc true)
+        parsed (parser/from-jsonld generated)]
+    (is (parser/has-class? generated v/model:Fragment))
+    (is (= doc parsed))))

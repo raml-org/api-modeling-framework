@@ -11,6 +11,7 @@
   (cond
     (nil? model)                         nil
     (has-class? model v/model:Document)  v/model:Document
+    (has-class? model v/model:Fragment)  v/model:Fragment
     (has-class? model v/model:SourceMap) v/model:SourceMap
     (has-class? model v/model:Tag)       v/model:Tag
     :else                                :unknown))
@@ -18,22 +19,19 @@
 
 (defmulti from-jsonld (fn [m] (from-jsonld-dispatch-fn m)))
 
+(defn find-tag [source-map tag-id]
+  (when (some? source-map)
+    (->> (document/tags source-map)
+         (filter #(= tag-id
+                     (document/tag-id %)))
+         first)))
 
 (defmethod from-jsonld v/model:Document [m]
   (let [encodes (from-jsonld (get m v/model:encodes))
         declares (from-jsonld (get m v/model:declares))
-        source-map (first (map from-jsonld (get m v/model:source [])))
-        file-parsed-tag (when (some? source-map)
-                          (->> (document/tags source-map)
-                               (filter #(= document/file-parsed-tag
-                                           (document/tag-id %)))
-                               first))
         location (get m "@id")
-        document-type-tag (when (some? source-map)
-                            (->> (document/tags source-map)
-                                 (filter #(= document/document-type-tag
-                                             (document/tag-id %)))
-                                 first))
+        source-map (first (map from-jsonld (get m v/model:source [])))
+        document-type-tag (find-tag source-map document/document-type-tag)
         document-type (if (some? document-type-tag) (document/value document-type-tag) nil)]
     (document/->Document location encodes declares document-type)))
 
@@ -60,8 +58,22 @@
               (document/id [this] id)
               (document/name [this] (str tag-id " tag"))
               (document/description [this] (str "A " tag-id " tag"))
-              (document/to-jsonld [this source-maps?] m)
               (document/valid? [this] true)))))
+
+
+(defmethod from-jsonld v/model:Fragment [m]
+  (let [encodes (from-jsonld (get m v/model:encodes))
+        source-map (first (map from-jsonld (get m v/model:source [])))
+        file-parsed-tag (when (some? source-map)
+                          (->> (document/tags source-map)
+                               (filter #(= document/file-parsed-tag
+                                           (document/tag-id %)))
+                               first))
+        location (get m "@id")
+        source-map (first (map from-jsonld (get m v/model:source [])))
+        document-type-tag (find-tag source-map document/document-type-tag)
+        document-type (if (some? document-type-tag) (document/value document-type-tag) nil)]
+    (document/->Fragment location encodes document-type)))
 
 
 (defmethod from-jsonld :unknown [m]
@@ -69,7 +81,6 @@
     (document/id [this] (get m "@id"))
     (document/name [this] "unknown node")
     (document/description [this] (str m))
-    (document/to-jsonld [this source-maps?] m)
     (document/valid? [this] true)))
 
 (defmethod from-jsonld nil [_] nil)

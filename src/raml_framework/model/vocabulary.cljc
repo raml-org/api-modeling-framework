@@ -7,6 +7,8 @@
 
 
 (def model:Document (model-ns "Document"))
+(def model:Fragment (model-ns "Fragment"))
+(def model:Module (model-ns "Module"))
 (def model:Unit (model-ns "Unit"))
 (def model:SourceMap (model-ns "SourceMap"))
 (def model:Tag (model-ns "Tag"))

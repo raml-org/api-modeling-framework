@@ -56,4 +56,13 @@
         v/model:tag-value [{"@value" (document/value m)}]}
        (clean-nils)))
 
+(defmethod to-jsonld raml_framework.model.document.Fragment [m source-maps?]
+  (->> {"@id" (document/id m)
+        "@type" [v/model:Fragment
+                 v/model:Module
+                 v/model:Unit]
+        v/model:encodes [(to-jsonld (document/encodes m) source-maps?)]}
+       (with-source-maps source-maps? m)
+       (clean-nils)))
+
 (defmethod to-jsonld nil [_ _ ] nil)
