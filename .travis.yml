@@ -7,6 +7,6 @@ script:
   - lein test raml-framework.parser.syntax.yaml-test
   - lein test raml-framework.parser.syntax.json-test
   - lein test raml-framework.model.document-test
-  - lein test aml-framework.generators.document.jsonld-test
-  - lein test aml-framework.parser.document.jsonld-test
+  - lein test raml-framework.generators.document.jsonld-test
+  - lein test raml-framework.parser.document.jsonld-test
   - lein doo node test once
