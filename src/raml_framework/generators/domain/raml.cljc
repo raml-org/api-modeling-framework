@@ -4,7 +4,7 @@
             [raml-framework.model.domain :as domain]
             [raml-framework.utils :as utils]
             [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs refer-macros)
+             #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
 (defn to-raml-dispatch-fn [model ctx]

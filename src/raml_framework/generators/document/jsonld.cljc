@@ -1,7 +1,10 @@
 (ns raml-framework.generators.document.jsonld
   (:require [raml-framework.model.vocabulary :as v]
             [raml-framework.model.document :as document]
-            [raml-framework.utils :as utils]))
+            [raml-framework.utils :as utils]
+            [taoensso.timbre :as timbre
+             #?(:clj :refer :cljs :refer-macros)
+             [debug]]))
 
 (defn to-jsonld-dispatch-fn [model source-maps?]
   (cond
@@ -31,6 +34,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :source-map [m source-maps?]
+  (debug "Generating SourceMap" (get m "@id"))
   (->> {"@id" (document/id m)
         "@type" [v/document:SourceMap]
         v/document:location [{"@id" (document/source m)}]
@@ -38,6 +42,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :tag [m source-maps?]
+  (debug "Generating Tag" (get m "@id"))
   (->> {"@id" (document/id m)
         "@type" [v/document:Tag]
         v/document:tag-id [{"@value" (document/tag-id m)}]
@@ -53,4 +58,4 @@
        (with-source-maps source-maps? m)
        (utils/clean-nils)))
 
-(defmethod to-jsonld nil [_ _ ] nil)
+(defmethod to-jsonld nil [_ _] nil)

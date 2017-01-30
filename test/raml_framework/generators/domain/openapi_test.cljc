@@ -43,8 +43,7 @@
               :consumes ["application/json" "application/xml"]
               :produces ["application/ld+json"]
               :paths {(keyword "/users") {:get {}}
-                      (keyword "/users/items") {:get {}}
-                      }}
+                      (keyword "/users/items") {:get {}}}}
         parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#"
                                                :parsed-location "file://path/to/resource.raml#"
                                                :is-fragment false})

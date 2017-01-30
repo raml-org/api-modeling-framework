@@ -1,5 +1,6 @@
 (ns raml-framework.parser.domain.openapi-test
-  (:require [clojure.test :refer :all]
+  #?(:cljs (:require-macros [cljs.test :refer [deftest is async]]))
+  (:require #?(:clj [clojure.test :refer :all])
             [raml-framework.parser.domain.openapi :as openapi-parser]
             [raml-framework.model.document :as document]
             [raml-framework.model.domain :as domain]))

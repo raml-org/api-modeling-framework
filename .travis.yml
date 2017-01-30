@@ -4,9 +4,15 @@ install:
   - lein npm install
 
 script:
-  - lein test raml-framework.parser.syntax.yaml-test
-  - lein test raml-framework.parser.syntax.json-test
-  - lein test raml-framework.model.document-test
-  - lein test raml-framework.generators.document.jsonld-test
-  - lein test raml-framework.parser.document.jsonld-test
+  - lein test  raml-framework.parser.syntax.yaml-test
+  - lein test  raml-framework.parser.syntax.json-test
+  - lein test  raml-framework.model.document-test
+  - lein test  raml-framework.generators.document.jsonld-test
+  - lein test  raml-framework.parser.document.jsonld-test
+  - lein test  raml-framework.parser.domain.jsonld-test
+  - lein test  raml-framework.parser.domain.raml-test
+  - lein test  raml-framework.parser.domain.openapi-test
+  - lein test  raml-framework.generators.domain.jsonld-test
+  - lein test  raml-framework.generators.domain.openapi-test
+  - lein test  raml-framework.generators.domain.raml-test
   - lein doo node test once

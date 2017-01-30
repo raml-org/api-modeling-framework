@@ -3,7 +3,7 @@
             [raml-framework.model.vocabulary :as v]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs refer-macros)
+             #?(:clj :refer :cljs :refer-macros)
              [log]]))
 
 (defn has-class? [m c]

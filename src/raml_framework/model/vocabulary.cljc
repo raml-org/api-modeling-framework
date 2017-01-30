@@ -12,6 +12,10 @@
   ([] "http://schema.org/")
   ([s] (str (sorg-ns) s)))
 
+(defn hydra-ns
+  ([] "http://www.w3.org/ns/hydra/core#")
+  ([s] (str (hydra-ns) s)))
+
 
 (def document:Document (document-ns "Document"))
 (def document:Fragment (document-ns "Fragment"))
@@ -44,3 +48,9 @@
 (def http:terms-of-service (http-ns "termsOfService"))
 (def sorg:version (sorg-ns "version"))
 (def sorg:license (sorg-ns "license"))
+(def http:endpoint (http-ns "endpoint"))
+
+(def http:EndPoint (http-ns "EndPoint"))
+
+(def hydra:supportedOperation (hydra-ns "supportedOperation"))
+(def http:path (http-ns "path"))

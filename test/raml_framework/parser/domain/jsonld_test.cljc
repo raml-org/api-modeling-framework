@@ -1,8 +1,12 @@
 (ns raml-framework.parser.domain.jsonld-test
-  (:require [clojure.test :refer :all]
+  #?(:cljs (:require-macros [cljs.test :refer [deftest is async]]))
+  (:require #?(:clj [clojure.test :refer :all])
             [raml-framework.model.vocabulary :as v]
             [raml-framework.parser.domain.jsonld :as jsonld-parser]
+            [raml-framework.parser.domain.raml :as raml-parser]
             [raml-framework.model.domain :as domain]
+            [raml-framework.generators.domain.jsonld :as generator]
+            [raml-framework.generators.domain.raml :as raml-genenerator]
             [raml-framework.model.document :as document]))
 
 (deftest from-jsonld-APIDocumentation
@@ -37,3 +41,18 @@
     (is (= "file://test.json/" (document/source source)))
     (is (= 1 (count (document/tags source))))
     (is (= document/node-parsed-tag (document/tag-id (first (document/tags source)))))))
+
+(deftest from-jsonld-EndPoint
+  (let [input {:baseUri "http://test.com"
+               :protocols "http"
+               :version "1.0"
+               (keyword "/users") {:displayName "Users"
+                                   (keyword "/items") {:displayName "items"
+                                                       (keyword "/prices") {:displayName "prices"}}}}
+        api-documentation (raml-parser/parse-ast input
+                                                 {:location "file://path/to/resource.raml#"
+                                                  :parsed-location "file://path/to/resource.raml#"
+                                                  :is-fragment false})
+        generated (generator/to-jsonld api-documentation true)
+        parsed (jsonld-parser/from-jsonld generated)]
+    (is (= input (raml-genenerator/to-raml parsed {})))))

@@ -3,7 +3,7 @@
             [raml-framework.model.document :as document]
             [raml-framework.utils :as utils]
             [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs refer-macros)
+             #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
 
@@ -32,7 +32,7 @@
 
 
 (defmethod from-jsonld v/document:SourceMap [m]
-  (debug "Parsing " v/document:SourceMap)
+  (debug "Parsing " v/document:SourceMap " " (get m "@id"))
   (let [id (get m "@id")
         location (-> m (get v/document:location) first (get "@id"))
         tags (map from-jsonld (get m v/document:tag []))]
@@ -40,7 +40,7 @@
 
 
 (defmethod from-jsonld v/document:Tag [m]
-  (debug "Parsing " v/document:Tag)
+  (debug "Parsing " v/document:Tag  " " (get m "@id"))
   (let [id (get m "@id")
         tag-id (-> m (get v/document:tag-id) first (get "@value"))
         tag-value (-> m (get v/document:tag-value) first (get "@value"))]
@@ -48,6 +48,9 @@
       document/file-parsed-tag (document/->FileParsedTag id tag-value)
       document/document-type-tag (document/->DocumentTypeTag id tag-value)
       document/node-parsed-tag (document/->NodeParsedTag id tag-value)
+      document/nested-resource-children-tag (document/->NestedResourceChildrenTag id tag-value)
+      document/nested-resource-parent-id-tag (document/->NestedResourceParentIdTag id tag-value)
+      document/nested-resource-path-parsed-tag (document/->NestedResourcePathParsedTag id tag-value)
       (reify
         document/Tag
         (document/tag-id [this] tag-id)
@@ -60,7 +63,7 @@
 
 
 (defmethod from-jsonld v/document:Fragment [m]
-  (debug "Parsing " v/document:Fragment)
+  (debug "Parsing " v/document:Fragment  " " (get m "@id"))
   (let [encodes (from-jsonld (get m v/document:encodes))
         source-map (first (map from-jsonld (get m v/document:source [])))
         file-parsed-tag (when (some? source-map)

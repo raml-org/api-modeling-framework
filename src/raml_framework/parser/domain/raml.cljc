@@ -7,7 +7,7 @@
             [clojure.string :as string]
             [clojure.set :as set]
             [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs refer-macros)
+             #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
 (def properties-map
