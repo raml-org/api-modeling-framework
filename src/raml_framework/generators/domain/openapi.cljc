@@ -12,6 +12,8 @@
     (nil? model)                                 model
     (and (satisfies? domain/APIDocumentation model)
          (satisfies? document/Node model))       domain/APIDocumentation
+    (and (satisfies? domain/EndPoint model)
+         (satisfies? document/Node model))       domain/EndPoint
     :else                                        (type model)))
 
 (defmulti to-openapi (fn [model ctx] (to-openapi-dispatch-fn model ctx)))
@@ -27,7 +29,12 @@
         info (if (= {} info)
                nil
                (do (debug "Generating Info")
-                   info))]
+                   info))
+        paths (->> (domain/endpoints model)
+                   (map (fn [endpoint]
+                          [(keyword (domain/path endpoint))
+                           (to-openapi endpoint ctx)]))
+                   (into {}))]
     (-> {:host (domain/host model)
          :scheme (domain/scheme model)
          :basePath (domain/base-path model)
@@ -37,8 +44,14 @@
          :info info
          :consumes (if (= 1 (count (domain/accepts model)))
                      (first (domain/accepts model))
-                     (domain/accepts model))}
+                     (domain/accepts model))
+         :paths paths}
         utils/clean-nils)))
+
+(defmethod to-openapi domain/EndPoint [model ctx]
+  (debug "Generating resource " (document/id model))
+  ;; temporary until we add the operations logic
+  {})
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")
