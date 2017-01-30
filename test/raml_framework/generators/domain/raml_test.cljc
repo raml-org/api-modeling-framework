@@ -4,7 +4,8 @@
             [raml-framework.model.vocabulary :as v]
             [raml-framework.model.document :as document]
             [raml-framework.model.domain :as domain]
-            [raml-framework.generators.domain.raml :as generator]))
+            [raml-framework.generators.domain.raml :as generator]
+            [raml-framework.parser.domain.raml :as raml-parser]))
 
 (deftest to-raml-APIDocumentation
   (let [api-documentation (domain/map->ParsedAPIDocumentation {:host "test.com"
@@ -24,3 +25,18 @@
             :protocols ["http" "https"]
             :mediaType ["appliaton/json" "application/json"]}
            (generator/to-raml api-documentation {})))))
+
+
+(deftest to-raml-EndPoint
+  (let [input {:baseUri "http://test.com"
+               :protocols "http"
+               :version "1.0"
+               (keyword "/users") {:displayName "Users"
+                                   (keyword "/items") {:displayName "items"
+                                                       (keyword "/prices") {:displayName "prices"}}}}
+        api-documentation (raml-parser/parse-ast input
+                                                 {:location "file://path/to/resource.raml#"
+                                                  :parsed-location "file://path/to/resource.raml#"
+                                                  :is-fragment false})
+        generated (generator/to-raml api-documentation {})]
+    (is (= input generated))))

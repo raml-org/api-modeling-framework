@@ -72,10 +72,14 @@
     (let [{:keys [path]} (url/url base-uri)]
       path)))
 
-(defn root->scheme [{:keys [protocols]}]
-  (if (some? protocols)
-    (->> [protocols] flatten (map string/lower-case))
-    nil))
+(defn root->scheme [{:keys [protocols baseUri]}]
+  (cond
+    (some? protocols)                  (->> [protocols] flatten (map string/lower-case))
+    (and (some? baseUri)
+         (some? (:protocol
+                 (url/url baseUri)))) [(:protocol (url/url baseUri))]
+    :else                              nil))
+
 
 (defn parse-nested-resources [extracted-resources parent-path location parsed-location context]
   (->> extracted-resources
@@ -145,8 +149,8 @@
                     :host (base-uri->host (:baseUri node))
                     :scheme (root->scheme node)
                     :base-path (base-uri->basepath (:baseUri node))
-                    :accepts (flatten [(:mediaType node)])
-                    :content-type (flatten [(:mediaType node)])
+                    :accepts (filter some? (flatten [(:mediaType node)]))
+                    :content-type (filter some? (flatten [(:mediaType node)]))
                     :version (:version node)
                     :provider nil
                     :terms-of-service nil
