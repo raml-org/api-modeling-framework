@@ -78,11 +78,11 @@
   (sources [this] [])
   (valid? [this] true))
 
-(def nested-resource-parsed-tag "nested-resource-parsed")
+(def nested-resource-path-parsed-tag "nested-resource-path-parsed")
 
-(defrecord NestedResourceParsedTag [id path]
+(defrecord NestedResourcePathParsedTag [id path]
   Tag
-  (tag-id [this] nested-resource-parsed-tag)
+  (tag-id [this] nested-resource-path-parsed-tag)
   (value [this] path)
   Node
   (id [this] id)
@@ -91,16 +91,29 @@
   (sources [this] [])
   (valid? [this] true))
 
-  (def resource-nested-children-tag "resource-nested-children")
+(def nested-resource-children-tag "nested-resource-nested-children")
 
-(defrecord ResourceNestedChildrenTag [id children-id]
+(defrecord NestedResourceChildrenTag [id children-id]
   Tag
-  (tag-id [this] resource-nested-children-tag)
+  (tag-id [this] nested-resource-children-tag)
   (value [this] children-id)
   Node
   (id [this] id)
   (name [this] "Resource nested children tag")
   (description [this] (str "This resource has a nested resource " children-id))
+  (sources [this] [])
+  (valid? [this] true))
+
+(def nested-resource-parent-id-tag "nested-resource-parent-id")
+
+(defrecord NestedResourceParentIdTag [id parent-id]
+  Tag
+  (tag-id [this] nested-resource-parent-id-tag)
+  (value [this] parent-id)
+  Node
+  (id [this] id)
+  (name [this] "Resource parent id  tag")
+  (description [this] (str "This resource has a parent resource " parent-id))
   (sources [this] [])
   (valid? [this] true))
 

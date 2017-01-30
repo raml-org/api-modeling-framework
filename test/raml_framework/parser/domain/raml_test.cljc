@@ -30,7 +30,7 @@
     (is (= ["application/json" "application/xml"] (domain/content-type parsed)))
     (is (= ["application/json" "application/xml"] (domain/accepts parsed)))
     (is (= 1 (count (domain/endpoints parsed))))
-    (is (= ["file://path/to/resource.raml#/%2Fusers" "/users"]
+    (is (= ["file://path/to/resource.raml#/%2Fusers" "/users" "file://path/to/resource.raml#/api-documentation"]
            (->> parsed
                 (domain/endpoints)
                 first
@@ -58,13 +58,18 @@
            (-> parsed (nth 1) (document/sources) first (document/source))))
     (is (= "file://path/to/resource.raml#/users/%2Fitems/%2Fprices"
            (-> parsed (nth 2) (document/sources) first (document/source))))
-    (is (= 1 (count (-> parsed (nth 0) (document/find-tag document/nested-resource-parsed-tag)))))
-    (is (= 1 (count (-> parsed (nth 1) (document/find-tag document/nested-resource-parsed-tag)))))
-    (is (= 1 (count (-> parsed (nth 2) (document/find-tag document/nested-resource-parsed-tag)))))
-    (is (= nil (-> parsed (nth 0) (document/find-tag document/nested-resource-parsed-tag) first document/value)))
-    (is (= "/items" (-> parsed (nth 1) (document/find-tag document/nested-resource-parsed-tag) first document/value)))
-    (is (= "/prices" (-> parsed (nth 2) (document/find-tag document/nested-resource-parsed-tag) first document/value)))
-    (is (= (-> parsed (nth 0) (document/find-tag document/resource-nested-children-tag) first document/value)
+    (is (= 1 (count (-> parsed (nth 0) (document/find-tag document/nested-resource-path-parsed-tag)))))
+    (is (= 1 (count (-> parsed (nth 1) (document/find-tag document/nested-resource-path-parsed-tag)))))
+    (is (= 1 (count (-> parsed (nth 2) (document/find-tag document/nested-resource-path-parsed-tag)))))
+    (is (= nil (-> parsed (nth 0) (document/find-tag document/nested-resource-path-parsed-tag) first document/value)))
+    (is (= "/items" (-> parsed (nth 1) (document/find-tag document/nested-resource-path-parsed-tag) first document/value)))
+    (is (= "/prices" (-> parsed (nth 2) (document/find-tag document/nested-resource-path-parsed-tag) first document/value)))
+    (is (= (-> parsed (nth 0) (document/find-tag document/nested-resource-children-tag) first document/value)
            (-> parsed (nth 1) document/id)))
-    (is (= (-> parsed (nth 1) (document/find-tag document/resource-nested-children-tag) first document/value)
-           (-> parsed (nth 2) document/id)))))
+    (is (= (-> parsed (nth 1) (document/find-tag document/nested-resource-children-tag) first document/value)
+           (-> parsed (nth 2) document/id)))
+    (is (= (-> parsed (nth 1) document/id)
+           (-> parsed (nth 2) (document/find-tag document/nested-resource-parent-id-tag) first document/value)))
+    (is (= (-> parsed (nth 0) document/id)
+           (-> parsed (nth 1) (document/find-tag document/nested-resource-parent-id-tag) first document/value)))
+    (is (= (nil? (-> parsed (nth 0) (document/find-tag document/nested-resource-parent-id-tag) first document/value))))))

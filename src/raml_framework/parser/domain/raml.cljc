@@ -91,15 +91,55 @@
             (range 0 (count extracted-resources)))
        flatten))
 
+(defn nested-resources-tags [is-fragment resource-id resource-path location parent-id nested-resources]
+  "For each resource node we generate a source map with the path as it appears in the document and a additional children tag for every nested resource"
+  (let [;; All descendants will be returned in nested-resources.
+        ;; To be able to re-construct the tree we need only direct children. We try to find them looking for the id
+        ;; they have in the nested-parent tag and checking if it matches the current resource
+        nested-children (->> nested-resources
+                             (filter (fn [resource]
+                                       (let [resource-path (first (document/find-tag resource document/nested-resource-parent-id-tag))]
+                                         (= resource-id (document/value resource-path))))))
+        nested-ids (if is-fragment
+                     (mapv :id nested-children)
+                     (mapv #(document/id %) nested-children))
+        source-map-id (str resource-id "/source-map/0/nested-resource-parsed")
+        ;; the path tag
+        node-parsed-tag (document/->NestedResourcePathParsedTag source-map-id resource-path)
+        ;; the parent id tag
+        node-parent-tag (document/->NestedResourceParentIdTag source-map-id parent-id)
+        ;; the children resource tags
+        nested-children-tags (mapv (fn [i nested-id]
+                                     (let [source-map-id (str resource-id "/source-map/" (+ i 2) "/nested-children")]
+                                       (document/->NestedResourceChildrenTag source-map-id nested-id)))
+                                   (range 0 (count nested-ids))
+                                   nested-ids)]
+    (debug "Parsed " (count nested-children-tags) " child resource tags for resource " location)
+    (flatten [(document/->DocumentSourceMap (str resource-id "/source-map/0") location [node-parsed-tag])
+              (document/->DocumentSourceMap (str resource-id "/source-map/1") location [node-parent-tag])
+              (mapv (fn [i child-tag]
+                      (document/->DocumentSourceMap (str resource-id "/source-map/" (+ i 2)) location [child-tag]))
+                    (range 0 (count nested-children-tags))
+                    nested-children-tags)])))
+
 (defmethod parse-ast :root [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing RAML root")
   (let [parsed-location (str parsed-location "/api-documentation")
         location (str location "/")
+        ;; we generated all the descendants, flattening the hierarchy of nested resources
+        ;; we keep the information about the tree structure in the tags of the parsed end-points
         nested-resources (-> node
                              (utils/extract-nested-resources)
-                             (parse-nested-resources "" location parsed-location context))
+                             (parse-nested-resources "" location parsed-location (assoc context :parent-id parsed-location)))
+        children-tags (nested-resources-tags is-fragment
+                                             location
+                                             ""
+                                             location
+                                             parsed-location
+                                             nested-resources)
         properties {:id parsed-location
-                    :sources (generate-parse-node-sources location parsed-location)
+                    :sources (concat (generate-parse-node-sources location parsed-location)
+                                     children-tags)
                     :name (:title node)
                     :description (:description node)
                     :host (base-uri->host (:baseUri node))
@@ -118,43 +158,27 @@
                                         :properties properties})
       (domain/map->ParsedAPIDocumentation properties))))
 
-(defn generate-resource-nesting-sources [path nested-ids location parsed-location]
-  (let [source-map-id (str parsed-location "/source-map/0/nested-resource-parsed")
-        node-parsed-tag (document/->NestedResourceParsedTag source-map-id path)
-        nested-children-tags (mapv (fn [i nested-id]
-                                     (let [source-map-id (str parsed-location "/source-map/" (inc i) "/nested-children")]
-                                       (document/->ResourceNestedChildrenTag source-map-id nested-id)))
-                                   (range 0 (count nested-ids))
-                                   nested-ids)]
-    (debug "Generated " (count nested-children-tags) " child resource tags for resource " location)
-    (flatten [(document/->DocumentSourceMap (str parsed-location "/source-map/0") location [node-parsed-tag])
-              (mapv (fn [i child-tag]
-                      (document/->DocumentSourceMap (str parsed-location "/source-map/" (inc i)) location [child-tag]))
-                    (range 0 (count nested-children-tags))
-                    nested-children-tags)])))
-
-(defmethod parse-ast :resource [node {:keys [location parsed-location is-fragment resource-path parent-path] :as context}]
+(defmethod parse-ast :resource [node {:keys [location parsed-location is-fragment resource-path parent-path parent-id] :as context}]
   (debug "Parsing resource " location)
-  (let [extracted-resources (utils/extract-nested-resources node)
-        extracted-paths-set (set (map :path extracted-resources))
-        nested-resources (parse-nested-resources extracted-resources parent-path location parsed-location context)
-        nested-children (->> nested-resources
-                             (filter (fn [resource]
-                                       (let [resource-path (first (document/find-tag resource document/nested-resource-parsed-tag))]
-                                         (and (some? resource-path)
-                                              (some? (extracted-paths-set (document/value resource-path))))))))
-        nested-ids (if is-fragment
-                     (mapv :id nested-children)
-                     (mapv #(document/id %) nested-children))
+  (let [resource-id parsed-location
+        nested-resources (-> node
+                             (utils/extract-nested-resources)
+                             (parse-nested-resources parent-path location resource-id (assoc context :parent-id resource-id)))
+        children-tags (nested-resources-tags is-fragment
+                                             resource-id
+                                             resource-path
+                                             location
+                                             parent-id
+                                             nested-resources)
         properties {:path parent-path
-                    :sources (concat (generate-parse-node-sources location parsed-location)
-                                     (generate-resource-nesting-sources resource-path nested-ids location parsed-location))
-                    :id parsed-location
+                    :sources (concat (generate-parse-node-sources location resource-id)
+                                     children-tags)
+                    :id resource-id
                     :name (:displayName node)
                     :description (:description node)
                     :supported-operations []}]
     (concat (if is-fragment
-              [(domain/map->ParsedDomainElement {:id parsed-location
+              [(domain/map->ParsedDomainElement {:id resource-id
                                                  :fragment-node :parsed-end-point
                                                  :properties properties})]
               [(domain/map->ParsedEndPoint properties)])
