@@ -1,6 +1,7 @@
 (ns raml-framework.utils
   (:require [raml-framework.model.document :as document]
             [raml-framework.model.vocabulary :as v]
+            [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs refer-macros)
              [log]]))
@@ -65,3 +66,9 @@
   (if (some? (property m))
     (assoc t target (map #(mapping %) (property m)))
     t))
+
+
+(defn sanitize-path [path]
+  (-> path
+      (string/replace "{" "%7B")
+      (string/replace "}" "%7D")))

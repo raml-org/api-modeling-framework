@@ -15,9 +15,11 @@
   (license [this] "License for the API"))
 
 
+(defprotocol EndPointContainer
+  (nested-endpoints [this] "Other end-points in the API nested under the current end-point path"))
 
 (defrecord ParsedAPIDocumentation [id sources name description host scheme base-path accepts content-type
-                                   provider terms-of-service version license]
+                                   provider terms-of-service version license nested-endpoints]
   CommonAPIProperties
   (host [this] host)
   (scheme [this] scheme)
@@ -29,6 +31,8 @@
   (terms-of-service [this] terms-of-service)
   (version [this] version)
   (license [this] license)
+  EndPointContainer
+  (nested-endpoints [this] nested-endpoints)
   document/Node
   (id [this] id)
   (name [this] name)
@@ -56,3 +60,21 @@
   (to-domain-node [this]
     (condp = fragment-node
       :parsed-api-documentation (map->ParsedAPIDocumentation properties))))
+
+
+(defprotocol EndPoint
+  (supported-operations [this] "HTTP operations supported by this end-point")
+  (path [this] "(partial) IRI template where the operations are bound to"))
+
+(defrecord ParsedEndPoint [id sources name description path supported-operations nested-endpoints]
+  EndPoint
+  (supported-operations [this] supported-operations)
+  (path [this] path)
+  EndPointContainer
+  (nested-endpoints [this] nested-endpoints)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources)
+  (valid? [this] true))
