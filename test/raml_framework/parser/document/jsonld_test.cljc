@@ -4,7 +4,8 @@
             [raml-framework.model.vocabulary :as v]
             [raml-framework.model.document :as document]
             [raml-framework.generators.document.jsonld :as generator]
-            [raml-framework.parser.document.jsonld :as parser]))
+            [raml-framework.parser.document.jsonld :as parser]
+            [raml-framework.utils :as utils]))
 
 
 (deftest document-test
@@ -15,7 +16,7 @@
                                      :document-type "open-api"})
         generated (generator/to-jsonld doc true)
         parsed (parser/from-jsonld generated)]
-    (is (parser/has-class? generated v/model:Document))
+    (is (utils/has-class? generated v/document:Document))
     (is (= doc parsed))))
 
 
@@ -26,5 +27,5 @@
                                      :document-type "open-api"})
         generated (generator/to-jsonld doc true)
         parsed (parser/from-jsonld generated)]
-    (is (parser/has-class? generated v/model:Fragment))
+    (is (utils/has-class? generated v/document:Fragment))
     (is (= doc parsed))))

@@ -14,7 +14,7 @@
         source-map (first (document/sources doc))]
     (prn source-map)
     (is (= (document/id doc) location))
-    (is (= location (document/location source-map)))
+    (is (= location (document/source source-map)))
     (is (= 2 (count (document/tags source-map))))
     (is (= [document/file-parsed-tag document/document-type-tag] (map document/tag-id (document/tags source-map))))
     (is (= ["http://test.com/location.json" "open-api"] (map document/value (document/tags source-map))))))
@@ -28,7 +28,7 @@
         source-map (first (document/sources doc))]
     (prn source-map)
     (is (= (document/id doc) location))
-    (is (= location (document/location source-map)))
+    (is (= location (document/source source-map)))
     (is (= 2 (count (document/tags source-map))))
     (is (= [document/file-parsed-tag document/document-type-tag] (map document/tag-id (document/tags source-map))))
     (is (= ["http://test.com/location.json" "open-api"] (map document/value (document/tags source-map))))))

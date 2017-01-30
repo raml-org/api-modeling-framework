@@ -10,18 +10,18 @@
 
 (defprotocol SourceMap
   "Defines basic behaviour for all nodes in the model"
-  (location [this] "URI identifying the location of the information source in the layer n - 1
+  (source [this] "URI identifying the location of the information source in the layer n - 1
                     In the document model, the location will be a file or HTTP resource, in the service layer, it will be a node in the document layer.")
   (tags [this] "Annotations describing the kind of relationship between the source of information and the target node"))
 
-(defrecord DocumentSourceMap [id location tags]
+(defrecord DocumentSourceMap [id source tags]
   SourceMap
-  (location [this] location)
+  (source [this] source)
   (tags [this] tags)
   Node
   (id [this] id)
   (name [this] "Document source map")
-  (description [this] (str "Source map for a document located at " location))
+  (description [this] (str "Source map for a document located at " source))
   (sources [this] [])
   (valid? [this] true))
 
@@ -55,6 +55,18 @@
   (sources [this] [])
   (valid? [this] true))
 
+(def node-parsed-tag "node-parsed")
+
+(defrecord NodeParsedTag [id path]
+  Tag
+  (tag-id [this] node-parsed-tag)
+  (value [this] path)
+  Node
+  (id [this] id)
+  (name [this] "Node parsed tag")
+  (description [this] (str "This node was generating parsing a node located at " path))
+  (sources [this] [])
+  (valid? [this] true))
 
 (defprotocol DocumentUnit
   "Any parseable unit, it should be backed by a source URI"
@@ -63,16 +75,16 @@
 
 
 
-(defn generate-document-sources [location document-type]
-  (let [source-map-id (str location "#/source-map/0")
-        file-parsed-tag (if (some? location)
-                          (FileParsedTag. (str source-map-id "/tag/file-parsed") location)
+(defn generate-document-sources [source document-type]
+  (let [source-map-id (str source "#/source-map/0")
+        file-parsed-tag (if (some? source)
+                          (FileParsedTag. (str source-map-id "/tag/file-parsed") source)
                           nil)
         document-type-tag (if (some? document-type)
                             (DocumentTypeTag. (str source-map-id "/tag/document-type") document-type)
                             nil)]
-    (if (some? location)
-      [(DocumentSourceMap. source-map-id location (filter some? [file-parsed-tag document-type-tag]))]
+    (if (some? source)
+      [(DocumentSourceMap. source-map-id source (filter some? [file-parsed-tag document-type-tag]))]
       [])))
 
 (defrecord Document [location encodes declares document-type]

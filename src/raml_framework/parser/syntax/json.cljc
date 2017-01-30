@@ -1,6 +1,6 @@
 (ns raml-framework.parser.syntax.json
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
-  #?(:clj (:require[clojure.core.async :refer [<! >! go chan] :as async]
+  #?(:clj (:require [clojure.core.async :refer [<! >! go chan] :as async]
                     [clojure.string :as string]
                     [cemerick.url :as url]
                     [raml-framework.platform :as platform]))
