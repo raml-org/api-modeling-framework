@@ -29,6 +29,16 @@
   (tag-id [this] "Identifier for the tag")
   (value [this] "A value associated to this tag"))
 
+(defn find-tag [node tag-id-to-find]
+  (let [sources (or (:sources  node) (try (sources node) (catch #?(:cljs js/Error :clj Exception) ex nil)))]
+    (if (some? sources)
+      (->> sources
+           (map tags)
+           flatten
+           (filter #(= tag-id-to-find (tag-id %)))
+           flatten)
+      [])))
+
 (def file-parsed-tag "file-parsed")
 
 (defrecord FileParsedTag [id location]
@@ -65,6 +75,32 @@
   (id [this] id)
   (name [this] "Node parsed tag")
   (description [this] (str "This node was generating parsing a node located at " path))
+  (sources [this] [])
+  (valid? [this] true))
+
+(def nested-resource-parsed-tag "nested-resource-parsed")
+
+(defrecord NestedResourceParsedTag [id path]
+  Tag
+  (tag-id [this] nested-resource-parsed-tag)
+  (value [this] path)
+  Node
+  (id [this] id)
+  (name [this] "Nested resource parsed tag")
+  (description [this] (str "This node was generating parsing a nested resource with path " path))
+  (sources [this] [])
+  (valid? [this] true))
+
+  (def resource-nested-children-tag "resource-nested-children")
+
+(defrecord ResourceNestedChildrenTag [id children-id]
+  Tag
+  (tag-id [this] resource-nested-children-tag)
+  (value [this] children-id)
+  Node
+  (id [this] id)
+  (name [this] "Resource nested children tag")
+  (description [this] (str "This resource has a nested resource " children-id))
   (sources [this] [])
   (valid? [this] true))
 

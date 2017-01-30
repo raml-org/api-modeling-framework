@@ -5,7 +5,10 @@
             [raml-framework.utils :as utils]
             [cemerick.url :as url]
             [clojure.string :as string]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [taoensso.timbre :as timbre
+             #?(:clj :refer :cljs refer-macros)
+             [debug]]))
 
 (def properties-map
   {:title #{:root}
@@ -74,30 +77,27 @@
     (->> [protocols] flatten (map string/lower-case))
     nil))
 
-(defn extract-nested-resources [node]
-  (->> node
-       (filter (fn [[k v]]
-                 (string/starts-with? (str k) ":/")))
-       (map (fn [[k v]]
-              {:path (-> k str (string/replace-first ":/" "/"))
-               :resource v}))))
-
-(defn parse-nested-resources [extracted-resources location parsed-location context]
+(defn parse-nested-resources [extracted-resources parent-path location parsed-location context]
   (->> extracted-resources
        (map (fn [i {:keys [path resource]}]
               (let [context (-> context
-                                (assoc :location (str location (utils/sanitize-path path)))
-                                (assoc :parsed-location (str parsed-location "/resources/" i))
+                                (assoc :parent-path (str parent-path path))
+                                (assoc :location (str location (if (string/ends-with? location "/") "" "/")
+                                                      (url/url-encode path)))
+                                (assoc :parsed-location (str parsed-location "/end-points/" i))
+                                (assoc :resource-path path)
                                 (assoc :path path))]
                 (parse-ast resource context)))
-            (range 0 (count extracted-resources)))))
+            (range 0 (count extracted-resources)))
+       flatten))
 
 (defmethod parse-ast :root [node {:keys [location parsed-location is-fragment] :as context}]
+  (debug "Parsing RAML root")
   (let [parsed-location (str parsed-location "/api-documentation")
         location (str location "/")
         nested-resources (-> node
-                             (extract-nested-resources)
-                             (parse-nested-resources location parsed-location context))
+                             (utils/extract-nested-resources)
+                             (parse-nested-resources "" location parsed-location context))
         properties {:id parsed-location
                     :sources (generate-parse-node-sources location parsed-location)
                     :name (:title node)
@@ -111,29 +111,51 @@
                     :provider nil
                     :terms-of-service nil
                     :license nil
-                    :nested-endpoints nested-resources}]
+                    :endpoints nested-resources}]
     (if is-fragment
       (domain/map->ParsedDomainElement {:id parsed-location
                                         :fragment-node :parsed-api-documentation
                                         :properties properties})
       (domain/map->ParsedAPIDocumentation properties))))
 
-(defmethod parse-ast :resource [node {:keys [location parsed-location is-fragment path] :as context}]
-  (when (nil? path)
-    (throw (new #? (:cljs js/Error :clj Exception)
-                "Cannot parse a resource without information about the resource path in the context")))
-  (let [nested-resources (-> node
-                             (extract-nested-resources)
-                             (parse-nested-resources location parsed-location context))
-        properties {:path path
-                    :sources (generate-parse-node-sources location parsed-location)
+(defn generate-resource-nesting-sources [path nested-ids location parsed-location]
+  (let [source-map-id (str parsed-location "/source-map/0/nested-resource-parsed")
+        node-parsed-tag (document/->NestedResourceParsedTag source-map-id path)
+        nested-children-tags (mapv (fn [i nested-id]
+                                     (let [source-map-id (str parsed-location "/source-map/" (inc i) "/nested-children")]
+                                       (document/->ResourceNestedChildrenTag source-map-id nested-id)))
+                                   (range 0 (count nested-ids))
+                                   nested-ids)]
+    (debug "Generated " (count nested-children-tags) " child resource tags for resource " location)
+    (flatten [(document/->DocumentSourceMap (str parsed-location "/source-map/0") location [node-parsed-tag])
+              (mapv (fn [i child-tag]
+                      (document/->DocumentSourceMap (str parsed-location "/source-map/" (inc i)) location [child-tag]))
+                    (range 0 (count nested-children-tags))
+                    nested-children-tags)])))
+
+(defmethod parse-ast :resource [node {:keys [location parsed-location is-fragment resource-path parent-path] :as context}]
+  (debug "Parsing resource " location)
+  (let [extracted-resources (utils/extract-nested-resources node)
+        extracted-paths-set (set (map :path extracted-resources))
+        nested-resources (parse-nested-resources extracted-resources parent-path location parsed-location context)
+        nested-children (->> nested-resources
+                             (filter (fn [resource]
+                                       (let [resource-path (first (document/find-tag resource document/nested-resource-parsed-tag))]
+                                         (and (some? resource-path)
+                                              (some? (extracted-paths-set (document/value resource-path))))))))
+        nested-ids (if is-fragment
+                     (mapv :id nested-children)
+                     (mapv #(document/id %) nested-children))
+        properties {:path parent-path
+                    :sources (concat (generate-parse-node-sources location parsed-location)
+                                     (generate-resource-nesting-sources resource-path nested-ids location parsed-location))
                     :id parsed-location
                     :name (:displayName node)
                     :description (:description node)
-                    :supported-operations []
-                    :nested-endpoints nested-resources}]
-    (if is-fragment
-      (domain/map->ParsedDomainElement {:id parsed-location
-                                        :fragment-node :parsed-end-point
-                                        :properties properties})
-      (domain/map->ParsedEndPoint properties))))
+                    :supported-operations []}]
+    (concat (if is-fragment
+              [(domain/map->ParsedDomainElement {:id parsed-location
+                                                 :fragment-node :parsed-end-point
+                                                 :properties properties})]
+              [(domain/map->ParsedEndPoint properties)])
+            (or nested-resources []))))

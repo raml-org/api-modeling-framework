@@ -1,6 +1,7 @@
 (ns raml-framework.parser.domain.openapi-test
   (:require [clojure.test :refer :all]
             [raml-framework.parser.domain.openapi :as openapi-parser]
+            [raml-framework.model.document :as document]
             [raml-framework.model.domain :as domain]))
 
 
@@ -14,7 +15,8 @@
               :basePath "/test/endpoint"
               :schemes ["http" "https"]
               :consumes ["application/json" "application/xml"]
-              :produces ["application/ld+json"]}
+              :produces ["application/ld+json"]
+              :paths {(keyword "/users") {:get {}}}}
         parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#"
                                                :parsed-location "file://path/to/resource.raml#"
                                                :is-fragment false})]
@@ -23,4 +25,10 @@
     (is (= ["http" "https"] (domain/scheme parsed)))
     (is (= "/test/endpoint" (domain/base-path parsed)))
     (is (= ["application/ld+json"] (domain/content-type parsed)))
-    (is (= ["application/json" "application/xml"] (domain/accepts parsed)))))
+    (is (= ["application/json" "application/xml"] (domain/accepts parsed)))
+    (is (= 1 (count (domain/endpoints parsed))))
+    (is (= 2 (count (-> parsed
+                        (domain/endpoints)
+                        first
+                        (document/sources)))))
+    (is (= "/users" (domain/path (first (domain/endpoints parsed)))))))

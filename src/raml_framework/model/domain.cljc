@@ -12,14 +12,11 @@
   (provider [this] "Person or organisation providing the API")
   (terms-of-service [this] "Terms of service for the API")
   (version [this] "Version of the API")
-  (license [this] "License for the API"))
-
-
-(defprotocol EndPointContainer
-  (nested-endpoints [this] "Other end-points in the API nested under the current end-point path"))
+  (license [this] "License for the API")
+  (endpoints [this] "List of endpoints in the API"))
 
 (defrecord ParsedAPIDocumentation [id sources name description host scheme base-path accepts content-type
-                                   provider terms-of-service version license nested-endpoints]
+                                   provider terms-of-service version license endpoints]
   CommonAPIProperties
   (host [this] host)
   (scheme [this] scheme)
@@ -31,8 +28,7 @@
   (terms-of-service [this] terms-of-service)
   (version [this] version)
   (license [this] license)
-  EndPointContainer
-  (nested-endpoints [this] nested-endpoints)
+  (endpoints [this] endpoints)
   document/Node
   (id [this] id)
   (name [this] name)
@@ -66,12 +62,10 @@
   (supported-operations [this] "HTTP operations supported by this end-point")
   (path [this] "(partial) IRI template where the operations are bound to"))
 
-(defrecord ParsedEndPoint [id sources name description path supported-operations nested-endpoints]
+(defrecord ParsedEndPoint [id sources name description path supported-operations]
   EndPoint
   (supported-operations [this] supported-operations)
   (path [this] path)
-  EndPointContainer
-  (nested-endpoints [this] nested-endpoints)
   document/Node
   (id [this] id)
   (name [this] name)

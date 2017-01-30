@@ -68,7 +68,10 @@
     t))
 
 
-(defn sanitize-path [path]
-  (-> path
-      (string/replace "{" "%7B")
-      (string/replace "}" "%7D")))
+(defn extract-nested-resources [node]
+  (->> node
+       (filter (fn [[k v]]
+                 (string/starts-with? (str k) ":/")))
+       (map (fn [[k v]]
+              {:path (-> k str (string/replace-first ":/" "/"))
+               :resource v}))))
