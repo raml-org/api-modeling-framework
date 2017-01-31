@@ -4,9 +4,11 @@
             [raml-framework.model.vocabulary :as v]
             [raml-framework.parser.domain.jsonld :as jsonld-parser]
             [raml-framework.parser.domain.raml :as raml-parser]
+            [raml-framework.parser.domain.openapi :as openapi-parser]
             [raml-framework.model.domain :as domain]
             [raml-framework.generators.domain.jsonld :as generator]
             [raml-framework.generators.domain.raml :as raml-genenerator]
+            [raml-framework.generators.domain.openapi :as openapi-genenerator]
             [raml-framework.model.document :as document]))
 
 (deftest from-jsonld-APIDocumentation
@@ -56,3 +58,39 @@
         generated (generator/to-jsonld api-documentation true)
         parsed (jsonld-parser/from-jsonld generated)]
     (is (= input (raml-genenerator/to-raml parsed {})))))
+
+(deftest from-jsonld-Operation
+  (let [input {:displayName "Users"
+               :get {:displayName "get method"
+                     :description "get description"
+                     :protocols ["http"]}
+               :post {:displayName "post method"
+                      :description "post description"
+                      :protocols ["http"]}}
+        model-parsed (raml-parser/parse-ast input
+                                            {:location "file://path/to/resource.raml#"
+                                             :parsed-location "file://path/to/resource.raml#"
+                                             :is-fragment false})
+        generated (generator/to-jsonld (first model-parsed) true)
+        parsed (jsonld-parser/from-jsonld generated)]
+    (is (= input (raml-genenerator/to-raml parsed {}))))
+  (let [input {:get {:operationId "get"
+                     :description "get description"
+                     :schemes ["https"]
+                     :tags ["experimantl" "foo" "bar"]
+                     :produces ["application/ld+json"]
+                     :consumes ["application/json"]}
+               :post {:operationId "post"
+                      :description "post description"
+                      :schemes ["https"]
+                      :tags ["experimantl" "foo" "bar"]
+                      :produces ["application/ld+json"]
+                      :consumes ["application/json"]}}
+        model-parsed (openapi-parser/parse-ast input
+                                               {:location "file://path/to/resource.raml#"
+                                                :parsed-location "file://path/to/resource.raml#"
+                                                :is-fragment false
+                                                :path "/Users"})
+        generated (generator/to-jsonld model-parsed true)
+        parsed (jsonld-parser/from-jsonld generated)]
+    (is (= input (openapi-genenerator/to-openapi parsed {})))))

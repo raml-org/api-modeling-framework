@@ -19,6 +19,8 @@
          (satisfies? document/Node model))       :Tag
     (and (satisfies? domain/EndPoint model)
          (satisfies? document/Node model))       :EndPoint
+    (and (satisfies? domain/Operation model)
+         (satisfies? document/Node model))       :Operation
     :else                                        (type model)))
 
 (defmulti to-jsonld (fn [model source-maps?] (to-jsonld-dispatch-fn model source-maps?)))
@@ -34,7 +36,7 @@
 
 
 (defmethod to-jsonld :APIDocumentation [m source-maps?]
-  (debug "Generating APIDocumentation")
+  (debug "Generating APIDocumentation " (document/id m))
   (-> {"@type" [v/http:APIDocumentation
                 v/document:DomainElement]}
       (with-node-properties m source-maps?)
@@ -58,9 +60,21 @@
   (jsonld-document-generator/to-jsonld m source-maps?))
 
 (defmethod to-jsonld :EndPoint [m source-maps?]
-  (debug "Generating EndPoint")
+  (debug "Generating EndPoint " (document/id m))
   (-> {"@type" [v/http:EndPoint
                 v/document:DomainElement]}
        (with-node-properties m source-maps?)
        (utils/assoc-value m v/http:path domain/path)
+       (utils/assoc-objects m v/hydra:supportedOperation domain/supported-operations (fn [x] (to-jsonld x source-maps?)))
        utils/clean-nils))
+
+(defmethod to-jsonld :Operation [m source-maps?]
+  (debug "Generating Operation " (document/id m))
+  (-> {"@type" [v/hydra:Operation
+                v/document:DomainElement]}
+      (with-node-properties m source-maps?)
+      (utils/assoc-value m v/hydra:method domain/method)
+      (utils/assoc-values m v/http:accepts domain/accepts)
+      (utils/assoc-values m v/http:content-type domain/content-type)
+      (utils/assoc-values m v/http:scheme domain/scheme)
+      utils/clean-nils))

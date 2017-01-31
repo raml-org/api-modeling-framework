@@ -51,6 +51,7 @@
       document/nested-resource-children-tag (document/->NestedResourceChildrenTag id tag-value)
       document/nested-resource-parent-id-tag (document/->NestedResourceParentIdTag id tag-value)
       document/nested-resource-path-parsed-tag (document/->NestedResourcePathParsedTag id tag-value)
+      document/api-tag-tag (document/->APITagTag id tag-value)
       (reify
         document/Tag
         (document/tag-id [this] tag-id)

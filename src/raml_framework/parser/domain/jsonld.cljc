@@ -17,6 +17,7 @@
     (utils/has-class? model v/document:SourceMap)    v/document:SourceMap
     (utils/has-class? model v/document:Tag)          v/document:Tag
     (utils/has-class? model v/http:EndPoint)         v/http:EndPoint
+    (utils/has-class? model v/hydra:Operation)       v/hydra:Operation
     :else                                            :unknown))
 
 (defmulti from-jsonld (fn [m] (from-jsonld-dispatch-fn m)))
@@ -49,13 +50,27 @@
                                  :sources parsed-sources
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
-                                 :path (utils/find-value m v/http:path)})))
+                                 :path (utils/find-value m v/http:path)
+                                 :supported-operations (map from-jsonld (-> m (get v/hydra:supportedOperation [])))})))
 
 (defmethod from-jsonld v/document:SourceMap [m]
   (json-document-parser/from-jsonld m))
 
 (defmethod from-jsonld v/document:Tag [m]
   (json-document-parser/from-jsonld m))
+
+(defmethod from-jsonld v/hydra:Operation [m]
+  (debug "Parsing " v/hydra:Operation " " (get m "@id"))
+  (let [sources (get m v/document:source)
+        parsed-sources (map json-document/from-jsonld sources)]
+    (domain/map->ParsedOperation {:id (get m "@id")
+                                  :sources parsed-sources
+                                  :name (utils/find-value m v/sorg:name)
+                                  :description (utils/find-value m v/sorg:description)
+                                  :accepts (utils/find-values m v/http:accepts)
+                                  :content-type (utils/find-values m v/http:content-type)
+                                  :scheme (utils/find-values m v/http:scheme)
+                                  :method (utils/find-value m v/hydra:method)})))
 
 (defmethod from-jsonld nil [m]
   (debug "Parsing " nil)
