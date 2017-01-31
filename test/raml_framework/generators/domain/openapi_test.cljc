@@ -70,3 +70,16 @@
                                                :path "/Users"})
         generated (generator/to-openapi parsed {})]
     (is (= node generated))))
+
+(deftest to-openapi-response
+  (let [node {:operationId "get method"
+              :description "get description"
+              :schemes ["http"]
+              :responses {"200" {:description "200 response"}
+                          "400" {:description "400 response"}}}
+        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#/users"
+                                               :parsed-location "file://path/to/resource.raml#/users"
+                                               :is-fragment false
+                                               :path "/Users"})
+        generated (generator/to-openapi parsed {})]
+    (is (= node generated))))

@@ -10,12 +10,19 @@
 (defn to-raml-dispatch-fn [model ctx]
   (cond
     (nil? model)                                 model
+
     (and (satisfies? domain/APIDocumentation model)
          (satisfies? document/Node model))       domain/APIDocumentation
+
     (and (satisfies? domain/EndPoint model)
          (satisfies? document/Node model))       domain/EndPoint
+
     (and (satisfies? domain/Operation model)
          (satisfies? document/Node model))       domain/Operation
+
+    (and (satisfies? domain/Response model)
+         (satisfies? document/Node model))       domain/Response
+
     :else                                        (type model)))
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
@@ -103,11 +110,18 @@
         utils/clean-nils)))
 
 (defmethod to-raml domain/Operation [model context]
-  (debug "Generating Operation " (document/id model))
+  (debug "Generating operation " (document/id model))
   (-> {:displayName (document/name model)
        :description (document/description model)
-       :protocols (domain/scheme model)}
+       :protocols (domain/scheme model)
+       :responses (->> (domain/responses model)
+                       (map (fn [response] [(document/name response) (to-raml response context)]))
+                       (into {}))}
       utils/clean-nils))
+
+(defmethod to-raml domain/Response [model context]
+  (debug "Generating response " (document/name model))
+  {:description (document/description model)})
 
 (defmethod to-raml nil [_ _]
   (debug "Generating nil")

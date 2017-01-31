@@ -57,3 +57,16 @@
                                                   :path "/test"})
         generated (generator/to-raml api-documentation {})]
     (is (= input generated))))
+
+(deftest to-raml-Response
+  (let[input {:displayName "get method"
+              :description "get description"
+              :protocols ["http"]
+              :responses {"200" {:description "200 response"}
+                          "400" {:description "400 response"}}}
+       parsed (raml-parser/parse-ast input {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
+                                            :location "file://path/to/resource.raml#/users"
+                                            :path "/users"
+                                            :is-fragment false})
+       generated (generator/to-raml parsed {})]
+    (is (= input generated))))

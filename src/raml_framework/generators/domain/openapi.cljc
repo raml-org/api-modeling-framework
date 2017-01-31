@@ -10,12 +10,19 @@
 (defn to-openapi-dispatch-fn [model ctx]
   (cond
     (nil? model)                                 model
+
     (and (satisfies? domain/APIDocumentation model)
          (satisfies? document/Node model))       domain/APIDocumentation
+
     (and (satisfies? domain/EndPoint model)
          (satisfies? document/Node model))       domain/EndPoint
+
     (and (satisfies? domain/Operation model)
          (satisfies? document/Node model))       domain/Operation
+
+    (and (satisfies? domain/Response model)
+         (satisfies? document/Node model))       domain/Response
+
     :else                                        (type model)))
 
 (defmulti to-openapi (fn [model ctx] (to-openapi-dispatch-fn model ctx)))
@@ -66,8 +73,15 @@
          :tags tags
          :schemes (domain/scheme model)
          :consumes (domain/accepts model)
-         :produces (domain/content-type model)}
+         :produces (domain/content-type model)
+         :responses (->> (domain/responses model)
+                         (map (fn [response] [(document/name response) (to-openapi response ctx)]))
+                         (into {}))}
         utils/clean-nils)))
+
+(defmethod to-openapi domain/Response [model ctx]
+  (debug "Generating response " (document/name model))
+  {:description (document/description model)})
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")
