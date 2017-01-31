@@ -57,7 +57,12 @@
 (def http:path (http-ns "path"))
 
 
-
 (def hydra:Operation (hydra-ns "Operation"))
 
 (def hydra:method (hydra-ns "method"))
+(def hydra:returns (hydra-ns "returns"))
+
+
+(def http:Response (http-ns "Response"))
+
+(def hydra:statusCode (hydra-ns "statusCode"))

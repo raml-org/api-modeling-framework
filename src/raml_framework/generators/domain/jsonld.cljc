@@ -11,16 +11,25 @@
 (defn to-jsonld-dispatch-fn [model source-maps?]
   (cond
     (nil? model)                                 model
+
     (and (satisfies? domain/APIDocumentation model)
          (satisfies? document/Node model))       :APIDocumentation
+
     (and (satisfies? document/SourceMap model)
          (satisfies? document/Node model))       :SourceMap
+
     (and (satisfies? document/Tag  model)
          (satisfies? document/Node model))       :Tag
+
     (and (satisfies? domain/EndPoint model)
          (satisfies? document/Node model))       :EndPoint
+
     (and (satisfies? domain/Operation model)
          (satisfies? document/Node model))       :Operation
+
+    (and (satisfies? domain/Response model)
+         (satisfies? document/Node model))       :Response
+
     :else                                        (type model)))
 
 (defmulti to-jsonld (fn [model source-maps?] (to-jsonld-dispatch-fn model source-maps?)))
@@ -77,4 +86,13 @@
       (utils/assoc-values m v/http:accepts domain/accepts)
       (utils/assoc-values m v/http:content-type domain/content-type)
       (utils/assoc-values m v/http:scheme domain/scheme)
+      (utils/assoc-objects m v/hydra:returns domain/responses (fn [x] (to-jsonld x source-maps?)))
+      utils/clean-nils))
+
+(defmethod to-jsonld :Response [m source-maps?]
+  (debug "Generating Response " (document/id m))
+  (-> {"@type" [v/http:Response
+                v/document:DomainElement]}
+      (with-node-properties m source-maps?)
+      (utils/assoc-value m v/hydra:statusCode domain/status-code)
       utils/clean-nils))
