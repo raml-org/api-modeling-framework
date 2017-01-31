@@ -75,3 +75,11 @@
        (map (fn [[k v]]
               {:path (-> k str (string/replace-first ":/" "/"))
                :resource v}))))
+
+(defn safe-str [x]
+  (cond
+    (string? x) x
+    (keyword? x) (if (string/starts-with? (str x) ":/")
+                   (str "/" (name x))
+                   (name x))
+    :else (str x)))

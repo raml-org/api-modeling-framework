@@ -62,3 +62,26 @@
                 (map (fn [tag] (document/value tag))))))
     (is (= ["get" "post"] (->> operations
                                (map domain/method))))))
+
+
+(deftest parse-ast-response
+  (let [node {:get {:responses {:200 {:description "200 response"}
+                                :error {:description "error response"}}}}
+        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#"
+                                               :parsed-location "file://path/to/resource.raml#"
+                                               :is-fragment false
+                                               :path "/Users"})]
+    (is (= 2 (count (->> parsed
+                         domain/supported-operations
+                         first
+                         domain/responses))))
+    (is (= ["200" nil] (->> parsed
+                            domain/supported-operations
+                            first
+                            domain/responses
+                            (map domain/status-code))))
+    (is (= ["200" "error"] (->> parsed
+                                domain/supported-operations
+                                first
+                                domain/responses
+                                (map document/name))))))

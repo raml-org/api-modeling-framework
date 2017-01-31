@@ -94,3 +94,25 @@
     (is (= ["get" "post"] (->> operations (map domain/method))))
     (is (= ["get method" "post method"] (->> operations (map document/name))))
     (is (= ["get description" "post description"] (->> operations (map document/description))))))
+
+
+(deftest parse-ast-responses
+  (let [node {:displayName "Users"
+              :get {:displayName "get method"
+                    :description "get description"
+                    :protocols ["http"]
+                    :responses {200 {:description "200 response"}
+                                400 {:description "400 response"}}}}
+        parsed (first (raml-parser/parse-ast node {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
+                                                   :location "file://path/to/resource.raml#/users"
+                                                   :path "/users"
+                                                   :is-fragment false}))]
+    (is (= 2 (count (-> parsed
+                        domain/supported-operations
+                        first
+                        domain/responses))))
+    (is (= ["200" "400"] (->> parsed
+                              domain/supported-operations
+                              first
+                              domain/responses
+                              (map domain/status-code))))))

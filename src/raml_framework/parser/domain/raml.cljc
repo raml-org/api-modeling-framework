@@ -15,14 +15,14 @@
    :annotationTypes #{:root}
    :baseUri #{:root}
    :baseUriParameters #{:root}
-   :body #{:method}
+   :body #{:method :response}
    :delete #{:resource}
-   :description #{:root :resource :method}
+   :description #{:root :resource :method :response}
    :displayName #{:resource :method}
    :documentation #{:root}
    :get #{:resource}
    :head #{:resource}
-   :headers #{:method}
+   :headers #{:method :response}
    :is #{:resource :method}
    :mediaType #{:root}
    :options #{:resource}
@@ -39,15 +39,18 @@
    :securitySchemes #{:root}
    :title #{:root}
    :traits #{:root}
-   :type #{:resource}
+   :type #{:resource :body}
    :types #{:root}
    :uriParameters #{:resource}
    :uses #{:root}
    :version #{:root}
    })
 
+
 (defn guess-type-from-predicates [x]
-  (->> [(fn [x] (when (string/starts-with? (str x) ":/") #{:root :resource}))]
+  (->> [(fn [x] (when (string/starts-with? (utils/safe-str x) "/") #{:root :resource}))
+        (fn [x] (when (some? (re-matches #"^\d+$" (utils/safe-str x))) #{:responses}))
+        (fn [x] (when (some? (re-matches #"^[a-z]+\/[a-z+]+$" (utils/safe-str x))) #{:body}))]
        (map (fn [p] (p x)))
        (filter some?)
        first))
@@ -188,6 +191,7 @@
         operations (->> [:get :patch :put :post :delete :options :head]
                         (map (fn [op] (if-let [node (get node op)]
                                        (parse-ast node (-> context
+                                                           (assoc parsed-location resource-id)
                                                            (assoc :method (name op))
                                                            (assoc :type-hint :method)))
                                        nil)))
@@ -211,16 +215,48 @@
   (let [method-id (str parsed-location "/" method)
         location (str location "/" method)
         node-parsed-source-map (generate-parse-node-sources location method-id)
+        responses (parse-ast (:responses node {}) (-> context
+                                                      (assoc :type-hint :responses)
+                                                      (assoc :parsed-location method-id)
+                                                      (assoc :location location)))
         properties (-> {:id method-id
                         :sources node-parsed-source-map
                         :method method
                         :name (:displayName node)
                         :description (:description node)
                         :scheme (:protocols node)
-                        :headers (:headers node)}
+                        :headers (:headers node)
+                        :responses responses}
                        utils/clean-nils)]
     (if is-fragment
       (domain/map->ParsedOperation {:id method-id
                                     :fragment :parsed-operation
                                     :properties properties})
       (domain/map->ParsedOperation properties))))
+
+(defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment] :as context}]
+  (debug "Parsing responses")
+  (->> node
+       (map (fn [[key response]]
+              (parse-ast response (-> context
+                                      (assoc :location (str location "/responses"))
+                                      (assoc :type-hint :response)
+                                      (assoc :status-code key)))))))
+
+(defmethod parse-ast :response [node {:keys [location parsed-location is-fragment status-code] :as context}]
+  (debug "Parsing response " status-code)
+  (let [response-id (str parsed-location "/" status-code)
+        location (str location "/" status-code)
+        status-code (if (integer? status-code) (str status-code) (name status-code))
+        node-parsed-source-map (generate-parse-node-sources location response-id)
+        properties (-> {:id response-id
+                        :name status-code
+                        :status-code status-code
+                        :sources node-parsed-source-map
+                        :description (:description node)}
+                       utils/clean-nils)]
+    (if is-fragment
+      (domain/map->ParsedDomainElement {:id response-id
+                                        :fragment :parsed-response
+                                        :properties properties})
+      (domain/map->ParsedResponse properties))))

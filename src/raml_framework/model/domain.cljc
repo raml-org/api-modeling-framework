@@ -39,7 +39,6 @@
   (valid? [this] (and (some? (name this))
                       (some? (version this)))))
 
-
 (defprotocol DomainElement
   (fragment-node [this] "The kind of node this domain element is wrapping")
   (properties [this] "A map of properties that can be used to build a concrete domain component")
@@ -59,7 +58,6 @@
     (condp = fragment-node
       :parsed-api-documentation (map->ParsedAPIDocumentation properties))))
 
-
 (defprotocol EndPoint
   (supported-operations [this] "HTTP operations supported by this end-point")
   (path [this] "(partial) IRI template where the operations are bound to"))
@@ -75,13 +73,17 @@
   (sources [this] sources)
   (valid? [this] true))
 
+(defprotocol PayloadHolder
+  (schema [this] "Schema for the payload"))
+
 (defprotocol Operation
-  (method [this] "HTTP method this operation is bound to"))
+  (method [this] "HTTP method this operation is bound to")
+  (responses [this] "HTTP responses"))
 
-
-(defrecord ParsedOperation [id sources name description method headers host scheme accepts content-type]
+(defrecord ParsedOperation [id sources name description method headers scheme accepts content-type schema responses]
   Operation
   (method [this] method)
+  (responses [this] responses)
   document/Node
   (id [this] id)
   (name [this] name)
@@ -89,8 +91,28 @@
   (sources [this] sources)
   (valid? [this] true)
   CommonAPIProperties
-  (host [this] host)
   (scheme [this] scheme)
+  (accepts [this] accepts)
+  (content-type [this] content-type)
+  (headers [this] headers)
+  PayloadHolder
+  (schema [this] schema))
+
+(defprotocol Response
+  (status-code [this] "Status code for the response"))
+
+(defrecord ParsedResponse [id sources name description status-code schema headers accepts content-type]
+  Response
+  (status-code [this] status-code)
+  PayloadHolder
+  (schema [this] schema)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources)
+  (valid? [this] true)
+  CommonAPIProperties
   (accepts [this] accepts)
   (content-type [this] content-type)
   (headers [this] headers))
