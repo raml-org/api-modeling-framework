@@ -40,3 +40,20 @@
                                                   :is-fragment false})
         generated (generator/to-raml api-documentation {})]
     (is (= input generated))))
+
+
+(deftest to-raml-Operations
+  (let [input {(keyword "/users") {:displayName "Users"
+                                   :get {:displayName "get method"
+                                         :description "get description"
+                                         :protocols ["http"]}
+                                   :post {:displayName "post method"
+                                          :description "post description"
+                                          :protocols ["http"]}}}
+        api-documentation (raml-parser/parse-ast input
+                                                 {:location "file://path/to/resource.raml#"
+                                                  :parsed-location "file://path/to/resource.raml#"
+                                                  :is-fragment false
+                                                  :path "/test"})
+        generated (generator/to-raml api-documentation {})]
+    (is (= input generated))))

@@ -14,6 +14,8 @@
          (satisfies? document/Node model))       domain/APIDocumentation
     (and (satisfies? domain/EndPoint model)
          (satisfies? document/Node model))       domain/EndPoint
+    (and (satisfies? domain/Operation model)
+         (satisfies? document/Node model))       domain/Operation
     :else                                        (type model)))
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
@@ -90,11 +92,22 @@
 
 (defmethod to-raml domain/EndPoint [model {:keys [all-resources] :as ctx}]
   (debug "Generating resource " (document/id model))
-  (let [children-resources (find-children-resources (document/id model) all-resources)]
+  (let [children-resources (find-children-resources (document/id model) all-resources)
+        operations (->> (or (domain/supported-operations model) [])
+                        (map (fn [op] [(keyword (domain/method op)) (to-raml op ctx)]))
+                        (into {}))]
     (-> {:displayName (document/name model)
          :description (document/description model)}
         (merge-children-resources children-resources ctx)
+        (merge operations)
         utils/clean-nils)))
+
+(defmethod to-raml domain/Operation [model context]
+  (debug "Generating Operation " (document/id model))
+  (-> {:displayName (document/name model)
+       :description (document/description model)
+       :protocols (domain/scheme model)}
+      utils/clean-nils))
 
 (defmethod to-raml nil [_ _]
   (debug "Generating nil")

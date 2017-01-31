@@ -14,6 +14,8 @@
          (satisfies? document/Node model))       domain/APIDocumentation
     (and (satisfies? domain/EndPoint model)
          (satisfies? document/Node model))       domain/EndPoint
+    (and (satisfies? domain/Operation model)
+         (satisfies? document/Node model))       domain/Operation
     :else                                        (type model)))
 
 (defmulti to-openapi (fn [model ctx] (to-openapi-dispatch-fn model ctx)))
@@ -50,8 +52,22 @@
 
 (defmethod to-openapi domain/EndPoint [model ctx]
   (debug "Generating resource " (document/id model))
-  ;; temporary until we add the operations logic
-  {})
+  (let [operations (domain/supported-operations model)]
+    (->> operations
+         (map (fn [op] [(keyword (domain/method op)) (to-openapi op ctx)]))
+         (into {}))))
+
+(defmethod to-openapi domain/Operation [model ctx]
+  (debug "Generating operation " (document/id model))
+  (let [tags (->> (document/find-tag model document/api-tag-tag)
+                  (map #(document/value %)))]
+    (-> {:operationId (document/name model)
+         :description (document/description model)
+         :tags tags
+         :schemes (domain/scheme model)
+         :consumes (domain/accepts model)
+         :produces (domain/content-type model)}
+        utils/clean-nils)))
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")

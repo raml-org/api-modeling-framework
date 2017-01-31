@@ -50,3 +50,23 @@
         generated (generator/to-openapi parsed {})]
     (is (= (->> node :paths keys)
            (->> generated :paths keys)))))
+
+(deftest to-openapi-operations
+  (let [node {:get {:operationId "get"
+                    :description "get description"
+                    :schemes ["https"]
+                    :tags ["experimantl" "foo" "bar"]
+                    :produces ["application/ld+json"]
+                    :consumes ["application/json"]}
+              :post {:operationId "post"
+                     :description "post description"
+                     :schemes ["https"]
+                     :tags ["experimantl" "foo" "bar"]
+                     :produces ["application/ld+json"]
+                     :consumes ["application/json"]}}
+        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#/users"
+                                               :parsed-location "file://path/to/resource.raml#/users"
+                                               :is-fragment false
+                                               :path "/Users"})
+        generated (generator/to-openapi parsed {})]
+    (is (= node generated))))
