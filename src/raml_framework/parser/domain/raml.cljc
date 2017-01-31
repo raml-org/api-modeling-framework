@@ -50,7 +50,7 @@
 (defn guess-type-from-predicates [x]
   (->> [(fn [x] (when (string/starts-with? (utils/safe-str x) "/") #{:root :resource}))
         (fn [x] (when (some? (re-matches #"^\d+$" (utils/safe-str x))) #{:responses}))
-        (fn [x] (when (some? (re-matches #"^[a-z]+\/[a-z+]+$" (utils/safe-str x))) #{:body}))]
+        (fn [x] (when (some? (re-matches #"^[a-z]+/[a-z+]+$" (utils/safe-str x))) #{:body}))]
        (map (fn [p] (p x)))
        (filter some?)
        first))
