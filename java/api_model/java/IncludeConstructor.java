@@ -1,4 +1,4 @@
-package raml_framework.java;
+package api_modelling_framework.java;
 
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.AbstractConstruct;

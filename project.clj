@@ -1,6 +1,6 @@
-(defproject raml-framework "0.1.0-SNAPSHOT"
+(defproject api-modelling-framework "0.1.0-SNAPSHOT"
   :description "Parsing tools for API specs"
-  :url "https://github.com/mulesoft-labs/raml-framework"
+  :url "https://github.com/mulesoft-labs/api-modelling-framework"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :java-source-paths ["java"]
@@ -21,7 +21,7 @@
 
   :cljsbuild {:builds {:default {:source-paths ["src"]
                                  :figwheel true
-                                 :compiler {:main raml-framework.core.js
+                                 :compiler {:main api-modelling-framework.core.js
                                             :output-dir "node/engine"
                                             :output-to "node/engine/index.js"
                                             :optimizations :none,
@@ -32,6 +32,6 @@
                                             :target :nodejs}}
                        :test    {:source-paths ["src" "test"]
                                  :compiler {:output-to "resources/public/js/main-test.js"
-                                            :main raml-framework.runner
+                                            :main api-modelling-framework.runner
                                             :pretty-print true
                                             :target :nodejs}}}})

@@ -1,4 +1,4 @@
-# RAML Framework [![Build Status](https://travis-ci.com/mulesoft-labs/raml-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)](https://travis-ci.com/mulesoft-labs/raml-framework)
+# API Modelling Framework [![Build Status](https://travis-ci.com/mulesoft-labs/raml-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)](https://travis-ci.com/mulesoft-labs/raml-framework)
 
 **Status: In progress**
 
