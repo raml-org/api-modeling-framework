@@ -2,6 +2,10 @@
 
 **Status: In progress**
 
+## Architecture
+
+![Architectural diagram](doc/images/arch.png)
+
 ## Vision
 
 [ Vision Statement here ]
