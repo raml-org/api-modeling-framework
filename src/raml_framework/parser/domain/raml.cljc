@@ -188,7 +188,7 @@
         operations (->> [:get :patch :put :post :delete :options :head]
                         (map (fn [op] (if-let [node (get node op)]
                                        (parse-ast node (-> context
-                                                           (assoc :method op)
+                                                           (assoc :method (name op))
                                                            (assoc :type-hint :method)))
                                        nil)))
                         (filter some?))

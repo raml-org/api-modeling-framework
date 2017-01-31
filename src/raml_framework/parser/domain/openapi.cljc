@@ -74,9 +74,9 @@
   (let [tags (or tags [])]
     (->> tags
          (map (fn [i tag]
-                (let [parsed-location (str parsed-location "/source-map/api-tags/tag-" i)]
+                (let [parsed-location (str parsed-location "/source-map/api-tags-" i "/tag")]
                   (document/->DocumentSourceMap
-                   (str parsed-location "/source-map/api-tags")
+                   (str parsed-location "/source-map/api-tags-" i)
                    location
                    [(document/->APITagTag parsed-location tag)])))
               (range 0 (count tags))))))
@@ -151,13 +151,13 @@
   (debug "Parsing path-item")
   (when (nil? path)
     (throw (new #?(:clj Exception :cljs js/Error) "Cannot parse path-item object without contextual path information")))
-  (let [operations (-> [:get :put :post :delete :options :head :patch]
-                       (map (fn [op] (if-let [method-node (get node op)]
-                                      (parse-ast node (-> context
-                                                          (assoc :type-hint :operation)
-                                                          (assoc :method op)))
-                                      nil)))
-                       (filter some?))
+  (let [operations (->> [:get :put :post :delete :options :head :patch]
+                        (map (fn [op] (if-let [method-node (get node op)]
+                                       (parse-ast method-node (-> context
+                                                                  (assoc :type-hint :operation)
+                                                                  (assoc :method (name op))))
+                                       nil)))
+                        (filter some?))
         properties {:path path
                     :sources (concat (generate-parsed-node-sources "path-item" location parsed-location) (or paths-sources []))
                     :id parsed-location

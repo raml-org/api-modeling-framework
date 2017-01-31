@@ -74,3 +74,23 @@
     (is (= (-> parsed (nth 0) document/id)
            (-> parsed (nth 1) (document/find-tag document/nested-resource-parent-id-tag) first document/value)))
     (is (= (nil? (-> parsed (nth 0) (document/find-tag document/nested-resource-parent-id-tag) first document/value))))))
+
+
+
+(deftest parse-ast-methods
+  (let [node {:displayName "Users"
+              :get {:displayName "get method"
+                    :description "get description"
+                    :protocols ["http"]}
+              :post {:displayName "post method"
+                     :description "post description"
+                     :protocols ["http"]}}
+        parsed (raml-parser/parse-ast node {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
+                                            :location "file://path/to/resource.raml#/users"
+                                            :path "/users"
+                                            :is-fragment false})
+        operations (domain/supported-operations (first parsed))]
+    (is (= 2 (count operations)))
+    (is (= ["get" "post"] (->> operations (map domain/method))))
+    (is (= ["get method" "post method"] (->> operations (map document/name))))
+    (is (= ["get description" "post description"] (->> operations (map document/description))))))

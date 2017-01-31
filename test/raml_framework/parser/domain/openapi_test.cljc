@@ -33,3 +33,32 @@
                         first
                         (document/sources)))))
     (is (= "/users" (domain/path (first (domain/endpoints parsed)))))))
+
+
+
+(deftest parse-ast-methods
+  (let [node {:get {:operationId "get"
+                    :description "get description"
+                    :schemes ["https"]
+                    :tags ["experimantl" "foo" "bar"]
+                    :produces ["application/ld+json"]
+                    :consumes ["application/json"]}
+              :post {:operationId "post"
+                     :description "post description"
+                     :schemes ["https"]
+                     :tags ["experimantl" "foo" "bar"]
+                     :produces ["application/ld+json"]
+                     :consumes ["application/json"]}}
+        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#"
+                                               :parsed-location "file://path/to/resource.raml#"
+                                               :is-fragment false
+                                               :path "/Users"})
+        operations (domain/supported-operations parsed)]
+    (is (= 2 (count operations)))
+    (is (= ["experimantl" "foo" "bar" "experimantl" "foo" "bar"]
+           (->> operations
+                (map (fn [op] (document/find-tag op document/api-tag-tag)))
+                flatten
+                (map (fn [tag] (document/value tag))))))
+    (is (= ["get" "post"] (->> operations
+                               (map domain/method))))))
