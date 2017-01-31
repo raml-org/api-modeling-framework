@@ -1,4 +1,4 @@
-(ns raml-framework.platform
+(ns api-modelling-framework.platform
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.nodejs :as nodejs]
             [clojure.string :as string]
