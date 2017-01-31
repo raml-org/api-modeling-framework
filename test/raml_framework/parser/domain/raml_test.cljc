@@ -8,7 +8,7 @@
 (deftest guess-type-test
   (is (= :root (raml-parser/guess-type {:title "a"
                                    :description "hey"})))
-  (is (= :root (raml-parser/guess-type {"/path/to/resource" nil})))
+  (is (= :root (raml-parser/guess-type {(keyword "/path/to/resource") nil})))
   (is (= :undefined (raml-parser/guess-type {})))
   (is (= :undefined (raml-parser/guess-type {:foo :bar}))))
 

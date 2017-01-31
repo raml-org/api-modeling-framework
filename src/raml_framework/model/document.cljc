@@ -117,6 +117,19 @@
   (sources [this] [])
   (valid? [this] true))
 
+(def api-tag-tag "api-tag-tag")
+
+(defrecord APITagTag [id tag-value]
+  Tag
+  (tag-id [this] api-tag-tag)
+  (value [this] tag-value)
+  Node
+  (id [this] id)
+  (name [this] "API specific tag")
+  (description [this] (str "API specific tag with value " tag-value))
+  (sources [this] [])
+  (valid? [this] true))
+
 (defprotocol DocumentUnit
   "Any parseable unit, it should be backed by a source URI"
   (encodes [this] "Domain description encoded into this document unit")

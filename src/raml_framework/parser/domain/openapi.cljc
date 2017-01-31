@@ -11,34 +11,39 @@
 
 
 (def properties-map
-  {:swagger #{:swagger}
-   :info #{:swagger}
-   :host #{:swagger}
+  {
    :basePath #{:swagger}
-   :schemes #{:swagger}
-   :consumes #{:swagger}
-   :produces #{:swagger}
-   :paths #{:swagger}
-   :definitions #{:swagger}
-   :parameters #{:swagger :path-info}
-   :responses #{:swagger}
-   :securityDefinitions #{:swagger}
-   :security #{:swagger}
-   :tags #{:swagger}
-   :externalDocs #{:swagger}
-   :title #{:info}
-   :description #{:info}
-   :termsOfService #{:info}
+   :consumes #{:swagger :operation}
    :contact #{:info}
+   :definitions #{:swagger}
+   :delete #{:path-item}
+   :deprecated #{:operation}
+   :description #{:info :operation}
+   :externalDocs #{:swagger :operation}
+   :get #{:path-item}
+   :head #{:path-item}
+   :host #{:swagger}
+   :info #{:swagger}
    :license #{:info}
+   :operationId #{:operation}
+   :options #{:path-item}
+   :parameters #{:swagger :path-item :operation}
+   :patch #{:path-item}
+   :paths #{:swagger}
+   :post #{:path-item}
+   :produces #{:swagger :operation}
+   :put #{:path-item}
+   :responses #{:swagger :operation}
+   :schemes #{:swagger :operation}
+   :security #{:swagger :operation}
+   :securityDefinitions #{:swagger}
+   :summary #{:operation}
+   :swagger #{:swagger}
+   :tags #{:swagger :operation}
+   :termsOfService #{:info}
+   :title #{:info}
    :version #{:info}
-   :get #{:path-info}
-   :put #{:path-info}
-   :post #{:path-info}
-   :delete #{:path-info}
-   :options #{:path-info}
-   :head #{:path-info}
-   :patch #{:path-info}})
+   })
 
 (defn guess-type-from-predicates [x]
   (->> [(fn [x] (when (string/starts-with? (str x) ":/") #{:paths}))]
@@ -62,11 +67,22 @@
         node-parsed-tag (document/->NodeParsedTag source-map-parsed-location location)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [node-parsed-tag])]))
 
+(defn generate-open-api-tags-sources [tags location parsed-location]
+  (let [tags (or tags [])]
+    (->> tags
+         (map (fn [i tag]
+                (let [parsed-location (str parsed-location "/source-map/api-tags/tag-" i)]
+                  (document/->DocumentSourceMap
+                   (str parsed-location "/source-map/api-tags")
+                   location
+                   [(document/->APITagTag parsed-location tag)])))
+              (range 0 (count tags))))))
+
 (defmethod parse-ast :swagger [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing swagger")
   (let [parsed-location (str parsed-location "/api-documentation")
         location (str location "/")
-        sources (generate-parsed-node-sources "node-parsed-root" location parsed-location)
+        sources (generate-parsed-node-sources "root" location parsed-location)
         endpoints (parse-ast (:paths node) (-> context
                                                (assoc :parsed-location parsed-location)
                                                (assoc :location location)))
@@ -107,13 +123,13 @@
                                                      :fragment-node :info
                                                      :description (:description node)
                                                      :version (:version node)
-                                                     :sources (generate-parsed-node-sources "node-parsed-info" location parsed-location)
+                                                     :sources (generate-parsed-node-sources "info" location parsed-location)
                                                      :terms-of-service (:termsOfService node)}}))))
 
 (defmethod parse-ast :paths [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing paths")
   (let [location (str location "paths")
-        paths-sources (generate-parsed-node-sources "paths-node" location parsed-location)
+        paths-sources (generate-parsed-node-sources "paths" location parsed-location)
         nested-resources (utils/extract-nested-resources node)]
     (map (fn [i {:keys [path resource]}]
            (let [context (-> context
@@ -125,19 +141,44 @@
          (range 0 (count nested-resources))
          nested-resources)))
 
-(defmethod parse-ast :path-info [node {:keys [location parsed-location is-fragment path paths-sources] :as context}]
-  (debug "Parsing path-info")
+(defmethod parse-ast :path-item [node {:keys [location parsed-location is-fragment path paths-sources] :as context}]
+  (debug "Parsing path-item")
   (when (nil? path)
-    (throw (new #?(:clj Exception :cljs js/Error) "Cannot parse path-info object without contextual path information")))
-  (let [properties {:path path
-                    :sources (concat (generate-parsed-node-sources "path-info-node" location parsed-location) (or paths-sources []))
+    (throw (new #?(:clj Exception :cljs js/Error) "Cannot parse path-item object without contextual path information")))
+  (let [operations (-> [:get :put :post :delete :options :head :patch]
+                       (map (fn [op] (if-let [method-node (get node op)]
+                                      (parse-ast node (assoc context :method op))
+                                      nil)))
+                       (filter some?))
+        properties {:path path
+                    :sources (concat (generate-parsed-node-sources "path-item" location parsed-location) (or paths-sources []))
                     :id parsed-location
-                    :supported-operations []}]
+                    :supported-operations operations}]
     (if is-fragment
       (domain/map->ParsedDomainElement {:id parsed-location
                                         :fragment-node :parsed-end-point
                                         :properties properties})
       (domain/map->ParsedEndPoint properties))))
+
+(defmethod parse-ast :operation [node {:keys [location parsed-location is-fragment method] :as context}]
+  (debug "Parsing method " method)
+  (let [method-id (str parsed-location "/" method)
+        location (str location "/" method)
+        node-parsed-source-map (generate-parsed-node-sources method location parsed-location)
+        api-tags (generate-open-api-tags-sources (:tags node) location parsed-location)
+        properties {:id method-id
+                    :method method
+                    :sources (concat node-parsed-source-map api-tags)
+                    :name (:operationId node)
+                    :description (:description node)
+                    :scheme (:schemes node)
+                    :accepts (:consumes node)
+                    :content-type (:produces node)}]
+    (if is-fragment
+      (domain/map->ParsedDomainElement {:id parsed-location
+                                        :fragment-node :parsed-operation
+                                        :properties properties})
+      (domain/map->ParsedOperation properties))))
 
 (defmethod parse-ast :undefined [_ _]
   (debug "Parsing undefined")

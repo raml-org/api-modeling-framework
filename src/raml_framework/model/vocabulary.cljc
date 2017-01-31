@@ -50,7 +50,14 @@
 (def sorg:license (sorg-ns "license"))
 (def http:endpoint (http-ns "endpoint"))
 
+
 (def http:EndPoint (http-ns "EndPoint"))
 
 (def hydra:supportedOperation (hydra-ns "supportedOperation"))
 (def http:path (http-ns "path"))
+
+
+
+(def hydra:Operation (hydra-ns "Operation"))
+
+(def hydra:method (hydra-ns "method"))

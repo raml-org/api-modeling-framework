@@ -34,7 +34,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :source-map [m source-maps?]
-  (debug "Generating SourceMap" (get m "@id"))
+  (debug "Generating SourceMap" (document/id m))
   (->> {"@id" (document/id m)
         "@type" [v/document:SourceMap]
         v/document:location [{"@id" (document/source m)}]
@@ -42,7 +42,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :tag [m source-maps?]
-  (debug "Generating Tag" (get m "@id"))
+  (debug "Generating Tag" (document/id m))
   (->> {"@id" (document/id m)
         "@type" [v/document:Tag]
         v/document:tag-id [{"@value" (document/tag-id m)}]

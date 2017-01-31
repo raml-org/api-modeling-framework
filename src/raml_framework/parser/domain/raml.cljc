@@ -11,36 +11,43 @@
              [debug]]))
 
 (def properties-map
-  {:title #{:root}
-   :description #{:root :resource}
-   :version #{:root}
+  {
+   :annotationTypes #{:root}
    :baseUri #{:root}
    :baseUriParameters #{:root}
-   :protocols? #{:root}
-   :mediaType #{:root}
-   :documentation #{:root}
-   :schemas #{:root}
-   :types #{:root}
-   :traits #{:root}
-   :annotationTypes #{:root}
-   :resourceTypes #{:root}
-   :securitySchemes #{:root}
-   :securedBy #{:root :resource}
-   :uses #{:root}
-   :displayName #{:resource}
-   :get #{:resource}
-   :patch #{:resource}
-   :put #{:resource}
-   :post #{:resource}
+   :body #{:method}
    :delete #{:resource}
-   :options #{:resource}
+   :description #{:root :resource :method}
+   :displayName #{:resource :method}
+   :documentation #{:root}
+   :get #{:resource}
    :head #{:resource}
-   :is #{:resource}
+   :headers #{:method}
+   :is #{:resource :method}
+   :mediaType #{:root}
+   :options #{:resource}
+   :patch #{:resource}
+   :post #{:resource}
+   :protocols? #{:root :method}
+   :put #{:resource}
+   :queryParameters #{:method}
+   :queryString #{:method}
+   :resourceTypes #{:root}
+   :responses #{:method}
+   :schemas #{:root}
+   :securedBy #{:root :resource :method}
+   :securitySchemes #{:root}
+   :title #{:root}
+   :traits #{:root}
    :type #{:resource}
-   :uriParameters #{:resource}})
+   :types #{:root}
+   :uriParameters #{:resource}
+   :uses #{:root}
+   :version #{:root}
+   })
 
 (defn guess-type-from-predicates [x]
-  (->> [(fn [x] (when (string/starts-with? (name x) "/") #{:root :resource}))]
+  (->> [(fn [x] (when (string/starts-with? (str x) ":/") #{:root :resource}))]
        (map (fn [p] (p x)))
        (filter some?)
        first))
@@ -52,7 +59,11 @@
         node-type (first (if (empty? node-types) [] (apply set/intersection node-types)))]
     (or node-type :undefined)))
 
-(defn parse-ast-dispatch-function [node context] (guess-type node))
+(defn parse-ast-dispatch-function [node context]
+  ;; if a type hint is available, we use that information to dispatch, otherwise we try to guess from properties
+  (if (some? (:type-hint context))
+    (:type-hint context)
+    (guess-type node)))
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
@@ -91,7 +102,7 @@
                                 (assoc :parsed-location (str parsed-location "/end-points/" i))
                                 (assoc :resource-path path)
                                 (assoc :path path))]
-                (parse-ast resource context)))
+                (parse-ast resource (assoc context :type-hint :resource))))
             (range 0 (count extracted-resources)))
        flatten))
 
@@ -174,16 +185,42 @@
                                              location
                                              parent-id
                                              nested-resources)
+        operations (->> [:get :patch :put :post :delete :options :head]
+                        (map (fn [op] (if-let [node (get node op)]
+                                       (parse-ast node (-> context
+                                                           (assoc :method op)
+                                                           (assoc :type-hint :method)))
+                                       nil)))
+                        (filter some?))
         properties {:path parent-path
                     :sources (concat (generate-parse-node-sources location resource-id)
                                      children-tags)
                     :id resource-id
                     :name (:displayName node)
                     :description (:description node)
-                    :supported-operations []}]
+                    :supported-operations operations}]
     (concat (if is-fragment
               [(domain/map->ParsedDomainElement {:id resource-id
                                                  :fragment-node :parsed-end-point
                                                  :properties properties})]
               [(domain/map->ParsedEndPoint properties)])
             (or nested-resources []))))
+
+(defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method] :as context}]
+  (debug "Parsing method " method)
+  (let [method-id (str parsed-location "/" method)
+        location (str location "/" method)
+        node-parsed-source-map (generate-parse-node-sources location method-id)
+        properties (-> {:id method-id
+                        :sources node-parsed-source-map
+                        :method method
+                        :name (:displayName node)
+                        :description (:description node)
+                        :scheme (:protocols node)
+                        :headers (:headers node)}
+                       utils/clean-nils)]
+    (if is-fragment
+      (domain/map->ParsedOperation {:id method-id
+                                    :fragment :parsed-operation
+                                    :properties properties})
+      (domain/map->ParsedOperation properties))))
