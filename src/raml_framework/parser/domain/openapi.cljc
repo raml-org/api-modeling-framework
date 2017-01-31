@@ -58,7 +58,10 @@
         node-type (first (if (empty? node-types) [] (apply set/intersection node-types)))]
     (or node-type :undefined)))
 
-(defn parse-ast-dispatch-function [node context] (guess-type node))
+(defn parse-ast-dispatch-function [node context]
+  (if (some? (:type-hint context))
+    (:type-hint context)
+    (guess-type node)))
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
@@ -84,6 +87,7 @@
         location (str location "/")
         sources (generate-parsed-node-sources "root" location parsed-location)
         endpoints (parse-ast (:paths node) (-> context
+                                               (assoc :type-hint :paths)
                                                (assoc :parsed-location parsed-location)
                                                (assoc :location location)))
         properties {:id parsed-location
@@ -97,6 +101,7 @@
                     :endpoints endpoints}
         node-info-properties (if (some? (:info node))
                                (domain/properties (parse-ast (:info node) (-> context
+                                                                              (assoc :type-hint :info)
                                                                               (assoc :is-fragment true)
                                                                               (assoc :parsed-location parsed-location)
                                                                               (assoc :location location))))
@@ -133,6 +138,7 @@
         nested-resources (utils/extract-nested-resources node)]
     (map (fn [i {:keys [path resource]}]
            (let [context (-> context
+                             (assoc :type-hint :path-item)
                              (assoc :location (str location "/" (url/url-encode path)))
                              (assoc :parsed-location (str parsed-location "/end-points/" i))
                              (assoc :path path)
@@ -147,7 +153,9 @@
     (throw (new #?(:clj Exception :cljs js/Error) "Cannot parse path-item object without contextual path information")))
   (let [operations (-> [:get :put :post :delete :options :head :patch]
                        (map (fn [op] (if-let [method-node (get node op)]
-                                      (parse-ast node (assoc context :method op))
+                                      (parse-ast node (-> context
+                                                          (assoc :type-hint :operation)
+                                                          (assoc :method op)))
                                       nil)))
                        (filter some?))
         properties {:path path
