@@ -19,6 +19,7 @@
     (utils/has-class? model v/http:EndPoint)         v/http:EndPoint
     (utils/has-class? model v/hydra:Operation)       v/hydra:Operation
     (utils/has-class? model v/http:Response)         v/http:Response
+    (utils/has-class? model v/http:Payload)          v/http:Payload
     :else                                            :unknown))
 
 (defmulti from-jsonld (fn [m] (from-jsonld-dispatch-fn m)))
@@ -82,7 +83,19 @@
                                  :sources parsed-sources
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
+                                 :accepts (utils/find-values m v/http:accepts)
+                                 :content-type (utils/find-values m v/http:content-type)
+                                 :schema (from-jsonld (first (get m v/http:shape)))
                                  :status-code (utils/find-value m v/hydra:statusCode)})))
+
+(defmethod from-jsonld v/http:Payload [m]
+  (debug "Parsing " v/http:Payload " " (get m "@id"))
+  (let [sources (get m v/document:source)
+        parsed-sources (map json-document/from-jsonld sources)]
+    (domain/map->ParsedType {:id (get m "@id")
+                             :sources parsed-sources
+                             :name (utils/find-value m v/sorg:name)
+                             :description (utils/find-value m v/sorg:description)})))
 
 (defmethod from-jsonld nil [m]
   (debug "Parsing " nil)

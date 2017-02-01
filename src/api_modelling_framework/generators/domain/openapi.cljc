@@ -63,7 +63,7 @@
     (->> operations
          (map (fn [op] [(keyword (domain/method op)) (to-openapi op ctx)]))
          (into {}))))
-(defn trace [x] (prn x) x)
+
 (defmethod to-openapi domain/Operation [model ctx]
   (debug "Generating operation " (document/id model))
   (let [tags (->> (document/find-tag model document/api-tag-tag)

@@ -30,6 +30,9 @@
     (and (satisfies? domain/Response model)
          (satisfies? document/Node model))       :Response
 
+    (and (satisfies? domain/Type model)
+         (satisfies? document/Node model))       :Type
+
     :else                                        (type model)))
 
 (defmulti to-jsonld (fn [model source-maps?] (to-jsonld-dispatch-fn model source-maps?)))
@@ -95,4 +98,14 @@
                 v/document:DomainElement]}
       (with-node-properties m source-maps?)
       (utils/assoc-value m v/hydra:statusCode domain/status-code)
+      (utils/assoc-values m v/http:accepts domain/status-code)
+      (utils/assoc-values m v/http:content-type domain/content-type)
+      (utils/assoc-object m v/http:shape domain/schema (fn [x] (to-jsonld x source-maps?)))
+      utils/clean-nils))
+
+(defmethod to-jsonld :Type [m source-maps?]
+  (debug "Generating Type " (document/id m))
+  (-> {"@type" [v/http:Payload
+                v/document:DomainElement]}
+      (with-node-properties m source-maps?)
       utils/clean-nils))

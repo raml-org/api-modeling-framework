@@ -24,7 +24,6 @@
 (def document:SourceMap (document-ns "SourceMap"))
 (def document:Tag (document-ns "Tag"))
 (def document:DomainElement (document-ns "DomainElement"))
-
 (def document:source (document-ns "source"))
 (def document:location (document-ns "location"))
 (def document:declares (document-ns "declares"))
@@ -36,7 +35,6 @@
 
 
 (def http:APIDocumentation (http-ns "APIDocumentation"))
-
 (def sorg:name (sorg-ns "name"))
 (def sorg:description (sorg-ns "description"))
 (def http:host (http-ns "host"))
@@ -52,17 +50,18 @@
 
 
 (def http:EndPoint (http-ns "EndPoint"))
-
 (def hydra:supportedOperation (hydra-ns "supportedOperation"))
 (def http:path (http-ns "path"))
 
 
 (def hydra:Operation (hydra-ns "Operation"))
-
 (def hydra:method (hydra-ns "method"))
 (def hydra:returns (hydra-ns "returns"))
 
 
 (def http:Response (http-ns "Response"))
-
 (def hydra:statusCode (hydra-ns "statusCode"))
+(def http:shape (http-ns "shape"))
+
+
+(def http:Payload (http-ns "Payload"))

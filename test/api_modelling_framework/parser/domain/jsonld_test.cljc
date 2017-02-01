@@ -119,3 +119,21 @@
         generated (generator/to-jsonld model-parsed true)
         parsed (jsonld-parser/from-jsonld generated)]
     (is (= input (openapi-genenerator/to-openapi parsed {})))))
+
+
+(deftest from-jsonld-Response
+  (let [input {:displayName "get method"
+               :description "get description"
+               :protocols ["http"]
+               :responses {"200" {:description "200 response"
+                                  :body {"application/json" {:type "any"}
+                                         "text/plain"       {:type "any"}}}
+                           "400" {:description "400 response"
+                                  :body {:type "any"}}}}
+        model-parsed (raml-parser/parse-ast input
+                                            {:location "file://path/to/resource.raml#"
+                                             :parsed-location "file://path/to/resource.raml#"
+                                             :is-fragment false})
+        generated (generator/to-jsonld model-parsed true)
+        parsed (jsonld-parser/from-jsonld generated)]
+    (is (= input (raml-genenerator/to-raml parsed {})))))
