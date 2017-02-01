@@ -23,6 +23,9 @@
     (and (satisfies? domain/Response model)
          (satisfies? document/Node model))       domain/Response
 
+    (and (satisfies? domain/Type model)
+         (satisfies? document/Node model))       domain/Type
+
     :else                                        (type model)))
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
@@ -109,19 +112,56 @@
         (merge operations)
         utils/clean-nils)))
 
+(defn group-responses [responses context]
+  (->> responses
+       (map (fn [response] [(document/name response) response]))
+       ;; multiple responses sharing the status-code belong to the same group in RAML
+       (reduce (fn [acc [key response]]
+                 (let [responses (get acc key [])
+                       responses (concat responses [response])]
+                   (assoc acc key responses)))
+               {})
+       ;; We expand element in the groups based in the presence of content type
+       (map (fn [[key responses]]
+              (if (= 1 (count responses))
+                ;; just one response, either it has a content type and become a  map or we plug it directly
+                (let [response (first responses)
+                      parsed-response (to-raml response context)
+                      body (:body parsed-response)]
+                  (if-let [content-type (some? (-> response domain/content-type first))]
+                    [key (-> parsed-response
+                             (assoc :body {content-type body})
+                             utils/clean-nils)]
+                    [key (utils/clean-nils parsed-response)]))
+                ;; If there are more than one, it has to have a content-type
+                (let [responses (reduce (fn [acc response]
+                                          (assoc acc (-> response domain/content-type first) (to-raml response context)))
+                                        {}
+                                        responses)
+                      common-response (dissoc (->> responses vals first) :body)
+                      responses-bodies (->> responses
+                                            (map (fn [[k response]]
+                                                   [k (:body response)]))
+                                            (into {}))]
+                  [key (utils/clean-nils (assoc common-response :body responses-bodies))]))))
+       (into {})))
+
 (defmethod to-raml domain/Operation [model context]
   (debug "Generating operation " (document/id model))
   (-> {:displayName (document/name model)
        :description (document/description model)
        :protocols (domain/scheme model)
-       :responses (->> (domain/responses model)
-                       (map (fn [response] [(document/name response) (to-raml response context)]))
-                       (into {}))}
+       :responses (-> (domain/responses model)
+                      (group-responses context))}
       utils/clean-nils))
 
 (defmethod to-raml domain/Response [model context]
   (debug "Generating response " (document/name model))
-  {:description (document/description model)})
+  {:description (document/description model)
+   :body (to-raml (domain/schema model) context)})
+
+(defmethod to-raml domain/Type [model context]
+  {:type "any"})
 
 (defmethod to-raml nil [_ _]
   (debug "Generating nil")

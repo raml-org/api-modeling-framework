@@ -116,3 +116,26 @@
                               first
                               domain/responses
                               (map domain/status-code))))))
+
+
+(deftest parse-ast-response-bodies
+  (let [node {:displayName "get method"
+              :description "get description"
+              :protocols ["http"]
+              :responses {200 {:description "200 response"
+                               :body {"application/json" {:type "string"}
+                                      "text/plain"       {:type "string"}}}
+                          400 {:description "400 response"
+                               :body {:type "string"}}}}
+        parsed (raml-parser/parse-ast node {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
+                                            :location "file://path/to/resource.raml#/users"
+                                            :path "/users"
+                                            :is-fragment false})
+        responses (-> parsed (domain/responses))]
+    (is (= 3 (count responses)))
+    (is (= ["200" "200" "400"] (->> responses
+                                    (map domain/status-code))))
+    (is (= ["application/json" "text/plain" nil]
+           (->> responses
+                (map domain/content-type)
+                flatten)))))

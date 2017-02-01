@@ -15,26 +15,42 @@
    :basePath #{:swagger}
    :consumes #{:swagger :operation}
    :contact #{:info}
+   :default #{:type}
    :definitions #{:swagger}
    :delete #{:path-item}
    :deprecated #{:operation}
-   :description #{:info :operation :response}
+   :description #{:info :operation :response :type}
+   :enum #{:type}
    :examples #{:response}
+   :exclusiveMaximum #{:type}
+   :exclusiveMinimum #{:type}
    :externalDocs #{:swagger :operation}
+   :format #{:type}
    :get #{:path-item}
    :head #{:path-item}
    :headers #{:response}
    :host #{:swagger}
    :info #{:swagger}
    :license #{:info}
+   :maxItems #{:type}
+   :maxLength #{:type}
+   :maxProperties #{:type}
+   :maximum #{:type}
+   :minItems #{:type}
+   :minLength #{:type}
+   :minProperties #{:type}
+   :minimum #{:type}
+   :multipleOf #{:type}
    :operationId #{:operation}
    :options #{:path-item}
    :parameters #{:swagger :path-item :operation}
    :patch #{:path-item}
    :paths #{:swagger}
+   :pattern #{:type}
    :post #{:path-item}
    :produces #{:swagger :operation}
    :put #{:path-item}
+   :required #{:type}
    :responses #{:swagger :operation}
    :schema #{:response}
    :schemes #{:swagger :operation}
@@ -44,7 +60,9 @@
    :swagger #{:swagger}
    :tags #{:swagger :operation}
    :termsOfService #{:info}
-   :title #{:info}
+   :title #{:info :type}
+   :type #{:type}
+   :uniqueItems #{:type}
    :version #{:info}
    })
 
@@ -182,6 +200,7 @@
         parsed-location (str location "/" method)
         node-parsed-source-map (generate-parsed-node-sources method location parsed-location)
         api-tags (generate-open-api-tags-sources (:tags node) location parsed-location)
+        x-response-bodies-with-media-types (:x-response-bodies-with-media-types node)
         properties {:id parsed-location
                     :method method
                     :sources (concat node-parsed-source-map api-tags)
@@ -193,22 +212,26 @@
                     :responses (parse-ast (:responses node) (-> context
                                                                 (assoc :type-hint :responses)
                                                                 (assoc :location location)
-                                                                (assoc :parsed-location parsed-location)))}]
+                                                                (assoc :parsed-location parsed-location)
+                                                                (assoc :x-response-bodies-with-media-types x-response-bodies-with-media-types)))}]
     (if is-fragment
       (domain/map->ParsedDomainElement {:id parsed-location
                                         :fragment-node :parsed-operation
                                         :properties properties})
       (domain/map->ParsedOperation properties))))
 
-(defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment] :as context}]
+(defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment x-response-bodies-with-media-types] :as context}]
   (debug "Parsing responses")
   (->> node
        (map (fn [[key response]]
-              (parse-ast response (-> context
-                                      (assoc :type-hint :response)
-                                      (assoc :response-key key)
-                                      (assoc :location (str location "/responses"))
-                                      (assoc :parsed-location (str parsed-location "/responses"))))))))
+              (let [key (if x-response-bodies-with-media-types
+                          (first (string/split key #"--"))
+                          key)]
+                (parse-ast response (-> context
+                                        (assoc :type-hint :response)
+                                        (assoc :response-key key)
+                                        (assoc :location (str location "/responses"))
+                                        (assoc :parsed-location (str parsed-location "/responses")))))))))
 
 (defmethod parse-ast :response [node {:keys [location parsed-location is-fragment response-key] :as context}]
   (debug "Parsing response " response-key)
@@ -227,6 +250,14 @@
                                         :fragment-node :parsed-response
                                         :properties properties})
       (domain/map->ParsedResponse properties))))
+
+(defmethod parse-ast :type [node {:keys [location parsed-location is-fragment]}]
+  (debug "Parsing type")
+  (if is-fragment
+    {:id (str parsed-location "/type")
+     :constraints []}
+    (domain/map->ParsedType {:id (str parsed-location "/type")
+                             :constraints []})))
 
 (defmethod parse-ast :undefined [_ _]
   (debug "Parsing undefined")

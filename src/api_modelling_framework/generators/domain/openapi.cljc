@@ -63,19 +63,53 @@
     (->> operations
          (map (fn [op] [(keyword (domain/method op)) (to-openapi op ctx)]))
          (into {}))))
-
+(defn trace [x] (prn x) x)
 (defmethod to-openapi domain/Operation [model ctx]
   (debug "Generating operation " (document/id model))
   (let [tags (->> (document/find-tag model document/api-tag-tag)
-                  (map #(document/value %)))]
+                  (map #(document/value %)))
+        produces(domain/content-type model)
+        responses-produces (->> (or (domain/responses model) [])
+                                (map #(or (domain/content-type %) []))
+                                flatten
+                                (filter some?))
+        response-bodies-with-media-types (or (not (empty? responses-produces)) nil)]
     (-> {:operationId (document/name model)
          :description (document/description model)
          :tags tags
+         :x-response-bodies-with-media-types response-bodies-with-media-types
          :schemes (domain/scheme model)
          :consumes (domain/accepts model)
-         :produces (domain/content-type model)
+         :produces (concat produces responses-produces)
          :responses (->> (domain/responses model)
-                         (map (fn [response] [(document/name response) (to-openapi response ctx)]))
+                         (map (fn [response] [(document/name response) response]))
+                         ;; we need to avoid multiple responses with the same key
+                         ;; this is not allowed in OpenAPI, we deal with this generating an altered key
+                         ;; for the duplicated responses.
+                         ;; the x-response-bodies-with-media-types guards against this condition
+
+                         ;; first we group
+                         (reduce (fn [acc [k v]]
+                                   (let [vs (get acc k [])
+                                         vs (concat vs [v])]
+                                     (assoc acc k vs)))
+                                 {})
+
+                         ;; now e generated the keys
+                         (map (fn [[k vs]]
+                                (if (> (count vs) 1)
+                                  (map (fn [i response]
+                                         (let [v (to-openapi response ctx)]
+                                           [(str k "--" (or (-> response domain/content-type first) i))
+                                            v]))
+                                       (range 0 (count vs))
+                                       vs)
+                                  [k (to-openapi (first vs) ctx)])))
+                         ;; we recreate the hash
+                         flatten
+                         (partition 2)
+                         (map #(into [] %))
+                         (into [])
                          (into {}))}
         utils/clean-nils)))
 

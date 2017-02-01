@@ -116,3 +116,18 @@
   (accepts [this] accepts)
   (content-type [this] content-type)
   (headers [this] headers))
+
+
+(defprotocol Type
+  (constraints [this] "Constraints for the data type"))
+
+
+(defrecord ParsedType [id sources name description constraints]
+  Type
+  (constraints [this] constraints)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources)
+  (valid? [this] true))

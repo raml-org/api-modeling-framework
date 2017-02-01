@@ -17,7 +17,7 @@
    :baseUriParameters #{:root}
    :body #{:method :response}
    :delete #{:resource}
-   :description #{:root :resource :method :response}
+   :description #{:root :resource :method :response :type}
    :displayName #{:resource :method}
    :documentation #{:root}
    :get #{:resource}
@@ -39,7 +39,7 @@
    :securitySchemes #{:root}
    :title #{:root}
    :traits #{:root}
-   :type #{:resource :body}
+   :type #{:resource :type}
    :types #{:root}
    :uriParameters #{:resource}
    :uses #{:root}
@@ -50,7 +50,7 @@
 (defn guess-type-from-predicates [x]
   (->> [(fn [x] (when (string/starts-with? (utils/safe-str x) "/") #{:root :resource}))
         (fn [x] (when (some? (re-matches #"^\d+$" (utils/safe-str x))) #{:responses}))
-        (fn [x] (when (some? (re-matches #"^[a-z]+/[a-z+]+$" (utils/safe-str x))) #{:body}))]
+        (fn [x] (when (some? (re-matches #"^[a-z]+/[a-z+]+$" (utils/safe-str x))) #{:body-media-type}))]
        (map (fn [p] (p x)))
        (filter some?)
        first))
@@ -226,7 +226,7 @@
                         :description (:description node)
                         :scheme (:protocols node)
                         :headers (:headers node)
-                        :responses responses}
+                        :responses (flatten responses)}
                        utils/clean-nils)]
     (if is-fragment
       (domain/map->ParsedOperation {:id method-id
@@ -243,20 +243,77 @@
                                       (assoc :type-hint :response)
                                       (assoc :status-code key)))))))
 
+(defn extract-bodies [node {:keys [location parsed-location] :as context}]
+  (let [location (str location "/body")
+        parsed-location (str parsed-location "/body")
+        responses (flatten [(parse-ast node (-> context
+                                                (assoc :location location)
+                                                (assoc :parsed-operation parsed-location)
+                                                (dissoc :type-hint)))])]
+    (->> responses
+         (map (fn [res]
+                (cond
+                  (and (satisfies? domain/Type res)
+                       (satisfies? document/Node res)) {:media-type nil
+                                                        :location location
+                                                        :body-id parsed-location
+                                                        :schema res}
+                  (some? (:media-type res))            res
+                  (nil? res)                           nil
+                  :else                                (throw (new #?(:clj Exception :cljs js/Error)
+                                                                   (str "Cannot parse body response at " location ", media-type or type declaration expected")))))))))
+
 (defmethod parse-ast :response [node {:keys [location parsed-location is-fragment status-code] :as context}]
   (debug "Parsing response " status-code)
   (let [response-id (str parsed-location "/" status-code)
         location (str location "/" status-code)
         status-code (if (integer? status-code) (str status-code) (name status-code))
         node-parsed-source-map (generate-parse-node-sources location response-id)
-        properties (-> {:id response-id
-                        :name status-code
+        properties (-> {:name status-code
                         :status-code status-code
-                        :sources node-parsed-source-map
                         :description (:description node)}
-                       utils/clean-nils)]
-    (if is-fragment
-      (domain/map->ParsedDomainElement {:id response-id
-                                        :fragment :parsed-response
-                                        :properties properties})
-      (domain/map->ParsedResponse properties))))
+                       utils/clean-nils)
+        bodies (extract-bodies (:body node) (-> context
+                                                (assoc :location location)
+                                                (assoc :parsed-location response-id)))]
+    (->> bodies
+         (map (fn [{:keys [media-type body-id location schema]}]
+                (let [media-type-node-sources (if (some? media-type)
+                                                (generate-parse-node-sources location body-id)
+                                                [])]
+                  (-> properties
+                      (assoc :sources (concat node-parsed-source-map media-type-node-sources))
+                      (assoc :id body-id)
+                      (assoc :content-type [media-type])
+                      (assoc :schema schema)
+                      utils/clean-nils))))
+         (map (fn [properties]
+                (if is-fragment
+                  (domain/map->ParsedDomainElement {:id response-id
+                                                    :fragment :parsed-response
+                                                    :properties properties})
+                  (domain/map->ParsedResponse properties)))))))
+
+(defmethod parse-ast :body-media-type [node {:keys [location parsed-location is-fragment] :as context}]
+  (debug "Parsing body media-type")
+  (->> node
+       (map (fn [[media-type body]]
+              (let [location (str location "/" (url/url-encode media-type))
+                    parsed-location (str parsed-location "/" (url/url-encode media-type))]
+                {:media-type media-type
+                 :body-id parsed-location
+                 :location location
+                 :schema (parse-ast body (-> context
+                                             (assoc :location location)
+                                             (assoc :parsed-location parsed-location)
+                                             (assoc :type-hint :type)))})))))
+
+(defmethod parse-ast :type [node {:keys [location parsed-location is-fragment] :as context}]
+  (debug "Parsing type")
+  (if is-fragment
+    {:id (str parsed-location "/type")
+     :constraints []}
+    (domain/map->ParsedType {:id (str parsed-location "/type")
+                             :constraints []})))
+
+(defmethod parse-ast :undefined [_ _] nil)

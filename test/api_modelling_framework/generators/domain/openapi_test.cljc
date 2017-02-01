@@ -5,7 +5,8 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.generators.domain.openapi :as generator]
-            [api-modelling-framework.parser.domain.openapi :as openapi-parser]))
+            [api-modelling-framework.parser.domain.openapi :as openapi-parser]
+            [api-modelling-framework.parser.domain.raml :as raml-parser]))
 
 (deftest to-openapi-APIDocumentation
   (let [api-documentation (domain/map->ParsedAPIDocumentation {:host "test.com"
@@ -82,4 +83,28 @@
                                                :is-fragment false
                                                :path "/Users"})
         generated (generator/to-openapi parsed {})]
-    (is (= node generated))))
+    (is (= node generated)))
+  (let [parsing-context {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
+                         :location "file://path/to/resource.raml#/users"
+                         :path "/users"
+                         :is-fragment false}
+        node {:displayName "get method"
+              :description "get description"
+              :protocols ["http"]
+              :responses {200 {:description "200 response"
+                               :body {"application/json" {:type "string"}
+                                      "text/plain"       {:type "string"}}}
+                          400 {:description "400 response"
+                               :body {:type "string"}}}}
+        parsed (raml-parser/parse-ast node parsing-context)
+        generated (generator/to-openapi parsed {})]
+    (is (= {:operationId "get method",
+            :description "get description",
+            :x-response-bodies-with-media-types true,
+            :schemes ["http"],
+            :produces ["application/json" "text/plain"],
+            :responses
+            {"200--application/json" {:description "200 response"},
+             "200--text/plain" {:description "200 response"},
+             "400" {:description "400 response"}}}
+           generated))))
