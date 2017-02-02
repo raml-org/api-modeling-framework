@@ -197,6 +197,57 @@
                                         :properties properties})
       (domain/map->ParsedEndPoint properties))))
 
+(defn parse-params [parameters {:keys [location parsed-location is-fragment] :as context}]
+  (->> (or parameters [])
+       (filter (fn [parameter] (not= "body" (get parameter "in"))))
+       (map (fn [parameter]
+              (let [name (:name parameter)
+                    location (str location "/" (url/url-encode name))
+                    parsed-location (str parsed-location "/" (url/url-encode name))
+                    node-sources (generate-parsed-node-sources "parameter" location parsed-location)]
+                {:id parsed-location
+                 :name name
+                 :description (:description parameter)
+                 :sources node-sources
+                 :kind (:in parameter)
+                 :shape (shapes/parse-type (-> parameter
+                                               (dissoc :name)
+                                               (dissoc :description)
+                                               (dissoc :in))
+                                           (-> context
+                                               (assoc :location location)
+                                               (assoc :parsed-location parsed-location)))})))
+       (map (fn [properties]
+              (if is-fragment
+                (domain/map->ParsedDomainElement {:id parsed-location
+                                                  :fragment-node :parsed-parameter
+                                                  :properties properties})
+                (domain/map->ParsedParameter properties))))))
+
+(defn parse-body [parameters {:keys [location parsed-location is-fragment] :as context}]
+  (->> (or parameters [])
+       (filter (fn [parameter] (= "body" (get parameter "in"))))
+       (map (fn [parameter]
+              (let [name (:name parameter)
+                    location (str location "/body")
+                    parsed-location (str parsed-location "/body")
+                    node-sources (generate-parsed-node-sources "body" location parsed-location)]
+                {:id parsed-location
+                 :name name
+                 :description (:description parameter)
+                 :sources node-sources
+                 :shape (shapes/parse-type (:schema parameter)
+                                           (-> context
+                                               (assoc :type-hint :type)
+                                               (assoc :location location)
+                                               (assoc :parsed-location parsed-location)))})))
+       (map (fn [properties]
+              (if is-fragment
+                (domain/map->ParsedDomainElement {:id parsed-location
+                                                  :fragment-node :parsed-type
+                                                  :properties properties})
+                (domain/map->ParsedType properties))))))
+
 (defmethod parse-ast :operation [node {:keys [location parsed-location is-fragment method] :as context}]
   (debug "Parsing method " method)
   (let [location (str location "/" method)
@@ -204,6 +255,17 @@
         node-parsed-source-map (generate-parsed-node-sources method location parsed-location)
         api-tags (generate-open-api-tags-sources (:tags node) location parsed-location)
         x-response-bodies-with-media-types (:x-response-bodies-with-media-types node)
+        parameters (parse-params (:parameters node) (-> context
+                                                        (assoc :location (str location "/parameters"))
+                                                        (assoc :parsed-location (str parsed-location "/parameters"))))
+        body (parse-body (:parameters node) (-> context
+                                                (assoc :location (str location "/parameters"))
+                                                (assoc :parsed-location (str parsed-location "/body"))))
+        request-id (str parsed-location "/request")
+        request (domain/map->ParsedRequest {:id request-id
+                                            :sources (generate-parsed-node-sources "request" location request-id)
+                                            :parameters parameters
+                                            :schema body})
         properties {:id parsed-location
                     :method method
                     :sources (concat node-parsed-source-map api-tags)
@@ -212,6 +274,7 @@
                     :scheme (:schemes node)
                     :accepts (:consumes node)
                     :content-type (:produces node)
+                    :request request
                     :responses (parse-ast (:responses node) (-> context
                                                                 (assoc :type-hint :responses)
                                                                 (assoc :location location)

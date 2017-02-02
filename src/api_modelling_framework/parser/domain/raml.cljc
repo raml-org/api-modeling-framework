@@ -71,11 +71,33 @@
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
-
 (defn generate-parse-node-sources [location parsed-location]
   (let [source-map-id (str parsed-location "/source-map/node-parsed")
         node-parsed-tag (document/->NodeParsedTag source-map-id location)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [node-parsed-tag])]))
+
+(defn parse-parameters [type headers {:keys [location parsed-location is-fragment] :as context}]
+  (if (nil? headers) nil
+      (->> headers
+           (map (fn [[header-name header-value]]
+                  (let [header-type (get header-value :type "string")
+                        header-value (assoc header-value :type header-type)
+                        location (str location "/" type "/" (url/url-encode (utils/safe-str header-name)))
+                        parsed-location (str location "/" type "/" (url/url-encode (utils/safe-str header-name)))
+                        node-parsed-source-map (generate-parse-node-sources location parsed-location)
+                        header-shape (shapes/parse-type header-value (-> context
+                                                                         (assoc :location location)
+                                                                         (assoc :parsed-location parsed-location)))
+                        properties {:id parsed-location
+                                    :name (utils/safe-str header-name)
+                                    :sources node-parsed-source-map
+                                    :kind type
+                                    :shape header-name}]
+                    (if is-fragment
+                      (domain/map->ParsedDomainElement {:id parsed-location
+                                                        :fragment-node :parsed-parameter
+                                                        :properties properties})
+                      (domain/map->ParsedParameter properties))))))))
 
 (defn base-uri->host [base-uri]
   (when (some? base-uri)
@@ -215,11 +237,22 @@
   (debug "Parsing method " method)
   (let [method-id (str parsed-location "/" method)
         location (str location "/" method)
+        next-context (-> context
+                         (assoc :parsed-location method-id)
+                         (assoc :location location))
         node-parsed-source-map (generate-parse-node-sources location method-id)
-        responses (parse-ast (:responses node {}) (-> context
-                                                      (assoc :type-hint :responses)
-                                                      (assoc :parsed-location method-id)
-                                                      (assoc :location location)))
+        headers (parse-parameters "header" (:headers node) next-context)
+        query-parameters (parse-parameters "query" (:queryParameters node) next-context)
+        request-id (str method-id "/request")
+        body (parse-ast (:body node) (-> context
+                                         (assoc :location (str location "/body"))
+                                         (assoc :parsed-location (str parsed-location "/body"))
+                                         (assoc :type-hint :type)))
+        request (domain/map->ParsedRequest {:id request-id
+                                            :sources (generate-parse-node-sources location request-id)
+                                            :parameters (concat query-parameters headers)
+                                            :schema body})
+        responses (parse-ast (:responses node {}) (-> next-context (assoc :type-hint :responses)))
         properties (-> {:id method-id
                         :sources node-parsed-source-map
                         :method method
@@ -227,6 +260,7 @@
                         :description (:description node)
                         :scheme (:protocols node)
                         :headers (:headers node)
+                        :request request
                         :responses (flatten responses)}
                        utils/clean-nils)]
     (if is-fragment
@@ -270,8 +304,12 @@
         location (str location "/" status-code)
         status-code (if (integer? status-code) (str status-code) (name status-code))
         node-parsed-source-map (generate-parse-node-sources location response-id)
+        headers (parse-parameters "header" (:headers node) (-> context
+                                                   (assoc :location location)
+                                                   (assoc :parsed-location response-id)))
         properties (-> {:name status-code
                         :status-code status-code
+                        :headers headers
                         :description (:description node)}
                        utils/clean-nils)
         bodies (extract-bodies (:body node) (-> context

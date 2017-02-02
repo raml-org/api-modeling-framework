@@ -76,3 +76,10 @@
 
 (def http:Payload (http-ns "Payload"))
 (def http:shape (http-ns "shape"))
+
+(def http:Request (http-ns "Request"))
+(def http:parameter (http-ns "parameter"))
+
+(def http:Parameter (http-ns "Parameter"))
+(def http:HeaderParameter (http-ns "HeaderParameter"))
+(def http:QueryParameter (http-ns "QueryParameter"))

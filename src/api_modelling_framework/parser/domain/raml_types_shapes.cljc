@@ -102,5 +102,5 @@
                 "any" (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "any")))
                 "object"  (parse-shape node context)
                 "array"   (parse-array node context)
-                (throw (new #?(:clj Exception :cljs js/Error) (str "Non supported RAML type " type-string))))]
+                nil)]
     shape))

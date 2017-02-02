@@ -78,11 +78,13 @@
 
 (defprotocol Operation
   (method [this] "HTTP method this operation is bound to")
+  (request [this] "HTTP request information")
   (responses [this] "HTTP responses"))
 
-(defrecord ParsedOperation [id sources name description method headers scheme accepts content-type schema responses]
+(defrecord ParsedOperation [id sources name description method headers scheme accepts content-type responses request]
   Operation
   (method [this] method)
+  (request [this] request)
   (responses [this] responses)
   document/Node
   (id [this] id)
@@ -94,9 +96,7 @@
   (scheme [this] scheme)
   (accepts [this] accepts)
   (content-type [this] content-type)
-  (headers [this] headers)
-  PayloadHolder
-  (schema [this] schema))
+  (headers [this] headers))
 
 (defprotocol Response
   (status-code [this] "Status code for the response"))
@@ -125,6 +125,37 @@
 (defrecord ParsedType [id sources name description shape]
   Type
   (shape [this] shape)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources)
+  (valid? [this] true))
+
+
+(defprotocol Request
+  (parameters [this] "Parameters for this request"))
+
+(defprotocol Parameter
+  (parameter-kind [this] "What kind of parameter is this"))
+
+(defrecord ParsedParameter [id sources name description kind shape]
+  Parameter
+  (parameter-kind [this] kind)
+  Type
+  (shape [this] shape)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources)
+  (valid? [this] true))
+
+(defrecord ParsedRequest [id sources name description parameters schema]
+  Request
+  (parameters [this] parameters)
+  PayloadHolder
+  (schema [this] schema)
   document/Node
   (id [this] id)
   (name [this] name)
