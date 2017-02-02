@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.test :refer [deftest is async]]))
   (:require #?(:clj [clojure.test :refer :all])
             [api-modelling-framework.parser.domain.openapi :as openapi-parser]
+            [api-modelling-framework.generators.domain.openapi :as openapi-generator]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]))
 
@@ -85,3 +86,53 @@
                                 first
                                 domain/responses
                                 (map document/name))))))
+
+
+(deftest parser-ast-type-scalars
+  (let [int-type {:type "number"}
+        string-type {:type "string"}
+        time-only-type {:type "string"
+                        :x-rdf-type "xsd:time"}
+        any-type {:type "string"
+                  :x-rdf-type "shapes:any"}]
+    (openapi-parser/parse-ast int-type {:parsed-location "/response"
+                                        :location "/response"})
+    (doseq [json-schema-type [int-type string-type time-only-type any-type]]
+      (let [shape (openapi-parser/parse-ast json-schema-type {:parsed-location "/response"
+                                                              :location "/response"})]
+        (is (= json-schema-type (openapi-generator/to-openapi shape {})))))))
+
+
+(deftest parser-ast-type-arrays
+  (let [int-type {:type "array"
+                  :items {:type "number"}}
+        string-type {:type "array"
+                     :items {:type "string"}}
+        time-only-type {:type "array"
+                        :items {:type "string"
+                                :x-rdf-type "xsd:time"}}
+        tuple-type {:type "array"
+                    :items [{:type "string"}
+                            {:type "number"}]}]
+    (doseq [openapi-type [int-type string-type time-only-type tuple-type]]
+      (let [shape (openapi-parser/parse-ast openapi-type {:parsed-location "/response"
+                                                          :location "/response"})]
+        (is (= openapi-type (openapi-generator/to-openapi shape {})))))))
+
+(deftest parser-ast-type-objects
+  (let [int-type {:type "array"
+                  :items {:type "number"}}
+        string-type {:type "array"
+                     :items {:type "string"}}
+        object-type-1 {:type "object"
+                       :properties {:a int-type
+                                    :b string-type}
+                       :additionalProperties false}
+        object-type-2 {:type "object"
+                       :properties {:a int-type
+                                    :b string-type}
+                       :required ["a"]}]
+    (doseq [raml-type [object-type-1 object-type-2]]
+      (let [shape (openapi-parser/parse-ast raml-type {:parsed-location "/response"
+                                                    :location "/response"})]
+        (is (= raml-type (openapi-generator/to-openapi shape {})))))))

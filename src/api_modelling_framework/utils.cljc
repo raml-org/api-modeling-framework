@@ -83,3 +83,16 @@
                    (str "/" (name x))
                    (name x))
     :else (str x)))
+
+
+(defn extract-jsonld-literal
+  ([node property f]
+   (let [value (-> node (get property []) first (get "@value"))]
+     (if (some? value) (f value) nil)))
+  ([node property] (extract-jsonld-literal node property identity)))
+
+(defn extract-jsonld
+  ([node property f]
+   (let [value (-> node (get property []) first)]
+     (if (some? value) (f value) nil)))
+  ([node property] (extract-jsonld node property identity)))

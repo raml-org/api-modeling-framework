@@ -100,7 +100,7 @@
       (utils/assoc-value m v/hydra:statusCode domain/status-code)
       (utils/assoc-values m v/http:accepts domain/status-code)
       (utils/assoc-values m v/http:content-type domain/content-type)
-      (utils/assoc-object m v/http:shape domain/schema (fn [x] (to-jsonld x source-maps?)))
+      (utils/assoc-object m v/http:payload domain/schema (fn [x] (to-jsonld x source-maps?)))
       utils/clean-nils))
 
 (defmethod to-jsonld :Type [m source-maps?]
@@ -108,4 +108,5 @@
   (-> {"@type" [v/http:Payload
                 v/document:DomainElement]}
       (with-node-properties m source-maps?)
+      (utils/assoc-object m v/http:shape domain/shape identity)
       utils/clean-nils))

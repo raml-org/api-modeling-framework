@@ -8,6 +8,14 @@
   ([] "http://raml.org/vocabularies/http#")
   ([s] (str (http-ns) s)))
 
+(defn shapes-ns
+  ([] "http://raml.org/vocabularies/shapes#")
+  ([s] (str (shapes-ns) s)))
+
+(defn sh-ns
+  ([] "http://www.w3.org/ns/shacl#")
+  ([s] (str (sh-ns) s)))
+
 (defn sorg-ns
   ([] "http://schema.org/")
   ([s] (str (sorg-ns) s)))
@@ -16,6 +24,9 @@
   ([] "http://www.w3.org/ns/hydra/core#")
   ([s] (str (hydra-ns) s)))
 
+(defn xsd-ns
+  ([] "http://www.w3.org/2001/XMLSchema#")
+  ([s] (str (xsd-ns) s)))
 
 (def document:Document (document-ns "Document"))
 (def document:Fragment (document-ns "Fragment"))
@@ -61,7 +72,7 @@
 
 (def http:Response (http-ns "Response"))
 (def hydra:statusCode (hydra-ns "statusCode"))
-(def http:shape (http-ns "shape"))
-
+(def http:payload (http-ns "payload"))
 
 (def http:Payload (http-ns "Payload"))
+(def http:shape (http-ns "shape"))

@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.test :refer [deftest is async]]))
   (:require #?(:clj [clojure.test :refer :all])
             [api-modelling-framework.parser.domain.raml :as raml-parser]
+            [api-modelling-framework.generators.domain.raml :as raml-genenerator]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]))
 
@@ -139,3 +140,52 @@
            (->> responses
                 (map domain/content-type)
                 flatten)))))
+
+
+(deftest parser-ast-type-scalars
+  (let [int-type {:type "integer"}
+        string-type {:type "string"}
+        time-only-type {:type "time-only"}
+        date-only-type {:type "date-only"}]
+    (doseq [raml-type [int-type string-type time-only-type date-only-type]]
+      (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
+                                                    :location "/response"})]
+        (is (= raml-type (raml-genenerator/to-raml shape {})))))))
+
+
+(deftest parser-ast-type-arrays
+  (let [int-type {:type "array"
+                  :items {:type "integer"}}
+        string-type {:type "array"
+                     :items {:type "string"}}
+        time-only-type {:type "array"
+                        :items {:type "time-only"}}
+        date-only-type {:type "array"
+                        :items {:type "date-only"}}
+        tuple-type      {:type "array"
+                         :items {:type "union"
+                                 :of [{:type "date-only"}
+                                      {:type "string"}]}
+                         (keyword "(is-tuple)") true}]
+    (doseq [raml-type [int-type string-type time-only-type date-only-type tuple-type]]
+      (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
+                                                    :location "/response"})]
+        (is (= raml-type (raml-genenerator/to-raml shape {})))))))
+
+
+(deftest parser-ast-type-objects
+  (let [int-type {:type "array"
+                  :items {:type "integer"}}
+        string-type {:type "array"
+                     :items {:type "string"}}
+        object-type-1 {:type "object"
+                       :properties {:a int-type
+                                    :b string-type}
+                       :additionalProperties false}
+        object-type-2 {:type "object"
+                       :properties {:a int-type
+                                    :b string-type}}]
+    (doseq [raml-type [object-type-1 object-type-2]]
+      (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
+                                                    :location "/response"})]
+        (is (= raml-type (raml-genenerator/to-raml shape {})))))))

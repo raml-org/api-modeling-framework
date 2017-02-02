@@ -85,7 +85,7 @@
                                  :description (utils/find-value m v/sorg:description)
                                  :accepts (utils/find-values m v/http:accepts)
                                  :content-type (utils/find-values m v/http:content-type)
-                                 :schema (from-jsonld (first (get m v/http:shape)))
+                                 :schema (from-jsonld (first (get m v/http:payload)))
                                  :status-code (utils/find-value m v/hydra:statusCode)})))
 
 (defmethod from-jsonld v/http:Payload [m]
@@ -95,7 +95,9 @@
     (domain/map->ParsedType {:id (get m "@id")
                              :sources parsed-sources
                              :name (utils/find-value m v/sorg:name)
-                             :description (utils/find-value m v/sorg:description)})))
+                             :description (utils/find-value m v/sorg:description)
+                             ;; shapes are expressed already in JSON-LD, they are passed as it
+                             :shape (utils/extract-jsonld m v/http:shape)})))
 
 (defmethod from-jsonld nil [m]
   (debug "Parsing " nil)

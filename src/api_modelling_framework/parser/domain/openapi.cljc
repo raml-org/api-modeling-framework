@@ -2,7 +2,9 @@
   (:require [clojure.string :as string]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.parser.domain.json-schema-shapes :as shapes]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.model.vocabulary :as v]
             [clojure.set :as set]
             [cemerick.url :as url]
             [taoensso.timbre :as timbre
@@ -81,9 +83,10 @@
     (or node-type :undefined)))
 
 (defn parse-ast-dispatch-function [node context]
-  (if (some? (:type-hint context))
-    (:type-hint context)
-    (guess-type node)))
+  (cond
+    (nil? node)                  :undefined
+    (some? (:type-hint context)) (:type-hint context)
+    :else                        (guess-type node)))
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
@@ -244,20 +247,28 @@
                     :sources node-parsed-source-map
                     :status-code (if is-status (name response-key) nil)
                     :name response-key
-                    :description (:description node)}]
+                    :description (:description node)
+                    :schema (parse-ast (:schema node) (-> context
+                                                          (assoc :location location)
+                                                          (assoc :parsed-location response-id)
+                                                          (assoc :type-hint :type)))}]
     (if is-fragment
       (domain/map->ParsedDomainElement {:id response-id
                                         :fragment-node :parsed-response
                                         :properties properties})
       (domain/map->ParsedResponse properties))))
 
-(defmethod parse-ast :type [node {:keys [location parsed-location is-fragment]}]
+
+
+(defmethod parse-ast :type [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing type")
-  (if is-fragment
-    {:id (str parsed-location "/type")
-     :constraints []}
-    (domain/map->ParsedType {:id (str parsed-location "/type")
-                             :constraints []})))
+  (let [type-id (str parsed-location "/type")
+        shape (shapes/parse-type node (assoc context :parsed-location type-id))]
+    (if is-fragment
+      {:id type-id
+       :shape shape}
+      (domain/map->ParsedType {:id type-id
+                               :shape shape}))))
 
 (defmethod parse-ast :undefined [_ _]
   (debug "Parsing undefined")

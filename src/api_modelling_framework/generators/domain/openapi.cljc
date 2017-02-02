@@ -1,8 +1,10 @@
 (ns api-modelling-framework.generators.domain.openapi
   (:require [api-modelling-framework.model.vocabulary :as v]
+            [api-modelling-framework.generators.domain.shapes-json-schema :as shapes-parser]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
+            [clojure.walk :refer [keywordize-keys]]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
@@ -22,6 +24,9 @@
 
     (and (satisfies? domain/Response model)
          (satisfies? document/Node model))       domain/Response
+
+    (and (satisfies? domain/Type model)
+         (satisfies? document/Node model))       domain/Type
 
     :else                                        (type model)))
 
@@ -115,7 +120,13 @@
 
 (defmethod to-openapi domain/Response [model ctx]
   (debug "Generating response " (document/name model))
-  {:description (document/description model)})
+  (-> {:description (document/description model)
+       :schema (to-openapi (domain/schema model) ctx)}
+      utils/clean-nils))
+
+(defmethod to-openapi domain/Type [model context]
+  (debug "Generating type")
+  (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context)))
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")

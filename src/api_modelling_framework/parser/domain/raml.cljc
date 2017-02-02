@@ -2,6 +2,7 @@
   (:require [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.parser.domain.raml-types-shapes :as shapes]
             [api-modelling-framework.utils :as utils]
             [cemerick.url :as url]
             [clojure.string :as string]
@@ -310,10 +311,12 @@
 
 (defmethod parse-ast :type [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing type")
-  (if is-fragment
-    {:id (str parsed-location "/type")
-     :constraints []}
-    (domain/map->ParsedType {:id (str parsed-location "/type")
-                             :constraints []})))
+  (let [type-id (str parsed-location "/type")
+        shape (shapes/parse-type node (assoc context :parsed-location type-id))]
+    (if is-fragment
+      {:id type-id
+       :shape shape}
+      (domain/map->ParsedType {:id type-id
+                               :shape shape}))))
 
 (defmethod parse-ast :undefined [_ _] nil)

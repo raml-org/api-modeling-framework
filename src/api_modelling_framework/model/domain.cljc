@@ -119,12 +119,12 @@
 
 
 (defprotocol Type
-  (constraints [this] "Constraints for the data type"))
+  (shape [this] "Constraints for the data type"))
 
 
-(defrecord ParsedType [id sources name description constraints]
+(defrecord ParsedType [id sources name description shape]
   Type
-  (constraints [this] constraints)
+  (shape [this] shape)
   document/Node
   (id [this] id)
   (name [this] name)

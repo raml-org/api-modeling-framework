@@ -104,7 +104,7 @@
             :schemes ["http"],
             :produces ["application/json" "text/plain"],
             :responses
-            {"200--application/json" {:description "200 response"},
-             "200--text/plain" {:description "200 response"},
-             "400" {:description "400 response"}}}
+            {"200--application/json" {:description "200 response", :schema {:type "string"}},
+             "200--text/plain" {:description "200 response", :schema {:type "string"}},
+             "400" {:description "400 response", :schema {:type "string"}}}}
            generated))))

@@ -1,8 +1,10 @@
 (ns api-modelling-framework.generators.domain.raml
   (:require [api-modelling-framework.model.vocabulary :as v]
+            [api-modelling-framework.generators.domain.shapes-raml-types :as shapes-parser]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
+            [clojure.walk :refer [keywordize-keys]]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
@@ -161,7 +163,8 @@
    :body (to-raml (domain/schema model) context)})
 
 (defmethod to-raml domain/Type [model context]
-  {:type "any"})
+  (debug "Generating type")
+  (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context)))
 
 (defmethod to-raml nil [_ _]
   (debug "Generating nil")
