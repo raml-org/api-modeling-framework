@@ -4,6 +4,8 @@
             [api-modelling-framework.parser.domain.raml :as raml-parser]
             [api-modelling-framework.generators.domain.raml :as raml-genenerator]
             [api-modelling-framework.model.document :as document]
+            [api-modelling-framework.model.vocabulary :as v]
+            [api-modelling-framework.utils :as utils]
             [api-modelling-framework.model.domain :as domain]))
 
 (deftest guess-type-test
@@ -123,6 +125,11 @@
   (let [node {:displayName "get method"
               :description "get description"
               :protocols ["http"]
+              :headers {:Zencoder-Api-Key {:type "string"}}
+              :body {:type "string"}
+              :queryParameters {:page {:type "integer"
+                                       :required true}
+                                :per_page {:type "integer"}}
               :responses {200 {:description "200 response"
                                :body {"application/json" {:type "string"}
                                       "text/plain"       {:type "string"}}}
@@ -131,15 +138,27 @@
         parsed (raml-parser/parse-ast node {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
                                             :location "file://path/to/resource.raml#/users"
                                             :path "/users"
+                                            :method "get"
                                             :is-fragment false})
         responses (-> parsed (domain/responses))]
+    (clojure.pprint/pprint parsed)
     (is (= 3 (count responses)))
     (is (= ["200" "200" "400"] (->> responses
                                     (map domain/status-code))))
     (is (= ["application/json" "text/plain" nil]
            (->> responses
                 (map domain/content-type)
-                flatten)))))
+                flatten)))
+    (is (= 1 (-> parsed domain/headers count)))
+    (is (= "Zencoder-Api-Key" (-> parsed domain/headers first document/name)))
+    (is (= (v/xsd-ns "string")
+           (-> parsed domain/headers first domain/shape (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))
+    (is (= ["page" "per_page"] (->> parsed domain/request domain/parameters (map document/name))))
+    (is (= [(v/xsd-ns "integer") (v/xsd-ns "integer")])
+        (->> parsed domain/request domain/parameters (map #(-> % domain/shape
+                                                               (utils/extract-jsonld (v/sh-ns "dataType") (fn [t] (get t "@id")))))))
+    (is (= (v/xsd-ns "string")
+           (-> parsed domain/request domain/schema (domain/shape) (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))))
 
 
 (deftest parser-ast-type-scalars

@@ -76,14 +76,14 @@
         node-parsed-tag (document/->NodeParsedTag source-map-id location)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [node-parsed-tag])]))
 
-(defn parse-parameters [type headers {:keys [location parsed-location is-fragment] :as context}]
-  (if (nil? headers) nil
-      (->> headers
+(defn parse-parameters [type location-segment parameters {:keys [location parsed-location is-fragment] :as context}]
+  (if (nil? parameters) nil
+      (->> parameters
            (map (fn [[header-name header-value]]
                   (let [header-type (get header-value :type "string")
                         header-value (assoc header-value :type header-type)
-                        location (str location "/" type "/" (url/url-encode (utils/safe-str header-name)))
-                        parsed-location (str location "/" type "/" (url/url-encode (utils/safe-str header-name)))
+                        parsed-location (str location "/" location-segment "/" (url/url-encode (utils/safe-str header-name)))
+                        location (str location "/" location-segment "/" (url/url-encode (utils/safe-str header-name)))
                         node-parsed-source-map (generate-parse-node-sources location parsed-location)
                         header-shape (shapes/parse-type header-value (-> context
                                                                          (assoc :location location)
@@ -92,7 +92,7 @@
                                     :name (utils/safe-str header-name)
                                     :sources node-parsed-source-map
                                     :kind type
-                                    :shape header-name}]
+                                    :shape header-shape}]
                     (if is-fragment
                       (domain/map->ParsedDomainElement {:id parsed-location
                                                         :fragment-node :parsed-parameter
@@ -241,8 +241,8 @@
                          (assoc :parsed-location method-id)
                          (assoc :location location))
         node-parsed-source-map (generate-parse-node-sources location method-id)
-        headers (parse-parameters "header" (:headers node) next-context)
-        query-parameters (parse-parameters "query" (:queryParameters node) next-context)
+        headers (parse-parameters "header" "headers" (:headers node) next-context)
+        query-parameters (parse-parameters "query" "queryParameters"(:queryParameters node) next-context)
         request-id (str method-id "/request")
         body (parse-ast (:body node) (-> context
                                          (assoc :location (str location "/body"))
@@ -250,7 +250,7 @@
                                          (assoc :type-hint :type)))
         request (domain/map->ParsedRequest {:id request-id
                                             :sources (generate-parse-node-sources location request-id)
-                                            :parameters (concat query-parameters headers)
+                                            :parameters query-parameters
                                             :schema body})
         responses (parse-ast (:responses node {}) (-> next-context (assoc :type-hint :responses)))
         properties (-> {:id method-id
@@ -259,7 +259,7 @@
                         :name (:displayName node)
                         :description (:description node)
                         :scheme (:protocols node)
-                        :headers (:headers node)
+                        :headers headers
                         :request request
                         :responses (flatten responses)}
                        utils/clean-nils)]
@@ -304,9 +304,9 @@
         location (str location "/" status-code)
         status-code (if (integer? status-code) (str status-code) (name status-code))
         node-parsed-source-map (generate-parse-node-sources location response-id)
-        headers (parse-parameters "header" (:headers node) (-> context
-                                                   (assoc :location location)
-                                                   (assoc :parsed-location response-id)))
+        headers (parse-parameters "header" "headers" (:headers node) (-> context
+                                                                         (assoc :location location)
+                                                                         (assoc :parsed-location response-id)))
         properties (-> {:name status-code
                         :status-code status-code
                         :headers headers

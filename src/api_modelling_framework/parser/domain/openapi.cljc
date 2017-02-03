@@ -199,10 +199,10 @@
 
 (defn parse-params [parameters {:keys [location parsed-location is-fragment] :as context}]
   (->> (or parameters [])
-       (filter (fn [parameter] (not= "body" (get parameter "in"))))
-       (map (fn [parameter]
+       (filter (fn [parameter] (not= "body" (:in parameter))))
+       (map (fn [i parameter]
               (let [name (:name parameter)
-                    location (str location "/" (url/url-encode name))
+                    location (str location "[" i "]")
                     parsed-location (str parsed-location "/" (url/url-encode name))
                     node-sources (generate-parsed-node-sources "parameter" location parsed-location)]
                 {:id parsed-location
@@ -216,7 +216,8 @@
                                                (dissoc :in))
                                            (-> context
                                                (assoc :location location)
-                                               (assoc :parsed-location parsed-location)))})))
+                                               (assoc :parsed-location parsed-location)))}))
+            (range 0 (count parameters)))
        (map (fn [properties]
               (if is-fragment
                 (domain/map->ParsedDomainElement {:id parsed-location
@@ -226,10 +227,10 @@
 
 (defn parse-body [parameters {:keys [location parsed-location is-fragment] :as context}]
   (->> (or parameters [])
-       (filter (fn [parameter] (= "body" (get parameter "in"))))
-       (map (fn [parameter]
+       (filter (fn [parameter] (= "body" (:in parameter))))
+       (map (fn [i parameter]
               (let [name (:name parameter)
-                    location (str location "/body")
+                    location (str location "/parameters[" i "]")
                     parsed-location (str parsed-location "/body")
                     node-sources (generate-parsed-node-sources "body" location parsed-location)]
                 {:id parsed-location
@@ -240,13 +241,15 @@
                                            (-> context
                                                (assoc :type-hint :type)
                                                (assoc :location location)
-                                               (assoc :parsed-location parsed-location)))})))
+                                               (assoc :parsed-location parsed-location)))}))
+            (range 0 (count parameters)))
        (map (fn [properties]
               (if is-fragment
                 (domain/map->ParsedDomainElement {:id parsed-location
                                                   :fragment-node :parsed-type
                                                   :properties properties})
-                (domain/map->ParsedType properties))))))
+                (domain/map->ParsedType properties))))
+       first))
 
 (defmethod parse-ast :operation [node {:keys [location parsed-location is-fragment method] :as context}]
   (debug "Parsing method " method)
@@ -258,6 +261,8 @@
         parameters (parse-params (:parameters node) (-> context
                                                         (assoc :location (str location "/parameters"))
                                                         (assoc :parsed-location (str parsed-location "/parameters"))))
+        headers (->> parameters (filter #(= "header" (:kind %))))
+        parameters (->> parameters (filter #(not= "header" (:kind %))))
         body (parse-body (:parameters node) (-> context
                                                 (assoc :location (str location "/parameters"))
                                                 (assoc :parsed-location (str parsed-location "/body"))))
@@ -274,6 +279,7 @@
                     :scheme (:schemes node)
                     :accepts (:consumes node)
                     :content-type (:produces node)
+                    :headers headers
                     :request request
                     :responses (parse-ast (:responses node) (-> context
                                                                 (assoc :type-hint :responses)

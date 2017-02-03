@@ -148,13 +148,39 @@
                   [key (utils/clean-nils (assoc common-response :body responses-bodies))]))))
        (into {})))
 
+(defn unparse-parameters [parameters context]
+  (if (nil? parameters) nil
+      (->> parameters
+           (map (fn [parameter]
+                  (let [parsed-type (keywordize-keys (shapes-parser/parse-shape (domain/shape parameter) context))
+                        parsed-type (if (= "string" (:type parsed-type))
+                                      (dissoc parsed-type :type)
+                                      parsed-type)]
+                    [(keyword (document/name parameter))
+                     parsed-type])))
+           (into {}))))
+
+(defn unparse-domain-body [request context]
+  (if (nil? request) nil
+      (if-let [body (domain/schema request)]
+        (to-raml body context)
+        nil)))
+
+(defn unparse-query-parameters [request context]
+  (if (nil? request) nil
+      (if-let [parameters (domain/parameters request)]
+        (unparse-parameters parameters)
+        nil)))
 (defmethod to-raml domain/Operation [model context]
   (debug "Generating operation " (document/id model))
   (-> {:displayName (document/name model)
        :description (document/description model)
        :protocols (domain/scheme model)
        :responses (-> (domain/responses model)
-                      (group-responses context))}
+                      (group-responses context))
+       :body (unparse-domain-body (domain/request model) context)
+       :queryParameters (unparse-query-parameters (domain/request model) context)
+       :headers (unparse-parameters (domain/headers model) context)}
       utils/clean-nils))
 
 (defmethod to-raml domain/Response [model context]

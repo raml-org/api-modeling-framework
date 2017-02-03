@@ -99,5 +99,5 @@
                 "null"    (parse-type-constraints node  (parse-scalar parsed-location (v/shapes-ns "null")))
                 "object"  (parse-shape node context)
                 "array"   (parse-array node context)
-                (throw (new #?(:clj Exception :cljs js/Error) (str "Unknown type of json-schema " type-string))))]
+                nil)]
     shape))

@@ -3,6 +3,8 @@
   (:require #?(:clj [clojure.test :refer :all])
             [api-modelling-framework.parser.domain.openapi :as openapi-parser]
             [api-modelling-framework.generators.domain.openapi :as openapi-generator]
+            [api-modelling-framework.model.vocabulary :as v]
+            [api-modelling-framework.utils :as utils]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]))
 
@@ -43,7 +45,20 @@
                     :schemes ["https"]
                     :tags ["experimantl" "foo" "bar"]
                     :produces ["application/ld+json"]
-                    :consumes ["application/json"]}
+                    :consumes ["application/json"]
+                    :parameters [{:name "petId"
+                                  :in "path"
+                                  :required true
+                                  :type "string"}
+                                 {:name "race"
+                                  :in "query"
+                                  :type "string"}
+                                 {:name "api-key"
+                                  :in "header"
+                                  :type "string"}
+                                 {:name "the-body"
+                                  :in "body"
+                                  :schema {:type "string"}}]}
               :post {:operationId "post"
                      :description "post description"
                      :schemes ["https"]
@@ -62,7 +77,19 @@
                 flatten
                 (map (fn [tag] (document/value tag))))))
     (is (= ["get" "post"] (->> operations
-                               (map domain/method))))))
+                               (map domain/method))))
+    (is (= 1 (-> operations first domain/headers count)))
+    (is (= "api-key" (-> operations first domain/headers first document/name)))
+    (is (= (v/xsd-ns "string") (-> operations first domain/headers first domain/shape (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))
+    (is (= "header" (-> operations first domain/headers first domain/parameter-kind)))
+    (is (= 2) (-> operations first domain/request domain/parameters count))
+    (is (= ["petId" "race"] (->> operations first domain/request domain/parameters (map document/name))))
+    (is (= ["path" "query"] (->> operations first domain/request domain/parameters (map domain/parameter-kind))))
+    (is (= [(v/xsd-ns "string") (v/xsd-ns "string")] (->> operations first domain/request domain/parameters
+                                                          (map #(utils/extract-jsonld (domain/shape %)
+                                                                                      (v/sh-ns "dataType")
+                                                                                      (fn [t] (get t "@id")))))))
+    (is (= (v/xsd-ns "string") (-> operations first domain/request domain/schema domain/shape (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))))
 
 
 (deftest parse-ast-response
