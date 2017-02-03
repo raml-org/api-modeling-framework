@@ -209,7 +209,7 @@
                  :name name
                  :description (:description parameter)
                  :sources node-sources
-                 :kind (:in parameter)
+                 :parameter-kind (:in parameter)
                  :required (:required parameter)
                  :shape (shapes/parse-type (-> parameter
                                                (dissoc :name)
@@ -262,8 +262,8 @@
         parameters (parse-params (:parameters node) (-> context
                                                         (assoc :location (str location "/parameters"))
                                                         (assoc :parsed-location (str parsed-location "/parameters"))))
-        headers (->> parameters (filter #(= "header" (:kind %))))
-        parameters (->> parameters (filter #(not= "header" (:kind %))))
+        headers (->> parameters (filter #(= "header" (:parameter-kind %))))
+        parameters (->> parameters (filter #(not= "header" (:parameter-kind %))))
         body (parse-body (:parameters node) (-> context
                                                 (assoc :location (str location "/parameters"))
                                                 (assoc :parsed-location (str parsed-location "/body"))))

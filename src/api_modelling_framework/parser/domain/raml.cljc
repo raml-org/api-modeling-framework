@@ -93,7 +93,7 @@
                                     :name (utils/safe-str header-name)
                                     :sources node-parsed-source-map
                                     :required required
-                                    :kind type
+                                    :parameter-kind type
                                     :shape header-shape}]
                     (if is-fragment
                       (domain/map->ParsedDomainElement {:id parsed-location

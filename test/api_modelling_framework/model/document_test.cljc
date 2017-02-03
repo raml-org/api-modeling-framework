@@ -12,7 +12,6 @@
                                      :declares nil
                                      :document-type "open-api"})
         source-map (first (document/sources doc))]
-    (prn source-map)
     (is (= (document/id doc) location))
     (is (= location (document/source source-map)))
     (is (= 2 (count (document/tags source-map))))
@@ -26,7 +25,6 @@
                                      :encodes nil
                                      :document-type "open-api"})
         source-map (first (document/sources doc))]
-    (prn source-map)
     (is (= (document/id doc) location))
     (is (= location (document/source source-map)))
     (is (= 2 (count (document/tags source-map))))

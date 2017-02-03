@@ -57,6 +57,11 @@
     (assoc t target (map (fn [v] {"@value" v}) (property m)))
     t))
 
+(defn map-values [m property]
+  (if (some? (property m))
+    (map (fn [v] {"@value" v}) (property m))
+    []))
+
 (defn assoc-object [t m target property mapping]
   (if (some? (property m))
     (assoc t target [(mapping (property m))])
@@ -66,7 +71,6 @@
   (if (some? (property m))
     (assoc t target (map #(mapping %) (property m)))
     t))
-
 
 (defn extract-nested-resources [node]
   (->> node

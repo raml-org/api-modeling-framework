@@ -55,7 +55,7 @@
                                                  {:location "file://path/to/resource.raml#"
                                                   :parsed-location "file://path/to/resource.raml#"
                                                   :is-fragment false})
-        generated (generator/to-jsonld api-documentation true)
+        generated (generator/to-jsonld api-documentation {:source-maps? true})
         parsed (jsonld-parser/from-jsonld generated)]
     (is (= input (raml-genenerator/to-raml parsed {})))))
 
@@ -71,7 +71,7 @@
                                             {:location "file://path/to/resource.raml#"
                                              :parsed-location "file://path/to/resource.raml#"
                                              :is-fragment false})
-        generated (generator/to-jsonld (first model-parsed) true)
+        generated (generator/to-jsonld (first model-parsed) {:source-maps? true})
         parsed (jsonld-parser/from-jsonld generated)]
     (is (= input (raml-genenerator/to-raml parsed {}))))
   (let [input {:get {:operationId "get"
@@ -91,7 +91,7 @@
                                                 :parsed-location "file://path/to/resource.raml#"
                                                 :is-fragment false
                                                 :path "/Users"})
-        generated (generator/to-jsonld model-parsed true)
+        generated (generator/to-jsonld model-parsed {:source-maps? true})
         parsed (jsonld-parser/from-jsonld generated)]
     (is (= input (openapi-genenerator/to-openapi parsed {})))))
 
@@ -106,7 +106,7 @@
                                             {:location "file://path/to/resource.raml#"
                                              :parsed-location "file://path/to/resource.raml#"
                                              :is-fragment false})
-        generated (generator/to-jsonld (first model-parsed) true)
+        generated (generator/to-jsonld (first model-parsed) {:source-maps? true})
         parsed (jsonld-parser/from-jsonld generated)]
     (is (= input (raml-genenerator/to-raml parsed {}))))
   (let [input {:get {:responses {"200" {:description "200 response"}
@@ -116,7 +116,7 @@
                                                 :parsed-location "file://path/to/resource.raml#"
                                                 :is-fragment false
                                                 :path "/Users"})
-        generated (generator/to-jsonld model-parsed true)
+        generated (generator/to-jsonld model-parsed {:source-maps? true})
         parsed (jsonld-parser/from-jsonld generated)]
     (is (= input (openapi-genenerator/to-openapi parsed {})))))
 
@@ -134,6 +134,64 @@
                                             {:location "file://path/to/resource.raml#"
                                              :parsed-location "file://path/to/resource.raml#"
                                              :is-fragment false})
-        generated (generator/to-jsonld model-parsed true)
+        generated (generator/to-jsonld model-parsed {:source-maps? true})
         parsed (jsonld-parser/from-jsonld generated)]
     (is (= input (raml-genenerator/to-raml parsed {})))))
+
+
+(deftest from-jsonld-operations-with-request
+  (let [node {:displayName "get method"
+              :description "get description"
+              :protocols ["http"]
+              :headers {:Zencoder-Api-Key {:type "integer"}}
+              :body {:type "string"}
+              :queryParameters {:page {:type "integer"
+                                       :required true}
+                                :per_page {:type "integer"}}
+              :responses {"200" {:description "200 response"
+                                 :body {"application/json" {:type "string"}
+                                        "text/plain"       {:type "string"}}}
+                          "400" {:description "400 response"
+                                 :body {:type "string"}}}}
+        model-parsed (raml-parser/parse-ast node
+                                            {:location "file://path/to/resource.raml#"
+                                             :parsed-location "file://path/to/resource.raml#"
+                                             :is-fragment false
+                                             :metho "get"})
+        generated (generator/to-jsonld model-parsed {:source-maps? true})
+        parsed (jsonld-parser/from-jsonld generated)]
+    (is (= node (raml-genenerator/to-raml parsed {}))))
+  (let [input {:get {:operationId "get"
+                    :description "get description"
+                    :schemes ["https"]
+                    :tags ["experimantl" "foo" "bar"]
+                    :produces ["application/ld+json"]
+                    :consumes ["application/json"]
+                    :parameters [{:name "api-key"
+                                  :in "header"
+                                  :type "string"}
+                                 {:name "petId"
+                                  :in "path"
+                                  :required true
+                                  :type "string"}
+                                 {:name "race"
+                                  :in "query"
+                                  :type "string"}
+                                 {:name "the-body"
+                                  :in "body"
+                                  :schema {:type "string"}}]}
+              :post {:operationId "post"
+                     :description "post description"
+                     :schemes ["https"]
+                     :tags ["experimantl" "foo" "bar"]
+                     :produces ["application/ld+json"]
+                     :consumes ["application/json"]}}
+        model-parsed (openapi-parser/parse-ast input
+                                               {:location "file://path/to/resource.raml#"
+                                                :parsed-location "file://path/to/resource.raml#"
+                                                :is-fragment false
+                                                :path "/Users"})
+        generated (generator/to-jsonld model-parsed {:source-maps? true})
+        parsed (jsonld-parser/from-jsonld generated)
+        output (openapi-genenerator/to-openapi parsed {})]
+    (is (= input output))))

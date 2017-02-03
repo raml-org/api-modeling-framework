@@ -68,6 +68,7 @@
 (def hydra:Operation (hydra-ns "Operation"))
 (def hydra:method (hydra-ns "method"))
 (def hydra:returns (hydra-ns "returns"))
+(def hydra:expects (hydra-ns "expects"))
 
 
 (def http:Response (http-ns "Response"))
@@ -81,5 +82,5 @@
 (def http:parameter (http-ns "parameter"))
 
 (def http:Parameter (http-ns "Parameter"))
-(def http:HeaderParameter (http-ns "HeaderParameter"))
-(def http:QueryParameter (http-ns "QueryParameter"))
+(def hydra:required (hydra-ns "required"))
+(def http:param-binding (http-ns "paramBinding"))

@@ -19,7 +19,9 @@
     (utils/has-class? model v/http:EndPoint)         v/http:EndPoint
     (utils/has-class? model v/hydra:Operation)       v/hydra:Operation
     (utils/has-class? model v/http:Response)         v/http:Response
+    (utils/has-class? model v/http:Request)          v/http:Request
     (utils/has-class? model v/http:Payload)          v/http:Payload
+    (utils/has-class? model v/http:Parameter)        v/http:Parameter
     :else                                            :unknown))
 
 (defmulti from-jsonld (fn [m] (from-jsonld-dispatch-fn m)))
@@ -61,10 +63,21 @@
 (defmethod from-jsonld v/document:Tag [m]
   (json-document-parser/from-jsonld m))
 
+(defn parse-request [request]
+  (if (nil? request) {:request nil :headers nil}
+      (let [params (get request v/http:parameter [])
+            headers (->> params
+                         (filter #(= "header" (utils/find-value % v/http:param-binding)))
+                         (map #(from-jsonld %)))
+            not-headers (filter #(not= "header" (utils/find-value % v/http:param-binding)) params)]
+        {:headers headers
+         :request (from-jsonld (assoc request v/http:parameter not-headers))})))
+
 (defmethod from-jsonld v/hydra:Operation [m]
   (debug "Parsing " v/hydra:Operation " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map json-document/from-jsonld sources)]
+        parsed-sources (map json-document/from-jsonld sources)
+        {:keys [request headers]} (parse-request (-> m (get v/hydra:expects) first))]
     (domain/map->ParsedOperation {:id (get m "@id")
                                   :sources parsed-sources
                                   :name (utils/find-value m v/sorg:name)
@@ -73,6 +86,8 @@
                                   :content-type (utils/find-values m v/http:content-type)
                                   :scheme (utils/find-values m v/http:scheme)
                                   :method (utils/find-value m v/hydra:method)
+                                  :headers headers
+                                  :request request
                                   :responses (map from-jsonld (-> m (get v/hydra:returns [])))})))
 
 (defmethod from-jsonld v/http:Response [m]
@@ -98,6 +113,30 @@
                              :description (utils/find-value m v/sorg:description)
                              ;; shapes are expressed already in JSON-LD, they are passed as it
                              :shape (utils/extract-jsonld m v/http:shape)})))
+
+(defmethod from-jsonld v/http:Parameter [m]
+  (debug "Parsing " v/http:Parameter " " (get m "@id"))
+  (let [sources (get m v/document:source)
+        parsed-sources (map json-document/from-jsonld sources)]
+    (domain/map->ParsedParameter {:id (get m "@id")
+                                  :sources parsed-sources
+                                  :name (utils/find-value m v/sorg:name)
+                                  :description (utils/find-value m v/sorg:description)
+                                  ;; shapes are expressed already in JSON-LD, they are passed as it
+                                  :required (utils/find-value m v/hydra:required)
+                                  :parameter-kind (utils/find-value m v/http:param-binding)
+                                  :shape (utils/extract-jsonld m v/http:shape)})))
+
+(defmethod from-jsonld v/http:Request [m]
+  (debug "Parsing " v/http:Request " " (get m "@id"))
+  (let [sources (get m v/document:source)
+        parsed-sources (map json-document/from-jsonld sources)]
+    (domain/map->ParsedRequest {:id (get m "@id")
+                                :sources parsed-sources
+                                :name (utils/find-value m v/sorg:name)
+                                :description (utils/find-value m v/sorg:description)
+                                :parameters (map #(from-jsonld %) (get m v/http:parameter []))
+                                :schema (from-jsonld (-> m (get v/http:payload) first))})))
 
 (defmethod from-jsonld nil [m]
   (debug "Parsing " nil)
