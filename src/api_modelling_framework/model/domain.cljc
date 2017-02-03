@@ -137,11 +137,13 @@
   (parameters [this] "Parameters for this request"))
 
 (defprotocol Parameter
-  (parameter-kind [this] "What kind of parameter is this"))
+  (parameter-kind [this] "What kind of parameter is this")
+  (required [this] "Is this parameter required"))
 
-(defrecord ParsedParameter [id sources name description kind shape]
+(defrecord ParsedParameter [id sources name description kind shape required]
   Parameter
   (parameter-kind [this] kind)
+  (required [this] required)
   Type
   (shape [this] shape)
   document/Node

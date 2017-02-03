@@ -25,6 +25,9 @@
     (and (satisfies? domain/Response model)
          (satisfies? document/Node model))       domain/Response
 
+    (and (satisfies? domain/Parameter model)
+         (satisfies? document/Node model))       domain/Parameter
+
     (and (satisfies? domain/Type model)
          (satisfies? document/Node model))       domain/Type
 
@@ -69,21 +72,45 @@
          (map (fn [op] [(keyword (domain/method op)) (to-openapi op ctx)]))
          (into {}))))
 
+(defn unparse-body [request ctx]
+  (if (or (nil? request)
+          (nil? (domain/schema request)))
+    nil
+    (let [body (domain/schema request)
+          schema(to-openapi body ctx)
+          parsed-body (-> {:name (document/name body)
+                           :description (document/description body)
+                           :schema schema}
+                          utils/clean-nils)]
+      (if (= parsed-body {})
+        nil
+        (assoc parsed-body :in "body")))))
+
+(defn unparse-params [request ctx]
+  (if (nil? request) []
+      (let [params (or (domain/parameters request) [])]
+        (map #(to-openapi % ctx) params))))
+
 (defmethod to-openapi domain/Operation [model ctx]
   (debug "Generating operation " (document/id model))
   (let [tags (->> (document/find-tag model document/api-tag-tag)
                   (map #(document/value %)))
-        produces(domain/content-type model)
+        produces (domain/content-type model)
         responses-produces (->> (or (domain/responses model) [])
                                 (map #(or (domain/content-type %) []))
                                 flatten
                                 (filter some?))
+        headers (map #(to-openapi % ctx) (domain/headers model))
+        request (domain/request model)
+        parameters (unparse-params request ctx)
+        body (unparse-body request ctx)
         response-bodies-with-media-types (or (not (empty? responses-produces)) nil)]
     (-> {:operationId (document/name model)
          :description (document/description model)
          :tags tags
          :x-response-bodies-with-media-types response-bodies-with-media-types
          :schemes (domain/scheme model)
+         :parameters (filter some? (concat headers parameters [body]))
          :consumes (domain/accepts model)
          :produces (concat produces responses-produces)
          :responses (->> (domain/responses model)
@@ -100,7 +127,7 @@
                                      (assoc acc k vs)))
                                  {})
 
-                         ;; now e generated the keys
+                         ;; now we generate the keys
                          (map (fn [[k vs]]
                                 (if (> (count vs) 1)
                                   (map (fn [i response]
@@ -110,7 +137,7 @@
                                        (range 0 (count vs))
                                        vs)
                                   [k (to-openapi (first vs) ctx)])))
-                         ;; we recreate the hash
+                         ;; we recreate the responses hash by flattening and then partitioning
                          flatten
                          (partition 2)
                          (map #(into [] %))
@@ -123,6 +150,16 @@
   (-> {:description (document/description model)
        :schema (to-openapi (domain/schema model) ctx)}
       utils/clean-nils))
+
+(defmethod to-openapi domain/Parameter [model ctx]
+  (debug "Generating parameter " (document/name model))
+  (let [base {:description (document/description model)
+              :name (document/name model)
+              :required (domain/required model)
+              :in (domain/parameter-kind model)}
+        type-info (merge (keywordize-keys (shapes-parser/parse-shape (domain/shape model) ctx)))]
+    (-> (merge base type-info)
+        utils/clean-nils)))
 
 (defmethod to-openapi domain/Type [model context]
   (debug "Generating type")

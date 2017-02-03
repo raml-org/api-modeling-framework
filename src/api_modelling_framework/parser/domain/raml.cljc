@@ -85,12 +85,14 @@
                         parsed-location (str location "/" location-segment "/" (url/url-encode (utils/safe-str header-name)))
                         location (str location "/" location-segment "/" (url/url-encode (utils/safe-str header-name)))
                         node-parsed-source-map (generate-parse-node-sources location parsed-location)
+                        required (:required header-value)
                         header-shape (shapes/parse-type header-value (-> context
                                                                          (assoc :location location)
                                                                          (assoc :parsed-location parsed-location)))
                         properties {:id parsed-location
                                     :name (utils/safe-str header-name)
                                     :sources node-parsed-source-map
+                                    :required required
                                     :kind type
                                     :shape header-shape}]
                     (if is-fragment

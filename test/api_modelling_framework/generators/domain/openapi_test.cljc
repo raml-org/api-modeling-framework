@@ -108,3 +108,37 @@
              "200--text/plain" {:description "200 response", :schema {:type "string"}},
              "400" {:description "400 response", :schema {:type "string"}}}}
            generated))))
+
+
+(deftest top-openapi-method-with-params
+  (let [node {:get {:operationId "get"
+                    :description "get description"
+                    :schemes ["https"]
+                    :tags ["experimantl" "foo" "bar"]
+                    :produces ["application/ld+json"]
+                    :consumes ["application/json"]
+                    :parameters [{:name "api-key"
+                                  :in "header"
+                                  :type "string"}
+                                 {:name "petId"
+                                  :in "path"
+                                  :required true
+                                  :type "string"}
+                                 {:name "race"
+                                  :in "query"
+                                  :type "string"}
+                                 {:name "the-body"
+                                  :in "body"
+                                  :schema {:type "string"}}]}
+              :post {:operationId "post"
+                     :description "post description"
+                     :schemes ["https"]
+                     :tags ["experimantl" "foo" "bar"]
+                     :produces ["application/ld+json"]
+                     :consumes ["application/json"]}}
+        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#/users"
+                                               :parsed-location "file://path/to/resource.raml#/users"
+                                               :is-fragment false
+                                               :path "/Users"})
+        generated (generator/to-openapi parsed {})]
+    (is (= generated node))))

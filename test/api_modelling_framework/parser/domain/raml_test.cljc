@@ -141,7 +141,6 @@
                                             :method "get"
                                             :is-fragment false})
         responses (-> parsed (domain/responses))]
-    (clojure.pprint/pprint parsed)
     (is (= 3 (count responses)))
     (is (= ["200" "200" "400"] (->> responses
                                     (map domain/status-code))))

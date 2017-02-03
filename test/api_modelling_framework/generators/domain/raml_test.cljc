@@ -84,3 +84,26 @@
                                              :is-fragment false})
         generated (generator/to-raml parsed {})]
     (is (= input generated))))
+
+
+(deftest to-raml-operation-with-request
+  (let [input {:displayName "get method"
+               :description "get description"
+               :protocols ["http"]
+               :headers {:Zencoder-Api-Key {:type "integer"}}
+               :body {:type "string"}
+               :queryParameters {:page {:type "integer"
+                                        :required true}
+                                 :per_page {:type "integer"}}
+               :responses {"200" {:description "200 response"
+                                :body {"application/json" {:type "string"}
+                                       "text/plain"       {:type "string"}}}
+                           "400" {:description "400 response"
+                                :body {:type "string"}}}}
+        parsed (raml-parser/parse-ast input {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
+                                             :location "file://path/to/resource.raml#/users"
+                                             :path "/users"
+                                             :method "get"
+                                             :is-fragment false})
+        generated (generator/to-raml parsed {})]
+    (is(= generated input))))

@@ -210,6 +210,7 @@
                  :description (:description parameter)
                  :sources node-sources
                  :kind (:in parameter)
+                 :required (:required parameter)
                  :shape (shapes/parse-type (-> parameter
                                                (dissoc :name)
                                                (dissoc :description)

@@ -155,6 +155,9 @@
                   (let [parsed-type (keywordize-keys (shapes-parser/parse-shape (domain/shape parameter) context))
                         parsed-type (if (= "string" (:type parsed-type))
                                       (dissoc parsed-type :type)
+                                      parsed-type)
+                        parsed-type (if (some? (domain/required parameter))
+                                      (assoc parsed-type :required (domain/required parameter))
                                       parsed-type)]
                     [(keyword (document/name parameter))
                      parsed-type])))
@@ -169,7 +172,7 @@
 (defn unparse-query-parameters [request context]
   (if (nil? request) nil
       (if-let [parameters (domain/parameters request)]
-        (unparse-parameters parameters)
+        (unparse-parameters parameters context)
         nil)))
 (defmethod to-raml domain/Operation [model context]
   (debug "Generating operation " (document/id model))
