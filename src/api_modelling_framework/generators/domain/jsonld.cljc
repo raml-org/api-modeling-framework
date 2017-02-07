@@ -4,6 +4,7 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.platform :as platform]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
@@ -11,6 +12,9 @@
 (defn to-jsonld-dispatch-fn [model context]
   (cond
     (nil? model)                                 model
+
+    (and (satisfies? document/Extends model)
+         (satisfies? document/Node model))       :Extends
 
     (and (satisfies? domain/APIDocumentation model)
          (satisfies? document/Node model))       :APIDocumentation
@@ -98,6 +102,7 @@
         (utils/assoc-values m v/http:scheme domain/scheme)
         (utils/assoc-objects m v/hydra:returns domain/responses (fn [x] (to-jsonld x context)))
         (utils/assoc-object m v/hydra:expects domain/request (fn [x] (to-jsonld x (assoc context :headers headers))))
+        (utils/assoc-objects m v/document:extends document/extends (fn [x] (to-jsonld x context)))
         utils/clean-nils)))
 
 (defmethod to-jsonld :Response [m context]
@@ -142,3 +147,12 @@
       (with-node-properties m context)
       (utils/assoc-object m v/http:shape domain/shape identity)
       utils/clean-nils))
+
+(defmethod to-jsonld :Extends [m context]
+  (debug "Generating Extends " (document/id m))
+  (-> {"@type" [v/document:ExtendRelationship]}
+      (with-node-properties m context)
+      (utils/assoc-link m v/document:target document/id)
+      (utils/assoc-value m v/document:label document/label)
+      (assoc v/document:arguments (->> m document/arguments (map (fn [arg] {"@value" (platform/encode-json arg)}))))
+      ))

@@ -44,6 +44,32 @@
                 (map document/value))))))
 
 
+(deftest parse-ast-traits
+  (let [node {:title "Github API"
+              :baseUri "http://api.github.com"
+              :version "v3"
+              :traits {:paged
+                       {:queryParameters
+                        {:start {:type "number"}}}}
+              (keyword "/users") {:displayName "Users"
+                                  :get {:description "get description"
+                                        :is ["paged"]
+                                        :protocols ["http"]
+                                        :responses {"200" {:description "200 response"}
+                                                    "400" {:description "400 response"}}}}}
+        location "file://path/to/resource.raml#"
+        declarations (raml-parser/process-traits node {:location (str location "")
+                                                       :parsed-location (str location "/declares")})
+        parsed (raml-parser/parse-ast node {:parsed-location location
+                                            :location location
+                                            :path "/users"
+                                            :references declarations
+                                            :is-fragment false})
+        extensions (-> parsed domain/endpoints first domain/supported-operations first document/extends)]
+    (is (= 1 (count extensions)))
+    (is (= "file://path/to/resource.raml#/declares/traits/paged"
+           (document/target (first extensions))))))
+
 (deftest parse-ast-resources
   (let [node {:displayName "Users"
               (keyword "/items") {:displayName "items"

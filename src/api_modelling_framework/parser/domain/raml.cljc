@@ -165,7 +165,44 @@
                     (range 0 (count nested-children-tags))
                     nested-children-tags)])))
 
-(defmethod parse-ast :root [node {:keys [location parsed-location is-fragment] :as context}]
+(defn generate-inline-fragment-parsed-sources [parsed-location fragment-name fragment-location]
+  (let [source-map-id (str parsed-location "/source-map/inline-fragment/" fragment-name)
+        inline-fragment-parsed-tag (document/->InlineFragmentParsedTag source-map-id fragment-location)]
+    [(document/->DocumentSourceMap (str parsed-location "/source-map")
+                                   fragment-location
+                                   [inline-fragment-parsed-tag])]))
+
+(defn process-traits [node {:keys [location parsed-location] :as context}]
+  (debug "Processing " (count (:traits node [])) "traits")
+  (let [location (str location "/traits")
+        parsed-location (str parsed-location "/traits")
+        nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
+    (->> (:traits node {})
+         (reduce (fn [acc [trait-name trait-node]]
+                   (debug (str "Processing trait " trait-name))
+                   (let [fragment-name (url/url-encode (utils/safe-str trait-name))
+                         trait-fragment (parse-ast trait-node (-> nested-context
+                                                                  (assoc :method fragment-name)
+                                                                  (assoc :location location)
+                                                                  (assoc :is-fragment true)
+                                                                  (assoc :type-hint :method)))
+                         parsed-trait (assoc trait-fragment :fragment-node :trait)]
+                     (assoc acc (keyword trait-name) parsed-trait)))
+                 {}))))
+
+(defn find-extend-tags [{:keys [location parsed-location references] :as context}]
+  (->> references
+       (map (fn [[extend-name parsed-domain-element]]
+              (condp = (:fragment-node parsed-domain-element)
+                :trait (generate-inline-fragment-parsed-sources (str parsed-location "/traits")
+                                                                (name extend-name)
+                                                                (:id parsed-domain-element))
+                (generate-inline-fragment-parsed-sources (str parsed-location "/declares")
+                                                         (name extend-name)
+                                                         (:id parsed-domain-element)))))
+       flatten))
+
+(defmethod parse-ast :root [node {:keys [location parsed-location is-fragment references] :as context :or {references {}}}]
   (debug "Parsing RAML root")
   (let [parsed-location (str parsed-location "/api-documentation")
         location (str location "/")
@@ -174,6 +211,9 @@
         nested-resources (-> node
                              (utils/extract-nested-resources)
                              (parse-nested-resources "" location parsed-location (assoc context :parent-id parsed-location)))
+        trait-tags (find-extend-tags (-> context
+                                         (assoc :location location)
+                                         (assoc :parsed-location parsed-location)))
         children-tags (nested-resources-tags is-fragment
                                              location
                                              ""
@@ -182,7 +222,10 @@
                                              nested-resources)
         properties {:id parsed-location
                     :sources (concat (generate-parse-node-sources location parsed-location)
-                                     children-tags)
+                                     children-tags
+                                     trait-tags
+                                     ;;types-sources
+                                     )
                     :name (:title node)
                     :description (:description node)
                     :host (base-uri->host (:baseUri node))
@@ -235,18 +278,48 @@
               [(domain/map->ParsedEndPoint properties)])
             (or nested-resources []))))
 
-(defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method] :as context}]
+(defn generate-is-trait-sources [trait-name location parsed-location]
+  (let [source-map-id (str parsed-location "/source-map/is-trait")
+        is-trait-tag (document/->IsTraitTag source-map-id trait-name)]
+    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-trait-tag])]))
+
+(defn parse-traits [resource-id node references {:keys [location parsed-location]}]
+  (let [traits (flatten [(:is node [])])]
+    (->> traits
+     (map (fn [trait-name] [trait-name (-> references
+                                          (get (keyword trait-name)))]))
+     (map (fn [i [trait-name trait]]
+            (if (some? trait)
+              (let
+                  [extend-id (str parsed-location "/extends/" (url/url-encode trait-name))
+                   extend-location (str location "/is/" i)
+                   node-parsed-source-map (generate-parse-node-sources extend-location extend-id)
+                   is-trait-source-map (generate-is-trait-sources trait-name extend-location extend-id)]
+                (document/map->ParsedExtends {:id extend-id
+                                              :sources (concat node-parsed-source-map
+                                                               is-trait-source-map)
+                                              :target (document/id trait)
+                                              :label "trait"
+                                              :arguments []}))
+              (throw (new #?(:clj Exception :cljs js/Error)
+                          (str "Cannot find trait '" trait-name "' to extend in node '" resource-id "'")))))
+          (range 0 (count traits))))))
+
+(defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method references] :as context}]
   (debug "Parsing method " method)
   (let [method-id (str parsed-location "/" method)
         location (str location "/" method)
         next-context (-> context
+                         (assoc :is-fragment false)
                          (assoc :parsed-location method-id)
                          (assoc :location location))
         node-parsed-source-map (generate-parse-node-sources location method-id)
         headers (parse-parameters "header" "headers" (:headers node) next-context)
         query-parameters (parse-parameters "query" "queryParameters"(:queryParameters node) next-context)
         request-id (str method-id "/request")
+        traits (parse-traits method-id node references next-context)
         body (parse-ast (:body node) (-> context
+                                         (assoc :is-fragment false)
                                          (assoc :location (str location "/body"))
                                          (assoc :parsed-location (str parsed-location "/body"))
                                          (assoc :type-hint :type)))
@@ -254,7 +327,8 @@
                                             :sources (generate-parse-node-sources location request-id)
                                             :parameters query-parameters
                                             :schema body})
-        responses (parse-ast (:responses node {}) (-> next-context (assoc :type-hint :responses)))
+        responses (parse-ast (:responses node {}) (-> next-context
+                                                      (assoc :type-hint :responses)))
         properties (-> {:id method-id
                         :sources node-parsed-source-map
                         :method method
@@ -263,12 +337,13 @@
                         :scheme (:protocols node)
                         :headers headers
                         :request request
-                        :responses (flatten responses)}
+                        :responses (flatten responses)
+                        :extends traits}
                        utils/clean-nils)]
     (if is-fragment
-      (domain/map->ParsedOperation {:id method-id
-                                    :fragment :parsed-operation
-                                    :properties properties})
+      (domain/map->ParsedDomainElement {:id method-id
+                                        :fragment :parsed-operation
+                                        :properties properties})
       (domain/map->ParsedOperation properties))))
 
 (defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment] :as context}]

@@ -4,6 +4,8 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
+            [clojure.string :as string]
+            [cemerick.url :as url]
             [clojure.walk :refer [keywordize-keys]]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
@@ -84,6 +86,21 @@
                        [(keyword child-path) (to-raml child ctx)])))
               (into {}))))
 
+(defn model->traits [{:keys [references] :as ctx}]
+  (->> references
+       (filter #(= :trait (domain/fragment-node %)))
+       (map (fn [reference]
+              (let [trait-name (-> reference
+                                   document/id
+                                   (string/split #"/")
+                                   last
+                                   (url/url-decode)
+                                   keyword)
+                    method (domain/to-domain-node reference)
+                    generated (to-raml method ctx)]
+                [trait-name generated])))
+       (into {})))
+
 (defmethod to-raml domain/APIDocumentation [model ctx]
   (debug "Generating RAML root node")
   (let [all-resources (domain/endpoints model)
@@ -97,7 +114,8 @@
          :version (domain/version model)
          :baseUri (model->base-uri model)
          :protocols (model->protocols model)
-         :mediaType (model->media-type model)}
+         :mediaType (model->media-type model)
+         :traits (model->traits ctx)}
         (merge-children-resources children-resources ctx)
         utils/clean-nils)))
 
@@ -174,6 +192,18 @@
       (if-let [parameters (domain/parameters request)]
         (unparse-parameters parameters context)
         nil)))
+
+(defn find-traits [model context]
+  (let [extends (document/extends model)]
+    (->> extends
+
+         (filter (fn [extend] (= "trait" (name (document/label extend)))))
+         (map (fn [trait]
+                (let [trait-tag (first (document/find-tag trait document/is-trait-tag))]
+                  (if (some? trait-tag)
+                    (document/value trait-tag)
+                    (-> (document/target trait) (string/split #"/") last))))))))
+
 (defmethod to-raml domain/Operation [model context]
   (debug "Generating operation " (document/id model))
   (-> {:displayName (document/name model)
@@ -181,6 +211,7 @@
        :protocols (domain/scheme model)
        :responses (-> (domain/responses model)
                       (group-responses context))
+       :is (find-traits model context)
        :body (unparse-domain-body (domain/request model) context)
        :queryParameters (unparse-query-parameters (domain/request model) context)
        :headers (unparse-parameters (domain/headers model) context)}

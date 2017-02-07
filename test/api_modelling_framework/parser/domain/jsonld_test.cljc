@@ -195,3 +195,35 @@
         parsed (jsonld-parser/from-jsonld generated)
         output (openapi-genenerator/to-openapi parsed {})]
     (is (= input output))))
+
+(deftest traits-test
+  (let [location "file://path/to/resource.raml#"
+        input {:title "Github API"
+               :baseUri "http://api.github.com"
+               :protocols "http"
+               :version "v3"
+               :traits {:paged
+                        {:queryParameters
+                         {:start {:type "float"}}}}
+               (keyword "/users") {:displayName "Users"
+                                   :get {:description "get description"
+                                         :is ["paged"]
+                                         :protocols ["http"]
+                                         :responses {"200" {:description "200 response"}
+                                                     "400" {:description "400 response"}}}}}
+        declarations (raml-parser/process-traits input {:location (str location "")
+                                                        :parsed-location (str location "/declares")})
+        model-parsed (raml-parser/parse-ast input
+                                            {:parsed-location location
+                                             :location location
+                                             :references declarations
+                                             :is-fragment false})
+        generated (generator/to-jsonld model-parsed {:source-maps? true})
+
+        parsed (jsonld-parser/from-jsonld generated)
+
+        output (raml-genenerator/to-raml parsed {:parsed-location location
+                                                 :location location
+                                                 :references (vals declarations)
+                                                 :is-fragment false})]
+    (is (= output input))))

@@ -34,4 +34,6 @@
 
 (defn decode-json [s] (js->clj (.parse js/JSON s)))
 
+(defn encode-json [s] (.stringify js/JSON s))
+
 (def Err js/Error)0

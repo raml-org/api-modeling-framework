@@ -19,10 +19,14 @@
 
 (defmethod parse-ast "#%RAML 1.0" [_ node]
   (let [location (get node "@location")
+        ;; we parse traits and types and add the information into the context
+        references (domain-parser/process-traits node {:location (str location "#")
+                                                       :parsed-location (str location "#/declares")})
         encoded (domain-parser/parse-ast node {:location (str location "#")
                                                :parsed-location (str location "#")
-                                               :is-fragment true})]
-    (document/->Document location encoded nil "RAML")))
+                                               :references references
+                                               :is-fragment false})]
+    (document/->Document location encoded (vals references) "RAML")))
 
 (defmethod parse-ast :fragment [_ node]
   (let [location (get node "@location")

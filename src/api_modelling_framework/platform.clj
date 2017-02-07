@@ -32,4 +32,7 @@
 (defn decode-json [s]
   (json/parse-string s))
 
+(defn encode-json [s]
+  (json/generate-string s))
+
 (def Err Exception)

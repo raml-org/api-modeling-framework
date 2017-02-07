@@ -35,6 +35,8 @@
 (def document:SourceMap (document-ns "SourceMap"))
 (def document:Tag (document-ns "Tag"))
 (def document:DomainElement (document-ns "DomainElement"))
+(def document:ExtendRelationship (document-ns "ExtendsRelationship"))
+
 (def document:source (document-ns "source"))
 (def document:location (document-ns "location"))
 (def document:declares (document-ns "declares"))
@@ -42,8 +44,10 @@
 (def document:tag (document-ns "tag"))
 (def document:tag-id (document-ns "tagId"))
 (def document:tag-value (document-ns "tagValue"))
-
-
+(def document:extends (document-ns "extends"))
+(def document:target (document-ns "target"))
+(def document:label (document-ns "label"))
+(def document:arguments (document-ns "arguments"))
 
 (def http:APIDocumentation (http-ns "APIDocumentation"))
 (def sorg:name (sorg-ns "name"))

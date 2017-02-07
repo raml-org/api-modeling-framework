@@ -93,6 +93,7 @@
                 "string"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "string")))
                 "number"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
                 "integer"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "integer")))
+                "float"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
                 "boolean" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "boolean")))
                 "null" (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "null")))
                 "time-only" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "time")))

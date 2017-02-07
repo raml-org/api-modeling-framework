@@ -52,6 +52,11 @@
     (assoc t target [{"@value" (property m)}])
     t))
 
+(defn assoc-link [t m target property]
+  (if (some? (property m))
+    (assoc t target [{"@id" (property m)}])
+    t))
+
 (defn assoc-values [t m target property]
   (if (some? (property m))
     (assoc t target (map (fn [v] {"@value" v}) (property m)))

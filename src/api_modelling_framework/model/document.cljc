@@ -6,7 +6,24 @@
   (name [this] "A string readable title for this node")
   (description [this] "A human readable description of this node")
   (sources [this] "Collection of source maps for this node")
-  (valid? [this] "Checks if this node is valid"))
+  (valid? [this] "Checks if this node is valid")
+  (extends [this] "Nodes extended by this node"))
+
+(defprotocol Extends
+  (target [this] "Target of the extends relationship")
+  (label  [this] "Description of the kind of extends relationship")
+  (arguments [this] "Arguments for the extension"))
+
+(defrecord ParsedExtends [id name description sources target label arguments]
+  Extends
+  (target [this] target)
+  (label  [this] label)
+  (arguments [this] (or arguments []))
+  Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources))
 
 (defprotocol SourceMap
   "Defines basic behaviour for all nodes in the model"
@@ -23,7 +40,8 @@
   (name [this] "Document source map")
   (description [this] (str "Source map for a document located at " source))
   (sources [this] [])
-  (valid? [this] true))
+  (valid? [this] true)
+  (extends [this] []))
 
 (defprotocol Tag
   (tag-id [this] "Identifier for the tag")
@@ -50,7 +68,8 @@
   (name [this] "File parsed tag")
   (description [this] (str "This node was generating parsing a file located at " location))
   (sources [this] [])
-  (valid? [this] true))
+  (valid? [this] true)
+  (extends [this] []))
 
 (def document-type-tag "document-type")
 
@@ -63,7 +82,8 @@
   (name [this] "Document type tag")
   (description [this] (str "This node was generating parsing a file of type " document-type))
   (sources [this] [])
-  (valid? [this] true))
+  (valid? [this] true)
+  (extends [this] []))
 
 (def node-parsed-tag "node-parsed")
 
@@ -76,7 +96,8 @@
   (name [this] "Node parsed tag")
   (description [this] (str "This node was generating parsing a node located at " path))
   (sources [this] [])
-  (valid? [this] true))
+  (valid? [this] true)
+  (extends [this] []))
 
 (def nested-resource-path-parsed-tag "nested-resource-path-parsed")
 
@@ -89,7 +110,8 @@
   (name [this] "Nested resource parsed tag")
   (description [this] (str "This node was generating parsing a nested resource with path " path))
   (sources [this] [])
-  (valid? [this] true))
+  (valid? [this] true)
+  (extends [this] []))
 
 (def nested-resource-children-tag "nested-resource-nested-children")
 
@@ -102,7 +124,8 @@
   (name [this] "Resource nested children tag")
   (description [this] (str "This resource has a nested resource " children-id))
   (sources [this] [])
-  (valid? [this] true))
+  (valid? [this] true)
+  (extends [this] []))
 
 (def nested-resource-parent-id-tag "nested-resource-parent-id")
 
@@ -115,7 +138,8 @@
   (name [this] "Resource parent id  tag")
   (description [this] (str "This resource has a parent resource " parent-id))
   (sources [this] [])
-  (valid? [this] true))
+  (valid? [this] true)
+  (extends [this] []))
 
 (def api-tag-tag "api-tag-tag")
 
@@ -128,7 +152,36 @@
   (name [this] "API specific tag")
   (description [this] (str "API specific tag with value " tag-value))
   (sources [this] [])
-  (valid? [this] true))
+  (valid? [this] true)
+  (extends [this] []))
+
+(def inline-fragment-parsed-tag "inline-fragment-parsed-tag")
+
+(defrecord InlineFragmentParsedTag [id tag-value]
+  Tag
+  (tag-id [this] inline-fragment-parsed-tag)
+  (value [this] tag-value)
+  Node
+  (id [this] id)
+  (name [this] "Inline fragment  tag")
+  (description [this] (str "Inline fragment tag with value " tag-value))
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] []))
+
+(def is-trait-tag "is-trait-tag")
+
+(defrecord IsTraitTag [id trait-name]
+  Tag
+  (tag-id [this] is-trait-tag)
+  (value [this] trait-name)
+  Node
+  (id [this] id)
+  (name [this] "Is trait tag")
+  (description [this] (str "Is trait tag with name " trait-name))
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] []))
 
 (defprotocol DocumentUnit
   "Any parseable unit, it should be backed by a source URI"
@@ -156,6 +209,7 @@
   (description [this] (str "Document parsed from " location " encoding " document-type " information "))
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
+  (extends [this] [])
   DocumentUnit
   (encodes [this] encodes)
   (declares [this] declares))
@@ -167,6 +221,7 @@
   (description [this] (str "Fragment parsed from " location " encoding " document-type " information "))
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
+  (extends [this] [])
   DocumentUnit
   (encodes [this] encodes)
   (declares [this] nil))
