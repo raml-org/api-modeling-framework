@@ -1,36 +1,63 @@
-(ns api-modelling-framework.parser.model.raml
+(ns api-modelling-framework.parser.document.raml
   (:require [clojure.string :as string]
             [api-modelling-framework.model.document :as document]
-            [api-modelling-framework.parser.domain.raml :as domain-parser]))
+            [api-modelling-framework.parser.domain.raml :as domain-parser]
+            [taoensso.timbre :as timbre
+             #?(:clj :refer :cljs :refer-macros)
+             [debug]]))
 
-(defn parse-ast-dispatch-function [type node]
+(defn parse-ast-dispatch-function [node context]
   (cond
-    (and (nil? type)
-         (some? (get node "@location"))
-         (some? (get node "@fragment")))      (string/trim (get node "@fragment"))
-    (and (nil? type)
-         (some? (get node "@location")))      :fragment
-    (and (nil? type)
-         (nil? (get node "@location"))
-         (nil? (get node "@fragment")))       (throw (new #?(:clj Exception :cljs js/Error) (str "Unsupported parsing unit, missing @location or @fragment information")))
-    :else                                     nil))
+    (and (some? (get node (keyword "@location")))
+         (some? (get node (keyword "@fragment"))))      (string/trim (get node (keyword "@fragment")))
 
-(defmulti parse-ast (fn [type node] (parse-ast-dispatch-function type node)))
+    (some? (get node (keyword "@location")))             :fragment
 
-(defmethod parse-ast "#%RAML 1.0" [_ node]
-  (let [location (get node "@location")
+    (and (nil? (get node (keyword "@location")))
+         (nil? (get node (keyword "@fragment"))))       (throw
+                                                         (new #?(:clj Exception :cljs js/Error)
+                                                              (str "Unsupported parsing unit, missing @location or @fragment information")))
+
+    :else                                               nil))
+
+(defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
+
+(defmethod parse-ast "#%RAML 1.0" [node context]
+  (let [location (get node (keyword "@location"))
+        _ (debug "Parsing Document at " location)
+        fragments (or (:fragments context) (atom {}))
         ;; we parse traits and types and add the information into the context
-        references (domain-parser/process-traits node {:location (str location "#")
-                                                       :parsed-location (str location "#/declares")})
-        encoded (domain-parser/parse-ast node {:location (str location "#")
-                                               :parsed-location (str location "#")
-                                               :references references
-                                               :is-fragment false})]
-    (document/->Document location encoded (vals references) "RAML")))
+        references (domain-parser/process-traits (get node (keyword "@data")) {:location (str location "#")
+                                                                               :fragments fragments
+                                                                               :parsed-location (str location "#/declares")})
+        encoded (domain-parser/parse-ast (get node (keyword "@data")) {:location (str location "#")
+                                                                       :fragments fragments
+                                                                       :parsed-location (str location "#")
+                                                                       :references references
+                                                                       :document-parser parse-ast
+                                                                       :is-fragment false})]
+    (document/map->ParsedDocument {:location location
+                                   :encodes encoded
+                                   :declares (vals references)
+                                   :references (vals @fragments)
+                                   :document-type "#%RAML 1.0"})))
 
-(defmethod parse-ast :fragment [_ node]
-  (let [location (get node "@location")
-        encoded (domain-parser/parse-ast node {:location (str location "#")
-                                               :parsed-location (str location "#")
-                                               :is-fragment true})]
-    (document/->Fragment location encoded "RAML")))
+(defmethod parse-ast :fragment [node context]
+  (let [context (or context {})
+        location (get node (keyword "@location"))
+        _ (debug "Parsing Fragment at " location)
+        fragments (or (:fragments context) (atom {}))
+        ;; @todo is this illegal?
+        references (or (:references context) {})
+        encoded (domain-parser/parse-ast (get node (keyword "@data")) (merge
+                                                                       context
+                                                                       {:location (str location "#")
+                                                                        :fragments fragments
+                                                                        :references references
+                                                                        :parsed-location (str location "#")
+                                                                        :document-parser parse-ast
+                                                                        :is-fragment true}))]
+    (document/map->ParsedFragment {:location location
+                                   :encodes encoded
+                                   :references (vals @fragments)
+                                   :document-type "#%RAML 1.0 Fragment"})))

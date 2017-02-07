@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.test :refer [deftest is async]]))
   (:require #?(:clj [clojure.test :refer :all])
             [api-modelling-framework.parser.domain.raml :as raml-parser]
+            [api-modelling-framework.parser.document.raml :as raml-document-parser]
             [api-modelling-framework.generators.domain.raml :as raml-genenerator]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.vocabulary :as v]
@@ -233,3 +234,20 @@
       (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
                                                     :location "/response"})]
         (is (= raml-type (raml-genenerator/to-raml shape {})))))))
+
+(deftest parse-ast-includes
+  (let [fragments (atom {})
+        node {:displayName "Users"
+              :get {(keyword "@location") "file://path/to/get_method.raml"
+                    (keyword "@data") {:displayName "get method"
+                                       :description "get description"
+                                       :protocols ["http"]}}}
+        parsed (raml-parser/parse-ast node {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
+                                            :location "file://path/to/resource.raml#/users"
+                                            :path "/users"
+                                            :fragments fragments
+                                            :document-parser raml-document-parser/parse-ast
+                                            :is-fragment false})]
+    (is (= "file://path/to/get_method.raml") (-> parsed first domain/supported-operations first document/target))
+    (is (= 1 (-> parsed first domain/supported-operations count)))
+    (is (some? (get @fragments "file://path/to/get_method.raml")))))

@@ -20,11 +20,13 @@
                        (get (keyword "@fragment"))
                        (string/starts-with? "#%RAML 1.0")))
                (is (-> result
+                       (get (keyword "@data"))
                        (get :traits)
                        (get :secured)
                        (get (keyword "@location"))
                        (string/ends-with? "accessToken.raml")))
                (is (-> result
+                       (get (keyword "@data"))
                        (get :traits)
                        (get :secured)
                        (get (keyword "@fragment"))

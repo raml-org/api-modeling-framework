@@ -10,15 +10,30 @@
   (extends [this] "Nodes extended by this node"))
 
 (defprotocol Extends
-  (target [this] "Target of the extends relationship")
-  (label  [this] "Description of the kind of extends relationship")
   (arguments [this] "Arguments for the extension"))
 
+(defprotocol Includes
+  (target [this] "Target of the relationship")
+  (label  [this] "Description of the kind of relationship"))
+
+(defn includes-element? [x] (satisfies? Includes x))
+
 (defrecord ParsedExtends [id name description sources target label arguments]
-  Extends
+  Includes
   (target [this] target)
   (label  [this] label)
+  Extends
   (arguments [this] (or arguments []))
+  Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources))
+
+(defrecord ParsedIncludes [id name description sources target label]
+  Includes
+  (target [this] target)
+  (label  [this] label)
   Node
   (id [this] id)
   (name [this] name)
@@ -183,12 +198,18 @@
   (valid? [this] true)
   (extends [this] []))
 
-(defprotocol DocumentUnit
+(defprotocol Fragment
+  "Units encoding domain fragments"
+  (encodes [this] "Domain description encoded into this document unit"))
+
+(defprotocol Module
+  "Units containing abstract fragments that can be referenced from other fragments"
+  (declares [this] "Fragments that are exposed for other units to refer"))
+
+(defprotocol Unit
   "Any parseable unit, it should be backed by a source URI"
-  (encodes [this] "Domain description encoded into this document unit")
-  (declares [this] "Depdencies of this unit with other parsing units"))
-
-
+  (location [this] "Derefenceable location of the unit")
+  (references [this] "Fragments referenced by this document"))
 
 (defn generate-document-sources [source document-type]
   (let [source-map-id (str source "#/source-map/0")
@@ -202,7 +223,7 @@
       [(DocumentSourceMap. source-map-id source (filter some? [file-parsed-tag document-type-tag]))]
       [])))
 
-(defrecord Document [location encodes declares document-type]
+(defrecord ParsedDocument [location encodes declares references document-type]
   Node
   (id [this] location)
   (name [this] location)
@@ -210,11 +231,15 @@
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])
-  DocumentUnit
+  Unit
+  (location [this] location)
+  (references [this] (or references []))
+  Fragment
   (encodes [this] encodes)
-  (declares [this] declares))
+  Module
+  (declares [this] (or declares [])))
 
-(defrecord Fragment [location encodes document-type]
+(defrecord ParsedFragment [location encodes references document-type]
   Node
   (id [this] location)
   (name [this] location)
@@ -222,6 +247,8 @@
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])
-  DocumentUnit
-  (encodes [this] encodes)
-  (declares [this] nil))
+  Unit
+  (location [this] location)
+  (references [this] (or references []))
+  Fragment
+  (encodes [this] encodes))

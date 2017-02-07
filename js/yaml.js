@@ -114,7 +114,8 @@ var parseYaml = function (location, cb) {
     global.FRAGMENTS_CACHE = {};
     cacheFragments({ "location": location }, function (err, data) {
         try {
-            var result = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
+            var loaded = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
+            var result = { "@data": loaded };
             result["@location"] = location;
             result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
             cb(null, result);

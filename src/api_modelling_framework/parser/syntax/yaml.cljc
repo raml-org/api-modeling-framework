@@ -35,7 +35,8 @@
                          yaml (org.yaml.snakeyaml.Yaml. include-constructor)
                          raw (.load yaml (java.io.FileInputStream. file))
                          parsed (decode raw)]
-                     (-> parsed
+                     (-> {}
+                         (assoc (keyword "@data") parsed)
                          (assoc (keyword "@location") (.getAbsolutePath file))
                          (assoc (keyword "@fragment") header)))
                    (catch #?(:cljs js/Error :clj Exception) ex ex)))))

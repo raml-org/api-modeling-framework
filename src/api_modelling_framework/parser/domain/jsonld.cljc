@@ -1,7 +1,6 @@
 (ns api-modelling-framework.parser.domain.jsonld
   (:require [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.parser.document.jsonld :as json-document]
-            [api-modelling-framework.parser.document.jsonld :as json-document-parser]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
@@ -59,10 +58,10 @@
                                  :supported-operations (map from-jsonld (-> m (get v/hydra:supportedOperation [])))})))
 
 (defmethod from-jsonld v/document:SourceMap [m]
-  (json-document-parser/from-jsonld m))
+  (json-document/from-jsonld m))
 
 (defmethod from-jsonld v/document:Tag [m]
-  (json-document-parser/from-jsonld m))
+  (json-document/from-jsonld m))
 
 (defn parse-request [request]
   (if (nil? request) {:request nil :headers nil}

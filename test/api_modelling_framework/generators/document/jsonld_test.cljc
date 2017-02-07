@@ -8,13 +8,15 @@
 
 (deftest document-test
   (let [location "http://test.com/location.json"
-        doc (document/map->Document {:location location
-                                     :encodes nil
-                                     :declares nil
-                                     :document-type "open-api"})
+        doc (document/map->ParsedDocument {:location location
+                                           :encodes nil
+                                           :declares nil
+                                           :document-type "open-api"})
         generated (generator/to-jsonld doc true)]
     (is (= {"@id" "http://test.com/location.json",
             "@type" ["http://raml.org/vocabularies/document#Document"
+                     "http://raml.org/vocabularies/document#Fragment"
+                     "http://raml.org/vocabularies/document#Module"
                      "http://raml.org/vocabularies/document#Unit"],
             "http://raml.org/vocabularies/document#source" [{"@id" "http://test.com/location.json#/source-map/0",
                                                              "@type" ["http://raml.org/vocabularies/document#SourceMap"],
@@ -41,13 +43,12 @@
 
 (deftest document-test
   (let [location "http://test.com/location.json"
-        doc (document/map->Fragment {:location location
-                                     :encodes nil
-                                     :document-type "open-api"})
+        doc (document/map->ParsedFragment {:location location
+                                           :encodes nil
+                                           :document-type "open-api"})
         generated (generator/to-jsonld doc true)]
     (is (= {"@id" "http://test.com/location.json",
             "@type" ["http://raml.org/vocabularies/document#Fragment"
-                     "http://raml.org/vocabularies/document#Module"
                      "http://raml.org/vocabularies/document#Unit"],
             "http://raml.org/vocabularies/document#source" [{"@id" "http://test.com/location.json#/source-map/0",
                                                           "@type" ["http://raml.org/vocabularies/document#SourceMap"],

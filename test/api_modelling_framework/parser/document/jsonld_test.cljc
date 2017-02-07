@@ -10,10 +10,10 @@
 
 (deftest document-test
   (let [location "http://test.com/location.json"
-        doc (document/map->Document {:location location
-                                     :encodes nil
-                                     :declares nil
-                                     :document-type "open-api"})
+        doc (document/map->ParsedDocument {:location location
+                                           :encodes nil
+                                           :declares nil
+                                           :document-type "open-api"})
         generated (generator/to-jsonld doc true)
         parsed (parser/from-jsonld generated)]
     (is (utils/has-class? generated v/document:Document))
@@ -22,9 +22,9 @@
 
 (deftest fragment-test
   (let [location "http://test.com/location.json"
-        doc (document/map->Fragment {:location location
-                                     :encodes nil
-                                     :document-type "open-api"})
+        doc (document/map->ParsedFragment {:location location
+                                           :encodes nil
+                                           :document-type "open-api"})
         generated (generator/to-jsonld doc true)
         parsed (parser/from-jsonld generated)]
     (is (utils/has-class? generated v/document:Fragment))

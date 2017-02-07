@@ -7,6 +7,7 @@
             [api-modelling-framework.parser.domain.raml-test]
             [api-modelling-framework.parser.domain.openapi-test]
             [api-modelling-framework.generators.document.jsonld-test]
+            [api-modelling-framework.generators.document.raml-test]
             [api-modelling-framework.generators.domain.jsonld-test]
             [api-modelling-framework.generators.domain.openapi-test]
             [api-modelling-framework.generators.domain.raml-test]
@@ -24,4 +25,5 @@
            'api-modelling-framework.generators.domain.jsonld-test
            'api-modelling-framework.generators.domain.openapi-test
            'api-modelling-framework.generators.domain.raml-test
+           'api-modelling-framework.generators.document.raml-test
            )

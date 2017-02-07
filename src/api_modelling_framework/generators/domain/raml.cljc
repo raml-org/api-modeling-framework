@@ -11,26 +11,42 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
+(defn send
+  "Dispatchs a method to an object, if the object is an inclusion relationship, it searches in the included object
+   in the context, builds the domain object and sends the method"
+  [method obj {:keys [fragments]}]
+  (if (document/includes-element? obj)
+    (let [fragment (get fragments (document/target obj))]
+      (if (nil? fragment)
+        (throw (new #?(:clj Exception :cljs js/Error)
+                    (str "Cannot find fragment " (document/target obj) " to apply method " method)))
+        (apply method [(-> fragment document/encodes domain/to-domain-node)])))
+    (apply method [obj])))
+
 (defn to-raml-dispatch-fn [model ctx]
   (cond
-    (nil? model)                                 model
+    (nil? model)                                    model
+
+    (and (satisfies? document/Includes model)
+         (satisfies? document/Node model))          document/Includes
+
 
     (and (satisfies? domain/APIDocumentation model)
-         (satisfies? document/Node model))       domain/APIDocumentation
+         (satisfies? document/Node model))          domain/APIDocumentation
 
     (and (satisfies? domain/EndPoint model)
-         (satisfies? document/Node model))       domain/EndPoint
+         (satisfies? document/Node model))          domain/EndPoint
 
     (and (satisfies? domain/Operation model)
-         (satisfies? document/Node model))       domain/Operation
+         (satisfies? document/Node model))          domain/Operation
 
     (and (satisfies? domain/Response model)
-         (satisfies? document/Node model))       domain/Response
+         (satisfies? document/Node model))          domain/Response
 
     (and (satisfies? domain/Type model)
-         (satisfies? document/Node model))       domain/Type
+         (satisfies? document/Node model))          domain/Type
 
-    :else                                        (type model)))
+    :else                                           (type model)))
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
 
@@ -124,7 +140,7 @@
   (debug "Generating resource " (document/id model))
   (let [children-resources (find-children-resources (document/id model) all-resources)
         operations (->> (or (domain/supported-operations model) [])
-                        (map (fn [op] [(keyword (domain/method op)) (to-raml op ctx)]))
+                        (map (fn [op] [(keyword (send domain/method op ctx)) (to-raml op ctx)]))
                         (into {}))]
     (-> {:displayName (document/name model)
          :description (document/description model)}
@@ -225,6 +241,19 @@
 (defmethod to-raml domain/Type [model context]
   (debug "Generating type")
   (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context)))
+
+(defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments document-generator]
+                                             :as context
+                                             :or {expanded-fragments (atom {})}}]
+  (let [fragment-target (document/target model)
+        fragment (get fragments fragment-target)]
+    (if (nil? fragment)
+      (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
+      (if-let [expanded-fragment (get expanded-fragments fragment-target)]
+        expanded-fragment
+        (let [expanded-fragment (document-generator fragment context)]
+          (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
+          expanded-fragment)))))
 
 (defmethod to-raml nil [_ _]
   (debug "Generating nil")

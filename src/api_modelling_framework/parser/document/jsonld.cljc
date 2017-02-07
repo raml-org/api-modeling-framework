@@ -28,7 +28,10 @@
         source-map (first (map from-jsonld (get m v/document:source [])))
         document-type-tag (utils/find-tag source-map document/document-type-tag)
         document-type (if (some? document-type-tag) (document/value document-type-tag) nil)]
-    (document/->Document location encodes declares document-type)))
+    (document/map->ParsedDocument {:location location
+                                   :encodes encodes
+                                   :declares declares
+                                   :document-type document-type})))
 
 
 (defmethod from-jsonld v/document:SourceMap [m]
@@ -76,7 +79,9 @@
         source-map (first (map from-jsonld (get m v/document:source [])))
         document-type-tag (utils/find-tag source-map document/document-type-tag)
         document-type (if (some? document-type-tag) (document/value document-type-tag) nil)]
-    (document/->Fragment location encodes document-type)))
+    (document/map->ParsedFragment {:location location
+                                   :encodes encodes
+                                   :document-type document-type})))
 
 
 (defmethod from-jsonld :unknown [m]

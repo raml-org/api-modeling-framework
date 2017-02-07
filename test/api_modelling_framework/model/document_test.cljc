@@ -7,10 +7,10 @@
 
 (deftest document-test
   (let [location "http://test.com/location.json"
-        doc (document/map->Document {:location location
-                                     :encodes nil
-                                     :declares nil
-                                     :document-type "open-api"})
+        doc (document/map->ParsedDocument {:location location
+                                           :encodes nil
+                                           :declares nil
+                                           :document-type "open-api"})
         source-map (first (document/sources doc))]
     (is (= (document/id doc) location))
     (is (= location (document/source source-map)))
@@ -21,9 +21,9 @@
 
 (deftest fragment-test
   (let [location "http://test.com/location.json"
-        doc (document/map->Fragment {:location location
-                                     :encodes nil
-                                     :document-type "open-api"})
+        doc (document/map->ParsedFragment {:location location
+                                           :encodes nil
+                                           :document-type "open-api"})
         source-map (first (document/sources doc))]
     (is (= (document/id doc) location))
     (is (= location (document/source source-map)))
