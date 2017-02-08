@@ -19,8 +19,9 @@
                                                                :id "id"
                                                                :name "name"
                                                                :description "description"})]
-    (is (= {:host "test.com"
-            :scheme ["http" "https"]
+    (is (= {:swagger "2.0"
+            :host "test.com"
+            :schemes ["http" "https"]
             :basePath "/path"
             :produces "appliaton/json"
             :info

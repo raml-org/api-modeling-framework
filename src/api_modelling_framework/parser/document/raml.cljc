@@ -24,7 +24,7 @@
 
 (defmethod parse-ast "#%RAML 1.0" [node context]
   (let [location (get node (keyword "@location"))
-        _ (debug "Parsing Document at " location)
+        _ (debug "Parsing RAML Document at " location)
         fragments (or (:fragments context) (atom {}))
         ;; we parse traits and types and add the information into the context
         references (domain-parser/process-traits (get node (keyword "@data")) {:location (str location "#")
@@ -45,7 +45,7 @@
 (defmethod parse-ast :fragment [node context]
   (let [context (or context {})
         location (get node (keyword "@location"))
-        _ (debug "Parsing Fragment at " location)
+        _ (debug "Parsing RAML Fragment at " location)
         fragments (or (:fragments context) (atom {}))
         ;; @todo is this illegal?
         references (or (:references context) {})

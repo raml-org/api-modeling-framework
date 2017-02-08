@@ -16,4 +16,5 @@ script:
   - lein test  api-modelling-framework.generators.domain.openapi-test
   - lein test  api-modelling-framework.generators.domain.raml-test
   - lein test  api-modelling-framework.generators.document.raml-test
+  - lein test  api-modelling-framework.generators.document.openapi-test
   - lein doo node test once

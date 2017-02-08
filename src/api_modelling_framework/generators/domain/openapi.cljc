@@ -4,6 +4,7 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.generators.domain.utils :refer [send <-domain]]
             [clojure.walk :refer [keywordize-keys]]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
@@ -12,6 +13,9 @@
 (defn to-openapi-dispatch-fn [model ctx]
   (cond
     (nil? model)                                 model
+
+    (and (satisfies? document/Includes model)
+         (satisfies? document/Node model))          document/Includes
 
     (and (satisfies? domain/APIDocumentation model)
          (satisfies? document/Node model))       domain/APIDocumentation
@@ -52,8 +56,9 @@
                           [(keyword (domain/path endpoint))
                            (to-openapi endpoint ctx)]))
                    (into {}))]
-    (-> {:host (domain/host model)
-         :scheme (domain/scheme model)
+    (-> {:swagger "2.0"
+         :host (domain/host model)
+         :schemes (domain/scheme model)
          :basePath (domain/base-path model)
          :produces (if (= 1 (count (domain/content-type model)))
                      (first (domain/content-type model))
@@ -69,15 +74,15 @@
   (debug "Generating resource " (document/id model))
   (let [operations (domain/supported-operations model)]
     (->> operations
-         (map (fn [op] [(keyword (domain/method op)) (to-openapi op ctx)]))
+         (map (fn [op] [(keyword (send domain/method op ctx)) (to-openapi op ctx)]))
          (into {}))))
 
 (defn unparse-body [request ctx]
   (if (or (nil? request)
           (nil? (domain/schema request)))
     nil
-    (let [body (domain/schema request)
-          schema(to-openapi body ctx)
+    (let [body (<-domain (domain/schema request) ctx)
+          schema (to-openapi body ctx)
           parsed-body (-> {:name (document/name body)
                            :description (document/description body)
                            :schema schema}
@@ -164,6 +169,19 @@
 (defmethod to-openapi domain/Type [model context]
   (debug "Generating type")
   (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context)))
+
+(defmethod to-openapi document/Includes [model {:keys [fragments expanded-fragments document-generator]
+                                                :as context
+                                                :or {expanded-fragments (atom {})}}]
+  (let [fragment-target (document/target model)
+        fragment (get fragments fragment-target)]
+    (if (nil? fragment)
+      (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
+      (if-let [expanded-fragment (get expanded-fragments fragment-target)]
+        expanded-fragment
+        (let [expanded-fragment (document-generator fragment context)]
+          (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
+          expanded-fragment)))))
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")

@@ -4,6 +4,7 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.generators.domain.utils :refer [send]]
             [clojure.string :as string]
             [cemerick.url :as url]
             [clojure.walk :refer [keywordize-keys]]
@@ -11,17 +12,6 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
-(defn send
-  "Dispatchs a method to an object, if the object is an inclusion relationship, it searches in the included object
-   in the context, builds the domain object and sends the method"
-  [method obj {:keys [fragments]}]
-  (if (document/includes-element? obj)
-    (let [fragment (get fragments (document/target obj))]
-      (if (nil? fragment)
-        (throw (new #?(:clj Exception :cljs js/Error)
-                    (str "Cannot find fragment " (document/target obj) " to apply method " method)))
-        (apply method [(-> fragment document/encodes domain/to-domain-node)])))
-    (apply method [obj])))
 
 (defn to-raml-dispatch-fn [model ctx]
   (cond

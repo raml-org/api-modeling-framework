@@ -11,11 +11,6 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
-(defn get-value [this method {:keys [fragments]}]
-  (if (document/includes-element? this)
-    (let [target (document/target this)
-          ])
-    (apply method this)))
 (def properties-map
   {
    :annotationTypes #{:root}

@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.test :refer [deftest is async]]))
   (:require #?(:clj [clojure.test :refer :all])
             [api-modelling-framework.parser.domain.openapi :as openapi-parser]
+            [api-modelling-framework.parser.document.openapi :as document-parser]
             [api-modelling-framework.generators.domain.openapi :as openapi-generator]
             [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.utils :as utils]
@@ -65,8 +66,8 @@
                      :tags ["experimantl" "foo" "bar"]
                      :produces ["application/ld+json"]
                      :consumes ["application/json"]}}
-        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#"
-                                               :parsed-location "file://path/to/resource.raml#"
+        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.json#"
+                                               :parsed-location "file://path/to/resource.json#"
                                                :is-fragment false
                                                :path "/Users"})
         operations (domain/supported-operations parsed)]
@@ -95,8 +96,8 @@
 (deftest parse-ast-response
   (let [node {:get {:responses {:200 {:description "200 response"}
                                 :error {:description "error response"}}}}
-        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#"
-                                               :parsed-location "file://path/to/resource.raml#"
+        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.json#"
+                                               :parsed-location "file://path/to/resource.json#"
                                                :is-fragment false
                                                :path "/Users"})]
     (is (= 2 (count (->> parsed
@@ -163,3 +164,38 @@
       (let [shape (openapi-parser/parse-ast raml-type {:parsed-location "/response"
                                                     :location "/response"})]
         (is (= raml-type (openapi-generator/to-openapi shape {})))))))
+
+
+(deftest parser-ast-refs
+  (let [fragments (atom {})
+        node {:get {(keyword "@location") "file://path/to/method.json"
+                    (keyword "@data") {:operationId "get"
+                                       :description "get description"
+                                       :schemes ["https"]
+                                       :tags ["experimantl" "foo" "bar"]
+                                       :produces ["application/ld+json"]
+                                       :consumes ["application/json"]
+                                       :parameters [{:name "petId"
+                                                     :in "path"
+                                                     :required true
+                                                     :type "string"}
+                                                    {:name "race"
+                                                     :in "query"
+                                                     :type "string"}
+                                                    {:name "api-key"
+                                                     :in "header"
+                                                     :type "string"}
+                                                    {:name "the-body"
+                                                     :in "body"
+                                                     :schema {:type "string"}}]}}}
+        parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#"
+                                               :parsed-location "file://path/to/resource.raml#"
+                                               :is-fragment false
+                                               :fragments fragments
+                                               :document-parser document-parser/parse-ast
+                                               :path "/Users"})]
+    (is (= 1 (-> parsed domain/supported-operations count)))
+    (is (= 1 (count @fragments)))
+    (is (= "file://path/to/method.json"
+           (-> parsed domain/supported-operations first document/target)))
+    (is (some? (get @fragments "file://path/to/method.json")))))
