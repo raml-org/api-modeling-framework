@@ -6,6 +6,19 @@
              #?(:clj :refer :cljs :refer-macros)
              [log]]))
 
+(defn safe-str [x]
+  (cond
+    (string? x) x
+    (keyword? x) (if (string/starts-with? (str x) ":/")
+                   (str "/" (name x))
+                   (name x))
+    :else (str x)))
+
+(defn safe-value [x]
+  (if (or (string? x) (keyword? x))
+    (safe-str x)
+    x))
+
 (defn has-class? [m c]
   (let [types (flatten [(get m "@type")])]
     (->> types (some #(= % c)))))
@@ -49,7 +62,7 @@
 
 (defn assoc-value [t m target property]
   (if (some? (property m))
-    (assoc t target [{"@value" (property m)}])
+    (assoc t target [{"@value" (safe-value (property m))}])
     t))
 
 (defn assoc-link [t m target property]
@@ -59,12 +72,12 @@
 
 (defn assoc-values [t m target property]
   (if (some? (property m))
-    (assoc t target (map (fn [v] {"@value" v}) (property m)))
+    (assoc t target (map (fn [v] {"@value" (safe-value v)}) (property m)))
     t))
 
 (defn map-values [m property]
   (if (some? (property m))
-    (map (fn [v] {"@value" v}) (property m))
+    (map (fn [v] {"@value" (safe-value v)}) (property m))
     []))
 
 (defn assoc-object [t m target property mapping]
@@ -84,15 +97,6 @@
        (map (fn [[k v]]
               {:path (-> k str (string/replace-first ":/" "/"))
                :resource v}))))
-
-(defn safe-str [x]
-  (cond
-    (string? x) x
-    (keyword? x) (if (string/starts-with? (str x) ":/")
-                   (str "/" (name x))
-                   (name x))
-    :else (str x)))
-
 
 (defn extract-jsonld-literal
   ([node property f]

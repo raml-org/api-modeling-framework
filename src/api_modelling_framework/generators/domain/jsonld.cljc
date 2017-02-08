@@ -1,6 +1,5 @@
 (ns api-modelling-framework.generators.domain.jsonld
   (:require [api-modelling-framework.model.vocabulary :as v]
-            [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
@@ -11,7 +10,11 @@
 
 (defn to-jsonld-dispatch-fn [model context]
   (cond
-    (nil? model)                                 model
+    (nil? model)                                 nil
+
+    (satisfies? domain/DomainElement model)      :DomainElement
+
+    (satisfies? document/Includes model)         :Includes
 
     (and (satisfies? document/Extends model)
          (satisfies? document/Node model))       :Extends
@@ -73,13 +76,6 @@
       (utils/assoc-object m v/sorg:license domain/license (fn [x] (to-jsonld x context)))
       (utils/assoc-objects m v/http:endpoint domain/endpoints (fn [x] (to-jsonld x context)))
       (utils/clean-nils)))
-
-(defmethod to-jsonld :Tag [m context]
-  (jsonld-document-generator/to-jsonld m context))
-
-
-(defmethod to-jsonld :SourceMap [m context]
-  (jsonld-document-generator/to-jsonld m context))
 
 (defmethod to-jsonld :EndPoint [m context]
   (debug "Generating EndPoint " (document/id m))
@@ -148,6 +144,23 @@
       (utils/assoc-object m v/http:shape domain/shape identity)
       utils/clean-nils))
 
+;; Abstract domain elements are slightly different, we add the properties from
+;; Domain element, like the fragment node name, and then we merge the set of properties
+;; coming from the encoded element, that can be incomplete
+(defmethod to-jsonld :DomainElement [m context]
+  (debug "Generating DomainElement " (document/id m))
+  (let [domain-element-types  [v/http:Payload
+                               v/document:DomainElement
+                               v/document:AbstractDomainElement]
+        domain-element-properties (-> {}
+                                      (with-node-properties m context)
+                                      (utils/assoc-value m v/document:fragment-node domain/fragment-node)
+                                      utils/clean-nils)
+        encoded-element (to-jsonld (domain/to-domain-node m) context)
+        encoded-element-types (flatten [(get encoded-element "@type" [])])
+        encoded-element (assoc encoded-element "@type" (distinct (concat domain-element-types encoded-element-types)))]
+    (merge domain-element-properties encoded-element)))
+
 (defmethod to-jsonld :Extends [m context]
   (debug "Generating Extends " (document/id m))
   (-> {"@type" [v/document:ExtendRelationship]}
@@ -156,3 +169,28 @@
       (utils/assoc-value m v/document:label document/label)
       (assoc v/document:arguments (->> m document/arguments (map (fn [arg] {"@value" (platform/encode-json arg)}))))
       ))
+
+(defmethod to-jsonld :Includes [m context]
+  (debug "Generating Includes " (document/id m))
+  (-> {"@type" [v/document:IncludeRelationship]}
+      (with-node-properties m context)
+      (utils/assoc-link m v/document:target document/id)
+      (utils/assoc-value m v/document:label document/label)))
+
+(defmethod to-jsonld :SourceMap [m {:keys [source-maps?]}]
+  (debug "Generating SourceMap" (document/id m))
+  (->> {"@id" (document/id m)
+        "@type" [v/document:SourceMap]
+        v/document:location [{"@id" (document/source m)}]
+        v/document:tag      (map #(to-jsonld % source-maps?) (document/tags m))}
+       (utils/clean-nils)))
+
+(defmethod to-jsonld :Tag [m {:keys [source-maps?]}]
+  (debug "Generating Tag" (document/id m))
+  (->> {"@id" (document/id m)
+        "@type" [v/document:Tag]
+        v/document:tag-id [{"@value" (document/tag-id m)}]
+        v/document:tag-value [{"@value" (document/value m)}]}
+       (utils/clean-nils)))
+
+(defmethod to-jsonld nil [_ _] nil)

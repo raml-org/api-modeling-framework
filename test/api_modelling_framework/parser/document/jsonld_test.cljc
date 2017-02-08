@@ -4,6 +4,8 @@
             [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.generators.document.jsonld :as generator]
+            [api-modelling-framework.generators.document.raml :as raml-generator]
+            [api-modelling-framework.parser.document.raml :as raml-parser]
             [api-modelling-framework.parser.document.jsonld :as parser]
             [api-modelling-framework.utils :as utils]))
 
@@ -29,3 +31,15 @@
         parsed (parser/from-jsonld generated)]
     (is (utils/has-class? generated v/document:Fragment))
     (is (= doc parsed))))
+
+
+(deftest fragments-test-2
+  (let [fragment {(keyword "@location") "file://path/to/get_method.raml"
+                  (keyword "@data") {:displayName "get method"
+                                     :description "get description"
+                                     :protocols ["http"]}}
+        parsed (raml-parser/parse-ast fragment {})
+        json-generated (generator/to-jsonld parsed true)
+        model-parsed (parser/from-jsonld json-generated)
+        generated-fragment (raml-generator/to-raml model-parsed {})]
+    (is (= fragment generated-fragment))))
