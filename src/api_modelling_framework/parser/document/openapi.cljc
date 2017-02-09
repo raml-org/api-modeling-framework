@@ -32,7 +32,8 @@
                                                                        :document-parser parse-ast
                                                                        :is-fragment false})]
     (document/map->ParsedDocument (merge context
-                                         {:location location
+                                         {:id location
+                                          :location location
                                           :encodes encoded
                                           :references (vals @fragments)
                                           :document-type "OpenAPI"}))))
@@ -51,7 +52,8 @@
                                                                               :parsed-location (str location "#")
                                                                               :document-parser parse-ast
                                                                               :is-fragment true}))]
-    (document/map->ParsedFragment {:location location
+    (document/map->ParsedFragment {:id location
+                                   :location location
                                    :encodes encoded
                                    :references (vals @fragments)
                                    :document-type "OpenApi"})))

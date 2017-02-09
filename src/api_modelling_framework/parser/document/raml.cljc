@@ -27,18 +27,19 @@
         _ (debug "Parsing RAML Document at " location)
         fragments (or (:fragments context) (atom {}))
         ;; we parse traits and types and add the information into the context
-        references (domain-parser/process-traits (get node (keyword "@data")) {:location (str location "#")
-                                                                               :fragments fragments
-                                                                               :parsed-location (str location "#/declares")})
+        declarations(domain-parser/process-traits (get node (keyword "@data")) {:location (str location "#")
+                                                                                :fragments fragments
+                                                                                :parsed-location (str location "#/declares")})
         encoded (domain-parser/parse-ast (get node (keyword "@data")) {:location (str location "#")
                                                                        :fragments fragments
                                                                        :parsed-location (str location "#")
-                                                                       :references references
+                                                                       :references declarations
                                                                        :document-parser parse-ast
                                                                        :is-fragment false})]
-    (document/map->ParsedDocument {:location location
+    (document/map->ParsedDocument {:id location
+                                   :location location
                                    :encodes encoded
-                                   :declares (vals references)
+                                   :declares (vals declarations)
                                    :references (vals @fragments)
                                    :document-type "#%RAML 1.0"})))
 
@@ -57,7 +58,8 @@
                                                                         :parsed-location (str location "#")
                                                                         :document-parser parse-ast
                                                                         :is-fragment true}))]
-    (document/map->ParsedFragment {:location location
+    (document/map->ParsedFragment {:id location
+                                   :location location
                                    :encodes encoded
                                    :references (vals @fragments)
                                    :document-type "#%RAML 1.0 Fragment"})))

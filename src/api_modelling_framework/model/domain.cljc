@@ -72,7 +72,7 @@
   (responses [this] "HTTP responses"))
 
 (defrecord ParsedOperation [id sources name description extends
-                            method headers scheme accepts content-type responses request]
+                            method headers host scheme accepts content-type responses request]
   Operation
   (method [this] method)
   (request [this] request)

@@ -348,7 +348,7 @@
                                       :or {fragments (atom {})}
                                       :as context}]
   (let [fragment-location (get node (keyword "@location"))]
-    (swap! fragments (fn [acc] (prn (some? (get acc fragment-location)))
+    (swap! fragments (fn [acc]
                        (if (some? (get acc fragment-location))
                          acc
                          (assoc acc fragment-location (document-parser node context)))))

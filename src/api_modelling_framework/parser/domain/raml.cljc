@@ -122,7 +122,7 @@
 
 
 (defn parse-nested-resources [extracted-resources parent-path location parsed-location context]
-  (->> extracted-resources
+  (->> extracted-resources ;; this comes from utils/extract-nested-resources it returns a map with {:path :resource} keys
        (mapv (fn [i {:keys [path resource]}]
                (let [context (-> context
                                  (assoc :parent-path (str parent-path path))
@@ -245,6 +245,8 @@
                                         :properties properties})
       (domain/map->ParsedAPIDocumentation properties))))
 
+;; parent-path points to this resource concatenated path
+;; resource-path is the value in the RAML spec that can be only the last segment of the path
 (defmethod parse-ast :resource [node {:keys [location parsed-location is-fragment resource-path parent-path parent-id] :as context}]
   (debug "Parsing resource " location)
   (let [resource-id parsed-location
@@ -394,13 +396,13 @@
                                                 (assoc :location location)
                                                 (assoc :parsed-location response-id)))]
     (->> bodies
-         (mapv (fn [{:keys [media-type body-id location schema]}]
+         (mapv (fn [{:keys [media-type body-id location schema] :as data}]
                  (let [media-type-node-sources (if (some? media-type)
                                                  (generate-parse-node-sources location body-id)
                                                  [])]
                    (-> properties
                        (assoc :sources (concat node-parsed-source-map media-type-node-sources))
-                       (assoc :id body-id)
+                       (assoc :id (or body-id response-id))
                        (assoc :content-type [media-type])
                        (assoc :schema schema)
                        utils/clean-nils))))
@@ -439,7 +441,7 @@
                                       :or {fragments (atom {})}
                                       :as context}]
   (let [fragment-location (get node (keyword "@location"))]
-    (swap! fragments (fn [acc] (prn (some? (get acc fragment-location)))
+    (swap! fragments (fn [acc]
                        (if (some? (get acc fragment-location))
                          acc
                          (assoc acc fragment-location (document-parser node context)))))

@@ -69,7 +69,8 @@
            (map tags)
            flatten
            (filter #(= tag-id-to-find (tag-id %)))
-           flatten)
+           flatten
+           (filter some?))
       [])))
 
 (def file-parsed-tag "file-parsed")

@@ -9,7 +9,6 @@
              [debug]]))
 
 (defn to-jsonld-dispatch-fn [model source-maps?]
-  (prn model)
   (cond
     (nil? model)                                 model
 

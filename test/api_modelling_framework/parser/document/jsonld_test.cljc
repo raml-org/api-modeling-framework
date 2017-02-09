@@ -15,7 +15,8 @@
         doc (document/map->ParsedDocument {:location location
                                            :encodes nil
                                            :declares nil
-                                           :document-type "open-api"})
+                                           :document-type "open-api"
+                                           :id "http://test.com/location.json"})
         generated (generator/to-jsonld doc true)
         parsed (parser/from-jsonld generated)]
     (is (utils/has-class? generated v/document:Document))
@@ -26,7 +27,8 @@
   (let [location "http://test.com/location.json"
         doc (document/map->ParsedFragment {:location location
                                            :encodes nil
-                                           :document-type "open-api"})
+                                           :document-type "open-api"
+                                           :id "http://test.com/location.json"})
         generated (generator/to-jsonld doc true)
         parsed (parser/from-jsonld generated)]
     (is (utils/has-class? generated v/document:Fragment))

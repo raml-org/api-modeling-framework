@@ -72,8 +72,8 @@
   (->> children
        (filter (fn [child] (= (-> child
                                  (document/find-tag document/nested-resource-parent-id-tag)
-                                 first
-                                 document/value)
+                                 (->> (mapv document/value))
+                                 first)
                              id)))))
 
 (defn merge-children-resources

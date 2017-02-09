@@ -28,7 +28,8 @@
         source-map (first (map domain-parser/from-jsonld (get m v/document:source [])))
         document-type-tag (utils/find-tag source-map document/document-type-tag)
         document-type (if (some? document-type-tag) (document/value document-type-tag) nil)]
-    (document/map->ParsedDocument {:location location
+    (document/map->ParsedDocument {:id location
+                                   :location location
                                    :encodes encodes
                                    :references references
                                    :declares declares
@@ -47,7 +48,8 @@
         source-map (first (map domain-parser/from-jsonld (get m v/document:source [])))
         document-type-tag (utils/find-tag source-map document/document-type-tag)
         document-type (if (some? document-type-tag) (document/value document-type-tag) nil)]
-    (document/map->ParsedFragment {:location location
+    (document/map->ParsedFragment {:id location
+                                   :location location
                                    :encodes encodes
                                    :document-type document-type})))
 
