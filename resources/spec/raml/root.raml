@@ -1,0 +1,28 @@
+#%RAML 1.0
+title: GitHub API
+version: v3
+baseUri: https://api.github.com
+mediaType:  application/json
+securitySchemes:
+  oauth_2_0:
+    security: true
+types:
+  Gist:
+    type: object
+    properties:
+      name: string
+  Gists:
+    type: object
+    properties:
+      name: string
+resourceTypes:
+  collection:
+    type: object
+    properties:
+      name: string
+traits:
+  securedBy: [ oauth_2_0 ]
+/search:
+  /code:
+    type: collection
+    get:

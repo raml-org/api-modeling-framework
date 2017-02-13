@@ -13,6 +13,7 @@
             [api-modelling-framework.generators.domain.raml-test]
             [api-modelling-framework.generators.document.openapi-test]
             [api-modelling-framework.model.document-test]
+            [api-modelling-framework.integration-test]
             ))
 
 (doo-tests 'api-modelling-framework.parser.syntax.yaml-test
@@ -28,4 +29,5 @@
            'api-modelling-framework.generators.domain.raml-test
            'api-modelling-framework.generators.document.raml-test
            'api-modelling-framework.generators.document.openapi-test
+           'api-modelling-framework.integration-test
            )

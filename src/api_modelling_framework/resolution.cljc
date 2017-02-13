@@ -133,7 +133,11 @@
 
 (defmethod resolve domain/EndPoint [model ctx]
   (debug "Resolving EndPoint " (document/id model))
-  (let [operations (mapv #(resolve % (-> ctx (assoc domain/EndPoint model))) (domain/supported-operations model))]
+  (let [traits (or (document/extends model) [])
+        operations (->> (domain/supported-operations model)
+                        (mapv #(let [op-traits (:extends %)]
+                                 (assoc % :extends (concat op-traits traits))))
+                        (mapv #(resolve % (-> ctx (assoc domain/EndPoint model)))))]
     (domain/map->ParsedEndPoint
      (-> {:id (document/id model)
           :name (document/name model)

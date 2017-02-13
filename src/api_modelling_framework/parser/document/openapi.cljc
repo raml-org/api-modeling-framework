@@ -1,5 +1,7 @@
 (ns api-modelling-framework.parser.document.openapi
   (:require [clojure.string :as string]
+            [api-modelling-framework.model.syntax :as syntax]
+            [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.parser.domain.openapi :as domain-parser]
             [taoensso.timbre :as timbre
@@ -8,29 +10,29 @@
 
 (defn parse-ast-dispatch-function [node context]
   (cond
-    (and (some? (get node (keyword "@location")))
-         (some? (get node (keyword "@fragment")))) :root
+    (and (some? (syntax/<-location node))
+         (some? (syntax/<-fragment node))) :root
 
-    (some? (get node (keyword "@location")))       :fragment
+    (some? (syntax/<-location node))       :fragment
 
-    (and (nil? (get node (keyword "@location")))
-         (nil? (get node (keyword "@fragment"))))  (throw
-                                                    (new #?(:clj Exception :cljs js/Error)
-                                                         (str "Unsupported parsing unit, missing @location or @fragment information")))
+    (and (nil? (syntax/<-location node))
+         (nil? (syntax/<-fragment node)))  (throw
+                                            (new #?(:clj Exception :cljs js/Error)
+                                                 (str "Unsupported parsing unit, missing @location or @fragment information")))
 
     :else                                          nil))
 
 (defmulti parse-ast (fn [type node] (parse-ast-dispatch-function type node)))
 
 (defmethod parse-ast :root [node context]
-  (let [location (get node (keyword "@location"))
+  (let [location (syntax/<-location node)
         _ (debug "Parsing OpenAPI Document at " location)
         fragments (or (:fragments context) (atom {}))
-        encoded (domain-parser/parse-ast (get node (keyword "@data")) {:location (str location "#")
-                                                                       :fragments fragments
-                                                                       :parsed-location (str location "#")
-                                                                       :document-parser parse-ast
-                                                                       :is-fragment false})]
+        encoded (domain-parser/parse-ast (syntax/<-data node) {:location (str location "#")
+                                                               :fragments fragments
+                                                               :parsed-location (str location "#")
+                                                               :document-parser parse-ast
+                                                               :is-fragment false})]
     (document/map->ParsedDocument (merge context
                                          {:id location
                                           :location location
@@ -40,18 +42,18 @@
 
 (defmethod parse-ast :fragment [node context]
   (let [context (or context {})
-        location (get node (keyword "@location"))
+        location (syntax/<-location node)
         _ (debug "Parsing RAML Fragment at " location)
         fragments (or (:fragments context) (atom {}))
         ;; @todo is this illegal?
         references (or (:references context) {})
-        encoded (domain-parser/parse-ast (get node (keyword "@data")) (merge context
-                                                                             {:location (str location "#")
-                                                                              :fragments fragments
-                                                                              :references references
-                                                                              :parsed-location (str location "#")
-                                                                              :document-parser parse-ast
-                                                                              :is-fragment true}))]
+        encoded (domain-parser/parse-ast (syntax/<-data node) (merge context
+                                                                     {:location (str location "#")
+                                                                      :fragments fragments
+                                                                      :references references
+                                                                      :parsed-location (str location "#")
+                                                                      :document-parser parse-ast
+                                                                      :is-fragment true}))]
     (document/map->ParsedFragment {:id location
                                    :location location
                                    :encodes encoded

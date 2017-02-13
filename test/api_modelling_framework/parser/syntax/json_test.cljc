@@ -71,7 +71,7 @@
 
 (deftest json-parse-1-test
   (async done
-         (go (let [result (<! (json/parse-json "resources/twitter.json"))]
+         (go (let [result (<! (json/parse-file "resources/twitter.json"))]
                (is (= "file://./resources/twitter.json"
                       (get result (keyword "@location"))))
                (is (some? (get result (keyword "@data"))))
@@ -80,7 +80,7 @@
 
 (deftest json-parse-2-test
   (async done
-         (go (let [result (<! (json/parse-json "resources/addresses/api.json"))]
+         (go (let [result (<! (json/parse-file "resources/addresses/api.json"))]
                (is (= "file://./resources/addresses/aux.json#/definitions/address"
                       (-> result
                           (get (keyword "@data"))
@@ -100,7 +100,7 @@
 
 (deftest json-parse-3-test
   (async done
-         (go (let [result (<! (json/parse-json "resources/addresses/api2.json"))]
+         (go (let [result (<! (json/parse-file "resources/addresses/api2.json"))]
                (is (= "file://./resources/addresses/aux2.json#/definitions/address"
                       (-> result
                           (get (keyword "@data"))

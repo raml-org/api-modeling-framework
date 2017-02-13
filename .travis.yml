@@ -4,17 +4,18 @@ install:
   - lein npm install
 
 script:
-  - lein test  api-modelling-framework.parser.syntax.yaml-test
-  - lein test  api-modelling-framework.parser.syntax.json-test
-  - lein test  api-modelling-framework.model.document-test
-  - lein test  api-modelling-framework.parser.document.jsonld-test
-  - lein test  api-modelling-framework.parser.domain.jsonld-test
-  - lein test  api-modelling-framework.parser.domain.raml-test
-  - lein test  api-modelling-framework.parser.domain.openapi-test
-  - lein test  api-modelling-framework.generators.document.jsonld-test
-  - lein test  api-modelling-framework.generators.domain.jsonld-test
-  - lein test  api-modelling-framework.generators.domain.openapi-test
-  - lein test  api-modelling-framework.generators.domain.raml-test
-  - lein test  api-modelling-framework.generators.document.raml-test
-  - lein test  api-modelling-framework.generators.document.openapi-test
+  - lein test api-modelling-framework.parser.syntax.yaml-test
+  - lein test api-modelling-framework.parser.syntax.json-test
+  - lein test api-modelling-framework.model.document-test
+  - lein test api-modelling-framework.parser.document.jsonld-test
+  - lein test api-modelling-framework.parser.domain.jsonld-test
+  - lein test api-modelling-framework.parser.domain.raml-test
+  - lein test api-modelling-framework.parser.domain.openapi-test
+  - lein test api-modelling-framework.generators.document.jsonld-test
+  - lein test api-modelling-framework.generators.domain.jsonld-test
+  - lein test api-modelling-framework.generators.domain.openapi-test
+  - lein test api-modelling-framework.generators.domain.raml-test
+  - lein test api-modelling-framework.generators.document.raml-test
+  - lein test api-modelling-framework.generators.document.openapi-test
+  - lein test api-modelling-framework.integration-test
   - lein doo node test once

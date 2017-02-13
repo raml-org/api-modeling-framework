@@ -1,5 +1,6 @@
 (ns api-modelling-framework.parser.domain.raml
   (:require [api-modelling-framework.model.vocabulary :as v]
+            [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.parser.domain.raml-types-shapes :as shapes]
@@ -66,7 +67,7 @@
 (defn parse-ast-dispatch-function [node context]
   ;; if a type hint is available, we use that information to dispatch, otherwise we try to guess from properties
   (cond
-    (some? (get node (keyword "@location"))) :fragment
+    (some? (syntax/<-location node)) :fragment
     (some? (:type-hint context))             (:type-hint context)
     :else                                    (guess-type node)))
 
@@ -81,7 +82,9 @@
   (if (nil? parameters) nil
       (->> parameters
            (mapv (fn [[header-name header-value]]
-                   (let [header-type (get header-value :type "string")
+
+                   (let [header-value (if (string? header-value) {:type header-value} header-value)
+                         header-type (get header-value :type "string")
                          header-value (assoc header-value :type header-type)
                          parsed-location (str location "/" location-segment "/" (url/url-encode (utils/safe-str header-name)))
                          location (str location "/" location-segment "/" (url/url-encode (utils/safe-str header-name)))
@@ -245,42 +248,6 @@
                                         :properties properties})
       (domain/map->ParsedAPIDocumentation properties))))
 
-;; parent-path points to this resource concatenated path
-;; resource-path is the value in the RAML spec that can be only the last segment of the path
-(defmethod parse-ast :resource [node {:keys [location parsed-location is-fragment resource-path parent-path parent-id] :as context}]
-  (debug "Parsing resource " location)
-  (let [resource-id parsed-location
-        nested-resources (-> node
-                             (utils/extract-nested-resources)
-                             (parse-nested-resources parent-path location resource-id (assoc context :parent-id resource-id)))
-        children-tags (nested-resources-tags is-fragment
-                                             resource-id
-                                             resource-path
-                                             location
-                                             parent-id
-                                             nested-resources)
-        operations (->> [:get :patch :put :post :delete :options :head]
-                        (mapv (fn [op] (if-let [node (get node op)]
-                                        (parse-ast node (-> context
-                                                            (assoc parsed-location resource-id)
-                                                            (assoc :method (name op))
-                                                            (assoc :type-hint :method)))
-                                        nil)))
-                        (filterv some?))
-        properties {:path parent-path
-                    :sources (concat (generate-parse-node-sources location resource-id)
-                                     children-tags)
-                    :id resource-id
-                    :name (:displayName node)
-                    :description (:description node)
-                    :supported-operations operations}]
-    (concat (if is-fragment
-              [(domain/map->ParsedDomainElement {:id resource-id
-                                                 :fragment-node :parsed-end-point
-                                                 :properties properties})]
-              [(domain/map->ParsedEndPoint properties)])
-            (or nested-resources []))))
-
 (defn generate-is-trait-sources [trait-name location parsed-location]
   (let [source-map-id (str parsed-location "/source-map/is-trait")
         is-trait-tag (document/->IsTraitTag source-map-id trait-name)]
@@ -307,6 +274,44 @@
                    (throw (new #?(:clj Exception :cljs js/Error)
                                (str "Cannot find trait '" trait-name "' to extend in node '" resource-id "'")))))
                (range 0 (count traits))))))
+
+;; parent-path points to this resource concatenated path
+;; resource-path is the value in the RAML spec that can be only the last segment of the path
+(defmethod parse-ast :resource [node {:keys [location parsed-location is-fragment resource-path parent-path parent-id references] :as context}]
+  (debug "Parsing resource " location)
+  (let [resource-id parsed-location
+        traits (parse-traits resource-id node references (assoc context :parsed-location resource-id))
+        nested-resources (-> node
+                             (utils/extract-nested-resources)
+                             (parse-nested-resources parent-path location resource-id (assoc context :parent-id resource-id)))
+        children-tags (nested-resources-tags is-fragment
+                                             resource-id
+                                             resource-path
+                                             location
+                                             parent-id
+                                             nested-resources)
+        operations (->> [:get :patch :put :post :delete :options :head]
+                        (mapv (fn [op] (if-let [node (get node op)]
+                                        (parse-ast node (-> context
+                                                            (assoc :parsed-location resource-id)
+                                                            (assoc :method (name op))
+                                                            (assoc :type-hint :method)))
+                                        nil)))
+                        (filterv some?))
+        properties (utils/clean-nils {:path parent-path
+                                      :sources (concat (generate-parse-node-sources location resource-id)
+                                                       children-tags)
+                                      :id resource-id
+                                      :name (:displayName node)
+                                      :description (:description node)
+                                      :supported-operations operations
+                                      :extends nested-resources})]
+    (concat (if is-fragment
+              [(domain/map->ParsedDomainElement {:id resource-id
+                                                 :fragment-node :parsed-end-point
+                                                 :properties properties})]
+              [(domain/map->ParsedEndPoint properties)])
+            (or nested-resources []))))
 
 (defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method references] :as context}]
   (debug "Parsing method " method)
@@ -440,11 +445,13 @@
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                       :or {fragments (atom {})}
                                       :as context}]
-  (let [fragment-location (get node (keyword "@location"))]
+  (let [fragment-location (syntax/<-location node)]
     (swap! fragments (fn [acc]
                        (if (some? (get acc fragment-location))
                          acc
-                         (assoc acc fragment-location (document-parser node context)))))
+                         (do
+
+                           (assoc acc fragment-location (document-parser node context))))))
     (let [expected-property (if type-hint (name type-hint) "includes")
           parsed-location (str parsed-location "/includes")]
       (document/map->ParsedIncludes {:id parsed-location

@@ -1,5 +1,6 @@
 (ns api-modelling-framework.parser.domain.openapi
   (:require [clojure.string :as string]
+            [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.parser.domain.json-schema-shapes :as shapes]
@@ -84,7 +85,7 @@
 
 (defn parse-ast-dispatch-function [node context]
   (cond
-    (some? (get node (keyword "@location"))) :fragment
+    (some? (syntax/<-location node)) :fragment
     (nil? node)                              :undefined
     (some? (:type-hint context))             (:type-hint context)
     :else                                    (guess-type node)))
@@ -347,7 +348,7 @@
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                       :or {fragments (atom {})}
                                       :as context}]
-  (let [fragment-location (get node (keyword "@location"))]
+  (let [fragment-location (syntax/<-location node)]
     (swap! fragments (fn [acc]
                        (if (some? (get acc fragment-location))
                          acc

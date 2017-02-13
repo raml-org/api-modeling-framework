@@ -3,6 +3,10 @@
             [clojure.string :as string]
             [cheshire.core :as json]))
 
+(defn error? [x]
+  (or (instance? Exception x)
+      (some? (:error x))))
+
 (comment
   (defn <?? [c]
     (let [returned (<!! c)]
@@ -27,7 +31,12 @@
                    location)]
     (go (try (slurp (first (string/split location #"#")))
              (catch Exception ex
-               ex)))))
+               {:error ex})))))
+
+(defn write-location [location data]
+  (go (try (spit (first (string/split location #"#")) data)
+           (catch Exception ex
+             {:error ex}))))
 
 (defn decode-json [s]
   (json/parse-string s))
@@ -36,3 +45,6 @@
   (json/generate-string s))
 
 (def Err Exception)
+
+(defn ->clj [x] x)
+(defn <-clj [x] x)

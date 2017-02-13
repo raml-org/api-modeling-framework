@@ -11,7 +11,7 @@
 
 (deftest load-yaml-test
   (async done
-         (go (let [result (<! (yaml/parse-yaml "resources/world-music-api/api.raml"))]
+         (go (let [result (<! (yaml/parse-file "resources/world-music-api/api.raml"))]
                (is (not (nil? result)))
                (is (-> result
                        (get (keyword "@location"))

@@ -33,39 +33,47 @@ var resolvePath = function (location, path) {
     }
 };
 
-var cacheFragments = function (file, cb, pending) {
+var updateFragments = function (file, data, pending, cb) {
+    var matches = data.match(/!include\s+(.+)/g) || [];
+    var files = matches.map(function (f) {
+        var filePath = f.split(/!include\s+/)[1];
+        var location = resolvePath(file.location, filePath);
+        return {
+            "path": filePath,
+            "location": location
+        };
+    });
+    pending = pending.concat(files);
+
+    FRAGMENTS_CACHE[file.path || file.location] = {
+        "data": data,
+        "location": file.location
+    };
+
+    if (pending.length === 0) {
+        cb(null, FRAGMENTS_CACHE);
+    } else {
+        var next = pending.shift();
+        cacheFragments(next, cb, pending);
+    }
+};
+
+var cacheFragments = function (fileOrData, cb, pending) {
     if (pending == null) {
         pending = [];
     }
 
-    resolveFile(file.location, function (err, data) {
-        if (err) {
-            cb(err);
-        } else {
-            var matches = data.match(/!include\s+(.+)/g) || [];
-            var files = matches.map(function (f) {
-                var filePath = f.split(/!include\s+/)[1];
-                var location = resolvePath(file.location, filePath);
-                return {
-                    "path": filePath,
-                    "location": location
-                };
-            });
-            pending = pending.concat(files);
-
-            FRAGMENTS_CACHE[file.path || file.location] = {
-                "data": data,
-                "location": file.location
-            };
-
-            if (pending.length === 0) {
-                cb(null, FRAGMENTS_CACHE);
+    if (fileOrData.data != null) {
+        updateFragments(fileOrData, fileOrData.data, pending, cb);
+    } else {
+        resolveFile(fileOrData.location, function (err, data) {
+            if (err) {
+                cb(err);
             } else {
-                var next = pending.shift();
-                cacheFragments(next, cb, pending);
+                updateFragments(fileOrData, data, pending, cb);
             }
-        }
-    });
+        });
+    }
 
 };
 
@@ -110,7 +118,7 @@ var FragmentType = new yaml.Type("!include", {
 
 var FRAGMENT_SCHEMA = yaml.Schema.create([FragmentType]);
 
-var parseYaml = function (location, cb) {
+var parseYamlFile = function (location, cb) {
     global.FRAGMENTS_CACHE = {};
     cacheFragments({ "location": location }, function (err, data) {
         try {
@@ -125,4 +133,20 @@ var parseYaml = function (location, cb) {
     });
 };
 
-module.exports.parseYaml = parseYaml;
+var parseYamlString = function (location, data, cb) {
+    global.FRAGMENTS_CACHE = {};
+    cacheFragments({ "location": location, "data": data }, function (err, data) {
+        try {
+            var loaded = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
+            var result = { "@data": loaded };
+            result["@location"] = location;
+            result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
+            cb(null, result);
+        } catch (e) {
+            cb(e);
+        }
+    });
+};
+
+module.exports.parseYamlFile = parseYamlFile;
+module.exports.parseYamlString = parseYamlString;

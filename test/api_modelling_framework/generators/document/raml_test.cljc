@@ -27,7 +27,8 @@
                                                             (keyword "@data") {:description "get description"
                                                                                :protocols ["http"]
                                                                                :responses {"200" {:description "200 response"}
-                                                                                           "400" {:description "400 response"}}}}}}}
+                                                                                           "400" {:description "400 response"}}}
+                                                            (keyword "@fragment") "#%RAML 1.0 Fragment"}}}}
         parsed (parser/parse-ast input {})
         generated (generator/to-raml parsed {})]
     (is (= generated input))))

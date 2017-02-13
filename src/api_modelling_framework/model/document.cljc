@@ -228,7 +228,7 @@
   Node
   (id [this] location)
   (name [this] location)
-  (description [this] (str "Document parsed from " location " encoding " document-type " information "))
+  (description [this] nil)
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])
@@ -244,7 +244,7 @@
   Node
   (id [this] location)
   (name [this] location)
-  (description [this] (str "Fragment parsed from " location " encoding " document-type " information "))
+  (description [this] nil)
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])

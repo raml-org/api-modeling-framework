@@ -1,5 +1,6 @@
 (ns api-modelling-framework.generators.document.openapi
   (:require [api-modelling-framework.model.vocabulary :as v]
+            [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.generators.domain.openapi :as domain-generator]
@@ -17,7 +18,9 @@
 
     (satisfies? document/Fragment model)          :fragment
 
-    (satisfies? document/Module model)            :library))
+    (satisfies? document/Module model)            :library
+
+    :else                                         :unknown))
 
 
 (defmulti to-openapi (fn [model ctx] (to-openapi-dispatch-fn model ctx)))
@@ -35,9 +38,9 @@
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
                     (assoc :document-generator to-openapi))]
-    {(keyword "@location") (document/location model)
-     (keyword "@data") (domain-generator/to-openapi (document/encodes model) context)
-     (keyword "@fragment") "OpenAPI"}))
+    {syntax/at-location (document/location model)
+     syntax/at-data (domain-generator/to-openapi (document/encodes model) context)
+     syntax/at-fragment "OpenAPI"}))
 
 
 (defmethod to-openapi :fragment [model ctx]
@@ -53,5 +56,9 @@
                     (assoc :expanded-fragments (or (:expanded-fragments ctx)
                                                    (atom {})))
                     (assoc :document-generator to-openapi))]
-    {(keyword "@location") (document/location model)
-     (keyword "@data") (domain-generator/to-openapi (domain/to-domain-node (document/encodes model)) context)}))
+    {syntax/at-location (document/location model)
+     syntax/at-data (domain-generator/to-openapi (domain/to-domain-node (document/encodes model)) context)}))
+
+(defmethod to-openapi :unknown [model ctx]
+  (debug "Unknown document fragment trying domain model generator")
+  (domain-generator/to-openapi model ctx))

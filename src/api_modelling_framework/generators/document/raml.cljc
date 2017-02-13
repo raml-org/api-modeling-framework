@@ -52,6 +52,12 @@
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (or (:expanded-fragments ctx)
                                                    (atom {})))
-                    (assoc :document-generator to-raml))]
-    {(keyword "@location") (document/location model)
-     (keyword "@data") (domain-generator/to-raml (domain/to-domain-node (document/encodes model)) context)}))
+                    (assoc :type-hint :method)
+                    (assoc :document-generator to-raml))
+        fragment-type-tag (first (document/find-tag model document/document-type-tag))
+        fragment-type (if (some? fragment-type-tag) (document/value fragment-type-tag) nil)]
+    (utils/clean-nils {(keyword "@location") (document/location model)
+                       (keyword "@data") (utils/clean-nils
+                                          (merge (domain-generator/to-raml (domain/to-domain-node (document/encodes model)) context)
+                                                 {:usage (document/description model)}))
+                       (keyword "@fragment") fragment-type})))

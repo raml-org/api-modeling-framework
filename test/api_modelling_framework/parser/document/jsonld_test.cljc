@@ -44,4 +44,5 @@
         json-generated (generator/to-jsonld parsed true)
         model-parsed (parser/from-jsonld json-generated)
         generated-fragment (raml-generator/to-raml model-parsed {})]
-    (is (= fragment generated-fragment))))
+    (is (= ((keyword "@fragment") generated-fragment) "#%RAML 1.0 Fragment"))
+    (is (= fragment (dissoc generated-fragment (keyword "@fragment"))))))
