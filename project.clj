@@ -21,7 +21,7 @@
 
   :cljsbuild {:builds {:default {:source-paths ["src"]
                                  :figwheel true
-                                 :compiler {:main api-modelling-framework.core.js
+                                 :compiler {:main api-modelling-framework.core
                                             :output-dir "node/engine"
                                             :output-to "node/engine/index.js"
                                             :optimizations :none,

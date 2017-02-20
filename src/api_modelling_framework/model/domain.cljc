@@ -181,4 +181,5 @@
       :parsed-operation         (map->ParsedOperation properties)
       :trait                    (map->ParsedOperation properties)
       :parsed-end-point         (map->ParsedEndPoint properties)
+      :parsed-includes          (document/map->ParsedIncludes properties)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Unknown fragment " fragment-node))))))

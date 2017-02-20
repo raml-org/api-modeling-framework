@@ -199,6 +199,20 @@
   (valid? [this] true)
   (extends [this] []))
 
+(def extends-trait-tag "is-trait-tag")
+
+(defrecord ExtendsTraitTag [id trait-name]
+  Tag
+  (tag-id [this] extends-trait-tag)
+  (value [this] trait-name)
+  Node
+  (id [this] id)
+  (name [this] "Extends trait tag")
+  (description [this] (str "Extends trait tag with name " trait-name))
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] []))
+
 (defprotocol Fragment
   "Units encoding domain fragments"
   (encodes [this] "Domain description encoded into this document unit"))

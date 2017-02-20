@@ -29,6 +29,13 @@
                      [clojure.walk :refer [keywordize-keys]]
                      [taoensso.timbre :as timbre :refer-macros [debug]])))
 
+(defn -registerInterface [] nil)
+
+#?(:cljs (set! *main-cli-fn* -registerInterface))
+
+#?(:cljs (defn ^:export from_clj [x] (clj->js x)))
+#?(:cljs (defn ^:export to-clj [x] (js->clj x)))
+
 (defprotocol Model
   (^:export document-model [this] "returns the domain model for the parsed document")
   (^:export domain-model [this] "Resolves the document model generating a domain model"))

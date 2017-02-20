@@ -176,6 +176,11 @@
                                    fragment-location
                                    [inline-fragment-parsed-tag])]))
 
+(defn generate-is-trait-sources [trait-name location parsed-location]
+  (let [source-map-id (str parsed-location "/source-map/is-trait")
+        is-trait-tag (document/->IsTraitTag source-map-id trait-name)]
+    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-trait-tag])]))
+
 (defn process-traits [node {:keys [location parsed-location] :as context}]
   (debug "Processing " (count (:traits node [])) "traits")
   (let [location (str location "/traits")
@@ -190,7 +195,11 @@
                                                                   (assoc :location location)
                                                                   (assoc :is-fragment true)
                                                                   (assoc :type-hint :method)))
-                         parsed-trait (assoc trait-fragment :fragment-node :trait)]
+                         sources (or (-> trait-fragment :properties :sources) [])
+                         sources (concat sources (generate-is-trait-sources fragment-name
+                                                                            (str location "/" fragment-name)
+                                                                            (str parsed-location "/" fragment-name)))
+                         parsed-trait (assoc-in trait-fragment [:properties :sources] sources)]
                      (assoc acc (keyword trait-name) parsed-trait)))
                  {}))))
 
@@ -248,10 +257,10 @@
                                         :properties properties})
       (domain/map->ParsedAPIDocumentation properties))))
 
-(defn generate-is-trait-sources [trait-name location parsed-location]
-  (let [source-map-id (str parsed-location "/source-map/is-trait")
-        is-trait-tag (document/->IsTraitTag source-map-id trait-name)]
-    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-trait-tag])]))
+(defn generate-extends-trait-sources [trait-name location parsed-location]
+  (let [source-map-id (str parsed-location "/source-map/extend-trait")
+        extends-trait-tag (document/->ExtendsTraitTag source-map-id trait-name)]
+    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [extends-trait-tag])]))
 
 (defn parse-traits [resource-id node references {:keys [location parsed-location]}]
   (let [traits (flatten [(:is node [])])]
@@ -264,7 +273,7 @@
                        [extend-id (str parsed-location "/extends/" (url/url-encode trait-name))
                         extend-location (str location "/is/" i)
                         node-parsed-source-map (generate-parse-node-sources extend-location extend-id)
-                        is-trait-source-map (generate-is-trait-sources trait-name extend-location extend-id)]
+                        is-trait-source-map (generate-extends-trait-sources trait-name extend-location extend-id)]
                      (document/map->ParsedExtends {:id extend-id
                                                    :sources (concat node-parsed-source-map
                                                                     is-trait-source-map)
@@ -453,9 +462,14 @@
 
                            (assoc acc fragment-location (document-parser node context))))))
     (let [expected-property (if type-hint (name type-hint) "includes")
-          parsed-location (str parsed-location "/includes")]
-      (document/map->ParsedIncludes {:id parsed-location
-                                     :label "!includes"
-                                     :target fragment-location}))))
+          parsed-location (str parsed-location "/includes")
+          properties {:id parsed-location
+                      :label "!includes"
+                      :target fragment-location}]
+      (if is-fragment
+        (domain/map->ParsedDomainElement {:id parsed-location
+                                          :fragment-node :parsed-includes
+                                          :properties properties})
+        (document/map->ParsedIncludes properties)))))
 
 (defmethod parse-ast :undefined [_ _] nil)

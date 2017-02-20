@@ -94,13 +94,13 @@
 
 (defn model->traits [{:keys [references] :as ctx}]
   (->> references
-       (filter #(= :trait (domain/fragment-node %)))
+       (filter #(not (empty? (document/find-tag % document/extends-trait-tag))))
+       ;(filter #(= :trait (domain/fragment-node %)))
        (map (fn [reference]
               (let [trait-name (-> reference
-                                   document/id
-                                   (string/split #"/")
-                                   last
-                                   (url/url-decode)
+                                   (document/find-tag document/extends-trait-tag)
+                                   first
+                                   (document/value)
                                    keyword)
                     method (domain/to-domain-node reference)
                     generated (to-raml method ctx)]
