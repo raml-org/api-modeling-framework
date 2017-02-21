@@ -189,11 +189,15 @@
 
 (deftest parser-ast-type-scalars
   (let [int-type {:type "integer"}
+        int-type-with-comment  {:type "integer"
+                                :displayName "AnInteger"
+                                :description "This is an integer"}
         string-type {:type "string"}
         time-only-type {:type "time-only"}
         date-only-type {:type "date-only"}]
-    (doseq [raml-type [int-type string-type time-only-type date-only-type]]
-      (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
+    (doseq [raml-type [int-type int-type-with-comment string-type time-only-type date-only-type]]
+      (let [shape (raml-parser/parse-ast raml-type {:type-hint :type
+                                                    :parsed-location "/response"
                                                     :location "/response"})]
         (is (= raml-type (raml-genenerator/to-raml shape {})))))))
 
@@ -214,6 +218,7 @@
                          (keyword "(is-tuple)") true}]
     (doseq [raml-type [int-type string-type time-only-type date-only-type tuple-type]]
       (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
+                                                    :type-hint :type
                                                     :location "/response"})]
         (is (= raml-type (raml-genenerator/to-raml shape {})))))))
 
@@ -232,6 +237,7 @@
                                     :b string-type}}]
     (doseq [raml-type [object-type-1 object-type-2]]
       (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
+                                                    :type-hint :type
                                                     :location "/response"})]
         (is (= raml-type (raml-genenerator/to-raml shape {})))))))
 

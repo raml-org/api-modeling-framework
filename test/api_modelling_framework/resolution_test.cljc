@@ -40,14 +40,14 @@
         generated-raml (raml-generator/to-raml resolved {})
         generated-openapi (openapi-genenerator/to-openapi resolved {})]
     ;; testing generted raml
-    (is (= [:displayName :get :post] (-> generated-raml (get (keyword "/users")) keys)))
+    (is (= (sort [:displayName :get :post]) (sort (-> generated-raml (get (keyword "/users")) keys))))
     (is (= ["http"] (-> generated-raml (get (keyword "/users")) :get :protocols)))
     (is (= ["200" "400"] (-> generated-raml (get (keyword "/users")) :get :responses keys)))
     (is (= ["http"] (-> generated-raml (get (keyword "/users")) :post :protocols)))
     (is (= ["201" "400"] (-> generated-raml (get (keyword "/users")) :post :responses keys)))
-    (is (= {:type "float"} (-> generated-raml (get (keyword "/users")) :post :queryParameters :start)))
+    (is (= {:type "number"} (-> generated-raml (get (keyword "/users")) :post :queryParameters :start)))
     ;; testing generted jsonld
-    (is (= [:get :post] (-> generated-openapi :paths (get (keyword "/users")) keys)))
+    (is (= (sort [:get :post]) (sort (-> generated-openapi :paths (get (keyword "/users")) keys))))
     (is (= ["http"] (-> generated-openapi :paths (get (keyword "/users")) :get :schemes)))
     (is (= ["200" "400"] (-> generated-openapi :paths (get (keyword "/users")) :get :responses keys)))
     (is (= ["http"] (-> generated-openapi :paths (get (keyword "/users")) :post :schemes)))
@@ -56,8 +56,8 @@
     ;; testing generted JSON-LD
     (is (= "/users" (-> generated-jsonld (get v/http:endpoint) first (get v/http:path) first (get "@value"))))
     (is (= 2 (-> generated-jsonld (get v/http:endpoint) first (get v/hydra:supportedOperation) count)))
-    (is (= ["get" "post"] (-> generated-jsonld (get v/http:endpoint) first (get v/hydra:supportedOperation)
-                              (->> (map #(-> % (get v/hydra:method) first (get "@value")))))))
+    (is (= (sort ["get" "post"]) (sort (-> generated-jsonld (get v/http:endpoint) first (get v/hydra:supportedOperation)
+                                           (->> (map #(-> % (get v/hydra:method) first (get "@value"))))))))
     (is (= ["200" "400" "201" "400"])
         (-> generated-jsonld (get v/http:endpoint) first (get v/hydra:supportedOperation)
             (->> (map #(-> % (get v/hydra:returns))))

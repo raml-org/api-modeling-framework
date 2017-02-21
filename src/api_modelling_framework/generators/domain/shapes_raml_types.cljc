@@ -15,6 +15,16 @@
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
 
+(defn parse-generic-keywords [shape raml-type]
+  (->> shape
+       (map (fn [[p _]]
+              (condp = p
+                (v/hydra-ns "title")       #(assoc % :displayName (utils/extract-jsonld-literal shape (v/hydra-ns "title")))
+                (v/hydra-ns "description") #(assoc % :description (utils/extract-jsonld-literal shape (v/hydra-ns "description")))
+                identity)))
+       (reduce (fn [acc p] (p acc)) raml-type)
+       (utils/clean-nils)))
+
 (defn parse-constraints [raml-type shape]
   (->> shape
        (map (fn [[p v]]
@@ -24,7 +34,9 @@
                 (v/sh-ns "pattern")         #(assoc % :pattern   v)
                 (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems v)
                 identity)))
-       (reduce (fn [acc p] (p acc)) raml-type)))
+       (reduce (fn [acc p] (p acc)) raml-type)
+       (parse-generic-keywords shape)
+       (utils/clean-nils)))
 
 
 (defmethod parse-shape (v/shapes-ns "Scalar") [shape context]
@@ -34,7 +46,7 @@
                     (get "@id"))
         raml-type (condp = sh-type
                     (v/xsd-ns "string")           {:type "string"}
-                    (v/xsd-ns "float")            {:type "float"}
+                    (v/xsd-ns "float")            {:type "number"}
                     (v/xsd-ns "integer")          {:type "integer"}
                     (v/xsd-ns "boolean")          {:type "boolean"}
                     (v/shapes-ns "null")          {:type "null"}

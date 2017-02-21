@@ -20,7 +20,7 @@
    :body #{:method :response}
    :delete #{:resource}
    :description #{:root :resource :method :response :type}
-   :displayName #{:resource :method}
+   :displayName #{:resource :method :type}
    :documentation #{:root}
    :get #{:resource}
    :head #{:resource}
@@ -47,7 +47,6 @@
    :uses #{:root}
    :version #{:root}
    })
-
 
 (defn guess-type-from-predicates [x]
   (->> [(fn [x] (when (string/starts-with? (utils/safe-str x) "/") #{:root :resource}))
@@ -79,7 +78,7 @@
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [node-parsed-tag])]))
 
 (defn parse-parameters [type location-segment parameters {:keys [location parsed-location is-fragment] :as context}]
-  (if (nil? parameters) nil
+  (if (nil? parameters) []
       (->> parameters
            (mapv (fn [[header-name header-value]]
 
@@ -265,8 +264,9 @@
 (defn parse-traits [resource-id node references {:keys [location parsed-location]}]
   (let [traits (flatten [(:is node [])])]
     (->> traits
-         (mapv (fn [trait-name] [trait-name (-> references
-                                               (get (keyword trait-name)))]))
+         (mapv (fn [trait-name]
+                 [trait-name (-> references
+                                 (get (keyword trait-name)))]))
          (mapv (fn [i [trait-name trait]]
                  (if (some? trait)
                    (let
@@ -299,12 +299,13 @@
                                              location
                                              parent-id
                                              nested-resources)
-        operations (->> [:get :patch :put :post :delete :options :head]
-                        (mapv (fn [op] (if-let [node (get node op)]
-                                        (parse-ast node (-> context
-                                                            (assoc :parsed-location resource-id)
-                                                            (assoc :method (name op))
-                                                            (assoc :type-hint :method)))
+        operations (->> node
+                        keys
+                        (mapv (fn [op] (if-let [op (#{:get :post :patch :put :delete :head :options} op)]
+                                        (parse-ast (get node op {}) (-> context
+                                                                        (assoc :parsed-location resource-id)
+                                                                        (assoc :method (name op))
+                                                                        (assoc :type-hint :method)))
                                         nil)))
                         (filterv some?))
         properties (utils/clean-nils {:path parent-path
@@ -314,7 +315,7 @@
                                       :name (:displayName node)
                                       :description (:description node)
                                       :supported-operations operations
-                                      :extends nested-resources})]
+                                      :extends traits})]
     (concat (if is-fragment
               [(domain/map->ParsedDomainElement {:id resource-id
                                                  :fragment-node :parsed-end-point
@@ -332,7 +333,10 @@
                          (assoc :location location))
         node-parsed-source-map (generate-parse-node-sources location method-id)
         headers (parse-parameters "header" "headers" (:headers node) next-context)
-        query-parameters (parse-parameters "query" "queryParameters"(:queryParameters node) next-context)
+        query-parameters (parse-parameters "query" "queryParameters" (:queryParameters node) next-context)
+        ;; @todo we need to fix the problem with the query-string
+        ;;query-string (parse-parameters "query" "queryString" (:queryString node) next-context)
+        query-string []
         request-id (str method-id "/request")
         traits (parse-traits method-id node references next-context)
         body (parse-ast (:body node) (-> context
@@ -340,10 +344,10 @@
                                          (assoc :location (str location "/body"))
                                          (assoc :parsed-location (str parsed-location "/body"))
                                          (assoc :type-hint :type)))
-        request (domain/map->ParsedRequest {:id request-id
-                                            :sources (generate-parse-node-sources location request-id)
-                                            :parameters query-parameters
-                                            :schema body})
+        request (domain/map->ParsedRequest (utils/clean-nils {:id request-id
+                                                              :sources (generate-parse-node-sources location request-id)
+                                                              :parameters (concat  query-parameters query-string)
+                                                              :schema body}))
         responses (parse-ast (:responses node {}) (-> next-context
                                                       (assoc :type-hint :responses)))
         properties (-> {:id method-id

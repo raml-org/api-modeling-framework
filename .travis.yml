@@ -4,6 +4,7 @@ install:
   - lein npm install
 
 script:
+  - lein test api-modelling-framework.utils-test
   - lein test api-modelling-framework.parser.syntax.yaml-test
   - lein test api-modelling-framework.parser.syntax.json-test
   - lein test api-modelling-framework.model.document-test

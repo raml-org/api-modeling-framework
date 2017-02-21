@@ -1,5 +1,6 @@
 (ns api-modelling-framework.runner
   (:require [doo.runner :refer-macros [doo-tests]]
+            [api-modelling-framework.utils-test]
             [api-modelling-framework.parser.syntax.yaml-test]
             [api-modelling-framework.parser.syntax.json-test]
             [api-modelling-framework.parser.document.jsonld-test]
@@ -16,7 +17,8 @@
             [api-modelling-framework.integration-test]
             ))
 
-(doo-tests 'api-modelling-framework.parser.syntax.yaml-test
+(doo-tests 'api-modelling-framework.utils-test
+           'api-modelling-framework.parser.syntax.yaml-test
            'api-modelling-framework.parser.syntax.json-test
            'api-modelling-framework.model.document-test
            'api-modelling-framework.generators.document.jsonld-test

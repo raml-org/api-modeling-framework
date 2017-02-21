@@ -146,7 +146,6 @@
           :supported-operations operations}
          utils/clean-nils))))
 
-
 (defmethod resolve domain/Operation [model ctx]
   (debug "Resolving Operation " (document/id model))
   (let [ctx (assoc ctx domain/Operation model)

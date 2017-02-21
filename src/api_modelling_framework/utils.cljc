@@ -9,8 +9,8 @@
 (defn safe-str [x]
   (cond
     (string? x) x
-    (keyword? x) (if (string/starts-with? (str x) ":/")
-                   (str "/" (name x))
+    (keyword? x) (if (string/index-of (str x) "/")
+                   (string/replace-first (str x) ":" "")
                    (name x))
     :else (str x)))
 
@@ -53,10 +53,12 @@
                         (filter some? v)
                         v)]
                 (cond
-                  (nil? v)                   nil
-                  (and (coll? v) (empty? v)) nil
-                  (and (map? v) (= v {}))    nil
-                  :else                      [k v]))))
+                  (#{:get :post :put :patch
+                     :head :options :delete} k) [k v]
+                  (nil? v)                      nil
+                  (and (coll? v) (empty? v))    nil
+                  (and (map? v) (= v {}))       nil
+                  :else                         [k v]))))
        (filter some?)
        (into {})))
 

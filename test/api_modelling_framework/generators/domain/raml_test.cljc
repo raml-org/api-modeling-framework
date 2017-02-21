@@ -117,7 +117,7 @@
                :version "v3"
                :traits {:paged
                         {:queryParameters
-                         {:start {:type "float"}}}}
+                         {:start {:type "number"}}}}
                (keyword "/users") {:displayName "Users"
                                    :get {:description "get description"
                                          :is ["paged"]

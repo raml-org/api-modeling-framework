@@ -89,7 +89,7 @@
                            child-path (if (some? child-path)
                                         (document/value child-path)
                                         (domain/path child))]
-                       [(keyword child-path) (to-raml child ctx)])))
+                       [(keyword (utils/safe-str child-path)) (to-raml child ctx)])))
               (into {}))))
 
 (defn model->traits [{:keys [references] :as ctx}]
@@ -125,18 +125,30 @@
         (merge-children-resources children-resources ctx)
         utils/clean-nils)))
 
+(defn find-traits [model context]
+  (let [extends (document/extends model)]
+    (->> extends
+         (filter (fn [extend] (= "trait" (name (document/label extend)))))
+         (map (fn [trait]
+                (let [trait-tag (first (document/find-tag trait document/is-trait-tag))]
+                  (if (some? trait-tag)
+                    (document/value trait-tag)
+                    (-> (document/target trait) (string/split #"/") last))))))))
+
 
 (defmethod to-raml domain/EndPoint [model {:keys [all-resources] :as ctx}]
   (debug "Generating resource " (document/id model))
   (let [children-resources (find-children-resources (document/id model) all-resources)
         operations (->> (or (domain/supported-operations model) [])
-                        (map (fn [op] [(keyword (send domain/method op ctx)) (to-raml op ctx)]))
+                        (map (fn [op]
+                               [(keyword (send domain/method op ctx)) (to-raml op ctx)]))
                         (into {}))]
     (-> {:displayName (document/name model)
+         :is (find-traits model ctx)
          :description (document/description model)}
-        (merge-children-resources children-resources ctx)
         (merge operations)
-        utils/clean-nils)))
+        (merge-children-resources children-resources ctx)
+        (utils/clean-nils))))
 
 (defn group-responses [responses context]
   (->> responses
@@ -156,12 +168,12 @@
                       body (:body parsed-response)]
                   (if-let [content-type (some? (-> response domain/content-type first))]
                     [key (-> parsed-response
-                             (assoc :body {content-type body})
+                             (assoc :body {(utils/safe-str content-type) body})
                              utils/clean-nils)]
                     [key (utils/clean-nils parsed-response)]))
                 ;; If there are more than one, it has to have a content-type
                 (let [responses (reduce (fn [acc response]
-                                          (assoc acc (-> response domain/content-type first) (to-raml response context)))
+                                          (assoc acc (-> response domain/content-type first utils/safe-str) (to-raml response context)))
                                         {}
                                         responses)
                       common-response (dissoc (->> responses vals first) :body)
@@ -198,17 +210,6 @@
       (if-let [parameters (domain/parameters request)]
         (unparse-parameters parameters context)
         nil)))
-
-(defn find-traits [model context]
-  (let [extends (document/extends model)]
-    (->> extends
-
-         (filter (fn [extend] (= "trait" (name (document/label extend)))))
-         (map (fn [trait]
-                (let [trait-tag (first (document/find-tag trait document/is-trait-tag))]
-                  (if (some? trait-tag)
-                    (document/value trait-tag)
-                    (-> (document/target trait) (string/split #"/") last))))))))
 
 (defmethod to-raml domain/Operation [model context]
   (debug "Generating operation " (document/id model))

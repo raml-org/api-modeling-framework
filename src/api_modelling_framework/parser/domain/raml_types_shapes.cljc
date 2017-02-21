@@ -8,25 +8,28 @@
 
 (declare parse-type)
 
-(defn parse-type-constraints [node shape]
-  (->> node
-       (map (fn [[p v]]
-              (condp = p
-                :minLength  #(assoc % (v/sh-ns "minLength") [{"@value" v}])
-                :maxLength  #(assoc % (v/sh-ns "maxLength") [{"@value" v}])
-                :pattern    #(assoc % (v/sh-ns "pattern")   [{"@value" v}])
-                :uniqueItems #(assoc % (v/shapes-ns "uniqueItems") [{"@value" v}])
-                identity)))
-       (reduce (fn [acc p] (p acc)) shape)))
-
 (defn parse-generic-keywords [node shape]
   (->> node
        (map (fn [[p v]]
-              (condp p =
+              (condp = p
                 :displayName #(assoc % (v/hydra-ns "title") [{"@value" v}])
                 :description #(assoc % (v/hydra-ns "description") [{"@value" v}])
                 identity)))
-       (reduce (fn [acc p] (p acc)) node)))
+       (reduce (fn [acc p] (p acc)) shape)))
+
+(defn parse-type-constraints [node shape]
+  (if (map? node)
+    (->> node
+         (map (fn [[p v]]
+                (condp = p
+                  :minLength  #(assoc % (v/sh-ns "minLength") [{"@value" v}])
+                  :maxLength  #(assoc % (v/sh-ns "maxLength") [{"@value" v}])
+                  :pattern    #(assoc % (v/sh-ns "pattern")   [{"@value" v}])
+                  :uniqueItems #(assoc % (v/shapes-ns "uniqueItems") [{"@value" v}])
+                  identity)))
+         (reduce (fn [acc p] (p acc)) shape)
+         (parse-generic-keywords node))
+    shape))
 
 (defn parse-shape [node {:keys [parsed-location] :as context}]
   (let [parsed-location (str parsed-location "/shape")
