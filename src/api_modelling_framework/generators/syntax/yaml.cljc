@@ -20,7 +20,7 @@
           (let [yaml (org.yaml.snakeyaml.Yaml.)]
             (.dump yaml (stringify-keys ast))))
    :cljs (defn generate-yaml-string [ast]
-           (.dump js-yaml (stringify-keys ast))))
+           (.dump js-yaml (clj->js (stringify-keys ast)))))
 
 (defn include-fragment [fragment]
   (let [location (syntax/<-location fragment)]
