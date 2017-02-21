@@ -7,6 +7,11 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
+(defn ensure-encoded-fragment [x]
+  (try (document/encodes x)
+       (catch #?(:clj Exception :cljs js/Error) e
+         x)))
+
 (defn merge-declaration [node declaration]
   (cond
     (nil? node) declaration
@@ -18,6 +23,10 @@
                                                      (assoc node property (merge-declaration node-value declaration-value))))
                                                  node
                                                  (keys declaration))
+    ;; Collections compact uniq
+    (and (coll? node) (coll? declaration)) (->> (concat node declaration) set (into []))
+    (coll? node)                           (->> (concat node [declaration]) set (into []))
+    (coll? declaration)                    (->> (concat [node] declaration) set (into []))
     ;; If value defined in both objects, node value overwrites declaration value
     :else node))
 
@@ -44,11 +53,13 @@
 
     (satisfies? domain/Response model)          domain/Response
 
-    (satisfies? document/Extends model)        document/Extends
+    (satisfies? document/Extends model)         document/Extends
 
     (satisfies? document/Includes model)        document/Includes
 
-    :else                                 nil))
+    (nil? model)                                nil
+
+    :else                                       :unknown))
 
 (defmulti resolve (fn [model ctx] (resolve-dispatch-fn model ctx)))
 
@@ -57,7 +68,7 @@
   (let [api-documentation (get ctx domain/APIDocumentation)
         base-path (or (domain/base-path api-documentation) "")
         path (domain/path model)]
-    (string/replace (str path base-path) "//" "/")))
+    (string/replace (str base-path path) "//" "/")))
 
 (defn compute-host [ctx]
   (let [api-documentation (get ctx domain/APIDocumentation)]
@@ -65,13 +76,17 @@
 
 (defn compute-scheme [model ctx]
   (let [api-documentation (get ctx domain/APIDocumentation)
-        base-scheme(or (domain/scheme api-documentation) nil)
+        base-scheme (if (some? api-documentation)
+                      (or (domain/scheme api-documentation) nil)
+                      nil)
         scheme (domain/scheme model)]
     (or scheme base-scheme)))
 
 (defn compute-headers [model ctx]
   (let [api-documentation (get ctx domain/APIDocumentation)
-        base-headers (or (domain/headers api-documentation) [])
+        base-headers (if (some? api-documentation)
+                       (or (domain/headers api-documentation) [])
+                       api-documentation)
         headers (or (domain/headers model) [])]
     (->> (concat headers base-headers)
          (reduce (fn [acc h] (assoc acc (document/name h) h)) {})
@@ -80,13 +95,18 @@
 
 (defn compute-accepts [model ctx]
   (let [api-documentation (get ctx domain/APIDocumentation)
-        base-accepts (or (domain/accepts api-documentation) [])
+        base-accepts (if (some? api-documentation)
+                       (or
+                        (domain/accepts api-documentation) [])
+                       nil)
         accepts(or (domain/accepts model) [])]
     (or accepts base-accepts)))
 
 (defn compute-content-type [model ctx]
   (let [api-documentation (get ctx domain/APIDocumentation)
-        base-content-type (or (domain/content-type api-documentation) [])
+        base-content-type (if (some? api-documentation)
+                            (or (domain/content-type api-documentation) [])
+                            nil)
         content-type(or (domain/content-type model) [])]
     (or content-type base-content-type)))
 
@@ -94,27 +114,35 @@
   (debug "Resolving Document " (document/id model))
   (let [fragments (->> (document/references model)
                        (mapv (fn [fragment]
-                               [(document/location fragment) fragment]))
+                               [(document/location fragment) (ensure-encoded-fragment
+                                                              (resolve fragment ctx))]))
                        (into {}))
         declarations (->> (document/declares model)
                           (mapv (fn [declaration]
-                                  [(document/id declaration) declaration]))
+                                  [(document/id declaration) (ensure-encoded-fragment
+                                                              (resolve declaration (-> ctx
+                                                                                       (assoc :fragments fragments)
+                                                                                       (assoc :document model)
+                                                                                       (assoc domain/APIDocumentation (document/encodes model)))))]))
                           (into {}))]
-    (resolve (document/encodes model) (-> ctx
-                                          (assoc :document model)
-                                          (assoc :declarations declarations)
-                                          (assoc :fragments fragments)))))
+    (assoc model :encodes
+           (resolve (document/encodes model) (-> ctx
+                                                 (assoc :document model)
+                                                 (assoc :declarations declarations)
+                                                 (assoc :fragments fragments))))))
 
 
 (defmethod resolve document/Fragment [model ctx]
   (debug "Resolving Fragment " (document/id model))
   (let [fragments (->> (document/references model)
                        (mapv (fn [fragment]
-                               [(document/location fragment) fragment]))
+                               [(document/location fragment) (ensure-encoded-fragment
+                                                              (resolve fragment ctx))]))
                        (into {}))]
-    (resolve (document/encodes model) (-> ctx
-                                          (assoc :document model)
-                                          (assoc :fragments fragments)))))
+    (assoc model :encodes
+           (resolve (document/encodes model) (-> ctx
+                                                 (assoc :document model)
+                                                 (assoc :fragments fragments))))))
 
 
 (defmethod resolve domain/DomainElement [model ctx]
@@ -229,3 +257,6 @@
 (defmethod resolve nil [_ _]
   (debug "Resolving nil value ")
   nil)
+
+(defmethod resolve :unknown [m _]
+  (debug "Resolving nil value")m)

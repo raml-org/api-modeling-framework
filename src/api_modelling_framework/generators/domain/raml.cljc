@@ -189,9 +189,10 @@
       (->> parameters
            (map (fn [parameter]
                   (let [parsed-type (keywordize-keys (shapes-parser/parse-shape (domain/shape parameter) context))
-                        parsed-type (if (= "string" (:type parsed-type))
-                                      (dissoc parsed-type :type)
-                                      parsed-type)
+                        ;; @todo should we really keep a source-map to see if we should add this mapping by default?
+                        ;;parsed-type (if (= "string" (:type parsed-type))
+                        ;;              (dissoc parsed-type :type)
+                        ;;              parsed-type)
                         parsed-type (if (some? (domain/required parameter))
                                       (assoc parsed-type :required (domain/required parameter))
                                       parsed-type)]

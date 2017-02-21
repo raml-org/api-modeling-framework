@@ -47,7 +47,6 @@
          location (syntax/<-location ast)]
      (generate-ast data {:location location}))))
 
-
 (defn generate-string
   ([ast context] (generate-yaml-string (generate-ast ast context)))
   ([ast] (generate-yaml-string (generate-ast ast))))

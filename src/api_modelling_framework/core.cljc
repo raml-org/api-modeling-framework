@@ -52,16 +52,17 @@
   (^:export generate-file [this uri model options cb]
    "Serialises a model into a file located at the provided URI"))
 
-(defn to-model [res]
-  (let [domain-cache (atom nil)]
-    (reify Model
-      (document-model [_] res)
-      (domain-model [_]
-        (if (some? @domain-cache)
-          @domain-cache
-          (let [res (resolution/resolve res {})]
-            (reset! domain-cache res)
-            res))))))
+(defn to-model
+  ([res]
+   (let [domain-cache (atom nil)]
+     (reify Model
+       (document-model [_] res)
+       (domain-model [_]
+         (if (some? @domain-cache)
+           @domain-cache
+           (let [res (resolution/resolve res {})]
+             (reset! domain-cache res)
+             res)))))))
 
 (defrecord RAMLParser []
   Parser

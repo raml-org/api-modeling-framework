@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.test :refer [deftest is async]]))
   (:require #?(:clj [clojure.test :refer :all])
             [api-modelling-framework.resolution :as resolution]
+            [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.parser.document.raml :as raml-parser]
@@ -35,7 +36,7 @@
                                                                                :responses {"200" {:description "200 response"}
                                                                                            "400" {:description "400 response"}}}}}}}
         parsed (raml-parser/parse-ast input {})
-        resolved (resolution/resolve parsed {})
+        resolved (document/encodes (resolution/resolve parsed {}))
         generated-jsonld (jsonld-generator/to-jsonld resolved {})
         generated-raml (raml-generator/to-raml resolved {})
         generated-openapi (openapi-genenerator/to-openapi resolved {})]

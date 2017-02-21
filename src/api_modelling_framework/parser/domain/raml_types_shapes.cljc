@@ -91,7 +91,9 @@
    (v/sh-ns "dataType") [{"@id" scalar-type}]})
 
 (defn parse-type [node {:keys [parsed-location] :as context}]
-  (let [type-string (or (:type node) (:schema node))
+  (let [type-string (if (string? node)
+                      node
+                      (or (:type node) (:schema node)))
         shape (condp = type-string
                 "string"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "string")))
                 "number"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
