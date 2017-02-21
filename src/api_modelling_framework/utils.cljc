@@ -14,6 +14,21 @@
                    (name x))
     :else (str x)))
 
+(defn ramlify [x]
+  (cond
+    (string? x) x
+    (keyword? x) (safe-str x)
+    (map? x) (->> x
+                  (mapv (fn [[k v]] [(ramlify k) (ramlify v)]))
+                  (sort (fn [[ka va] [kb vb]]
+                          (if (and (string/starts-with? ka "/")
+                                   (string/starts-with? kb "/"))
+                            0
+                            (if (string/starts-with? ka "/") 1 -1))))
+                  (into {}))
+    (coll? x) (mapv #(ramlify %) x)
+    :else x))
+
 (defn safe-value [x]
   (if (or (string? x) (keyword? x))
     (safe-str x)

@@ -106,8 +106,8 @@
                                                    {:location uri}))
                    res (-> model
                            (raml-document-generator/to-raml options)
-                           (syntax/<-data)
-                           (yaml-generator/generate-string options))]
+                           (syntax/<-data))
+                   res (yaml-generator/generate-string res options)]
               (cb nil (platform/<-clj res)))
             (catch #?(:clj Exception :cljs js/Error) ex
               (cb (platform/<-clj ex) nil)))))

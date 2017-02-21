@@ -2,25 +2,27 @@
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
   #?(:cljs (:require [cljs.nodejs :as nodejs]
+                     [api-modelling-framework.utils :as utils]
                      [api-modelling-framework.platform :as platform]
                      [clojure.string :as string]
                      [api-modelling-framework.model.syntax :as syntax]
-                     [clojure.walk :refer [keywordize-keys stringify-keys]]
+                     [clojure.walk :refer [keywordize-keys]]
                      [cljs.core.async :refer [<! >! chan]]))
 
   #?(:clj (:require [api-modelling-framework.model.syntax :as syntax]
+                    [api-modelling-framework.utils :as utils]
                     [api-modelling-framework.platform :as platform]
                     [clojure.core.async :refer [<! >! go]]
-                    [clojure.walk :refer [keywordize-keys stringify-keys]]
+                    [clojure.walk :refer [keywordize-keys]]
                     [clojure.string :as string])))
 
 #?(:cljs (def js-yaml (nodejs/require "js-yaml")))
 
 #?(:clj (defn generate-yaml-string [ast]
           (let [yaml (org.yaml.snakeyaml.Yaml.)]
-            (.dump yaml (stringify-keys ast))))
+            (.dump yaml (utils/ramlify ast))))
    :cljs (defn generate-yaml-string [ast]
-           (.dump js-yaml (clj->js (stringify-keys ast)))))
+           (.dump js-yaml (clj->js (utils/ramlify ast)))))
 
 (defn include-fragment [fragment]
   (let [location (syntax/<-location fragment)]

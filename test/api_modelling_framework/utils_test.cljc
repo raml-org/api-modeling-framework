@@ -1,5 +1,5 @@
 (ns api-modelling-framework.utils-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [api-modelling-framework.utils :as utils]))
 
 (deftest safe-str-test

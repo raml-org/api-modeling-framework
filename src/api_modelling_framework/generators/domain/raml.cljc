@@ -74,23 +74,24 @@
                                  (document/find-tag document/nested-resource-parent-id-tag)
                                  (->> (mapv document/value))
                                  first)
+
                              id)))))
 
 (defn merge-children-resources
   "We merge the children in the current node using the paths RAML style"
   [node children-resources ctx]
-  (merge node
-         (->> children-resources
-              (map (fn [child]
-                     (let [child-path (-> child
-                                          (document/find-tag document/nested-resource-path-parsed-tag)
-                                          first)
-                           ;; the node might come from a OpenAPI model, it will not have path tag
-                           child-path (if (some? child-path)
-                                        (document/value child-path)
-                                        (domain/path child))]
-                       [(keyword (utils/safe-str child-path)) (to-raml child ctx)])))
-              (into {}))))
+  (let [children-node (->> children-resources
+                           (mapv (fn [child]
+                                   (let [child-path (-> child
+                                                        (document/find-tag document/nested-resource-path-parsed-tag)
+                                                        first)
+                                         ;; the node might come from a OpenAPI model, it will not have path tag
+                                         child-path (if (some? child-path)
+                                                      (document/value child-path)
+                                                      (domain/path child))]
+                                     [(keyword (utils/safe-str child-path)) (to-raml child ctx)]))))
+        children-node (into {} children-node)]
+    (merge node children-node)))
 
 (defn model->traits [{:keys [references] :as ctx}]
   (->> references

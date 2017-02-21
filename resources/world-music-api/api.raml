@@ -26,13 +26,20 @@ traits:
   post:
   /{songId}:
     get:
-      queryString:
-        type: string
+      queryParameters:
+        start: number
       responses:
         200:
           body:
             application/json:
-              type: Songs.Song
+              type: object
+              properties:
+                name: string
+                order: integer
             application/xml:
-              type: !include schemas/songs.xsd
-              example: !include examples/songs.xml
+              type: object
+              properties:
+                name:
+                  type: string
+                order:
+                  type: integer
