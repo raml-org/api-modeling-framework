@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
   #?(:cljs (:require [cljs.nodejs :as nodejs]
+                     [api-modelling-framework.utils :as utils]
                      [api-modelling-framework.platform :as platform]
                      [clojure.string :as string]
                      [api-modelling-framework.model.syntax :as syntax]
@@ -9,6 +10,7 @@
                      [cljs.core.async :refer [<! >! chan]]))
 
   #?(:clj (:require [api-modelling-framework.model.syntax :as syntax]
+                    [api-modelling-framework.utils :as utils]
                     [api-modelling-framework.platform :as platform]
                     [clojure.core.async :refer [<! >! go]]
                     [clojure.walk :refer [keywordize-keys stringify-keys]]
@@ -43,8 +45,8 @@
      (generate-ast data {:location location}))))
 
 (defn generate-string
-  ([ast context] (platform/encode-json (generate-ast ast context)))
-  ([ast] (platform/encode-json (generate-ast ast))))
+  ([ast context] (platform/encode-json (utils/ramlify (generate-ast ast context))))
+  ([ast] (platform/encode-json (utils/ramlify (generate-ast ast)))))
 
 (defn generate-file
   ([location ast context]
