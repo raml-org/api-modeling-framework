@@ -8,7 +8,7 @@ import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor;
 import createModel = monaco.editor.createModel;
 
 export type NavigatorSection = "files" | "logic";
-export type EditorSection = "raml" | "open-api" | "document-model" | "domain-model";
+export type EditorSection = "raml" | "open-api" | "api-model";
 
 export interface ReferenceFile {
     value: string;
@@ -80,7 +80,7 @@ export class ViewModel {
                 }
             });
 
-            // We generate the JSON representation
+            // We generate the OpenAPI representation
             this.model.toOpenAPI(this.documentLevel, (err, string) => {
                 if (err != null) {
                     console.log("Error getting OpenAPI");
@@ -91,19 +91,38 @@ export class ViewModel {
                     }
                 }
             });
+
+            // We generate the APIModel representation
+            this.model.toAPIModel(this.documentLevel, (err, string) => {
+                if (err != null) {
+                    console.log("Error getting ApiModel");
+                    console.log(err);
+                } else {
+                    if (this.editorSection() === "api-model") {
+                        this.editor.setModel(createModel(this.model!.apiModeltring, "json"));
+                    }
+                }
+            });
         }
     }
 
     private onEditorSectionChange(section: EditorSection) {
+        // Warning, models here mean MONACO EDITOR MODELS, don't get confused with API Models
         if (section === "raml") {
             if (this.model != null) {
                 this.editor.setModel(createModel(this.model.ramlString, "yaml"));
             } else {
                 this.editor.setModel(createModel("# no model loaded", "yaml"));
             }
-        } else {
+        } else if (section == "open-api") {
             if (this.model != null) {
                 this.editor.setModel(createModel(this.model!.openAPIString, "json"));
+            } else {
+                this.editor.setModel(createModel("// no model loaded", "json"));
+            }
+        } else {
+            if (this.model != null) {
+                this.editor.setModel(createModel(this.model!.apiModeltring, "json"));
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
             }

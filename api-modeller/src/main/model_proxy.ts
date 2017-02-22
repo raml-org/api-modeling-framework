@@ -8,7 +8,7 @@ export type ModelLevel = "document" | "domain";
 
 const ramlGenerator = new apiFramework.RAMLGenerator();
 const openAPIGenerator = new apiFramework.OpenAPIGenerator();
-
+const apiModelGenerator = new apiFramework.APIModelGenerator();
 /**
  * A proxy class to interact with the clojure code containing the logic to interact with a API Model
  */
@@ -16,6 +16,7 @@ export class ModelProxy {
     // holders for the generated strings
     public ramlString: string = "";
     public openAPIString: string = "";
+    public apiModeltring: string = "";
 
     constructor(public raw: any, public sourceType: ModelType) {}
     location(): string { return apiFramework.location(this.raw) }
@@ -67,6 +68,24 @@ export class ModelProxy {
                 } else {
                     this.openAPIString = JSON.stringify(JSON.parse(res), null, 2);
                     cb(err, this.openAPIString);
+                }
+            });
+    }
+
+    toAPIModel(level: ModelLevel, cb) {
+        console.log(`** Generating API Model JSON-LD with level ${level}`);
+        let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
+        apiFramework.generate_string(
+            apiModelGenerator,
+            this.location(),
+            liftedModel,
+            {},
+            (err, res) => {
+                if (err != null) {
+                    cb(err, res);
+                } else {
+                    this.apiModeltring = JSON.stringify(JSON.parse(res), null, 2);
+                    cb(err, this.apiModeltring);
                 }
             });
     }

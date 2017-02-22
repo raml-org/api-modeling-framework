@@ -10,7 +10,7 @@
 
 (defn to-raml-dispatch-fn [model ctx]
   (cond
-    (nil? model) nil
+    (nil? model)                                  model
 
     (and (satisfies? document/Fragment model)
          (satisfies? document/Module model))      :document

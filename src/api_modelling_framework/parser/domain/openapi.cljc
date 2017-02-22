@@ -303,7 +303,7 @@
   (->> node
        (mapv (fn [[key response]]
                (let [key (if x-response-bodies-with-media-types
-                           (first (string/split key #"--"))
+                           (first (string/split (utils/safe-str key) #"--"))
                            key)]
                  (parse-ast response (-> context
                                          (assoc :type-hint :response)

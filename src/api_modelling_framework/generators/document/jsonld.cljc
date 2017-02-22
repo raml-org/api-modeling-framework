@@ -8,6 +8,12 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
+(defn ensure-domain-fragment [x]
+  (try
+    (domain/to-domain-node x)
+    (catch #?(:clj Exception :cljs js/Error) e
+      x)))
+
 (defn to-jsonld-dispatch-fn [model source-maps?]
   (cond
     (nil? model)                                 model
@@ -19,7 +25,7 @@
 
     (satisfies? document/Module model)           :library
 
-    :else                                        (type model)))
+    :else                                        :unknown))
 
 (defmulti to-jsonld (fn [model source-maps?] (to-jsonld-dispatch-fn model source-maps?)))
 
@@ -37,9 +43,9 @@
                  v/document:Fragment
                  v/document:Module
                  v/document:Unit]
-        v/document:declares (mapv #(to-jsonld % source-maps?) (document/declares m))
+        v/document:declares (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/declares m))
         v/document:encodes [(domain-generator/to-jsonld (document/encodes m) {:source-maps? source-maps?})]
-        v/document:references (mapv #(to-jsonld % source-maps?) (document/references m))}
+        v/document:references (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/references m))}
        (with-source-maps source-maps? m)
        (utils/clean-nils)))
 
@@ -53,3 +59,6 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld nil [_ _] nil)
+
+(defmethod to-jsonld :unknown [model source-maps?]
+  (domain-generator/to-jsonld model {:source-maps? source-maps?}))

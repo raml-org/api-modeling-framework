@@ -12,6 +12,7 @@
                     [api-modelling-framework.generators.syntax.json :as json-generator]
                     [api-modelling-framework.generators.document.raml :as raml-document-generator]
                     [api-modelling-framework.generators.document.openapi :as openapi-document-generator]
+                    [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
                     [api-modelling-framework.platform :as platform]
                     [clojure.walk :refer [keywordize-keys]]
                     [taoensso.timbre :as timbre :refer [debug]]))
@@ -27,6 +28,7 @@
                      [api-modelling-framework.generators.syntax.json :as json-generator]
                      [api-modelling-framework.generators.document.raml :as raml-document-generator]
                      [api-modelling-framework.generators.document.openapi :as openapi-document-generator]
+                     [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
                      [api-modelling-framework.platform :as platform]
                      [clojure.walk :refer [keywordize-keys]]
                      [taoensso.timbre :as timbre :refer-macros [debug]])))
@@ -110,10 +112,31 @@
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 
+(defrecord APIModelGenerator []
+  Generator
+  (generate-string [this uri model options cb]
+    (debug "Generating OpenAPI string")
+    (go (try (let [options true
+                   res (-> model
+                           (jsonld-document-generator/to-jsonld options)
+                           (json-generator/generate-string options))]
+               (cb nil (platform/<-clj res)))
+             (catch #?(:clj Exception :cljs js/Error) ex
+               (cb (platform/<-clj ex) nil)))))
+  (generate-file [this uri model options cb]
+    (debug "Generating OpenAPI file")
+    (go (let [options true
+              res (-> model
+                      (jsonld-document-generator/to-jsonld options)
+                      (json-generator/generate-string options))]
+          (if (platform/error? res)
+            (cb (platform/<-clj res) nil)
+            (cb nil (platform/<-clj res)))))))
 
 (defrecord RAMLGenerator []
   Generator
   (generate-string [this uri model options cb]
+    (debug "Generating RAML string")
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                                    {:location uri}))
                    res (-> model
@@ -124,6 +147,7 @@
             (catch #?(:clj Exception :cljs js/Error) ex
               (cb (platform/<-clj ex) nil)))))
   (generate-file [this uri model options cb]
+    (debug "Generating RAML file")
     (go (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                               {:location uri}))
               res (<! (-> model
@@ -153,17 +177,6 @@
     (go (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                               {:location uri}))
               res (-> model
-
-
-
-
-
-
-
-
-
-
-
                       (openapi-document-generator/to-openapi options)
                       (syntax/<-data)
                       (json-generator/generate-string options))]
