@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+    <link rel="stylesheet" href="bower_components/bulma/css/bulma.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script type='text/javascript' src="bower_components/knockout/dist/knockout.js"></script>
+    <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
+    <meta charset="UTF-8">
+    <title>API Modeller</title>
+</head>
+<body>
+<!-- Main container class -->
+<link rel="import" href="nav.html">
+<div class="section">
+    <div id="the-app" class="container is-marginless is-fluid">
+        <div class="columns">
+            <div class="column">
+                <link rel="import" href="navigator.html">
+            </div>
+            <div class="column is-three-quarters">
+                <link rel="import" href="editor.html">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+<script>
+    // Save Monaco's and require and restore Node's require
+    var amdRequire = global.require;
+    global.require = nodeRequire;
+</script>
+<script>
+    document.getElementsByName("body");
+    // Imported content
+    window.reloadApp = function() {
+        var importedMap = {};
+        var pending = true;
+        while (pending === true) {
+            pending = false;
+            var links = document.querySelectorAll('link[rel="import"]');
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i];
+                if (link.import != null && importedMap[link.href] == null) {
+                    pending = true;
+                    importedMap[link.href] = true;
+                    var content = link.import;
+                    var el = content.querySelector('.imported');
+                    link.parentNode.insertBefore(el.cloneNode(true), link);
+                }
+            }
+        }
+
+        var path = require('path');
+        function uriFromPath(_path) {
+            var pathName = path.resolve(_path).replace(/\\/g, '/');
+            if (pathName.length > 0 && pathName.charAt(0) !== '/') {
+                pathName = '/' + pathName;
+            }
+            return encodeURI('file://' + pathName);
+        }
+        amdRequire.config({
+            baseUrl: uriFromPath(path.join(__dirname, '../node_modules/monaco-editor/min'))
+        });
+        // workaround monaco-css not understanding the environment
+        self.module = undefined;
+        // workaround monaco-typescript not understanding the environment
+        self.process.browser = true;
+
+        amdRequire(['vs/editor/editor.main'], function() {
+            var editor = monaco.editor.create(document.getElementById("editor-raml"), {
+                value: [
+                    '# no data loaded'
+                ].join('\n'),
+                language: 'yaml'
+            });
+
+            const ViewModel = new require("../src/view_model").ViewModel;
+            window.appModel = new ViewModel(editor);
+            window.appModel.apply(document.getElementById("the-app"));
+        });
+    };
+    reloadApp();
+</script>
+</body>
+</html>

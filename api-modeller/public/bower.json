@@ -1,0 +1,23 @@
+{
+  "name": "api-modeller",
+  "description": "",
+  "main": "src/main.js",
+  "authors": [
+    "Mulesoft"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/mulesoft-labs/api-modelling-framework",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "font-awesome": "^4.7.0",
+    "bulma": "^0.3.1",
+    "knockout": "^3.4.1",
+    "monaco-editor": "^0.7.1"
+  }
+}

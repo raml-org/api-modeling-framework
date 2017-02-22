@@ -1,0 +1,12 @@
+html, body{
+    height:100%;
+}
+
+#the-app {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+}
+
+#file-to-load-input {
+    width: 90%;
+}

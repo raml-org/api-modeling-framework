@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<div id="navigator" class="imported">
+    <div class="tabs">
+        <ul>
+            <li data-bind="click: () => { navigatorSection('files') },
+                           css: {'is-active': navigatorSection() === 'files'}">
+                <a>Files</a></li>
+            <li data-bind="click: () => { navigatorSection('logic') },
+                           css: {'is-active': navigatorSection() === 'logic'}">
+                <a>Modules</a></li>
+        </ul>
+    </div>
+    <aside data-bind="visible: navigatorSection()==='files'"
+           class="menu" id="files-navigator">
+        <p class="menu-label">FILES</p>
+        <ul class="menu-list" data-bind="foreach: references">
+            <li>
+                <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 10px">
+                    <i class="fa fa-file-text-o"></i>
+                </span>
+                <a href="#" data-bind="text: $data.name,
+                                       css: {'is-active': $parent.selectedReference().value === $data.value}"></a>
+            </li>
+        </ul>
+
+    </aside>
+    <aside  data-bind="visible: navigatorSection()==='logic'"
+            class="menu" id="modules-navigator">
+        <p class="menu-label">DOCUMENTS</p>
+        <ul class="menu-list">
+            <li><a>api.raml</a></li>
+        </ul>
+        <p class="menu-label">FRAGMENTS</p>
+        <ul class="menu-list">
+            <li><a>api.raml</a></li>
+        </ul>
+        <p class="menu-label">MODULES</p>
+        <ul class="menu-list">
+            <li><a>api.raml</a></li>
+        </ul>
+    </aside>
+</div>

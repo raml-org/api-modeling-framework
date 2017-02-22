@@ -13,3 +13,11 @@ pom.xml.asc
 /node
 /node_modules
 /resources/public
+api-modeller/.idea
+api-modeller/.travis.yml
+api-modeller/test*.js
+api-modeller/test*.ts
+api-modeller/test*.js.map
+api-modeller/.eslintrc.json
+api-modeller/.gitattributes
+api-modeller/.github/

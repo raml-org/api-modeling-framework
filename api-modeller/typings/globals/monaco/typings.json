@@ -1,0 +1,8 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "/Users/antoniogarrote/Development/api-modelling-framework/api-modeller/node_modules/monaco-editor/monaco.d.ts",
+    "raw": "file://Users/antoniogarrote/Development/api-modelling-framework/api-modeller/node_modules/monaco-editor/monaco.d.ts",
+    "typings": "/Users/antoniogarrote/Development/api-modelling-framework/api-modeller/node_modules/monaco-editor/monaco.d.ts"
+  }
+}
