@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "electron": "^1.4.15",
+    "jsonld": "^0.4.11",
     "knockout": "^3.4.1",
     "monaco-editor": "^0.8.1",
     "ts-loader": "^2.0.0"

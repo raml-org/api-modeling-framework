@@ -1,4 +1,6 @@
 import {ModelType} from "./api_modeller_window";
+import * as jsonld from "jsonld";
+import {JsonLd} from "jsonld";
 require("api_modelling_framework");
 
 const apiFramework = global["api_modelling_framework"].core;
@@ -84,8 +86,27 @@ export class ModelProxy {
                 if (err != null) {
                     cb(err, res);
                 } else {
-                    this.apiModeltring = JSON.stringify(JSON.parse(res), null, 2);
-                    cb(err, this.apiModeltring);
+                    const parsed = JSON.parse(res);
+                    const context = {
+                        "raml-doc": "http://raml.org/vocabularies/document#",
+                        "raml-http": "http://raml.org/vocabularies/http#",
+                        "raml-shapes": "http://raml.org/vocabularies/shapes#",
+                        "hydra":"http://www.w3.org/ns/hydra/core#",
+                        "shacl":"http://www.w3.org/ns/shacl#",
+                        "schema-org":"http://schema.org/",
+                        "xsd":"http://www.w3.org/2001/XMLSchema#"
+                    };
+
+                    jsonld.compact(parsed, context, (err, compacted) => {
+                        if (err != null) {
+                            console.log("ERROR COMPACTING");
+                            console.log(err);
+                        }
+                        const finalJson = (err == null) ? compacted : parsed;
+                        this.apiModeltring = JSON.stringify(finalJson, null, 2);
+                        cb(err, this.apiModeltring);
+                    });
+
                 }
             });
     }
