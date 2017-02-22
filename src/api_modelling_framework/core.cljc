@@ -41,7 +41,8 @@
 (defprotocol Model
   (^:export location [this] "Location of the model if any")
   (^:export document-model [this] "returns the domain model for the parsed document")
-  (^:export domain-model [this] "Resolves the document model generating a domain model"))
+  (^:export domain-model [this] "Resolves the document model generating a domain model")
+  (^:export reference-model [this location] "Returns a model for a nested reference "))
 
 (defprotocol Parser
   (^:export parse-file [this uri cb]
@@ -66,7 +67,14 @@
            @domain-cache
            (let [res (resolution/resolve res {})]
              (reset! domain-cache res)
-             res)))))))
+             res)))
+       (reference-model [_ location]
+         (let [reference (->> (document/references res)
+                              (filter #(= location (document/location %)))
+                              first)]
+           (if (some? reference)
+             (to-model reference)
+             (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find reference " location " in the model"))))))))))
 
 (defrecord RAMLParser []
   Parser

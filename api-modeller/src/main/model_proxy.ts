@@ -82,4 +82,9 @@ export class ModelProxy {
         references.forEach(ref => files.push(ref.location));
         return files;
     }
+
+    nestedModel(location: string): ModelProxy {
+        const rawModel = apiFramework.reference_model(this.raw, location);
+        return new ModelProxy(rawModel, this.sourceType);
+    }
 }

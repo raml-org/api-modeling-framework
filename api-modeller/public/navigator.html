@@ -14,7 +14,7 @@
            class="menu" id="files-navigator">
         <p class="menu-label">FILES</p>
         <ul class="menu-list" data-bind="foreach: references">
-            <li>
+            <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
                 <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 10px">
                     <i class="fa fa-file-text-o"></i>
                 </span>

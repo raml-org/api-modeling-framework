@@ -25,6 +25,7 @@ export class ViewModel {
     public nav: Nav = new Nav("document");
     public loadModal: LoadModal = new LoadModal();
     public documentLevel: ModelLevel = "document";
+    public documentModel?: ModelProxy = undefined;
     public model?: ModelProxy = undefined;
 
     constructor(public editor: IStandaloneCodeEditor) {
@@ -35,6 +36,7 @@ export class ViewModel {
                     console.log(err);
                     alert(err);
                 } else {
+                    this.documentModel = model;
                     this.model = model;
                     this.resetDocuments();
                 }
@@ -60,10 +62,11 @@ export class ViewModel {
     }
 
     // Reset the view model state when a document has changed
-    private resetDocuments() {
+    private resetDocuments(resetReferences = true) {
         if (this.model != null) {
+
             // we reset the list of references for this model
-            this.resetReferences();
+            if (resetReferences) { this.resetReferences(); }
 
             // We generate the RAML representation
             this.model.toRaml(this.documentLevel,(err, string) => {
@@ -151,6 +154,18 @@ export class ViewModel {
                 name: name,
                 value: reference
             }
+        }
+    }
+
+    public selectNavigatorFile(reference: ReferenceFile) {
+        this.selectedReference(reference);
+        if (this.documentModel != null) {
+            if (this.documentModel.location() !== reference.value) {
+                this.model = this.documentModel.nestedModel(reference.value);
+            } else {
+                this.model =  this.documentModel;
+            }
+            this.resetDocuments(false)
         }
     }
 }
