@@ -13,7 +13,7 @@
 <body>
 <!-- Main container class -->
 <link rel="import" href="nav.html">
-<div class="section">
+<div class="section" style="padding-bottom: 0px">
     <div id="the-app" class="container is-marginless is-fluid">
         <div class="columns">
             <div class="column">
@@ -70,7 +70,23 @@
         self.process.browser = true;
 
         amdRequire(['vs/editor/editor.main'], function() {
-            var editor = monaco.editor.create(document.getElementById("editor-raml"), {
+            var resize = function() {
+                console.log("** Resizing **");
+                var height = document.documentElement.clientHeight;
+                var containerDiv = document.getElementById("editor-container");
+                containerDiv.setAttribute("style", "height: " + (height - 200) + "px");
+            };
+
+            window.onresize = resize;
+            resize();
+
+            var editor = monaco.editor.create(document.getElementById("editor-container"), {
+                automaticLayout: true,
+                // theme: "vs-dark",
+                fontSize: 16,
+                fontWeight: "bold",
+                scrollBeyondLastLine: false,
+                readOnly: true,
                 value: [
                     '# no data loaded'
                 ].join('\n'),

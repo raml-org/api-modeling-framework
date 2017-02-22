@@ -1,3 +1,13 @@
+.monaco-editor-background {
+    background: #edffff !important;
+}
+
+#editor-container {
+    border-style: solid;
+    border-width: 1px;
+    border-color: lightgrey;
+}
+
 #the-app {
     margin-left: 10px !important;
     margin-right: 10px !important;
