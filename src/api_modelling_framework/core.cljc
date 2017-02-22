@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
   #?(:clj (:require [clojure.core.async :refer [<! >! go chan] :as async]
                     [api-modelling-framework.model.syntax :as syntax]
+                    [api-modelling-framework.model.document :as document]
                     [api-modelling-framework.resolution :as resolution]
                     [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
                     [api-modelling-framework.parser.syntax.json :as json-parser]
@@ -16,6 +17,7 @@
                     [taoensso.timbre :as timbre :refer [debug]]))
   #?(:cljs (:require [cljs.core.async :refer [<! >! chan] :as async]
                      [api-modelling-framework.model.syntax :as syntax]
+                     [api-modelling-framework.model.document :as document]
                      [api-modelling-framework.resolution :as resolution]
                      [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
                      [api-modelling-framework.parser.syntax.json :as json-parser]
@@ -37,6 +39,7 @@
 #?(:cljs (defn ^:export to-clj [x] (js->clj x)))
 
 (defprotocol Model
+  (^:export location [this] "Location of the model if any")
   (^:export document-model [this] "returns the domain model for the parsed document")
   (^:export domain-model [this] "Resolves the document model generating a domain model"))
 
@@ -56,6 +59,7 @@
   ([res]
    (let [domain-cache (atom nil)]
      (reify Model
+       (location [_] (document/location res))
        (document-model [_] res)
        (domain-model [_]
          (if (some? @domain-cache)
