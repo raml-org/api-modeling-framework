@@ -291,6 +291,7 @@
                                                                 (assoc :type-hint :responses)
                                                                 (assoc :location location)
                                                                 (assoc :parsed-location parsed-location)
+                                                                (assoc :is-fragment false)
                                                                 (assoc :x-response-bodies-with-media-types x-response-bodies-with-media-types)))}]
     (if is-fragment
       (domain/map->ParsedDomainElement {:id parsed-location
@@ -308,6 +309,7 @@
                  (parse-ast response (-> context
                                          (assoc :type-hint :response)
                                          (assoc :response-key key)
+                                         (assoc :is-fragment false)
                                          (assoc :location (str location "/responses"))
                                          (assoc :parsed-location (str parsed-location "/responses")))))))))
 

@@ -27,6 +27,7 @@
                                                                                        :tags ["experimantl" "foo" "bar"]
                                                                                        :produces ["application/ld+json"]
                                                                                        :consumes ["application/json"]
+                                                                                       :responses {"default" {:description ""}}
                                                                                        :parameters [{:name "api-key"
                                                                                                      :in "header"
                                                                                                      :type "string"}

@@ -59,13 +59,15 @@
                     :schemes ["https"]
                     :tags ["experimantl" "foo" "bar"]
                     :produces ["application/ld+json"]
-                    :consumes ["application/json"]}
+                    :consumes ["application/json"]
+                    :responses {"default" {:description ""}}}
               :post {:operationId "post"
                      :description "post description"
                      :schemes ["https"]
                      :tags ["experimantl" "foo" "bar"]
                      :produces ["application/ld+json"]
-                     :consumes ["application/json"]}}
+                     :consumes ["application/json"]
+                     :responses {"default" {:description ""}}}}
         parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#/users"
                                                :parsed-location "file://path/to/resource.raml#/users"
                                                :is-fragment false
@@ -118,6 +120,7 @@
                     :tags ["experimantl" "foo" "bar"]
                     :produces ["application/ld+json"]
                     :consumes ["application/json"]
+                    :responses {"default" {:description ""}}
                     :parameters [{:name "api-key"
                                   :in "header"
                                   :type "string"}
@@ -136,7 +139,8 @@
                      :schemes ["https"]
                      :tags ["experimantl" "foo" "bar"]
                      :produces ["application/ld+json"]
-                     :consumes ["application/json"]}}
+                     :consumes ["application/json"]
+                     :responses {"default" {:description ""}}}}
         parsed (openapi-parser/parse-ast node {:location "file://path/to/resource.raml#/users"
                                                :parsed-location "file://path/to/resource.raml#/users"
                                                :is-fragment false

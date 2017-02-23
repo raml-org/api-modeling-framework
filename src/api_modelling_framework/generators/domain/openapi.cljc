@@ -109,16 +109,8 @@
         request (domain/request model)
         parameters (unparse-params request ctx)
         body (unparse-body request ctx)
-        response-bodies-with-media-types (or (not (empty? responses-produces)) nil)]
-    (-> {:operationId (document/name model)
-         :description (document/description model)
-         :tags tags
-         :x-response-bodies-with-media-types response-bodies-with-media-types
-         :schemes (domain/scheme model)
-         :parameters (filter some? (concat headers parameters [body]))
-         :consumes (domain/accepts model)
-         :produces (concat produces responses-produces)
-         :responses (->> (domain/responses model)
+        response-bodies-with-media-types (or (not (empty? responses-produces)) nil)
+        responses (->> (domain/responses model)
                          (map (fn [response] [(document/name response) response]))
                          ;; we need to avoid multiple responses with the same key
                          ;; this is not allowed in OpenAPI, we deal with this generating an altered key
@@ -137,7 +129,7 @@
                                 (if (> (count vs) 1)
                                   (map (fn [i response]
                                          (let [v (to-openapi response ctx)]
-                                           [(str k "--" (or (-> response domain/content-type first) i))
+                                           [(str (utils/safe-str k) "--" (utils/safe-str (or (-> response domain/content-type first) i)))
                                             v]))
                                        (range 0 (count vs))
                                        vs)
@@ -147,12 +139,24 @@
                          (partition 2)
                          (map #(into [] %))
                          (into [])
-                         (into {}))}
+                         (into {}))
+        responses (if (or (nil? responses) (= {} responses))
+                    {:default {:description ""}}
+                    responses)]
+    (-> {:operationId (document/name model)
+         :description (document/description model)
+         :tags tags
+         :x-response-bodies-with-media-types response-bodies-with-media-types
+         :schemes (domain/scheme model)
+         :parameters (filter some? (concat headers parameters [body]))
+         :consumes (domain/accepts model)
+         :produces (concat produces responses-produces)
+         :responses responses}
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Response [model ctx]
   (debug "Generating response " (document/name model))
-  (-> {:description (document/description model)
+  (-> {:description (or (document/description model) "")
        :schema (to-openapi (domain/schema model) ctx)}
       utils/clean-nils))
 
