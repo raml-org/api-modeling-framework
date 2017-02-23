@@ -41,11 +41,11 @@
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
 
 (defn model->base-uri [model]
-  (let [scheme (domain/scheme model)
+  (let [scheme (or (domain/scheme model) [])
         host (domain/host model)
         base-path (domain/base-path model)]
-    (if (and (some? scheme) (not (empty? scheme)) (some? host))
-      (str (first scheme) "://" host base-path)
+    (if (some? host)
+      (str (or (first scheme) "http") "://" host base-path)
       nil)))
 
 (defn model->protocols [model]

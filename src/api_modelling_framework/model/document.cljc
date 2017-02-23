@@ -223,6 +223,7 @@
 
 (defprotocol Unit
   "Any parseable unit, it should be backed by a source URI"
+  (resolved [this] "Has this model being resolved")
   (location [this] "Derefenceable location of the unit")
   (references [this] "Fragments referenced by this document"))
 
@@ -238,7 +239,7 @@
       [(DocumentSourceMap. source-map-id source (filter some? [file-parsed-tag document-type-tag]))]
       [])))
 
-(defrecord ParsedDocument [location encodes declares references document-type]
+(defrecord ParsedDocument [location encodes declares references document-type resolved]
   Node
   (id [this] location)
   (name [this] location)
@@ -249,12 +250,13 @@
   Unit
   (location [this] location)
   (references [this] (or references []))
+  (resolved [this] (or resolved false))
   Fragment
   (encodes [this] encodes)
   Module
   (declares [this] (or declares [])))
 
-(defrecord ParsedFragment [location encodes references document-type]
+(defrecord ParsedFragment [location encodes references document-type resolved]
   Node
   (id [this] location)
   (name [this] location)
@@ -265,5 +267,6 @@
   Unit
   (location [this] location)
   (references [this] (or references []))
+  (resolved [this] (or resolved false))
   Fragment
   (encodes [this] encodes))

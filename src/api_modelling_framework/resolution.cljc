@@ -125,11 +125,12 @@
                                                                                        (assoc :document model)
                                                                                        (assoc domain/APIDocumentation (document/encodes model)))))]))
                           (into {}))]
-    (assoc model :encodes
-           (resolve (document/encodes model) (-> ctx
-                                                 (assoc :document model)
-                                                 (assoc :declarations declarations)
-                                                 (assoc :fragments fragments))))))
+    (-> model
+        (assoc :resolved true)
+        (assoc :encodes (resolve (document/encodes model) (-> ctx
+                                                              (assoc :document model)
+                                                              (assoc :declarations declarations)
+                                                              (assoc :fragments fragments)))))))
 
 
 (defmethod resolve document/Fragment [model ctx]
@@ -139,10 +140,11 @@
                                [(document/location fragment) (ensure-encoded-fragment
                                                               (resolve fragment ctx))]))
                        (into {}))]
-    (assoc model :encodes
-           (resolve (document/encodes model) (-> ctx
-                                                 (assoc :document model)
-                                                 (assoc :fragments fragments))))))
+    (-> model
+        (assoc :resolved true)
+        (assoc :encodes (resolve (document/encodes model) (-> ctx
+                                                              (assoc :document model)
+                                                              (assoc :fragments fragments)))))))
 
 
 (defmethod resolve domain/DomainElement [model ctx]
@@ -156,6 +158,7 @@
      (-> {:id (document/id model)
           :name (document/name model)
           :version (domain/version model)
+          :host (domain/host model)
           :endpoints endpoints}
          utils/clean-nils))))
 
@@ -170,7 +173,6 @@
      (-> {:id (document/id model)
           :name (document/name model)
           :path (compute-path model ctx)
-          :host (compute-host ctx)
           :supported-operations operations}
          utils/clean-nils))))
 

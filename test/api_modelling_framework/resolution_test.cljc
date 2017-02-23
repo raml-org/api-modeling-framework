@@ -36,10 +36,13 @@
                                                                                :responses {"200" {:description "200 response"}
                                                                                            "400" {:description "400 response"}}}}}}}
         parsed (raml-parser/parse-ast input {})
-        resolved (document/encodes (resolution/resolve parsed {}))
+        document-resolved (resolution/resolve parsed {})
+        resolved (document/encodes document-resolved)
         generated-jsonld (jsonld-generator/to-jsonld resolved {})
         generated-raml (raml-generator/to-raml resolved {})
         generated-openapi (openapi-genenerator/to-openapi resolved {})]
+
+    (is (document/resolved document-resolved))
     ;; testing generted raml
     (is (= (sort [:displayName :get :post]) (sort (-> generated-raml (get (keyword "/users")) keys))))
     (is (= ["http"] (-> generated-raml (get (keyword "/users")) :get :protocols)))

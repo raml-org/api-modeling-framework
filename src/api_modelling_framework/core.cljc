@@ -114,12 +114,23 @@
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 
+(defn pre-process-model
+  "Prepares the model to be processed as a RAML document if the model has been resolved"
+  [model]
+  (if (document/resolved model)
+    (-> model
+        (assoc :resolved nil)
+        (assoc :references nil)
+        (assoc :declares nil))
+    model))
+
 (defrecord APIModelGenerator []
   Generator
   (generate-string [this uri model options cb]
     (debug "Generating OpenAPI string")
     (go (try (let [options true
                    res (-> model
+                           (pre-process-model)
                            (jsonld-document-generator/to-jsonld options)
                            (json-generator/generate-string options))]
                (cb nil (platform/<-clj res)))
@@ -129,6 +140,7 @@
     (debug "Generating OpenAPI file")
     (go (let [options true
               res (-> model
+                      (pre-process-model)
                       (jsonld-document-generator/to-jsonld options)
                       (json-generator/generate-string options))]
           (if (platform/error? res)
@@ -142,6 +154,7 @@
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                                    {:location uri}))
                    res (-> model
+                           (pre-process-model)
                            (raml-document-generator/to-raml options)
                            (syntax/<-data))
                    res (yaml-generator/generate-string res options)]
@@ -153,6 +166,7 @@
     (go (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                               {:location uri}))
               res (<! (-> model
+                          (pre-process-model)
                           (raml-document-generator/to-raml options)
                           (syntax/<-data)
                           (yaml-generator/generate-file uri options)))]
@@ -168,6 +182,7 @@
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                                    {:location uri}))
                    res (-> model
+                           (pre-process-model)
                            (openapi-document-generator/to-openapi options)
                            (syntax/<-data)
                            (json-generator/generate-string options))]
@@ -179,6 +194,7 @@
     (go (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                               {:location uri}))
               res (-> model
+                      (pre-process-model)
                       (openapi-document-generator/to-openapi options)
                       (syntax/<-data)
                       (json-generator/generate-string options))]
