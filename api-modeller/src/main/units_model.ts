@@ -1,4 +1,4 @@
-import {ModelProxy} from "./model_proxy";
+import {ModelProxy, ModelLevel} from "./model_proxy";
 import {label, nestedLabel} from "../utils";
 
 export interface DocumentId {
@@ -26,9 +26,10 @@ export class Module implements DocumentId {
     constructor(public id: string, public label: string, public declares: DocumentDeclaration[]) {}
 }
 
-async function consumePromises<T>(ps: Promise<T>[]) {
+async function consumePromises<T>(ps: (Promise<T>|null)[]) {
     if (ps.length > 0) {
-        await ps.pop();
+        const next = ps.pop();
+        if (next != null) { await next }
         await consumePromises(ps)
     }
 }
@@ -36,27 +37,31 @@ async function consumePromises<T>(ps: Promise<T>[]) {
 export class UnitModel {
     constructor(public model: ModelProxy) {}
 
-    public process(cb) {
+    public process(modelLevel: ModelLevel, cb) {
         const acc = { "documents": [], "fragments": [], "modules": []};
         const references = this.model.references();
         const promises = references.map(reference => {
-            return new Promise((resolve, reject) => {
-                let nestedModel = this.model.nestedModel(reference);
-                nestedModel.toAPIModelProcessed("document", false, false, (err, jsonld: any) => {
-                    if (err != null) {
-                        reject(err);
-                    } else {
-                        if (this.isDocument(jsonld)) {
-                            this.parseDocument(jsonld, acc);
-                        } else if (this.isFragment(jsonld)) {
-                            this.parseFragment(jsonld, acc);
-                        } else if (this.isModule(jsonld)) {
-                            this.parseModule(jsonld, acc);
+            if (modelLevel == "document" || reference == this.model.location()) {
+                return new Promise((resolve, reject) => {
+                    let nestedModel = this.model.nestedModel(reference);
+                    nestedModel.toAPIModelProcessed(modelLevel, false, false, (err, jsonld: any) => {
+                        if (err != null) {
+                            reject(err);
+                        } else {
+                            if (this.isDocument(jsonld)) {
+                                this.parseDocument(jsonld, acc);
+                            } else if (this.isFragment(jsonld)) {
+                                this.parseFragment(jsonld, acc);
+                            } else if (this.isModule(jsonld)) {
+                                this.parseModule(jsonld, acc);
+                            }
+                            resolve(undefined);
                         }
-                        resolve(undefined);
-                    }
+                    });
                 });
-            });
+            } else {
+                return null;
+            }
         });
 
         consumePromises(promises)
@@ -85,7 +90,7 @@ export class UnitModel {
 
     parseDocument(doc: any, acc) {
         const docId = doc["@id"];
-        const declares = (doc["http://raml.org/vocabularies/document#declares"] || "").map((declaration) => {
+        const declares = (doc["http://raml.org/vocabularies/document#declares"] || []).map((declaration) => {
             console.log("DECLARATION");
             console.log(declaration);
             return new DocumentDeclaration(
@@ -104,7 +109,7 @@ export class UnitModel {
 
     parseModule(doc:any, acc) {
         const docId = doc["@id"];
-        const declares = (doc["http://raml.org/vocabularies/document#declares"] || "").map((declaration) => {
+        const declares = (doc["http://raml.org/vocabularies/document#declares"] || []).map((declaration) => {
             return new DocumentDeclaration(
                 declaration["@id"],
                 nestedLabel(docId, declaration["@id"]),

@@ -24,9 +24,9 @@ export class ViewModel {
     public editorSection: KnockoutObservable<EditorSection> = ko.observable<EditorSection>("raml");
     public references: KnockoutObservableArray<ReferenceFile> = ko.observableArray<ReferenceFile>([]);
     public selectedReference: KnockoutObservable<ReferenceFile|null> = ko.observable<ReferenceFile|null>(null);
-    public documentUnits: KnockoutObservableArray<Document[]> = ko.observableArray<Document[]>([]);
-    public fragmentUnits: KnockoutObservableArray<Fragment[]> = ko.observableArray<Fragment[]>([]);
-    public moduleUnits: KnockoutObservableArray<Module[]> = ko.observableArray<Module[]>([]);
+    public documentUnits: KnockoutObservableArray<Document> = ko.observableArray<Document>([]);
+    public fragmentUnits: KnockoutObservableArray<Fragment> = ko.observableArray<Fragment>([]);
+    public moduleUnits: KnockoutObservableArray<Module> = ko.observableArray<Module>([]);
     public nav: Nav = new Nav("document");
     public loadModal: LoadModal = new LoadModal();
     public documentLevel: ModelLevel = "document";
@@ -43,7 +43,9 @@ export class ViewModel {
                 } else {
                     this.documentModel = model;
                     this.model = model;
+                    this.selectedReference(this.makeReference(this.documentModel!.location(), this.documentModel!.location()));
                     this.resetUnits();
+                    this.resetReferences();
                     this.resetDocuments();
                 }
             });
@@ -54,6 +56,32 @@ export class ViewModel {
         this.editorSection.subscribe((section) => this.onEditorSectionChange(section));
     }
 
+    public selectNavigatorFile(reference: ReferenceFile) {
+        this.selectedReference(reference);
+        if (this.documentModel != null) {
+            if (this.documentModel.location() !== reference.id) {
+                this.model = this.documentModel.nestedModel(reference.id);
+            } else {
+                this.model =  this.documentModel;
+            }
+            this.resetDocuments()
+        }
+    }
+
+    private onDocumentLevelChange(level: ModelLevel) {
+        console.log(`** New document level ${level}`);
+        this.documentLevel = level;
+        if (level === "domain" && this.documentModel) {
+            this.model = this.documentModel;
+            this.selectedReference(this.makeReference(this.documentModel.location(), this.documentModel.location()));
+        }
+        this.resetDocuments();
+        this.resetReferences();
+        this.resetUnits();
+    }
+
+
+
     protected apiModellerWindow(): ApiModellerWindow { return remote.getCurrentWindow() as ApiModellerWindow; }
 
     apply(location: Node) {
@@ -61,19 +89,10 @@ export class ViewModel {
         ko.applyBindings(this);
     }
 
-    private onDocumentLevelChange(level: ModelLevel) {
-        console.log(`** New document level ${level}`);
-        this.documentLevel = level;
-        this.resetDocuments();
-    }
 
     // Reset the view model state when a document has changed
-    private resetDocuments(resetReferences = true) {
+    private resetDocuments() {
         if (this.model != null) {
-
-            // we reset the list of references for this model
-            if (resetReferences) { this.resetReferences(); }
-
             // We generate the RAML representation
             this.model.toRaml(this.documentLevel,(err, string) => {
                 if (err != null) {
@@ -137,19 +156,18 @@ export class ViewModel {
 
     // Reset the list of references for the current model
     private resetReferences() {
-        console.log("Setting references");
-        if (this.model != null) {
+        console.log("** Setting references");
+        if (this.model != null && this.documentModel != null) {
             const location = this.model.location();
-            this.selectedReference(this.makeReference(location, location));
             if (this.documentLevel === "document") {
                 this.references.removeAll();
-                this.model.references().forEach(ref => this.references.push(this.makeReference(location, ref)));
+                this.documentModel.references().forEach(ref => this.references.push(this.makeReference(location, ref)));
             } else {
+                const documentModelReference = this.makeReference(location, location);
                 this.references.removeAll();
-                this.references.push(this.makeReference(location, this.model.location()))
+                this.references.push(documentModelReference);
             }
         }
-        console.log("TOTAL REFERENCES " + this.references.length);
     }
 
     private makeReference(currentLocation: string, reference: string): ReferenceFile {
@@ -166,16 +184,6 @@ export class ViewModel {
             }
         } else {
             const refParts = reference.split("/");
-            /*
-            let name;
-            if ( refParts.length > 3 ) {
-                const n = refParts.pop();
-                const n1 = refParts.pop();
-                name = `.../${n1}/${n}`;
-            } else {
-                name = refParts.join("/");
-            }
-            */
             return {
                 type: (isRemote ? "remote" : "local"),
                 id: reference,
@@ -184,30 +192,26 @@ export class ViewModel {
         }
     }
 
-    public selectNavigatorFile(reference: ReferenceFile) {
-        this.selectedReference(reference);
-        if (this.documentModel != null) {
-            if (this.documentModel.location() !== reference.id) {
-                this.model = this.documentModel.nestedModel(reference.id);
-            } else {
-                this.model =  this.documentModel;
-            }
-            this.resetDocuments(false)
-        }
-    }
-
     private resetUnits() {
-        if (this.documentModel != null && this.documentLevel === "document") {
-            this.documentModel.units((err, units) => {
+        if (this.documentModel != null) {
+            this.documentModel.units(this.documentLevel, (err, units) => {
                 if (err == null) {
+                    console.log("Got the new units");
                     this.documentUnits.removeAll();
                     units.documents.forEach(doc => this.documentUnits.push(doc));
                     this.fragmentUnits.removeAll();
                     units.fragments.forEach(fragment => this.fragmentUnits.push(fragment));
                     this.moduleUnits.removeAll();
                     units.modules.forEach(module => this.moduleUnits.push(module));
+                } else {
+                    console.log("Error loading units");
+                    console.log(err);
                 }
-            })
+            });
+        } else {
+            this.documentUnits.removeAll();
+            this.fragmentUnits.removeAll();
+            this.moduleUnits.removeAll();
         }
     }
 }

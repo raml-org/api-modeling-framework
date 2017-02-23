@@ -132,7 +132,7 @@ export class ModelProxy {
     }
 
 
-    public units(cb) { new UnitModel(this).process(cb); }
+    public units(modelLevel: ModelLevel, cb) { new UnitModel(this).process(modelLevel, cb); }
 
     /**
      * Returns all the files referenced in a document model
