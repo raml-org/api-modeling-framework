@@ -1,6 +1,8 @@
 import {ModelType} from "./api_modeller_window";
 import * as jsonld from "jsonld";
 import {JsonLd} from "jsonld";
+import {stringify} from "querystring";
+import {UnitModel} from "./units_model";
 require("api_modelling_framework");
 
 const apiFramework = global["api_modelling_framework"].core;
@@ -76,6 +78,11 @@ export class ModelProxy {
 
     toAPIModel(level: ModelLevel, cb) {
         console.log(`** Generating API Model JSON-LD with level ${level}`);
+        this.toAPIModelProcessed(level, true, true, cb);
+    }
+
+    toAPIModelProcessed(level: ModelLevel, compacted: boolean, stringify: boolean, cb) {
+        console.log(`** Generating API Model JSON-LD with level ${level}`);
         let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
         apiFramework.generate_string(
             apiModelGenerator,
@@ -87,29 +94,45 @@ export class ModelProxy {
                     cb(err, res);
                 } else {
                     const parsed = JSON.parse(res);
-                    const context = {
-                        "raml-doc": "http://raml.org/vocabularies/document#",
-                        "raml-http": "http://raml.org/vocabularies/http#",
-                        "raml-shapes": "http://raml.org/vocabularies/shapes#",
-                        "hydra":"http://www.w3.org/ns/hydra/core#",
-                        "shacl":"http://www.w3.org/ns/shacl#",
-                        "schema-org":"http://schema.org/",
-                        "xsd":"http://www.w3.org/2001/XMLSchema#"
-                    };
+                    if ( compacted ) {
+                        const context = {
+                            "raml-doc": "http://raml.org/vocabularies/document#",
+                            "raml-http": "http://raml.org/vocabularies/http#",
+                            "raml-shapes": "http://raml.org/vocabularies/shapes#",
+                            "hydra": "http://www.w3.org/ns/hydra/core#",
+                            "shacl": "http://www.w3.org/ns/shacl#",
+                            "schema-org": "http://schema.org/",
+                            "xsd": "http://www.w3.org/2001/XMLSchema#"
+                        };
 
-                    jsonld.compact(parsed, context, (err, compacted) => {
-                        if (err != null) {
-                            console.log("ERROR COMPACTING");
-                            console.log(err);
+                        jsonld.compact(parsed, context, (err, compacted) => {
+                            if (err != null) {
+                                console.log("ERROR COMPACTING");
+                                console.log(err);
+                            }
+                            const finalJson = (err == null) ? compacted : parsed;
+                            if ( stringify ) {
+                                this.apiModeltring = JSON.stringify(finalJson, null, 2);
+                                cb(err, this.apiModeltring);
+                            } else {
+                                cb(err, finalJson)
+                            }
+                        });
+                    } else {
+                        if ( stringify ) {
+                            this.apiModeltring = JSON.stringify(parsed, null, 2);
+                            cb(err, this.apiModeltring);
+                        } else {
+                            cb(err, parsed)
                         }
-                        const finalJson = (err == null) ? compacted : parsed;
-                        this.apiModeltring = JSON.stringify(finalJson, null, 2);
-                        cb(err, this.apiModeltring);
-                    });
 
+                    }
                 }
             });
     }
+
+
+    public units(cb) { new UnitModel(this).process(cb); }
 
     /**
      * Returns all the files referenced in a document model

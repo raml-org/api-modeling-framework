@@ -18,6 +18,7 @@
     "font-awesome": "^4.7.0",
     "bulma": "^0.3.1",
     "knockout": "^3.4.1",
-    "monaco-editor": "^0.7.1"
+    "monaco-editor": "^0.7.1",
+    "balloon-css": "^0.4.0"
   }
 }

@@ -70,13 +70,15 @@
            (let [res (resolution/resolve res {})]
              (reset! domain-cache res)
              res)))
-       (reference-model [_ location]
-         (let [reference (->> (document/references res)
-                              (filter #(= location (document/location %)))
-                              first)]
-           (if (some? reference)
-             (to-model reference)
-             (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find reference " location " in the model"))))))))))
+       (reference-model [this location]
+         (if (= location (document/location res))
+           this
+           (let [reference (->> (document/references res)
+                                (filter #(= location (document/location %)))
+                                first)]
+             (if (some? reference)
+               (to-model reference)
+               (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find reference " location " in the model")))))))))))
 
 (defrecord RAMLParser []
   Parser

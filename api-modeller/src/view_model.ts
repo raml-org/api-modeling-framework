@@ -6,13 +6,15 @@ import {ApiModellerWindow} from "./main/api_modeller_window";
 import {Nav} from "./view_models/nav";
 import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor;
 import createModel = monaco.editor.createModel;
+import {Document, Fragment, Module} from "./main/units_model";
+import {label} from "./utils";
 
 export type NavigatorSection = "files" | "logic";
 export type EditorSection = "raml" | "open-api" | "api-model";
 
 export interface ReferenceFile {
-    value: string;
-    name: string;
+    id: string;
+    label: string;
     type: "local" | "remote"
 }
 
@@ -22,6 +24,9 @@ export class ViewModel {
     public editorSection: KnockoutObservable<EditorSection> = ko.observable<EditorSection>("raml");
     public references: KnockoutObservableArray<ReferenceFile> = ko.observableArray<ReferenceFile>([]);
     public selectedReference: KnockoutObservable<ReferenceFile|null> = ko.observable<ReferenceFile|null>(null);
+    public documentUnits: KnockoutObservableArray<Document[]> = ko.observableArray<Document[]>([]);
+    public fragmentUnits: KnockoutObservableArray<Fragment[]> = ko.observableArray<Fragment[]>([]);
+    public moduleUnits: KnockoutObservableArray<Module[]> = ko.observableArray<Module[]>([]);
     public nav: Nav = new Nav("document");
     public loadModal: LoadModal = new LoadModal();
     public documentLevel: ModelLevel = "document";
@@ -38,6 +43,7 @@ export class ViewModel {
                 } else {
                     this.documentModel = model;
                     this.model = model;
+                    this.resetUnits();
                     this.resetDocuments();
                 }
             });
@@ -155,11 +161,12 @@ export class ViewModel {
         if (reference.startsWith(currentLocationDir)) {
             return {
                 type: (isRemote ? "remote" : "local"),
-                name: reference.replace(currentLocationDir,""),
-                value: reference
+                id: reference,
+                label: label(reference)
             }
         } else {
             const refParts = reference.split("/");
+            /*
             let name;
             if ( refParts.length > 3 ) {
                 const n = refParts.pop();
@@ -168,10 +175,11 @@ export class ViewModel {
             } else {
                 name = refParts.join("/");
             }
+            */
             return {
                 type: (isRemote ? "remote" : "local"),
-                name: name,
-                value: reference
+                id: reference,
+                label: label(reference),
             }
         }
     }
@@ -179,12 +187,27 @@ export class ViewModel {
     public selectNavigatorFile(reference: ReferenceFile) {
         this.selectedReference(reference);
         if (this.documentModel != null) {
-            if (this.documentModel.location() !== reference.value) {
-                this.model = this.documentModel.nestedModel(reference.value);
+            if (this.documentModel.location() !== reference.id) {
+                this.model = this.documentModel.nestedModel(reference.id);
             } else {
                 this.model =  this.documentModel;
             }
             this.resetDocuments(false)
+        }
+    }
+
+    private resetUnits() {
+        if (this.documentModel != null && this.documentLevel === "document") {
+            this.documentModel.units((err, units) => {
+                if (err == null) {
+                    this.documentUnits.removeAll();
+                    units.documents.forEach(doc => this.documentUnits.push(doc));
+                    this.fragmentUnits.removeAll();
+                    units.fragments.forEach(fragment => this.fragmentUnits.push(fragment));
+                    this.moduleUnits.removeAll();
+                    units.modules.forEach(module => this.moduleUnits.push(module));
+                }
+            })
         }
     }
 }

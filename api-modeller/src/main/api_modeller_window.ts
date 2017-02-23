@@ -56,7 +56,6 @@ export class ApiModellerWindow extends Electron.BrowserWindow {
             parser = new apiFramework.OpenAPIParser();
         }
 
-        var that = this;
         apiFramework.parse_file(parser, fileLocation, function(err, model) {
             if (err != null) {
                 cb(err, null);
