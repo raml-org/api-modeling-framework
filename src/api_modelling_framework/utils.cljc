@@ -21,10 +21,17 @@
     (map? x) (->> x
                   (mapv (fn [[k v]] [(ramlify k) (ramlify v)]))
                   (sort (fn [[ka va] [kb vb]]
-                          (if (and (string/starts-with? ka "/")
-                                   (string/starts-with? kb "/"))
-                            0
-                            (if (string/starts-with? ka "/") 1 -1))))
+                          (cond
+                            (and (string/starts-with? ka "/")
+                                 (string/starts-with? kb "/"))  0
+                            (string/starts-with? ka "/")        1
+                            (= ka "title")                     -1
+                            (and (= ka "version")
+                                 (or (not= kb "title")))       -1
+                            (and (= ka "baseUri")
+                                 (or (not= kb "title")
+                                     (not= kb "version")))     -1
+                            :else                              -1)))
                   (into {}))
     (coll? x) (mapv #(ramlify %) x)
     :else x))

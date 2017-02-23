@@ -93,8 +93,8 @@
                                   (is (nil? error))
                                   (is (some? model))
                                   (let [domain-model (core/domain-model model)]
-                                    (prn domain-model)
-                                    (println "GENEARTING STRING NOW...")
+                                    ;;(prn domain-model)
+                                    ;;(println "GENEARTING STRING NOW...")
                                     (core/generate-string api-model-generator "file://test/world-music.raml"
                                                           domain-model
                                                           {}

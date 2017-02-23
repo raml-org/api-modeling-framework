@@ -48,6 +48,12 @@
    :version #{:root}
    })
 
+(defn  extract-scalar [x]
+  (cond
+    (and (map? x) (:value x)) (:value x)
+    (coll? x)                 (mapv extract-scalar x)
+    :else                     x))
+
 (defn guess-type-from-predicates [x]
   (->> [(fn [x] (when (string/starts-with? (utils/safe-str x) "/") #{:root :resource}))
         (fn [x] (when (some? (re-matches #"^\d+$" (utils/safe-str x))) #{:responses}))
@@ -88,7 +94,7 @@
                          parsed-location (str location "/" location-segment "/" (url/url-encode (utils/safe-str header-name)))
                          location (str location "/" location-segment "/" (url/url-encode (utils/safe-str header-name)))
                          node-parsed-source-map (generate-parse-node-sources location parsed-location)
-                         required (:required header-value)
+                         required (extract-scalar (:required header-value))
                          header-shape (shapes/parse-type header-value (-> context
                                                                           (assoc :location location)
                                                                           (assoc :parsed-location parsed-location)))
@@ -238,14 +244,14 @@
                                      trait-tags
                                      ;;types-sources
                                      )
-                    :name (:title node)
-                    :description (:description node)
-                    :host (base-uri->host (:baseUri node))
+                    :name (extract-scalar (:title node))
+                    :description (extract-scalar (:description node))
+                    :host (base-uri->host (extract-scalar (:baseUri node)))
                     :scheme (root->scheme node)
-                    :base-path (base-uri->basepath (:baseUri node))
-                    :accepts (filterv some? (flatten [(:mediaType node)]))
+                    :base-path (base-uri->basepath (extract-scalar (:baseUri node)))
+                    :accepts (filterv some? (flatten [(extract-scalar (:mediaType node))]))
                     :content-type (filterv some? (flatten [(:mediaType node)]))
-                    :version (:version node)
+                    :version (extract-scalar (:version node))
                     :provider nil
                     :terms-of-service nil
                     :license nil
@@ -312,8 +318,8 @@
                                       :sources (concat (generate-parse-node-sources location resource-id)
                                                        children-tags)
                                       :id resource-id
-                                      :name (:displayName node)
-                                      :description (:description node)
+                                      :name (extract-scalar (:displayName node))
+                                      :description (extract-scalar (:description node))
                                       :supported-operations operations
                                       :extends traits})]
     (concat (if is-fragment
@@ -353,9 +359,9 @@
         properties (-> {:id method-id
                         :sources node-parsed-source-map
                         :method method
-                        :name (:displayName node)
-                        :description (:description node)
-                        :scheme (:protocols node)
+                        :name (extract-scalar (:displayName node))
+                        :description (extract-scalar (:description node))
+                        :scheme (extract-scalar (:protocols node))
                         :headers headers
                         :request request
                         :responses (flatten responses)
@@ -408,7 +414,7 @@
         properties (-> {:name status-code
                         :status-code status-code
                         :headers headers
-                        :description (:description node)}
+                        :description (extract-scalar (:description node))}
                        utils/clean-nils)
         bodies (extract-bodies (:body node) (-> context
                                                 (assoc :location location)
