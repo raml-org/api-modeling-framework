@@ -198,8 +198,11 @@
                          trait-fragment (parse-ast trait-node (-> nested-context
                                                                   (assoc :method fragment-name)
                                                                   (assoc :location location)
+                                                                  (assoc :parsed-location parsed-location)
                                                                   (assoc :is-fragment true)
                                                                   (assoc :type-hint :method)))
+                         trait-fragment (assoc trait-fragment :id (str parsed-location "/" fragment-name))
+                         trait-fragment (assoc-in trait-fragment [:properties :id] (str parsed-location "/" fragment-name))
                          sources (or (-> trait-fragment :properties :sources) [])
                          sources (concat sources (generate-is-trait-sources fragment-name
                                                                             (str location "/" fragment-name)
@@ -279,10 +282,10 @@
                        [extend-id (str parsed-location "/extends/" (url/url-encode trait-name))
                         extend-location (str location "/is/" i)
                         node-parsed-source-map (generate-parse-node-sources extend-location extend-id)
-                        is-trait-source-map (generate-extends-trait-sources trait-name extend-location extend-id)]
+                        extends-trait-source-map (generate-extends-trait-sources trait-name extend-location extend-id)]
                      (document/map->ParsedExtends {:id extend-id
                                                    :sources (concat node-parsed-source-map
-                                                                    is-trait-source-map)
+                                                                    extends-trait-source-map)
                                                    :target (document/id trait)
                                                    :label "trait"
                                                    :arguments []}))

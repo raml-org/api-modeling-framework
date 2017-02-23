@@ -5,7 +5,11 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.parser.domain.raml :as raml-parser]
-            [api-modelling-framework.generators.domain.jsonld :as generator]))
+            [api-modelling-framework.parser.document.raml :as raml-document-parser]
+            [api-modelling-framework.generators.domain.jsonld :as generator]
+            [api-modelling-framework.parser.domain.jsonld :as parser]
+            [api-modelling-framework.generators.domain.raml :as raml-generator]
+            [api-modelling-framework.generators.document.raml :as document-raml-generator]))
 
 (deftest to-raml-APIDocumentation
   (let [api-documentation (domain/map->ParsedAPIDocumentation {:host "test.com"
@@ -54,3 +58,28 @@
              (->> endpoints
                   (map #(first (get % v/http:path)))
                   (map #(get % "@value"))))))))
+
+
+(deftest from-raml-traits-test
+  (let [input {:baseUri "http://test.com"
+               :protocols "http"
+               :version "1.0"
+               :traits {:secure {:queryParameters {:access_token {:type "string"}}}}
+               (keyword "/users") {:displayName "Users"
+                                   (keyword "/items") {:displayName "items"
+                                                       :is ["secure"]}}}
+        traits (raml-parser/process-traits input {:location "file://location/#"
+                                                  :fragments []
+                                                  :document-parser raml-document-parser/parse-ast
+                                                  :parsed-location (str "file://location/#/declares")})
+        api-documentation (raml-parser/parse-ast input
+                                                 {:location "file://path/to/resource.raml#"
+                                                  :parsed-location "file://path/to/resource.raml#"
+                                                  :references traits
+                                                  :is-fragment false})
+        generated (generator/to-jsonld api-documentation true)
+        parsed    (parser/from-jsonld generated)
+        output (raml-generator/to-raml parsed {:references (vals traits)
+                                               :fragments {}
+                                               :document-generator document-raml-generator/to-raml})]
+    (is (= input output))))

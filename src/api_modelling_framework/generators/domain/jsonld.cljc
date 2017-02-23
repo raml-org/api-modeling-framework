@@ -14,10 +14,9 @@
 
     (satisfies? domain/DomainElement model)      :DomainElement
 
-    (satisfies? document/Includes model)         :Includes
+    (satisfies? document/Extends model)          :Extends
 
-    (and (satisfies? document/Extends model)
-         (satisfies? document/Node model))       :Extends
+    (satisfies? document/Includes model)         :Includes
 
     (and (satisfies? domain/APIDocumentation model)
          (satisfies? document/Node model))       :APIDocumentation
@@ -84,6 +83,7 @@
        (with-node-properties m context)
        (utils/assoc-value m v/http:path domain/path)
        (utils/assoc-objects m v/hydra:supportedOperation domain/supported-operations (fn [x] (to-jsonld x context)))
+       (utils/assoc-objects m v/document:extends document/extends (fn [x] (to-jsonld x context)))
        utils/clean-nils))
 
 (defmethod to-jsonld :Operation [m context]

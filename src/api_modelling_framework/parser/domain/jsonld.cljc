@@ -50,12 +50,15 @@
 (defmethod from-jsonld v/http:EndPoint [m]
   (debug "Parsing " v/http:EndPoint " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+        parsed-sources (map from-jsonld sources)
+        extend-rels (get m v/document:extends [])
+        extensions (map from-jsonld extend-rels)]
     (domain/map->ParsedEndPoint {:id (get m "@id")
                                  :sources parsed-sources
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
                                  :path (utils/find-value m v/http:path)
+                                 :extends extensions
                                  :supported-operations (map from-jsonld (-> m (get v/hydra:supportedOperation [])))})))
 
 (defmethod from-jsonld v/document:SourceMap [m]
@@ -79,6 +82,7 @@
       document/nested-resource-parent-id-tag (document/->NestedResourceParentIdTag id tag-value)
       document/nested-resource-path-parsed-tag (document/->NestedResourcePathParsedTag id tag-value)
       document/api-tag-tag (document/->APITagTag id tag-value)
+      document/inline-fragment-parsed-tag (document/->InlineFragmentParsedTag id tag-value)
       (reify
         document/Tag
         (document/tag-id [this] tag-id)

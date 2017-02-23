@@ -93,17 +93,27 @@
         children-node (into {} children-node)]
     (merge node children-node)))
 
-(defn model->traits [{:keys [references] :as ctx}]
-  (->> references
-       (filter #(not (empty? (document/find-tag % document/extends-trait-tag))))
-       ;(filter #(= :trait (domain/fragment-node %)))
-       (map (fn [reference]
-              (let [trait-name (-> reference
-                                   (document/find-tag document/extends-trait-tag)
-                                   first
-                                   (document/value)
-                                   keyword)
-                    method (domain/to-domain-node reference)
+(defn model->traits [model {:keys [references] :as ctx}]
+  (->> (document/find-tag model document/inline-fragment-parsed-tag)
+       (map (fn [tag]
+              (let [trait-id (document/value tag)
+                    reference (->> references
+                                   (filter (fn [reference] (= (document/id reference) trait-id)))
+                                   first)
+                    is-trait-tag (-> reference
+                                     (document/find-tag document/is-trait-tag)
+                                     first)
+                    trait-name (if is-trait-tag
+                                 (-> is-trait-tag
+                                     (document/value)
+                                     keyword)
+                                 (-> trait-id
+                                     name
+                                     (clojure.string/split #"/")
+                                     last))
+                    method (if (some? reference)
+                             (domain/to-domain-node reference)
+                             (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
                     generated (to-raml method ctx)]
                 [trait-name generated])))
        (into {})))
@@ -122,12 +132,13 @@
          :baseUri (model->base-uri model)
          :protocols (model->protocols model)
          :mediaType (model->media-type model)
-         :traits (model->traits ctx)}
+         :traits (model->traits model ctx)}
         (merge-children-resources children-resources ctx)
         utils/clean-nils)))
 
 (defn find-traits [model context]
   (let [extends (document/extends model)]
+    ;; @todo do I need both checks, label and is-trait-tag ??
     (->> extends
          (filter (fn [extend] (= "trait" (name (document/label extend)))))
          (map (fn [trait]

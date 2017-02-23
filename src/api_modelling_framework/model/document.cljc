@@ -171,6 +171,8 @@
   (valid? [this] true)
   (extends [this] []))
 
+;; used to makr that some declared extended fragments in a document are
+;; related to this node, for example as traits or types
 (def inline-fragment-parsed-tag "inline-fragment-parsed-tag")
 
 (defrecord InlineFragmentParsedTag [id tag-value]
@@ -185,6 +187,7 @@
   (valid? [this] true)
   (extends [this] []))
 
+;; Is trait is used to mark that the fragment is a RAML trait
 (def is-trait-tag "is-trait-tag")
 
 (defrecord IsTraitTag [id trait-name]
@@ -199,7 +202,8 @@
   (valid? [this] true)
   (extends [this] []))
 
-(def extends-trait-tag "is-trait-tag")
+;; Extends trait is used to mark that an extend relationship in a node is actually the application of a RAML trait
+(def extends-trait-tag "extends-trait-tag")
 
 (defrecord ExtendsTraitTag [id trait-name]
   Tag
