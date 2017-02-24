@@ -121,7 +121,7 @@
                 (external-reference? json) (let [next-id (join-path id (get json "$ref"))]
                                              (swap! pending #(conj % next-id))
                                              json)
-                (map? json)                (let [current-id (if (get json "id")
+                (map? json)                (let [current-id (if (and (some? (get json "id")) (string? (get json "id")))
                                                               (join-path id (get json "id"))
                                                               id)]
                                              (loop [pairs json

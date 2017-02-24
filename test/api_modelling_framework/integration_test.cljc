@@ -135,20 +135,20 @@
   (async done
          (go (let [open-api-parser (core/->OpenAPIParser)
                    open-api-generator (core/->OpenAPIGenerator)]
-               (core/parse-file open-api-parser "resources/twitter.json"
+               (core/parse-file open-api-parser "resources/petstore.json"
                                 (fn [error model]
                                   (is (nil? error))
                                   (is (some? model))
                                   (let [domain-model (core/domain-model model)]
-                                    ;;(prn domain-model)
-                                    ;;(println "GENEARTING STRING NOW...")
+                                    (prn domain-model)
+                                    (println "GENEARTING STRING NOW...")
                                     (core/generate-string open-api-generator "file://resources/petstore.json"
                                                           domain-model
                                                           {}
                                                           (fn [error raml-string]
-                                                            ;;(println "BACK!")
-                                                            ;;(prn error)
-                                                            ;;(println "I'M BACK")
-                                                            ;;(println raml-string)
+                                                            (println "BACK!")
+                                                            (prn error)
+                                                            (println "I'M BACK")
+                                                            (println raml-string)
                                                             (is true)
                                                             (done))))))))))
