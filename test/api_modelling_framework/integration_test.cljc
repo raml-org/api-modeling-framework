@@ -26,6 +26,7 @@
                                                         (fn [error openapi-string]
                                                           (is (nil? error))
                                                           (is (some? openapi-string))
+                                                          ;;(println "OPENAPI")
                                                           ;;(println openapi-string)
                                                           (core/parse-string openapi-parser "file://test/world-music.raml"
                                                                              openapi-string
@@ -38,7 +39,8 @@
                                                                                                      (fn [error raml-string]
                                                                                                        (is (nil? error))
                                                                                                        (is (some? raml-string))
-                                                                                                       ;;(println raml-string)
+                                                                                                       (println raml-string)
+                                                                                                       (is true)
                                                                                                        (done)))))))))))))
 
 
@@ -56,7 +58,8 @@
                                                         (core/document-model model)
                                                         {}
                                                         (fn [error raml-string]
-                                                          ;(println raml-string)
+                                                          (println raml-string)
+                                                          (is true)
                                                           (done)))))))))
 
 
@@ -103,25 +106,49 @@
                                                             ;;(prn error)
                                                             ;;(println "I'M BACK")
                                                             ;;(println raml-string)
+                                                            (is true)
+                                                            (done))))))))))
+
+(deftest integration-test-4b
+  (async done
+         (go (let [raml-parser (core/->RAMLParser)
+                   api-model-generator (core/->APIModelGenerator)]
+               (core/parse-file raml-parser "resources/world-music-api/api.raml"
+                                (fn [error model]
+                                  (is (nil? error))
+                                  (is (some? model))
+                                  (let [document-model (core/document-model model)]
+                                    ;;(prn document-model)
+                                    ;;(println "GENEARTING STRING NOW...")
+                                    (core/generate-string api-model-generator "file://test/world-music.raml"
+                                                          document-model
+                                                          {}
+                                                          (fn [error raml-string]
+                                                            ;;(println "BACK!")
+                                                            ;;(prn error)
+                                                            ;;(println "I'M BACK")
+                                                            ;;(println raml-string)
+                                                            (is true)
                                                             (done))))))))))
 
 (deftest integration-test-5
   (async done
          (go (let [open-api-parser (core/->OpenAPIParser)
                    open-api-generator (core/->OpenAPIGenerator)]
-               (core/parse-file open-api-parser "resources/uber.json"
+               (core/parse-file open-api-parser "resources/twitter.json"
                                 (fn [error model]
                                   (is (nil? error))
                                   (is (some? model))
                                   (let [domain-model (core/domain-model model)]
-                                    (prn domain-model)
-                                    (println "GENEARTING STRING NOW...")
+                                    ;;(prn domain-model)
+                                    ;;(println "GENEARTING STRING NOW...")
                                     (core/generate-string open-api-generator "file://resources/petstore.json"
                                                           domain-model
                                                           {}
                                                           (fn [error raml-string]
-                                                            (println "BACK!")
-                                                            (prn error)
-                                                            (println "I'M BACK")
-                                                            (println raml-string)
+                                                            ;;(println "BACK!")
+                                                            ;;(prn error)
+                                                            ;;(println "I'M BACK")
+                                                            ;;(println raml-string)
+                                                            (is true)
                                                             (done))))))))))

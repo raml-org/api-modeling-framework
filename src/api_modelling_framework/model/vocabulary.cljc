@@ -48,6 +48,7 @@
 (def document:tag-id (document-ns "tagId"))
 (def document:tag-value (document-ns "tagValue"))
 (def document:extends (document-ns "extends"))
+(def document:includes (document-ns "includes"))
 (def document:target (document-ns "target"))
 (def document:label (document-ns "label"))
 (def document:arguments (document-ns "arguments"))

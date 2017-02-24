@@ -5,6 +5,8 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.generators.domain.openapi :as generator]
+            [api-modelling-framework.generators.document.openapi :as document-generator]
+            [api-modelling-framework.parser.document.openapi :as openapi-document-parser]
             [api-modelling-framework.parser.domain.openapi :as openapi-parser]
             [api-modelling-framework.parser.domain.raml :as raml-parser]))
 
@@ -147,3 +149,49 @@
                                                :path "/Users"})
         generated (generator/to-openapi parsed {})]
     (is (= generated node))))
+
+
+(deftest from-traits-test
+  (let [input {:swagger "2.0",
+               :host "test.com"
+               :schemes ["http" "https"]
+               :info
+               {:title "name"
+                :description "description"
+                :version "1.0"
+                :termsOfService "terms"}
+               :x-traits {:secure {:parameters [{:name "access_token"
+                                                 :in "header"
+                                                 :required true
+                                                 :type "string"}]}}
+               :paths {(keyword "/users/items") {:x-is ["secure"]
+                                                 :get {:operationId "get"
+                                                       :description "get description"
+                                                       :schemes ["https"]
+                                                       :tags ["experimantl" "foo" "bar"]
+                                                       :produces ["application/ld+json"]
+                                                       :consumes ["application/json"]
+                                                       :responses {"default" {:description ""}}
+                                                       :parameters [{:name "petId"
+                                                                     :in "path"
+                                                                     :required true
+                                                                     :type "string"}
+                                                                    {:name "race"
+                                                                     :in "query"
+                                                                     :type "string"}
+                                                                    {:name "the-body"
+                                                                     :in "body"
+                                                                     :schema {:type "string"}}]}}}}
+        traits (openapi-parser/process-traits input {:location "file://location/#"
+                                                     :fragments []
+                                                     :document-parser openapi-document-parser/parse-ast
+                                                     :parsed-location (str "file://location/#/declares")})
+        api-documentation (openapi-parser/parse-ast input
+                                                    {:location "file://path/to/resource.raml#"
+                                                     :parsed-location "file://path/to/resource.raml#"
+                                                     :references traits
+                                                     :is-fragment false})
+        output (generator/to-openapi api-documentation {:references (vals traits)
+                                                        :fragments {}
+                                                        :document-generator document-generator/to-openapi})]
+    (is (= input output))))

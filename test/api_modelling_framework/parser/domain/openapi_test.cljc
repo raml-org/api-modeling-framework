@@ -197,5 +197,5 @@
     (is (= 1 (-> parsed domain/supported-operations count)))
     (is (= 1 (count @fragments)))
     (is (= "file://path/to/method.json"
-           (-> parsed domain/supported-operations first document/target)))
+           (-> parsed domain/supported-operations first document/includes)))
     (is (some? (get @fragments "file://path/to/method.json")))))

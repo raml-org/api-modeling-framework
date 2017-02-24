@@ -5,12 +5,12 @@
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.utils :as utils]
             [api-modelling-framework.generators.domain.utils :refer [send]]
+            [api-modelling-framework.generators.domain.common :as common]
             [clojure.string :as string]
             [cemerick.url :as url]
             [clojure.walk :refer [keywordize-keys]]
             [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+             #?(:clj :refer :cljs :refer-macros) [debug]]))
 
 
 (defn to-raml-dispatch-fn [model ctx]
@@ -39,6 +39,55 @@
     :else                                           (type model)))
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
+
+(defn includes? [x]
+  (and (some? x) (some? (document/includes x))))
+
+(defn to-raml! [x {:keys [fragments expanded-fragments document-generator] :as ctx}]
+  (if (includes? x)
+    (let [fragment-target (document/includes x)
+          fragment (get fragments fragment-target)]
+      (if (nil? fragment)
+        (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
+        (let [encoded-fragment (document/encodes fragment)
+              encoded-fragment-properties (:properties encoded-fragment)
+              encoded-fragment-properties (reduce (fn [acc k]
+                                                    (let [v (get x k)]
+                                                      (if (nil? v) acc (assoc acc k v))))
+                                                  encoded-fragment-properties
+                                                  (keys x))
+              encoded-fragment-properties (assoc encoded-fragment-properties :includes nil)
+              encoded-fragment (assoc encoded-fragment :properties encoded-fragment-properties)
+              encoded-fragment (assoc encoded-fragment :includes nil)
+              fragment (assoc fragment :encodes encoded-fragment)]
+          (if-let [expanded-fragment (get expanded-fragments fragment-target)]
+            expanded-fragment
+            (let [expanded-fragment (document-generator fragment ctx)]
+              (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
+              expanded-fragment)))))
+    (to-raml x ctx)))
+
+;; ;; Safe version of to-raml that checks for includes
+;; (defn to-raml! [x {:keys [fragments expanded-fragments document-generator] :as ctx}]
+;;   (if (includes? x)
+;;     (let [fragment-target (document/includes x)
+;;           fragment (get fragments fragment-target)]
+;;       (if (nil? fragment)
+;;         (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
+;;         (let [encoded-fragment (document/encodes fragment)
+;;               encoded-fragment (reduce (fn [acc k]
+;;                                          (let [v (get x k)]
+;;                                            (if (nil? v) acc (assoc acc k v))))
+;;                                        encoded-fragment
+;;                                        (keys x))
+;;               encoded-fragment (assoc encoded-fragment :includes nil)
+;;               fragment (assoc fragment :encodes encoded-fragment)]
+;;           (if-let [expanded-fragment (get expanded-fragments fragment-target)]
+;;             expanded-fragment
+;;             (let [expanded-fragment (document-generator fragment ctx)]
+;;               (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
+;;               expanded-fragment)))))
+;;     (to-raml x ctx)))
 
 (defn model->base-uri [model]
   (let [scheme (or (domain/scheme model) [])
@@ -89,34 +138,9 @@
                                          child-path (if (some? child-path)
                                                       (document/value child-path)
                                                       (domain/path child))]
-                                     [(keyword (utils/safe-str child-path)) (to-raml child ctx)]))))
+                                     [(keyword (utils/safe-str child-path)) (to-raml! child ctx)]))))
         children-node (into {} children-node)]
     (merge node children-node)))
-
-(defn model->traits [model {:keys [references] :as ctx}]
-  (->> (document/find-tag model document/inline-fragment-parsed-tag)
-       (map (fn [tag]
-              (let [trait-id (document/value tag)
-                    reference (->> references
-                                   (filter (fn [reference] (= (document/id reference) trait-id)))
-                                   first)
-                    is-trait-tag (-> reference
-                                     (document/find-tag document/is-trait-tag)
-                                     first)
-                    trait-name (if is-trait-tag
-                                 (-> is-trait-tag
-                                     (document/value)
-                                     keyword)
-                                 (-> trait-id
-                                     name
-                                     (clojure.string/split #"/")
-                                     last))
-                    method (if (some? reference)
-                             (domain/to-domain-node reference)
-                             (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
-                    generated (to-raml method ctx)]
-                [trait-name generated])))
-       (into {})))
 
 (defmethod to-raml domain/APIDocumentation [model ctx]
   (debug "Generating RAML root node")
@@ -132,31 +156,18 @@
          :baseUri (model->base-uri model)
          :protocols (model->protocols model)
          :mediaType (model->media-type model)
-         :traits (model->traits model ctx)}
+         :traits (common/model->traits model ctx to-raml!)}
         (merge-children-resources children-resources ctx)
         utils/clean-nils)))
-
-(defn find-traits [model context]
-  (let [extends (document/extends model)]
-    ;; @todo do I need both checks, label and is-trait-tag ??
-    (->> extends
-         (filter (fn [extend] (= "trait" (name (document/label extend)))))
-         (map (fn [trait]
-                (let [trait-tag (first (document/find-tag trait document/is-trait-tag))]
-                  (if (some? trait-tag)
-                    (document/value trait-tag)
-                    (-> (document/target trait) (string/split #"/") last))))))))
-
 
 (defmethod to-raml domain/EndPoint [model {:keys [all-resources] :as ctx}]
   (debug "Generating resource " (document/id model))
   (let [children-resources (find-children-resources (document/id model) all-resources)
         operations (->> (or (domain/supported-operations model) [])
-                        (map (fn [op]
-                               [(keyword (send domain/method op ctx)) (to-raml op ctx)]))
+                        (map (fn [op] [(keyword (domain/method op)) (to-raml! op ctx)]))
                         (into {}))]
     (-> {:displayName (document/name model)
-         :is (find-traits model ctx)
+         :is (common/find-traits model ctx)
          :description (document/description model)}
         (merge operations)
         (merge-children-resources children-resources ctx)
@@ -215,7 +226,7 @@
 (defn unparse-domain-body [request context]
   (if (nil? request) nil
       (if-let [body (domain/schema request)]
-        (to-raml body context)
+        (to-raml! body context)
         nil)))
 
 (defn unparse-query-parameters [request context]
@@ -231,7 +242,7 @@
        :protocols (domain/scheme model)
        :responses (-> (domain/responses model)
                       (group-responses context))
-       :is (find-traits model context)
+       :is (common/find-traits model context)
        :body (unparse-domain-body (domain/request model) context)
        :queryParameters (unparse-query-parameters (domain/request model) context)
        :headers (unparse-parameters (domain/headers model) context)}
@@ -240,11 +251,12 @@
 (defmethod to-raml domain/Response [model context]
   (debug "Generating response " (document/name model))
   {:description (document/description model)
-   :body (to-raml (domain/schema model) context)})
+   :body (to-raml! (domain/schema model) context)})
 
 (defmethod to-raml domain/Type [model context]
   (debug "Generating type")
   (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context)))
+
 
 (defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments document-generator]
                                              :as context

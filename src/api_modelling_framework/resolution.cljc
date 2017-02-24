@@ -63,6 +63,14 @@
 
 (defmulti resolve (fn [model ctx] (resolve-dispatch-fn model ctx)))
 
+(defn ensure-applied-fragment [x {:keys [fragments] :as ctx}]
+  (if (some? (document/includes x))
+    (let [fragment (get fragments (document/includes x))]
+      (if (nil? fragment)
+        (throw (new #?(:clj Exception :cljs js/Error)
+                    (str "Cannot find fragment " (document/includes x) " in include relationship " (document/id x))))
+        (resolve (assoc (merge-declaration x fragment) :includes nil) ctx)))
+    x))
 
 (defn compute-path [model ctx]
   (let [api-documentation (get ctx domain/APIDocumentation)
@@ -112,7 +120,8 @@
 
 (defmethod resolve :Document [model ctx]
   (debug "Resolving Document " (document/id model))
-  (let [fragments (->> (document/references model)
+  (let [model (ensure-applied-fragment model ctx)
+        fragments (->> (document/references model)
                        (mapv (fn [fragment]
                                [(document/location fragment) (ensure-encoded-fragment
                                                               (resolve fragment ctx))]))
@@ -135,7 +144,8 @@
 
 (defmethod resolve document/Fragment [model ctx]
   (debug "Resolving Fragment " (document/id model))
-  (let [fragments (->> (document/references model)
+  (let [model (ensure-applied-fragment model ctx)
+        fragments (->> (document/references model)
                        (mapv (fn [fragment]
                                [(document/location fragment) (ensure-encoded-fragment
                                                               (resolve fragment ctx))]))
@@ -149,11 +159,12 @@
 
 (defmethod resolve domain/DomainElement [model ctx]
   (debug "Resolving DomainElement " (document/id model))
-  (resolve (domain/to-domain-node model) ctx))
+  (resolve (domain/to-domain-node (ensure-applied-fragment model ctx)) ctx))
 
 (defmethod resolve domain/APIDocumentation [model ctx]
   (debug "Resolving APIDocumentation " (document/id model))
-  (let [endpoints (mapv #(resolve % (-> ctx (assoc domain/APIDocumentation model))) (domain/endpoints model))]
+  (let [model (ensure-applied-fragment model ctx)
+        endpoints (mapv #(resolve % (-> ctx (assoc domain/APIDocumentation model))) (domain/endpoints model))]
     (domain/map->ParsedAPIDocumentation
      (-> {:id (document/id model)
           :name (document/name model)
@@ -164,7 +175,8 @@
 
 (defmethod resolve domain/EndPoint [model ctx]
   (debug "Resolving EndPoint " (document/id model))
-  (let [traits (or (document/extends model) [])
+  (let [model (ensure-applied-fragment model ctx)
+        traits (or (document/extends model) [])
         operations (->> (domain/supported-operations model)
                         (mapv #(let [op-traits (:extends %)]
                                  (assoc % :extends (concat op-traits traits))))
@@ -178,10 +190,12 @@
 
 (defmethod resolve domain/Operation [model ctx]
   (debug "Resolving Operation " (document/id model))
-  (let [ctx (assoc ctx domain/Operation model)
+  (let [model (ensure-applied-fragment model ctx)
+        ctx (assoc ctx domain/Operation model)
         ;; we need to merge traits before resolving the resulting structure
         traits (mapv #(resolve % ctx) (document/extends model))
-        model (reduce (fn [acc trait] (merge-declaration acc trait)) model traits)
+        model (reduce (fn [acc trait] (merge-declaration acc trait))
+                      model traits)
         ;; reset the ctx after merging traits
         ctx (assoc ctx domain/Operation model)
         request (resolve (domain/request model) ctx)
@@ -199,7 +213,8 @@
 
 (defmethod resolve domain/Request [model ctx]
   (debug "Resolving Request " (document/id model))
-  (let [ctx (assoc ctx domain/Request model)
+  (let [model (ensure-applied-fragment model ctx)
+        ctx (assoc ctx domain/Request model)
         parameters (mapv #(resolve % ctx) (domain/parameters model))
         schema (resolve (domain/schema model) ctx)]
     (domain/map->ParsedRequest
@@ -211,7 +226,8 @@
 
 (defmethod resolve domain/Parameter [model ctx]
   (debug "Resolving Parameter " (document/id model))
-  (let [ctx (assoc ctx domain/Parameter model)
+  (let [model (ensure-applied-fragment model ctx)
+        ctx (assoc ctx domain/Parameter model)
         shape (domain/shape model)] ;; @todo we need to compute the canonical form of the shape
     (domain/map->ParsedParameter
      (-> {:id (document/id model)
@@ -223,7 +239,8 @@
 
 (defmethod resolve domain/Type [model ctx]
   (debug "Resolving Type " (document/id model))
-  (let [shape (domain/shape model)] ;; @todo we need to compute the canonical form of the shape
+  (let [model (ensure-applied-fragment model ctx)
+        shape (domain/shape model)] ;; @todo we need to compute the canonical form of the shape
     (domain/map->ParsedType
      (-> {:id (document/id model)
           :name (document/name model)
@@ -231,7 +248,8 @@
 
 (defmethod resolve domain/Response [model ctx]
   (debug "Resolving Response " (document/id model))
-  (let [ctx (assoc ctx domain/Response model)
+  (let [model (ensure-applied-fragment model ctx)
+        ctx (assoc ctx domain/Response model)
         schema (resolve (domain/schema model) ctx)]
     (domain/map->ParsedResponse
      (-> {:id (document/id model)
@@ -244,14 +262,16 @@
 
 (defmethod resolve document/Includes [model {:keys [fragments] :as ctx}]
   (debug "Resolving Includes " (document/id model))
-  (let [fragment (get fragments (document/target model))]
+  (let [model (ensure-applied-fragment model ctx)
+        fragment (get fragments (document/target model))]
     (if (nil? fragment)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " (document/target model) " in include relationship " (document/id model))))
       (resolve fragment ctx))))
 
 (defmethod resolve document/Extends [model {:keys [declarations] :as ctx}]
   (debug "Resolving Extends " (document/id model))
-  (let [fragment (get declarations (document/target model))]
+  (let [model (ensure-applied-fragment model ctx)
+        fragment (get declarations (document/target model))]
     (if (nil? fragment)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " (document/target model) " in extend relationship " (document/id model))))
       (resolve fragment ctx))))

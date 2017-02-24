@@ -56,7 +56,8 @@
       (assoc "@id" (document/id m))
       (utils/assoc-value m v/sorg:name document/name)
       (utils/assoc-value m v/sorg:description document/description)
-      (utils/assoc-objects m v/document:source document/sources (fn [x] (to-jsonld x context)))))
+      (utils/assoc-objects m v/document:source document/sources (fn [x] (to-jsonld x context)))
+      (utils/assoc-link m v/document:includes document/includes)))
 
 
 (defmethod to-jsonld :APIDocumentation [m context]

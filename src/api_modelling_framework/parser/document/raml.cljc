@@ -73,7 +73,6 @@
 (defn parse-fragment [node context]
   (let [context (or context {})
         location (syntax/<-location node)
-        _ (debug "Parsing RAML Fragment at " location)
         fragments (or (:fragments context) (atom {}))
         ;; @todo is this illegal?
         references (or (:references context) {})

@@ -7,6 +7,7 @@
   (description [this] "A human readable description of this node")
   (sources [this] "Collection of source maps for this node")
   (valid? [this] "Checks if this node is valid")
+  (includes [this] "Nodes included by this node")
   (extends [this] "Nodes extended by this node"))
 
 (defprotocol Extends
@@ -18,7 +19,7 @@
 
 (defn includes-element? [x] (satisfies? Includes x))
 
-(defrecord ParsedExtends [id name description sources target label arguments]
+(defrecord ParsedExtends [id name description sources target label arguments includes]
   Includes
   (target [this] target)
   (label  [this] label)
@@ -28,9 +29,10 @@
   (id [this] id)
   (name [this] name)
   (description [this] description)
-  (sources [this] sources))
+  (sources [this] sources)
+  (includes [this] includes))
 
-(defrecord ParsedIncludes [id name description sources target label]
+(defrecord ParsedIncludes [id name description sources target label includes]
   Includes
   (target [this] target)
   (label  [this] label)
@@ -38,7 +40,8 @@
   (id [this] id)
   (name [this] name)
   (description [this] description)
-  (sources [this] sources))
+  (sources [this] sources)
+  (includes [this] includes))
 
 (defprotocol SourceMap
   "Defines basic behaviour for all nodes in the model"
@@ -56,7 +59,8 @@
   (description [this] (str "Source map for a document located at " source))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 (defprotocol Tag
   (tag-id [this] "Identifier for the tag")
@@ -68,7 +72,7 @@
       (->> sources
            (map tags)
            flatten
-           (filter #(= tag-id-to-find (tag-id %)))
+           (filter (fn [tag] (= tag-id-to-find (tag-id tag))))
            flatten
            (filter some?))
       [])))
@@ -85,7 +89,8 @@
   (description [this] (str "This node was generating parsing a file located at " location))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 (def document-type-tag "document-type")
 
@@ -99,7 +104,8 @@
   (description [this] (str "This node was generating parsing a file of type " document-type))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 (def node-parsed-tag "node-parsed")
 
@@ -113,7 +119,8 @@
   (description [this] (str "This node was generating parsing a node located at " path))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 (def nested-resource-path-parsed-tag "nested-resource-path-parsed")
 
@@ -127,7 +134,8 @@
   (description [this] (str "This node was generating parsing a nested resource with path " path))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 (def nested-resource-children-tag "nested-resource-nested-children")
 
@@ -141,7 +149,8 @@
   (description [this] (str "This resource has a nested resource " children-id))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 (def nested-resource-parent-id-tag "nested-resource-parent-id")
 
@@ -155,7 +164,8 @@
   (description [this] (str "This resource has a parent resource " parent-id))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 (def api-tag-tag "api-tag-tag")
 
@@ -169,7 +179,8 @@
   (description [this] (str "API specific tag with value " tag-value))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 ;; used to makr that some declared extended fragments in a document are
 ;; related to this node, for example as traits or types
@@ -185,7 +196,8 @@
   (description [this] (str "Inline fragment tag with value " tag-value))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 ;; Is trait is used to mark that the fragment is a RAML trait
 (def is-trait-tag "is-trait-tag")
@@ -200,7 +212,8 @@
   (description [this] (str "Is trait tag with name " trait-name))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 ;; Extends trait is used to mark that an extend relationship in a node is actually the application of a RAML trait
 (def extends-trait-tag "extends-trait-tag")
@@ -215,7 +228,8 @@
   (description [this] (str "Extends trait tag with name " trait-name))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (includes [this] includes))
 
 (defprotocol Fragment
   "Units encoding domain fragments"
@@ -243,7 +257,7 @@
       [(DocumentSourceMap. source-map-id source (filter some? [file-parsed-tag document-type-tag]))]
       [])))
 
-(defrecord ParsedDocument [location encodes declares references document-type resolved]
+(defrecord ParsedDocument [location encodes declares references document-type resolved includes]
   Node
   (id [this] location)
   (name [this] location)
@@ -251,6 +265,7 @@
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])
+  (includes [this] includes)
   Unit
   (location [this] location)
   (references [this] (or references []))
@@ -260,7 +275,7 @@
   Module
   (declares [this] (or declares [])))
 
-(defrecord ParsedFragment [location encodes references document-type resolved]
+(defrecord ParsedFragment [location encodes references document-type resolved includes]
   Node
   (id [this] location)
   (name [this] location)
@@ -268,6 +283,7 @@
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])
+  (includes [this] includes)
   Unit
   (location [this] location)
   (references [this] (or references []))

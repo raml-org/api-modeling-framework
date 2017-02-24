@@ -28,15 +28,22 @@
   (let [location (syntax/<-location node)
         _ (debug "Parsing OpenAPI Document at " location)
         fragments (or (:fragments context) (atom {}))
+        ;; we parse traits and types and add the information into the context
+        declarations (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
+                                                                         :fragments fragments
+                                                                         :document-parser parse-ast
+                                                                         :parsed-location (str location "#/declares")})
         encoded (domain-parser/parse-ast (syntax/<-data node) {:location (str location "#")
                                                                :fragments fragments
                                                                :parsed-location (str location "#")
+                                                               :references declarations
                                                                :document-parser parse-ast
                                                                :is-fragment false})]
     (document/map->ParsedDocument (merge context
                                          {:id location
                                           :location location
                                           :encodes encoded
+                                          :declares (vals declarations)
                                           :references (vals @fragments)
                                           :document-type "OpenAPI"}))))
 

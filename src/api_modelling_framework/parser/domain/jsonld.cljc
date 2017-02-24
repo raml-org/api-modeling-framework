@@ -33,6 +33,7 @@
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedAPIDocumentation {:id (get m "@id")
+                                         :includes (utils/find-link m v/document:includes)
                                          :sources parsed-sources
                                          :name (utils/find-value m v/sorg:name)
                                          :description (utils/find-value m v/sorg:description)
@@ -54,6 +55,7 @@
         extend-rels (get m v/document:extends [])
         extensions (map from-jsonld extend-rels)]
     (domain/map->ParsedEndPoint {:id (get m "@id")
+                                 :includes (utils/find-link m v/document:includes)
                                  :sources parsed-sources
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
@@ -122,6 +124,7 @@
                                   :headers headers
                                   :request request
                                   :extends extensions
+                                  :includes (utils/find-link m v/document:includes)
                                   :responses (map from-jsonld (-> m (get v/hydra:returns [])))})))
 
 (defmethod from-jsonld v/http:Response [m]
@@ -129,6 +132,7 @@
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedResponse {:id (get m "@id")
+                                 :includes (utils/find-link m v/document:includes)
                                  :sources parsed-sources
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
@@ -142,6 +146,7 @@
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedType {:id (get m "@id")
+                             :includes (utils/find-link m v/document:includes)
                              :sources parsed-sources
                              :name (utils/find-value m v/sorg:name)
                              :description (utils/find-value m v/sorg:description)
@@ -153,6 +158,7 @@
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedParameter {:id (get m "@id")
+                                  :includes (utils/find-link m v/document:includes)
                                   :sources parsed-sources
                                   :name (utils/find-value m v/sorg:name)
                                   :description (utils/find-value m v/sorg:description)
@@ -166,6 +172,7 @@
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedRequest {:id (get m "@id")
+                                :includes (utils/find-link m v/document:includes)
                                 :sources parsed-sources
                                 :name (utils/find-value m v/sorg:name)
                                 :description (utils/find-value m v/sorg:description)
@@ -204,6 +211,7 @@
         parsed-encoded (from-jsonld (assoc m "@type" domain-element-types))
         properties (->> parsed-encoded (into {}))]
     (domain/map->ParsedDomainElement {:id (get m "@id")
+                                      :includes (utils/find-link m v/document:includes)
                                       :properties properties
                                       :fragment-node (keyword (utils/find-value m v/document:fragment-node))})))
 

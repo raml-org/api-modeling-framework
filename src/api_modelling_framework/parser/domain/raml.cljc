@@ -73,8 +73,8 @@
   ;; if a type hint is available, we use that information to dispatch, otherwise we try to guess from properties
   (cond
     (some? (syntax/<-location node)) :fragment
-    (some? (:type-hint context))             (:type-hint context)
-    :else                                    (guess-type node)))
+    (some? (:type-hint context))     (:type-hint context)
+    :else                            (guess-type node)))
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
@@ -196,11 +196,11 @@
                    (debug (str "Processing trait " trait-name))
                    (let [fragment-name (url/url-encode (utils/safe-str trait-name))
                          trait-fragment (parse-ast trait-node (-> nested-context
-                                                                  (assoc :method fragment-name)
                                                                   (assoc :location location)
                                                                   (assoc :parsed-location parsed-location)
                                                                   (assoc :is-fragment true)
                                                                   (assoc :type-hint :method)))
+                         trait-fragment (assoc trait-fragment :method nil) ;; method must be nil, this information cannot be in the fragment
                          trait-fragment (assoc trait-fragment :id (str parsed-location "/" fragment-name))
                          trait-fragment (assoc-in trait-fragment [:properties :id] (str parsed-location "/" fragment-name))
                          sources (or (-> trait-fragment :properties :sources) [])
@@ -310,11 +310,12 @@
                                              nested-resources)
         operations (->> node
                         keys
-                        (mapv (fn [op] (if-let [op (#{:get :post :patch :put :delete :head :options} op)]
-                                        (parse-ast (get node op {}) (-> context
-                                                                        (assoc :parsed-location resource-id)
-                                                                        (assoc :method (name op))
-                                                                        (assoc :type-hint :method)))
+                        (mapv (fn [op] (if-let [operation (#{:get :post :patch :put :delete :head :options} op)]
+                                        (assoc (parse-ast (get node operation {})
+                                                          (-> context
+                                                              (assoc :parsed-location resource-id)
+                                                              (assoc :type-hint :method)))
+                                               :method (utils/safe-str operation))
                                         nil)))
                         (filterv some?))
         properties (utils/clean-nils {:path parent-path
@@ -361,7 +362,7 @@
                                                       (assoc :type-hint :responses)))
         properties (-> {:id method-id
                         :sources node-parsed-source-map
-                        :method method
+                        :method (utils/safe-str method)
                         :name (extract-scalar (:displayName node))
                         :description (extract-scalar (:description node))
                         :scheme (extract-scalar (:protocols node))
@@ -468,21 +469,53 @@
                                       :or {fragments (atom {})}
                                       :as context}]
   (let [fragment-location (syntax/<-location node)]
-    (swap! fragments (fn [acc]
-                       (if (some? (get acc fragment-location))
-                         acc
-                         (do
-
-                           (assoc acc fragment-location (document-parser node context))))))
-    (let [expected-property (if type-hint (name type-hint) "includes")
-          parsed-location (str parsed-location "/includes")
-          properties {:id parsed-location
-                      :label "!includes"
-                      :target fragment-location}]
-      (if is-fragment
-        (domain/map->ParsedDomainElement {:id parsed-location
-                                          :fragment-node :parsed-includes
-                                          :properties properties})
-        (document/map->ParsedIncludes properties)))))
+    (let [parsed-fragment (document-parser node context)
+          encoded-element (document/encodes parsed-fragment)
+          encoded-element-sources (-> encoded-element :properties :sources)
+          clean-encoded-element (condp = type-hint
+                                  ;; this information is sensitive to the context, can never be in the fragment
+                                  :method (-> encoded-element
+                                              (assoc-in [:properties :method] nil)
+                                              (assoc-in [:properties :sources] nil))
+                                  :resource (-> encoded-element
+                                                (assoc-in [:properties :path] nil)
+                                                (assoc-in [:properties :sources] nil))
+                                  encoded-element)
+          parsed-location (str parsed-location "/includes")]
+      (swap! fragments (fn [acc]
+                         (if (some? (get acc fragment-location))
+                           acc
+                           (assoc acc fragment-location (assoc parsed-fragment :encodes clean-encoded-element)))))
+      (condp = type-hint
+        :method  (if is-fragment
+                   (domain/map->ParsedDomainElement {:id parsed-fragment
+                                                     :fragment-node :parsed-operation
+                                                     :properties {:id parsed-location
+                                                                  :method (utils/safe-str (-> encoded-element :properties :method))
+                                                                  :includes fragment-location
+                                                                  :sources encoded-element-sources}})
+                   (domain/map->ParsedOperation {:id parsed-location
+                                                 :method (utils/safe-str (-> encoded-element :properties :method))
+                                                 :sources encoded-element-sources
+                                                 :includes fragment-location}))
+        :resource (if is-fragment
+                    (domain/map->ParsedDomainElement {:id parsed-fragment
+                                                      :fragment-node :parsed-end-point
+                                                      :properties {:id parsed-location
+                                                                   :path (-> encoded-element :properties :path)
+                                                                   :includes fragment-location
+                                                                   :sources encoded-element-sources}})
+                    (domain/map->ParsedEndPoint {:id parsed-location
+                                                 :path (-> encoded-element :properties :path)
+                                                 :includes fragment-location
+                                                 :sources encoded-element-sources}))
+        (let [properties {:id parsed-location
+                          :label "!includes"
+                          :target fragment-location}]
+          (if is-fragment
+            (domain/map->ParsedDomainElement {:id parsed-location
+                                              :fragment-node :parsed-includes
+                                              :properties properties})
+            (document/map->ParsedIncludes properties)))))))
 
 (defmethod parse-ast :undefined [_ _] nil)
