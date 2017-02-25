@@ -4,10 +4,15 @@
         <ul>
             <li data-bind="click: () => { navigatorSection('files') },
                            css: {'is-active': navigatorSection() === 'files'}">
-                <a>Files</a></li>
+                <a>Files</a>
+            </li>
             <li data-bind="click: () => { navigatorSection('logic') },
                            css: {'is-active': navigatorSection() === 'logic'}">
-                <a>Modules</a></li>
+                <a>Modular Units</a>
+            </li>
+            <li >
+                <a>Domain</a>
+            </li>
         </ul>
     </div>
     <aside data-bind="visible: navigatorSection()==='files'"

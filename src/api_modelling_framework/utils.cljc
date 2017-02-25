@@ -14,6 +14,29 @@
                    (name x))
     :else (str x)))
 
+(defn trace [x] (prn (keys x)) x)
+
+(def key-orders {"swagger" 0
+                 "host" 1
+                 "info" 2
+                 "x-traits" 3
+                 "paths" 4})
+(defn swaggify [x]
+  (cond
+    (string? x) x
+    (keyword? x) (safe-str x)
+    (map? x) (->> x
+                  (mapv (fn [[k v]] [(swaggify k) (swaggify v)]))
+                  (sort (fn [[ka va] [kb vb]]
+                          (let [pos-a (get key-orders ka 100)
+                                pos-b (get key-orders kb 100)]
+                            (compare pos-a pos-b))))
+                  (reduce (fn [acc [k v]] (assoc acc k v))
+                          (sorted-map)))
+    (coll? x) (mapv #(swaggify %) x)
+    :else x))
+
+
 (defn ramlify [x]
   (cond
     (string? x) x
@@ -32,7 +55,8 @@
                                  (or (not= kb "title")
                                      (not= kb "version")))     -1
                             :else                              -1)))
-                  (into {}))
+                  (reduce (fn [acc [k v]] (assoc acc k v))
+                          (sorted-map)))
     (coll? x) (mapv #(ramlify %) x)
     :else x))
 

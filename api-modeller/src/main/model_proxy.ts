@@ -13,6 +13,22 @@ export type ModelLevel = "document" | "domain";
 const ramlGenerator = new apiFramework.RAMLGenerator();
 const openAPIGenerator = new apiFramework.OpenAPIGenerator();
 const apiModelGenerator = new apiFramework.APIModelGenerator();
+
+function from_clj(x: any) {
+    return apiFramework.fromClj(x)
+}
+
+function to_clj(x: any) {
+    console.log("********** TO CLJ");
+    try {
+        return apiFramework.toClj(x)
+    } catch (e) {
+        console.log("ERROR");
+        console.log(e);
+        return x;
+    }
+}
+
 /**
  * A proxy class to interact with the clojure code containing the logic to interact with a API Model
  */
@@ -32,7 +48,7 @@ export class ModelProxy {
      * @param level: document, domain
      * @param cb
      */
-    toRaml(level: ModelLevel, cb) {
+    toRaml(level: ModelLevel, options: any, cb) {
         console.log(`** Generating RAML with level ${level}`);
         let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
         apiFramework.generate_string(
@@ -58,7 +74,7 @@ export class ModelProxy {
      * @param level: document, domain
      * @param cb
      */
-    toOpenAPI(level: ModelLevel, cb) {
+    toOpenAPI(level: ModelLevel, options: any, cb) {
         console.log(`** Generating OpenAPI with level ${level}`);
         let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
         apiFramework.generate_string(
@@ -76,19 +92,19 @@ export class ModelProxy {
             });
     }
 
-    toAPIModel(level: ModelLevel, cb) {
+    toAPIModel(level: ModelLevel, options: any, cb) {
         console.log(`** Generating API Model JSON-LD with level ${level}`);
-        this.toAPIModelProcessed(level, true, true, cb);
+        this.toAPIModelProcessed(level, true, true, options, cb);
     }
 
-    toAPIModelProcessed(level: ModelLevel, compacted: boolean, stringify: boolean, cb) {
+    toAPIModelProcessed(level: ModelLevel, compacted: boolean, stringify: boolean, options: any, cb) {
         console.log(`** Generating API Model JSON-LD with level ${level}`);
         let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
         apiFramework.generate_string(
             apiModelGenerator,
             this.location(),
             liftedModel,
-            {},
+            to_clj(options),
             (err, res) => {
                 if (err != null) {
                     cb(err, res);
@@ -141,7 +157,7 @@ export class ModelProxy {
     references(): string[] {
         const files: string[] = [];
         files.push(this.location());
-        const references = apiFramework.from_clj(apiFrameworDocumentModel.references(this.domainModel()));
+        const references = from_clj(apiFrameworDocumentModel.references(this.domainModel()));
         references.forEach(ref => files.push(ref.location));
         return files;
     }

@@ -254,6 +254,6 @@
                                             :fragments fragments
                                             :document-parser raml-document-parser/parse-ast
                                             :is-fragment false})]
-    (is (= "file://path/to/get_method.raml") (-> parsed first domain/supported-operations first document/includes))
+    (is (= "file://path/to/get_method.raml") (-> parsed first domain/supported-operations first document/extends first document/target))
     (is (= 1 (-> parsed first domain/supported-operations count)))
     (is (some? (get @fragments "file://path/to/get_method.raml")))))

@@ -90,9 +90,22 @@
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "Scalar")]
    (v/sh-ns "dataType") [{"@id" scalar-type}]})
 
+(defn parse-json-node [parsed-location text]
+  {"@id" (str parsed-location "/json-schema-shape")
+   "@type" [(v/sh-ns "Shape") (v/shapes-ns "JSONSchema")]
+   (v/shapes-ns "schemaRaw") [{"@value" text}]})
+
+(defn parse-xml-node [parsed-location text]
+  {"@id" (str parsed-location "/xml-schema-shape")
+   "@type" [(v/sh-ns "Shape") (v/shapes-ns "XMLSchema")]
+   (v/shapes-ns "schemaRaw") [{"@value" text}]})
+
 (defn parse-type [node {:keys [parsed-location] :as context}]
   (let [type-string (if (string? node)
-                      node
+                      (cond
+                        (string/starts-with? node "{") (parse-json-node parsed-location node)
+                        (string/starts-with? node "<") (parse-xml-node parsed-location node)
+                        :else nil)
                       (or (:type node) (:schema node)))
         shape (condp = type-string
                 "string"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "string")))

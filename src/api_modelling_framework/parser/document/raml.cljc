@@ -28,10 +28,15 @@
         _ (debug "Parsing RAML Document at " location)
         fragments (or (:fragments context) (atom {}))
         ;; we parse traits and types and add the information into the context
-        declarations (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
-                                                                         :fragments fragments
-                                                                         :document-parser parse-ast
-                                                                         :parsed-location (str location "#/declares")})
+        traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
+                                                                   :fragments fragments
+                                                                   :document-parser parse-ast
+                                                                   :parsed-location (str location "#/declares")})
+        types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :fragments fragments
+                                                                 :document-parser parse-ast
+                                                                 :parsed-location (str location "#/declares")})
+        declarations (merge traits types)
         encoded (domain-parser/parse-ast (syntax/<-data node) {:location (str location "#")
                                                                :fragments fragments
                                                                :parsed-location (str location "#")
@@ -69,6 +74,30 @@
                                    :encodes encoded
                                    :references (vals @fragments)
                                    :document-type "#%RAML 1.0 Trait"})))
+
+(defmethod parse-ast "#%RAML 1.0 DataType" [node context]
+  (let [context (or context {})
+        location (syntax/<-location node)
+        _ (debug "Parsing RAML DataType Fragment at " location)
+        fragments (or (:fragments context) (atom {}))
+        ;; @todo is this illegal?
+        references (or (:references context) {})
+        type-data (syntax/<-data node)
+        usage (:usage type-data)
+        encoded (domain-parser/parse-ast (syntax/<-data node) (merge
+                                                               context
+                                                               {:location (str location "#")
+                                                                :fragments fragments
+                                                                :references references
+                                                                :parsed-location (str location "#")
+                                                                :document-parser parse-ast
+                                                                :is-fragment true}))]
+    (document/map->ParsedFragment {:id location
+                                   :description usage
+                                   :location location
+                                   :encodes encoded
+                                   :references (vals @fragments)
+                                   :document-type "#%RAML 1.0 DataType"})))
 
 (defn parse-fragment [node context]
   (let [context (or context {})

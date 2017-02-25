@@ -32,6 +32,8 @@ export class ViewModel {
     public documentLevel: ModelLevel = "document";
     public documentModel?: ModelProxy = undefined;
     public model?: ModelProxy = undefined;
+    public generationOptions: KnockoutObservable<any> = ko.observable<any>({"source-maps?": false});
+    public generateSourceMaps: KnockoutObservable<string> = ko.observable<string>("no");
 
     constructor(public editor: IStandaloneCodeEditor) {
         // events we are subscribed
@@ -52,6 +54,14 @@ export class ViewModel {
         });
         this.nav.on(Nav.DOCUMENT_LEVEL_SELECTED_EVENT, (level: ModelLevel) => {
             this.onDocumentLevelChange(level)
+        });
+        this.generateSourceMaps.subscribe((generate) => {
+            if (generate === "yes") {
+                this.generationOptions()["source-maps?"] = true;
+            } else {
+                this.generationOptions()["source-maps?"] = false;
+            }
+            this.resetDocuments();
         });
         this.editorSection.subscribe((section) => this.onEditorSectionChange(section));
     }
@@ -94,7 +104,7 @@ export class ViewModel {
     private resetDocuments() {
         if (this.model != null) {
             // We generate the RAML representation
-            this.model.toRaml(this.documentLevel,(err, string) => {
+            this.model.toRaml(this.documentLevel, this.generationOptions(), (err, string) => {
                 if (err != null) {
                     console.log("Error generating RAML");
                     console.log(err);
@@ -106,7 +116,7 @@ export class ViewModel {
             });
 
             // We generate the OpenAPI representation
-            this.model.toOpenAPI(this.documentLevel, (err, string) => {
+            this.model.toOpenAPI(this.documentLevel, this.generationOptions(), (err, string) => {
                 if (err != null) {
                     console.log("Error getting OpenAPI");
                     console.log(err);
@@ -118,7 +128,7 @@ export class ViewModel {
             });
 
             // We generate the APIModel representation
-            this.model.toAPIModel(this.documentLevel, (err, string) => {
+            this.model.toAPIModel(this.documentLevel, this.generationOptions(), (err, string) => {
                 if (err != null) {
                     console.log("Error getting ApiModel");
                     console.log(err);
@@ -183,7 +193,6 @@ export class ViewModel {
                 label: label(reference)
             }
         } else {
-            const refParts = reference.split("/");
             return {
                 type: (isRemote ? "remote" : "local"),
                 id: reference,

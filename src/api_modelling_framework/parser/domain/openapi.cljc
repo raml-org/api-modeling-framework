@@ -99,6 +99,13 @@
                                    fragment-location
                                    [inline-fragment-parsed-tag])]))
 
+(defn generate-extend-include-fragment-sources [parsed-location fragment-location]
+  (let [source-map-id (str parsed-location "/source-map/inline-fragment")
+        parsed-tag (document/->ExtendIncludeFragmentParsedTag source-map-id fragment-location)]
+    [(document/->DocumentSourceMap (str parsed-location "/source-map")
+                                   fragment-location
+                                   [parsed-tag])]))
+
 (defn generate-is-trait-sources [trait-name location parsed-location]
   (let [source-map-id (str parsed-location "/source-map/is-trait")
         is-trait-tag (document/->IsTraitTag source-map-id trait-name)]
@@ -451,7 +458,12 @@
                                                  (assoc [:properties:path] nil)
                                                  (assoc [:properties:path :sources] nil))
                                   encoded-element)
-          parsed-location (str parsed-location "/includes")]
+          parsed-location (str parsed-location "/includes")
+          extends [(document/map->ParsedExtends {:id parsed-location
+                                                 :sources (generate-extend-include-fragment-sources parsed-location fragment-location)
+                                                 :target fragment-location
+                                                 :label "!includes"
+                                                 :arguments []})]]
       (swap! fragments (fn [acc]
                          (if (some? (get acc fragment-location))
                            acc
@@ -460,10 +472,10 @@
         :operation (domain/map->ParsedOperation {:id parsed-location
                                                  :method (utils/safe-str (-> encoded-element :properties :method))
                                                  :sources encoded-element-sources
-                                                 :includes fragment-location})
+                                                 :extends extends})
         :path-item (domain/map->ParsedEndPoint {:id parsed-location
                                                 :path (-> encoded-element :properties :path)
-                                                :includes fragment-location
+                                                :extends extends
                                                 :sources encoded-element-sources})
         (let [properties {:id parsed-location
                           :label "$ref"

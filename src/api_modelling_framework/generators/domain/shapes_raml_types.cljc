@@ -8,9 +8,11 @@
 
 (defn parse-shape-dispatcher-fn [shape ctx]
   (cond
-    (utils/has-class? shape (v/shapes-ns "Scalar")) (v/shapes-ns "Scalar")
-    (utils/has-class? shape (v/shapes-ns "Array"))  (v/shapes-ns "Array")
-    (utils/has-class? shape (v/sh-ns "Shape"))      (v/sh-ns "Shape")
+    (utils/has-class? shape (v/shapes-ns "Scalar"))     (v/shapes-ns "Scalar")
+    (utils/has-class? shape (v/shapes-ns "Array"))      (v/shapes-ns "Array")
+    (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
+    (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/sh-ns "JSONSchema")
+    (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/sh-ns "XMLSchema")
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -89,5 +91,13 @@
          :additionalProperties additionalProperties}
         utils/clean-nils
         (parse-constraints shape))))
+
+(defmethod parse-shape (v/sh-ns "JSONSchema") [shape context]
+  (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
+    value))
+
+(defmethod parse-shape (v/sh-ns "XMLSchema") [shape context]
+  (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
+    value))
 
 (defmethod parse-shape nil [_ _] nil)

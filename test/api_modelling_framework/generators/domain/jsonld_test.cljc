@@ -47,7 +47,7 @@
                                                  {:location "file://path/to/resource.raml#"
                                                   :parsed-location "file://path/to/resource.raml#"
                                                   :is-fragment false})
-        generated (generator/to-jsonld api-documentation true)]
+        generated (generator/to-jsonld api-documentation {:source-maps? true})]
     (is (= 3 (-> generated (get v/http:endpoint) count)))
     (let [endpoints (-> generated (get v/http:endpoint))]
       (doseq [endpoint endpoints]
@@ -77,7 +77,7 @@
                                                   :parsed-location "file://path/to/resource.raml#"
                                                   :references traits
                                                   :is-fragment false})
-        generated (generator/to-jsonld api-documentation true)
+        generated (generator/to-jsonld api-documentation {:source-maps? true})
         parsed    (parser/from-jsonld generated)
         output (raml-generator/to-raml parsed {:references (vals traits)
                                                :fragments {}

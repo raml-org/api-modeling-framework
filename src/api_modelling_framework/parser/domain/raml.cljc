@@ -48,13 +48,18 @@
    :version #{:root}
    })
 
-(defn  extract-scalar [x]
+(defn  extract-scalar
+  "Function used to unwrap an scalar value if it defined using the value syntax"
+  [x]
   (cond
     (and (map? x) (:value x)) (:value x)
     (coll? x)                 (mapv extract-scalar x)
     :else                     x))
 
-(defn guess-type-from-predicates [x]
+(defn guess-type-from-predicates
+  "If the AST node is a string it can be one of these nodes: resource path, responses tatus or a media type, this function check for these occurrences.
+   Used in the dispatcher function"
+  [x]
   (->> [(fn [x] (when (string/starts-with? (utils/safe-str x) "/") #{:root :resource}))
         (fn [x] (when (some? (re-matches #"^\d+$" (utils/safe-str x))) #{:responses}))
         (fn [x] (when (some? (re-matches #"^[a-z]+/[a-z+]+$" (utils/safe-str x))) #{:body-media-type}))]
@@ -62,23 +67,36 @@
        (filterv some?)
        first))
 
-(defn guess-type [node]
+(defn guess-type
+  "Based in the keys of the node map, we assign a type to the node, used in the dispatcher function."
+  [node]
   (let [node-types (->> node
                         (mapv (fn [[k _]] (get properties-map k (guess-type-from-predicates k))))
                         (filterv some?))
         node-type (first (if (empty? node-types) [] (apply set/intersection node-types)))]
     (or node-type :undefined)))
 
-(defn parse-ast-dispatch-function [node context]
-  ;; if a type hint is available, we use that information to dispatch, otherwise we try to guess from properties
+(defn check-reference
+  "Checks if a provided string points to one of the types defined at the APIDocumentation level"
+  [node-str {:keys [references]}]
+  (if (some? (get references (keyword (utils/safe-str node-str))))
+    :type
+    :undefined))
+
+(defn parse-ast-dispatch-function
+  "If a type hint is available, we use that information to dispatch, otherwise we try to guess from properties"
+  [node context]
   (cond
     (some? (syntax/<-location node)) :fragment
     (some? (:type-hint context))     (:type-hint context)
+    (string? node)                   (check-reference node context)
     :else                            (guess-type node)))
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
-(defn generate-parse-node-sources [location parsed-location]
+(defn generate-parse-node-sources
+  "Source map pointing to the incoming node for this AST node"
+  [location parsed-location]
   (let [source-map-id (str parsed-location "/source-map/node-parsed")
         node-parsed-tag (document/->NodeParsedTag source-map-id location)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [node-parsed-tag])]))
@@ -181,10 +199,23 @@
                                    fragment-location
                                    [inline-fragment-parsed-tag])]))
 
+(defn generate-extend-include-fragment-sources [parsed-location fragment-location]
+  (let [source-map-id (str parsed-location "/source-map/inline-fragment")
+        parsed-tag (document/->ExtendIncludeFragmentParsedTag source-map-id fragment-location)]
+    [(document/->DocumentSourceMap (str parsed-location "/source-map")
+                                   fragment-location
+                                   [parsed-tag])]))
+
 (defn generate-is-trait-sources [trait-name location parsed-location]
   (let [source-map-id (str parsed-location "/source-map/is-trait")
         is-trait-tag (document/->IsTraitTag source-map-id trait-name)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-trait-tag])]))
+
+(defn generate-is-type-sources [type-name location parsed-location]
+  (let [source-map-id (str parsed-location "/source-map/is-type")
+        is-type-tag (document/->IsTypeTag source-map-id type-name)]
+    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-type-tag])]))
+
 
 (defn process-traits [node {:keys [location parsed-location] :as context}]
   (debug "Processing " (count (:traits node [])) "traits")
@@ -209,6 +240,28 @@
                                                                             (str parsed-location "/" fragment-name)))
                          parsed-trait (assoc-in trait-fragment [:properties :sources] sources)]
                      (assoc acc (keyword trait-name) parsed-trait)))
+                 {}))))
+
+(defn process-types [node {:keys [location parsed-location] :as context}]
+  (debug "Processing " (count (:types node [])) " types")
+  (let [parsed-location (str parsed-location "/types")
+        nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
+    (->> (:types node {})
+         (reduce (fn [acc [type-name type-node]]
+                   (debug (str "Processing type " type-name))
+                   (let [type-name     (url/url-encode (utils/safe-str type-name))
+                         type-fragment (parse-ast type-node (-> nested-context
+                                                                (assoc :location location)
+                                                                (assoc :parsed-location parsed-location)
+                                                                (assoc :is-fragment false)
+                                                                (assoc :type-hint :type)))
+                         type-fragment (assoc type-fragment :id (str parsed-location "/" type-name))
+                         sources (or (-> type-fragment :sources) [])
+                         sources (concat sources (generate-is-type-sources type-name
+                                                                           (str location "/" type-name)
+                                                                           (str parsed-location "/" type-name)))
+                         parsed-type (assoc type-fragment :sources sources)]
+                     (assoc acc (keyword type-name) parsed-type)))
                  {}))))
 
 (defn find-extend-tags [{:keys [location parsed-location references] :as context}]
@@ -455,15 +508,17 @@
                                               (assoc :parsed-location parsed-location)
                                               (assoc :type-hint :type)))})))))
 
-(defmethod parse-ast :type [node {:keys [location parsed-location is-fragment] :as context}]
+(defmethod parse-ast :type [node {:keys [location parsed-location is-fragment references] :as context}]
   (debug "Parsing type")
-  (let [type-id (str parsed-location "/type")
-        shape (shapes/parse-type node (assoc context :parsed-location type-id))]
-    (if is-fragment
-      {:id type-id
-       :shape shape}
-      (domain/map->ParsedType {:id type-id
-                               :shape shape}))))
+  (if (and (string? node) (not (string/starts-with? node "{")))
+    (get references (keyword (utils/safe-str node)))
+    (let [type-id (str parsed-location "/type")
+          shape (shapes/parse-type node (assoc context :parsed-location type-id))]
+      (if is-fragment
+        {:id type-id
+         :shape shape}
+        (domain/map->ParsedType {:id type-id
+                                 :shape shape})))))
 
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                       :or {fragments (atom {})}
@@ -481,7 +536,12 @@
                                                 (assoc-in [:properties :path] nil)
                                                 (assoc-in [:properties :sources] nil))
                                   encoded-element)
-          parsed-location (str parsed-location "/includes")]
+          parsed-location (str parsed-location "/includes")
+          extends (document/map->ParsedExtends {:id parsed-location
+                                                :sources (generate-extend-include-fragment-sources parsed-location fragment-location)
+                                                :target fragment-location
+                                                :label "!includes"
+                                                :arguments []})]
       (swap! fragments (fn [acc]
                          (if (some? (get acc fragment-location))
                            acc
@@ -492,22 +552,22 @@
                                                      :fragment-node :parsed-operation
                                                      :properties {:id parsed-location
                                                                   :method (utils/safe-str (-> encoded-element :properties :method))
-                                                                  :includes fragment-location
+                                                                  :extends [extends]
                                                                   :sources encoded-element-sources}})
                    (domain/map->ParsedOperation {:id parsed-location
                                                  :method (utils/safe-str (-> encoded-element :properties :method))
                                                  :sources encoded-element-sources
-                                                 :includes fragment-location}))
+                                                 :extends [extends]}))
         :resource (if is-fragment
                     (domain/map->ParsedDomainElement {:id parsed-fragment
                                                       :fragment-node :parsed-end-point
                                                       :properties {:id parsed-location
                                                                    :path (-> encoded-element :properties :path)
-                                                                   :includes fragment-location
+                                                                   :extends [extends]
                                                                    :sources encoded-element-sources}})
                     (domain/map->ParsedEndPoint {:id parsed-location
                                                  :path (-> encoded-element :properties :path)
-                                                 :includes fragment-location
+                                                 :extends [extends]
                                                  :sources encoded-element-sources}))
         (let [properties {:id parsed-location
                           :label "!includes"

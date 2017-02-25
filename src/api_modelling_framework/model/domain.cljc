@@ -16,7 +16,7 @@
   (base-path [this] "Optional base path for all API endpoints")
   (endpoints [this] "List of endpoints in the API"))
 
-(defrecord ParsedAPIDocumentation [id sources name description extends includes
+(defrecord ParsedAPIDocumentation [id sources name description extends
                                    host scheme base-path accepts content-type
                                    provider terms-of-service version license endpoints]
   CommonAPIProperties
@@ -39,8 +39,7 @@
   (sources [this] sources)
   (valid? [this] (and (some? (name this))
                       (some? (version this))))
-  (extends [this] (or extends []))
-  (includes [this] includes))
+  (extends [this] (or extends [])))
 
 (defprotocol DomainElement
   (fragment-node [this] "The kind of node this domain element is wrapping")
@@ -52,7 +51,7 @@
   (supported-operations [this] "HTTP operations supported by this end-point")
   (path [this] "(partial) IRI template where the operations are bound to"))
 
-(defrecord ParsedEndPoint [id sources name description extends path supported-operations includes]
+(defrecord ParsedEndPoint [id sources name description extends path supported-operations ]
   EndPoint
   (supported-operations [this] supported-operations)
   (path [this] path)
@@ -62,8 +61,7 @@
   (description [this] description)
   (sources [this] sources)
   (valid? [this] true)
-  (extends [this] (or extends []))
-  (includes [this] includes))
+  (extends [this] (or extends [])))
 
 (defprotocol PayloadHolder
   (schema [this] "Schema for the payload"))
@@ -73,7 +71,7 @@
   (request [this] "HTTP request information")
   (responses [this] "HTTP responses"))
 
-(defrecord ParsedOperation [id sources name description extends includes
+(defrecord ParsedOperation [id sources name description extends
                             method headers host scheme accepts content-type responses request]
   Operation
   (method [this] method)
@@ -86,7 +84,6 @@
   (sources [this] sources)
   (valid? [this] true)
   (extends [this] (or extends []))
-  (includes [this] includes)
   CommonAPIProperties
   (scheme [this] scheme)
   (accepts [this] accepts)
@@ -96,7 +93,7 @@
 (defprotocol Response
   (status-code [this] "Status code for the response"))
 
-(defrecord ParsedResponse [id sources name description extends includes
+(defrecord ParsedResponse [id sources name description extends
                            status-code schema headers accepts content-type]
   Response
   (status-code [this] status-code)
@@ -109,7 +106,6 @@
   (sources [this] sources)
   (valid? [this] true)
   (extends [this] (or extends []))
-  (includes [this] includes)
   CommonAPIProperties
   (accepts [this] accepts)
   (content-type [this] content-type)
@@ -120,7 +116,7 @@
   (shape [this] "Constraints for the data type"))
 
 
-(defrecord ParsedType [id sources name extends description shape includes]
+(defrecord ParsedType [id sources name extends description shape ]
   Type
   (shape [this] shape)
   document/Node
@@ -129,8 +125,7 @@
   (description [this] description)
   (sources [this] sources)
   (valid? [this] true)
-  (extends [this] (or extends []))
-  (includes [this] includes))
+  (extends [this] (or extends [])))
 
 
 (defprotocol Request
@@ -140,7 +135,7 @@
   (parameter-kind [this] "What kind of parameter is this")
   (required [this] "Is this parameter required"))
 
-(defrecord ParsedParameter [id sources name description extends includes
+(defrecord ParsedParameter [id sources name description extends
                             parameter-kind shape required]
   Parameter
   (parameter-kind [this] parameter-kind)
@@ -153,10 +148,9 @@
   (description [this] description)
   (sources [this] sources)
   (valid? [this] true)
-  (extends [this] (or extends []))
-  (includes [this] includes))
+  (extends [this] (or extends [])))
 
-(defrecord ParsedRequest [id sources name description extends includes parameters schema]
+(defrecord ParsedRequest [id sources name description extends  parameters schema]
   Request
   (parameters [this] parameters)
   PayloadHolder
@@ -167,10 +161,9 @@
   (description [this] description)
   (sources [this] sources)
   (valid? [this] true)
-  (extends [this] (or extends []))
-  (includes [this] includes))
+  (extends [this] (or extends [])))
 
-(defrecord  ParsedDomainElement [id fragment-node properties extends includes]
+(defrecord  ParsedDomainElement [id fragment-node properties extends ]
   document/Node
   (id [this] id)
   (name [this] "Domain element [" fragment-node "]")
@@ -178,7 +171,6 @@
   (sources [this] (:sources properties))
   (valid? [this] true)
   (extends [this] (or extends []))
-  (includes [this] includes)
   DomainElement
   (fragment-node [this] fragment-node)
   (properties [this] properties)

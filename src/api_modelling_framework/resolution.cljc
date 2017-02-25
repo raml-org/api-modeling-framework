@@ -63,13 +63,22 @@
 
 (defmulti resolve (fn [model ctx] (resolve-dispatch-fn model ctx)))
 
+(defn extended-included-fragment [x fragments]
+  (if-let [extends (first (document/extends x))]
+    (let [tags (document/find-tag extends document/extend-include-fragment-parsed-tag)]
+      (if (empty? tags)
+        nil
+        (let[location (document/target extends)
+             fragment (get fragments location)]
+          (if (nil? fragment)
+            (throw (new #?(:clj Exception :cljs js/Error)
+                        (str "Cannot find fragment " location " in include relationship " (document/id x))))
+            fragment))))
+    nil))
+
 (defn ensure-applied-fragment [x {:keys [fragments] :as ctx}]
-  (if (some? (document/includes x))
-    (let [fragment (get fragments (document/includes x))]
-      (if (nil? fragment)
-        (throw (new #?(:clj Exception :cljs js/Error)
-                    (str "Cannot find fragment " (document/includes x) " in include relationship " (document/id x))))
-        (resolve (assoc (merge-declaration x fragment) :includes nil) ctx)))
+  (if-let [fragment (extended-included-fragment x fragments)]
+    (resolve (merge-declaration (assoc x :extends nil) fragment) ctx)
     x))
 
 (defn compute-path [model ctx]
@@ -268,10 +277,14 @@
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " (document/target model) " in include relationship " (document/id model))))
       (resolve fragment ctx))))
 
-(defmethod resolve document/Extends [model {:keys [declarations] :as ctx}]
+(defmethod resolve document/Extends [model {:keys [declarations fragments] :as ctx}]
   (debug "Resolving Extends " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
-        fragment (get declarations (document/target model))]
+        ;; fragment can be in a declaration, for example a trait
+        fragment-extended (get declarations (document/target model))
+        ;; can also be in the list of included fragments for resources/methods
+        fragment-extended-included (get fragments (document/target model))
+        fragment (or fragment-extended fragment-extended-included)]
     (if (nil? fragment)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " (document/target model) " in extend relationship " (document/id model))))
       (resolve fragment ctx))))

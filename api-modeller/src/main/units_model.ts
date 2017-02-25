@@ -44,7 +44,8 @@ export class UnitModel {
             if (modelLevel == "document" || reference == this.model.location()) {
                 return new Promise((resolve, reject) => {
                     let nestedModel = this.model.nestedModel(reference);
-                    nestedModel.toAPIModelProcessed(modelLevel, false, false, (err, jsonld: any) => {
+                    console.log("SENDING SORUCE MAPS TRUE!!!!!");
+                    nestedModel.toAPIModelProcessed(modelLevel, false, false, {"source-maps?": true}, (err, jsonld: any) => {
                         if (err != null) {
                             reject(err);
                         } else {

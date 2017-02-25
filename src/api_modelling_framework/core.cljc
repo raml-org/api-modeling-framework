@@ -37,8 +37,8 @@
 
 #?(:cljs (set! *main-cli-fn* -registerInterface))
 
-#?(:cljs (defn ^:export from_clj [x] (clj->js x)))
-#?(:cljs (defn ^:export to-clj [x] (js->clj x)))
+#?(:cljs (defn ^:export fromClj [x] (clj->js x)))
+#?(:cljs (defn ^:export toClj [x] (js->clj x)))
 
 (defprotocol Model
   (^:export location [this] "Location of the model if any")
@@ -128,20 +128,20 @@
   Generator
   (generate-string [this uri model options cb]
     (debug "Generating OpenAPI string")
-    (go (try (let [options true
+    (go (try (let [options (keywordize-keys options)
                    res (-> model
                            (pre-process-model)
-                           (jsonld-document-generator/to-jsonld options)
+                           (jsonld-document-generator/to-jsonld (get options :source-maps? false))
                            (json-generator/generate-string options))]
                (cb nil (platform/<-clj res)))
              (catch #?(:clj Exception :cljs js/Error) ex
                (cb (platform/<-clj ex) nil)))))
   (generate-file [this uri model options cb]
     (debug "Generating OpenAPI file")
-    (go (let [options true
+    (go (let [options (keywordize-keys options)
               res (-> model
                       (pre-process-model)
-                      (jsonld-document-generator/to-jsonld options)
+                      (jsonld-document-generator/to-jsonld (get options :source-maps? false))
                       (json-generator/generate-string options))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)

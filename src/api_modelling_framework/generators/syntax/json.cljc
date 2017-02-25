@@ -45,8 +45,8 @@
      (generate-ast data {:location location}))))
 
 (defn generate-string
-  ([ast context] (platform/encode-json (utils/ramlify (generate-ast ast context))))
-  ([ast] (platform/encode-json (utils/ramlify (generate-ast ast)))))
+  ([ast context] (platform/encode-json (utils/swaggify (generate-ast ast context))))
+  ([ast] (platform/encode-json (utils/swaggify (generate-ast ast)))))
 
 (defn generate-file
   ([location ast context]

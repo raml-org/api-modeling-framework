@@ -34,7 +34,8 @@
   [source-maps? model generated]
   (if source-maps?
     (let [source-maps (document/sources model)]
-      (assoc generated v/document:source (map #(domain-generator/to-jsonld % {:source-maps? source-maps?}) source-maps)))))
+      (assoc generated v/document:source (map #(domain-generator/to-jsonld % {:source-maps? source-maps?}) source-maps)))
+    generated))
 
 (defmethod to-jsonld :document [m source-maps?]
   (debug "Generating Document")

@@ -42,33 +42,40 @@
 (defmulti to-openapi (fn [model ctx] (to-openapi-dispatch-fn model ctx)))
 
 (defn includes? [x]
-  (and (some? x) (some? (document/includes x))))
+  (if (and (some? x) (some? (document/extends x)) (= 1 (count (document/extends x))))
+    (let [extended (document/extends x)
+          included-tag (first (document/find-tag (first extended) document/extend-include-fragment-parsed-tag))]
+      (some? included-tag))
+    false))
 
 ;; Safe version of to-openapi that checks for includes
 (defn to-openapi! [x {:keys [fragments expanded-fragments document-generator] :as ctx}]
-  (if (includes? x)
-    (let [fragment-target (document/includes x)
+  (if (includes? x) ;; is this node merging something?
+    (let [fragment-target (document/target (first (document/extends x)))
           fragment (get fragments fragment-target)]
       (if (nil? fragment)
         (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
-        (let [encoded-fragment (document/encodes fragment)
-              encoded-fragment-properties (:properties encoded-fragment)
-              encoded-fragment-properties (reduce (fn [acc k]
-                                                    (let [v (get x k)]
-                                                      (if (nil? v) acc (assoc acc k v))))
-                                                  encoded-fragment-properties
-                                                  (keys x))
-              encoded-fragment-properties (assoc encoded-fragment-properties :includes nil)
-              encoded-fragment (assoc encoded-fragment :properties encoded-fragment-properties)
-              encoded-fragment (assoc encoded-fragment :includes nil)
-              fragment (assoc fragment :encodes encoded-fragment)]
-          (if-let [expanded-fragment (get expanded-fragments fragment-target)]
-            expanded-fragment
-            (let [expanded-fragment (document-generator fragment ctx)]
-              (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
-              expanded-fragment)))))
+        ;; we first check in the expansion cache
+        (if-let [expanded-fragment (get expanded-fragments fragment-target)]
+          expanded-fragment
+          ;; not in the cache we compute the value
+          (let [encoded-fragment (document/encodes fragment)
+                encoded-fragment-properties (:properties encoded-fragment)
+                encoded-fragment-properties (reduce (fn [acc k]
+                                                      (let [v (get x k)]
+                                                        (if (nil? v) acc (assoc acc k v))))
+                                                    encoded-fragment-properties
+                                                    (keys x))
+                encoded-fragment-properties (assoc encoded-fragment-properties :extends [])
+                encoded-fragment (assoc encoded-fragment :properties encoded-fragment-properties)
+                encoded-fragment (assoc encoded-fragment :extends [])
+                fragment (assoc fragment :encodes encoded-fragment)
+                expanded-fragment (document-generator fragment ctx)]
+            ;; before returning the expanded fragment, we saved it in the cache
+            (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
+            expanded-fragment))))
+    ;; Nothing to merge
     (to-openapi x ctx)))
-
 
 (defmethod to-openapi domain/APIDocumentation [model ctx]
   (debug "Generating Swagger")

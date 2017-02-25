@@ -41,53 +41,39 @@
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
 
 (defn includes? [x]
-  (and (some? x) (some? (document/includes x))))
+  (if (and (some? x) (some? (document/extends x)) (= 1 (count (document/extends x))))
+    (let [extended (document/extends x)
+          included-tag (first (document/find-tag (first extended) document/extend-include-fragment-parsed-tag))]
+      (some? included-tag))
+    false))
 
 (defn to-raml! [x {:keys [fragments expanded-fragments document-generator] :as ctx}]
-  (if (includes? x)
-    (let [fragment-target (document/includes x)
+  (if (includes? x) ;; is this node merging something?
+    (let [fragment-target (document/target (first (document/extends x)))
           fragment (get fragments fragment-target)]
       (if (nil? fragment)
         (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
-        (let [encoded-fragment (document/encodes fragment)
-              encoded-fragment-properties (:properties encoded-fragment)
-              encoded-fragment-properties (reduce (fn [acc k]
-                                                    (let [v (get x k)]
-                                                      (if (nil? v) acc (assoc acc k v))))
-                                                  encoded-fragment-properties
-                                                  (keys x))
-              encoded-fragment-properties (assoc encoded-fragment-properties :includes nil)
-              encoded-fragment (assoc encoded-fragment :properties encoded-fragment-properties)
-              encoded-fragment (assoc encoded-fragment :includes nil)
-              fragment (assoc fragment :encodes encoded-fragment)]
-          (if-let [expanded-fragment (get expanded-fragments fragment-target)]
-            expanded-fragment
-            (let [expanded-fragment (document-generator fragment ctx)]
-              (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
-              expanded-fragment)))))
+        ;; we first check in the expansion cache
+        (if-let [expanded-fragment (get expanded-fragments fragment-target)]
+          expanded-fragment
+          ;; not in the cache we compute the value
+          (let [encoded-fragment (document/encodes fragment)
+                encoded-fragment-properties (:properties encoded-fragment)
+                encoded-fragment-properties (reduce (fn [acc k]
+                                                      (let [v (get x k)]
+                                                        (if (nil? v) acc (assoc acc k v))))
+                                                    encoded-fragment-properties
+                                                    (keys x))
+                encoded-fragment-properties (assoc encoded-fragment-properties :extends [])
+                encoded-fragment (assoc encoded-fragment :properties encoded-fragment-properties)
+                encoded-fragment (assoc encoded-fragment :extends [])
+                fragment (assoc fragment :encodes encoded-fragment)
+                expanded-fragment (document-generator fragment ctx)]
+            ;; before returning the expanded fragment, we saved it in the cache
+            (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
+            expanded-fragment))))
+    ;; Nothing to merge
     (to-raml x ctx)))
-
-;; ;; Safe version of to-raml that checks for includes
-;; (defn to-raml! [x {:keys [fragments expanded-fragments document-generator] :as ctx}]
-;;   (if (includes? x)
-;;     (let [fragment-target (document/includes x)
-;;           fragment (get fragments fragment-target)]
-;;       (if (nil? fragment)
-;;         (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
-;;         (let [encoded-fragment (document/encodes fragment)
-;;               encoded-fragment (reduce (fn [acc k]
-;;                                          (let [v (get x k)]
-;;                                            (if (nil? v) acc (assoc acc k v))))
-;;                                        encoded-fragment
-;;                                        (keys x))
-;;               encoded-fragment (assoc encoded-fragment :includes nil)
-;;               fragment (assoc fragment :encodes encoded-fragment)]
-;;           (if-let [expanded-fragment (get expanded-fragments fragment-target)]
-;;             expanded-fragment
-;;             (let [expanded-fragment (document-generator fragment ctx)]
-;;               (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
-;;               expanded-fragment)))))
-;;     (to-raml x ctx)))
 
 (defn model->base-uri [model]
   (let [scheme (or (domain/scheme model) [])
@@ -156,6 +142,7 @@
          :baseUri (model->base-uri model)
          :protocols (model->protocols model)
          :mediaType (model->media-type model)
+         :types  (common/model->types (assoc ctx :resolve-types true) to-raml!)
          :traits (common/model->traits model ctx to-raml!)}
         (merge-children-resources children-resources ctx)
         utils/clean-nils)))
@@ -255,7 +242,10 @@
 
 (defmethod to-raml domain/Type [model context]
   (debug "Generating type")
-  (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context)))
+  (if (and (not (:resolve-types context))
+           (common/type-reference? model))
+    (common/type-reference-name model)
+    (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context))))
 
 
 (defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments document-generator]

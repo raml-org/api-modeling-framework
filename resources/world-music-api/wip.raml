@@ -1,0 +1,59 @@
+#%RAML 1.0
+title: World Music API (WIP)
+baseUri: http://example.api.com/{version}/{region-id}
+version: v1
+baseUriParameters:
+  version:
+    description: Version of the API
+    type: integer
+  region-id:
+    description: Region of th server
+    type: string
+traits:
+  secured: !include secured/accessToken.raml
+types:
+  Album:
+    type: object
+    properties:
+      name:
+        type: string
+      artist:
+        type: string
+  Track:
+    type: object
+    properties:
+      name:
+        type: string
+      position:
+        type: integer
+
+/albums:
+  is: [ secured ]
+  post:
+    body: Album
+  get:
+    queryParameters:
+      genre:
+        description: filter the songs by genre
+    responses:
+      200:
+        body:
+          type: array
+          items: Album
+  /{album-id}:
+    get:
+      responses:
+        200:
+          body: Album
+    /tracks:
+      get:
+        responses:
+          200:
+            body:
+              type: array
+              items: Track
+      /{track-id}:
+        get:
+          responses:
+            200:
+              body: Track

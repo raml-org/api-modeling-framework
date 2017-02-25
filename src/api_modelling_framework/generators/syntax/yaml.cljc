@@ -18,11 +18,26 @@
 
 #?(:cljs (def js-yaml (nodejs/require "js-yaml")))
 
+(def key-orders {"title" 0
+                 "description" 1
+                 "version" 2
+                 "baseUri" 3
+                 "types" 4
+                 "traits" 5})
+
 #?(:clj (defn generate-yaml-string [ast]
           (let [yaml (org.yaml.snakeyaml.Yaml.)]
             (.dump yaml (utils/ramlify ast))))
    :cljs (defn generate-yaml-string [ast]
-           (.dump js-yaml (clj->js (utils/ramlify ast)))))
+           (.dump js-yaml (clj->js (utils/ramlify ast)) (clj->js {"sortKeys" (fn [ka kb]
+                                                                               (cond
+                                                                                 (and (string/starts-with? ka "/")
+                                                                                      (string/starts-with? kb "/"))  0
+                                                                                 (string/starts-with? ka "/")        1
+                                                                                 (string/starts-with? kb "/")        -1
+                                                                                 :else  (let [pos-a (get key-orders ka 100)
+                                                                                              pos-b (get key-orders kb 100)]
+                                                                                          (compare pos-a pos-b))))}))))
 
 (defn include-fragment [fragment]
   (let [location (syntax/<-location fragment)]

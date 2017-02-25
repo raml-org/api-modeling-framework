@@ -10,8 +10,7 @@ export type ModelType = "raml" | "open-api";
 export class ApiModellerWindow extends Electron.BrowserWindow {
 
     static functions: string[] = [
-        "checkFile", "existsFile", "parseModelFile", "from_clj",
-        "to_clj", "generateString"
+        "checkFile", "existsFile", "parseModelFile", "generateString"
     ];
 
     static wrap(o: Object) {
@@ -40,15 +39,8 @@ export class ApiModellerWindow extends Electron.BrowserWindow {
         }
     }
 
-    from_clj(x: any) {
-        apiFramework.from_clj(x)
-    }
-
-    to_clj(x: any) {
-        apiFramework.to_clj(x)
-    }
-
     parseModelFile(type: ModelType, fileLocation: string, cb) {
+        console.log("PARSING FILE " + fileLocation + " TYPE " + type);
         let parser: any;
         if (type === "raml") {
             parser = new apiFramework.RAMLParser();
@@ -58,10 +50,27 @@ export class ApiModellerWindow extends Electron.BrowserWindow {
 
         apiFramework.parse_file(parser, fileLocation, function(err, model) {
             if (err != null) {
+                console.log("Error parsing file");
+                console.log(err);
                 cb(err, null);
             } else {
                 cb(null, new ModelProxy(model, type))
             }
         })
     }
+    from_clj(x: any) {
+        return apiFramework.fromClj(x)
+    }
+
+    to_clj(x: any) {
+        console.log("********** TO CLJ");
+        try {
+            return apiFramework.toClj(x)
+        } catch (e) {
+            console.log("ERROR");
+            console.log(e);
+            return x;
+        }
+    }
+
 }

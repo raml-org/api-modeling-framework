@@ -19,34 +19,20 @@ documentation:
     content: See http://legal.musicapi.com
 
 types:
-  Entry: |
-    {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/song"
-      },
-      "definitions": {
-        "song": {
-          "type": "object",
-          "properties": {
-            "title": {
-              "type": "string"
-            },
-            "artist": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    }
-  AnotherEntry:
-    type: Entry
-    description: |
-      This is just another entry to simulate that you can add facets also on JSON
-      schema defined types. Although you can only add documentation-based facets.
+  Entry:
+    type: array
+    items:
+      type: object
+      properties:
+        title:
+          type: string
+        artist:
+          type: string
   User:
+    type: object
     properties:
-      firstname: string
+      firstname:
+        type: string
       lastname:
         type: string
         example: Doe
@@ -171,7 +157,7 @@ uses:
   post:
     responses:
       200:
-        body: AnotherEntry
+        body: Entry
 /songs:
   displayName: Songs
   description:  Access to all songs inside the music world library.

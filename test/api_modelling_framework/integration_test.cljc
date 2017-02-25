@@ -152,3 +152,26 @@
                                                             (println raml-string)
                                                             (is true)
                                                             (done))))))))))
+
+
+(deftest integration-test-6
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->RAMLGenerator)]
+               (core/parse-file parser "resources/world-music-api/real_api.raml"
+                                (fn [error model]
+                                  (is (nil? error))
+                                  (is (some? model))
+                                  (let [output-model (core/document-model model)]
+                                    (prn output-model)
+                                    (println "GENEARTING STRING NOW...")
+                                    (core/generate-string generator "file://resources/petstore.json"
+                                                          output-model
+                                                          {}
+                                                          (fn [error raml-string]
+                                                            (println "BACK!")
+                                                            (prn error)
+                                                            (println "I'M BACK")
+                                                            (println raml-string)
+                                                            (is true)
+                                                            (done))))))))))
