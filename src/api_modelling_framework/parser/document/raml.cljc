@@ -3,9 +3,9 @@
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.parser.domain.raml :as domain-parser]
+            [api-modelling-framework.utils :as utils]
             [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+             #?(:clj :refer :cljs :refer-macros) [debug]]))
 
 (defn parse-ast-dispatch-function [node context]
   (cond
@@ -49,6 +49,30 @@
                                    :declares (vals declarations)
                                    :references (vals @fragments)
                                    :document-type "#%RAML 1.0"})))
+
+(defmethod parse-ast "#%RAML 1.0 Library" [node context]
+  (println "PARSING RAML LIBRARY")
+  (let [location (syntax/<-location node)
+        _ (debug "Parsing RAML Library at " location)
+        fragments (or (:fragments context) (atom {}))
+        ;; we parse traits and types and add the information into the context
+        traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
+                                                                   :fragments fragments
+                                                                   :document-parser parse-ast
+                                                                   :parsed-location (str location "#/declares")})
+        types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :fragments fragments
+                                                                 :document-parser parse-ast
+                                                                 :parsed-location (str location "#/declares")})
+        declarations (merge traits types)
+        usage (:usage (syntax/<-data node))]
+    (document/map->ParsedModule (utils/clean-nils
+                                 {:id location
+                                  :location location
+                                  :description usage
+                                  :declares (vals declarations)
+                                  :references (vals @fragments)
+                                  :document-type "#%RAML 1.0 Library"}))))
 
 
 (defmethod parse-ast "#%RAML 1.0 Trait" [node context]

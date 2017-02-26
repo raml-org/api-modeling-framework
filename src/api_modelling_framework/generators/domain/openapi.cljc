@@ -104,7 +104,7 @@
          :consumes (if (= 1 (count (domain/accepts model)))
                      (first (domain/accepts model))
                      (domain/accepts model))
-         :x-traits (common/model->traits model (assoc ctx :abstract true) to-openapi!)
+         :x-traits (common/model->traits (assoc ctx :abstract true) to-openapi!)
          :paths paths}
         utils/clean-nils)))
 

@@ -292,6 +292,21 @@
   Module
   (declares [this] (or declares [])))
 
+(defrecord ParsedModule [location declares references document-type resolved description]
+  Node
+  (id [this] location)
+  (name [this] location)
+  (description [this] description)
+  (sources [this] (generate-document-sources location document-type))
+  (valid? [this] true)
+  (extends [this] [])
+  Unit
+  (location [this] location)
+  (references [this] (or references []))
+  (resolved [this] (or resolved false))
+  Module
+  (declares [this] (or declares [])))
+
 (defrecord ParsedFragment [location encodes references document-type resolved]
   Node
   (id [this] location)

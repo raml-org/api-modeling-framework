@@ -143,7 +143,7 @@
          :protocols (model->protocols model)
          :mediaType (model->media-type model)
          :types  (common/model->types (assoc ctx :resolve-types true) to-raml!)
-         :traits (common/model->traits model ctx to-raml!)}
+         :traits (common/model->traits ctx to-raml!)}
         (merge-children-resources children-resources ctx)
         utils/clean-nils)))
 

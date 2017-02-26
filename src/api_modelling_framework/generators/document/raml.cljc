@@ -4,6 +4,7 @@
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.generators.domain.raml :as domain-generator]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.generators.domain.common :as common]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
@@ -61,3 +62,24 @@
                                           (merge (domain-generator/to-raml (domain/to-domain-node (document/encodes model)) context)
                                                  {:usage (document/description model)}))
                        (keyword "@fragment") fragment-type})))
+
+(defmethod to-raml :library [model ctx]
+  (debug "Generating Library at " (document/location model))
+  (let [declares (document/declares model)
+        fragments (->> (document/references model)
+                       (reduce (fn [acc fragment]
+                                 (assoc acc (document/location fragment) fragment))
+                               {}))
+        context (-> ctx
+                    (assoc :references declares)
+                    (assoc :fragments fragments)
+                    (assoc :expanded-fragments (atom {}))
+                    (assoc :document-generator to-raml))
+        types (common/model->types (assoc context :resolve-types true) domain-generator/to-raml!)
+        traits (common/model->traits context domain-generator/to-raml!)]
+    {(keyword "@location") (document/location model)
+     (keyword "@data") (-> {:types types
+                            :usage (document/description model)
+                            :traits traits}
+                           (utils/clean-nils))
+     (keyword "@fragment") "#%RAML 1.0 Library"}))

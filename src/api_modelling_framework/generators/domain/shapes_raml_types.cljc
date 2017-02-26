@@ -9,7 +9,6 @@
              [debug]]))
 
 (defn ref-shape? [shape {:keys [references]}]
-  (println "REF SHAPE?")
   (->> references
        (filter (fn [ref]
                  (satisfies? domain/Type ref)))

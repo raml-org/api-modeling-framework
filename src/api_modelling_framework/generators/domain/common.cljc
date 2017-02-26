@@ -15,27 +15,48 @@
                     (document/value trait-tag)
                     (-> (document/target trait) (string/split #"/") last))))))))
 
-(defn model->traits [model {:keys [references] :as ctx} domain-generator]
-  (->> (document/find-tag model document/inline-fragment-parsed-tag)
-       (map (fn [tag]
-              (let [trait-id (document/value tag)
-                    reference (->> references
-                                   (filter (fn [reference] (= (document/id reference) trait-id)))
-                                   first)
-                    is-trait-tag (-> reference
+;;(defn model->traits [model {:keys [references] :as ctx} domain-generator]
+;;  (->> (document/find-tag model document/inline-fragment-parsed-tag)
+;;       (map (fn [tag]
+;;              (let [trait-id (document/value tag)
+;;                    reference (->> references
+;;                                   (filter (fn [reference] (= (document/id reference) trait-id)))
+;;                                   first)
+;;                    is-trait-tag (-> reference
+;;                                     (document/find-tag document/is-trait-tag)
+;;                                     first)]
+;;                (if is-trait-tag
+;;                  (let [trait-name (-> is-trait-tag
+;;                                       (document/value)
+;;                                       keyword)
+;;                        method (if (some? reference)
+;;                                 (domain/to-domain-node reference)
+;;                                 (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
+;;                        generated (domain-generator method ctx)]
+;;                    [trait-name generated])
+;;                  nil))))
+;;       (filter some?)
+;;       (into {})))
+
+(defn model->traits [{:keys [references] :as ctx} domain-generator]
+  (->> references
+       (filter (fn [reference]
+                 (let [is-trait-tag (-> reference
+                                       (document/find-tag document/is-trait-tag)
+                                       first)]
+                   (some? is-trait-tag))))
+       (map (fn [reference]
+              (let [is-trait-tag (-> reference
                                      (document/find-tag document/is-trait-tag)
-                                     first)]
-                (if is-trait-tag
-                  (let [trait-name (-> is-trait-tag
-                                       (document/value)
-                                       keyword)
-                        method (if (some? reference)
-                                 (domain/to-domain-node reference)
-                                 (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
-                        generated (domain-generator method ctx)]
-                    [trait-name generated])
-                  nil))))
-       (filter some?)
+                                     first)
+                    trait-name (-> is-trait-tag
+                                   (document/value)
+                                   keyword)
+                    method (if (some? reference)
+                             (domain/to-domain-node reference)
+                             (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
+                    generated (domain-generator method ctx)]
+                [trait-name generated])))
        (into {})))
 
 
