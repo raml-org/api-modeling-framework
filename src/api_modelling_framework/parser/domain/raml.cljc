@@ -3,10 +3,13 @@
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.parser.domain.json-schema-shapes :as json-schema-shapes]
             [api-modelling-framework.parser.domain.raml-types-shapes :as shapes]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.platform :as platform]
             [cemerick.url :as url]
             [clojure.string :as string]
+            [clojure.walk :refer [keywordize-keys]]
             [clojure.set :as set]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
@@ -252,10 +255,10 @@
                    (let [type-name     (url/url-encode (utils/safe-str type-name))
                          type-fragment (parse-ast type-node (-> nested-context
                                                                 (assoc :location location)
-                                                                (assoc :parsed-location parsed-location)
+                                                                (assoc :parsed-location (str parsed-location "/" type-name))
                                                                 (assoc :is-fragment false)
                                                                 (assoc :type-hint :type)))
-                         type-fragment (assoc type-fragment :id (str parsed-location "/" type-name))
+                         ;;type-fragment (assoc type-fragment :id (str parsed-location "/" type-name))
                          sources (or (-> type-fragment :sources) [])
                          sources (concat sources (generate-is-type-sources type-name
                                                                            (str location "/" type-name)
@@ -510,15 +513,23 @@
 
 (defmethod parse-ast :type [node {:keys [location parsed-location is-fragment references] :as context}]
   (debug "Parsing type")
-  (if (and (string? node) (not (string/starts-with? node "{")))
-    (get references (keyword (utils/safe-str node)))
-    (let [type-id (str parsed-location "/type")
-          shape (shapes/parse-type node (assoc context :parsed-location type-id))]
-      (if is-fragment
-        {:id type-id
-         :shape shape}
-        (domain/map->ParsedType {:id type-id
-                                 :shape shape})))))
+  (let [;; the node can be the string of a type reference if that's the case,
+        ;; we build a {:type TypeReference} node to process it
+        node (if (and
+                  (not (shapes/inline-json-schema? node))
+                  (string? node))
+               {:type node} ;; it can be a string because it's a inline json-schema
+               node)
+        type-id (str parsed-location "/type")
+        shape-context (assoc context :parsed-location type-id)
+        shape (if (shapes/inline-json-schema? node)
+                (json-schema-shapes/parse-type (keywordize-keys (platform/decode-json node)) shape-context)
+                (shapes/parse-type node shape-context))]
+    (if is-fragment
+      {:id type-id
+       :shape shape}
+      (domain/map->ParsedType {:id type-id
+                               :shape shape}))))
 
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                       :or {fragments (atom {})}
