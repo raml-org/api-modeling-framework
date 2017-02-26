@@ -1,10 +1,33 @@
 (ns api-modelling-framework.generators.domain.shapes-raml-types
   (:require [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.model.document :as document]
+            [api-modelling-framework.model.domain :as domain]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
+
+(defn ref-shape? [shape {:keys [references]}]
+  (println "REF SHAPE?")
+  (->> references
+       (filter (fn [ref]
+                 (satisfies? domain/Type ref)))
+       (filter (fn [type]
+                 (= (get (domain/shape type) "@id") (first (get shape "@type")))))
+       first))
+
+(defn ref-shape [shape ctx]
+  (let [ref (ref-shape? shape ctx)
+        is-type-tag (-> ref
+                        (document/find-tag document/is-type-tag)
+                        first)
+        type-name (if (some? is-type-tag)
+                    (-> is-type-tag
+                        (document/value)
+                        keyword)
+                    (-> ref document/id (string/split #"/") last))]
+    (utils/safe-str type-name)))
 
 (defn parse-shape-dispatcher-fn [shape ctx]
   (cond
@@ -13,6 +36,7 @@
     (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
     (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/sh-ns "JSONSchema")
     (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/sh-ns "XMLSchema")
+    (ref-shape? shape ctx)                              :inheritance
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -99,5 +123,8 @@
 (defmethod parse-shape (v/sh-ns "XMLSchema") [shape context]
   (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
     value))
+
+(defmethod parse-shape :inheritance [shape context]
+  (ref-shape shape context))
 
 (defmethod parse-shape nil [_ _] nil)
