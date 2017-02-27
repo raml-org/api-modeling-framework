@@ -40,6 +40,7 @@
 
 (defn model->traits [{:keys [references] :as ctx} domain-generator]
   (->> references
+       (filter (fn [ref] (nil? (:from-library ref))))
        (filter (fn [reference]
                  (let [is-trait-tag (-> reference
                                        (document/find-tag document/is-trait-tag)
@@ -62,6 +63,7 @@
 
 (defn model->types [{:keys [references] :as ctx} domain-generator]
   (->> references
+       (filter (fn [ref] (nil? (:from-library ref))))
        (filter (fn [reference]
                  (let [is-type-tag (-> reference
                                        (document/find-tag document/is-type-tag)
@@ -76,6 +78,11 @@
                                   keyword)
                     generated (domain-generator reference ctx)]
                 [type-name generated])))
+       (into {})))
+
+(defn model->uses [node]
+  (->> (document/find-tag node document/uses-library-tag)
+       (map (fn [tag] [(document/name tag) (document/value tag)]))
        (into {})))
 
 (defn type-reference-name [reference]

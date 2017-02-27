@@ -114,18 +114,18 @@
 
 (defn check-multiple-inheritance
   "Computes multiple-inheritance references"
-  [types {:keys [parsed-location] :as context}]
+  [types {:keys [parsed-location default-type] :as context}]
   (let [types (mapv #(parse-type % context) types)]
     {"@id" (str parsed-location "/ref-shape")
      "@type" types}))
 
-(defn parse-type [node {:keys [parsed-location] :as context}]
+(defn parse-type [node {:keys [parsed-location default-type] :as context}]
   (cond
     (string? node) (cond
                      (string/starts-with? node "{") (parse-json-node parsed-location node)
                      (string/starts-with? node "<") (parse-xml-node parsed-location node)
                      :else (parse-type {:type node} context))
-    (map? node) (let [type-ref (or (:type node) (:schema node))]
+    (map? node) (let [type-ref (or (:type node) (:schema node) (or default-type "object"))]
                   (condp = type-ref
                     "string"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "string")))
                     "number"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))

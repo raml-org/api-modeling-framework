@@ -23,21 +23,42 @@
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
 
+(defn update-alias [declare alias]
+  (let [is-type-tag (-> declare (document/find-tag document/is-type-tag) first)
+        is-trait-tag (-> declare (document/find-tag document/is-trait-tag) first)
+        old-tag (or is-type-tag is-trait-tag)
+        new-tag (assoc old-tag :value (str (utils/safe-str alias) "." (utils/safe-str (document/value old-tag))))]
+    (document/replace-tag declare old-tag new-tag)))
 
 (defmethod to-raml :document [model ctx]
   (debug "Generating Document at " (document/location model))
-  (let [declares (document/declares model)
-        fragments (->> (document/references model)
+  (let [fragments (->> (document/references model)
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))
                                {}))
+        uses (->> (common/model->uses model)
+                  (mapv (fn [[alias location]]
+                          [alias (get fragments location)]))
+                  (into {}))
+        declares (document/declares model)
+        library-declares (->> uses
+                              (mapv (fn [[alias fragment]]
+                                      (mapv #(update-alias % alias) (document/declares fragment))))
+                              flatten
+                              (mapv (fn [declaration] (assoc declaration :from-library true))))
+        uses (->> uses
+                  (mapv (fn [[alias fragment]]
+                          [(keyword alias) (to-raml fragment ctx)]))
+                  (into {}))
         context (-> ctx
-                    (assoc :references declares)
+                    (assoc :references (concat declares library-declares))
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
-                    (assoc :document-generator to-raml))]
+                    (assoc :document-generator to-raml))
+        encoded (domain-generator/to-raml (document/encodes model) context)
+        encoded (if (> (count uses) 0) (assoc encoded :uses uses) encoded)]
     {(keyword "@location") (document/location model)
-     (keyword "@data") (domain-generator/to-raml (document/encodes model) context)
+     (keyword "@data") encoded
      (keyword "@fragment") "#%RAML 1.0"}))
 
 
@@ -76,10 +97,15 @@
                     (assoc :expanded-fragments (atom {}))
                     (assoc :document-generator to-raml))
         types (common/model->types (assoc context :resolve-types true) domain-generator/to-raml!)
-        traits (common/model->traits context domain-generator/to-raml!)]
+        traits (common/model->traits context domain-generator/to-raml!)
+        uses (->> (common/model->uses model)
+                  (mapv (fn [[alias location]]
+                          [alias (get fragments location)]))
+                  (into {}))]
     {(keyword "@location") (document/location model)
-     (keyword "@data") (-> {:types types
-                            :usage (document/description model)
+     (keyword "@data") (-> {:usage (document/description model)
+                            :uses uses
+                            :types types
                             :traits traits}
                            (utils/clean-nils))
      (keyword "@fragment") "#%RAML 1.0 Library"}))

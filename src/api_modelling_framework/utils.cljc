@@ -157,3 +157,6 @@
    (let [value (-> node (get property []) first)]
      (if (some? value) (f value) nil)))
   ([node property] (extract-jsonld node property identity)))
+
+(defn alias-chain [alias {:keys [alias-chain]}]
+  (if (some? alias-chain) (str (safe-str alias-chain) "." (safe-str alias)) (safe-str alias)))

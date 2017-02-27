@@ -75,6 +75,24 @@
            (filter some?))
       [])))
 
+(defn replace-tag [node old-tag new-tag]
+  (let [sources (or (:sources  node) (try (sources node) (catch #?(:cljs js/Error :clj Exception) ex nil)))]
+    (if (some? sources)
+      (let [new-sources (loop [old-sources sources
+                               new-sources []]
+                          (if (empty? old-sources)
+                            new-sources
+                            (let [next-source (first old-sources)
+                                  old-tag-id (tag-id old-tag)
+                                  new-source (assoc next-source :tags (->> (tags next-source)
+                                                                           (mapv (fn [tag] (if (= old-tag-id (tag-id tag))
+                                                                                            new-tag
+                                                                                            tag)))))]
+                              (recur (rest old-sources)
+                                     (conj new-sources new-source)))))]
+        (assoc node :sources new-sources))
+      node)))
+
 (def file-parsed-tag "file-parsed")
 
 (defrecord FileParsedTag [id location]
@@ -207,14 +225,14 @@
 ;; Is trait is used to mark that the fragment is a RAML trait
 (def is-trait-tag "is-trait-tag")
 
-(defrecord IsTraitTag [id trait-name]
+(defrecord IsTraitTag [id value]
   Tag
   (tag-id [this] is-trait-tag)
-  (value [this] trait-name)
+  (value [this] value)
   Node
   (id [this] id)
   (name [this] "Is trait tag")
-  (description [this] (str "Is trait tag with name " trait-name))
+  (description [this] (str "Is trait tag with name " value))
   (sources [this] [])
   (valid? [this] true)
   (extends [this] []))
@@ -222,14 +240,14 @@
 ;; Is type is used to mark that the fragment is a RAML type
 (def is-type-tag "is-type-tag")
 
-(defrecord IsTypeTag [id type-name]
+(defrecord IsTypeTag [id value]
   Tag
   (tag-id [this] is-type-tag)
-  (value [this] type-name)
+  (value [this] value)
   Node
   (id [this] id)
   (name [this] "Is type tag")
-  (description [this] (str "Is type tag with name " type-name))
+  (description [this] (str "Is type tag with name " value))
   (sources [this] [])
   (valid? [this] true)
   (extends [this] []))
@@ -245,6 +263,21 @@
   (id [this] id)
   (name [this] "Extends trait tag")
   (description [this] (str "Extends trait tag with name " trait-name))
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] []))
+
+;; Uses library is used to mark that a particular module is a RAML library/document using another library
+(def uses-library-tag "uses-library-tag")
+
+(defrecord UsesLibraryTag [id library-alias library]
+  Tag
+  (tag-id [this] uses-library-tag)
+  (value [this] library)
+  Node
+  (id [this] id)
+  (name [this] library-alias)
+  (description [this] (str "Uses library tag with name " library-alias " located at " library))
   (sources [this] [])
   (valid? [this] true)
   (extends [this] []))

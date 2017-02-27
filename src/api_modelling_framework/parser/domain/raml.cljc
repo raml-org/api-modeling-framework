@@ -242,10 +242,10 @@
                                                                             (str location "/" fragment-name)
                                                                             (str parsed-location "/" fragment-name)))
                          parsed-trait (assoc-in trait-fragment [:properties :sources] sources)]
-                     (assoc acc (keyword trait-name) parsed-trait)))
+                     (assoc acc (keyword (utils/alias-chain trait-name context)) parsed-trait)))
                  {}))))
 
-(defn process-types [node {:keys [location parsed-location] :as context}]
+(defn process-types [node {:keys [location parsed-location alias-chain] :as context}]
   (debug "Processing " (count (:types node [])) " types")
   (let [parsed-location (str parsed-location "/types")
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
@@ -258,13 +258,12 @@
                                                                 (assoc :parsed-location (str parsed-location "/" type-name))
                                                                 (assoc :is-fragment false)
                                                                 (assoc :type-hint :type)))
-                         ;;type-fragment (assoc type-fragment :id (str parsed-location "/" type-name))
                          sources (or (-> type-fragment :sources) [])
                          sources (concat sources (generate-is-type-sources type-name
                                                                            (str location "/" type-name)
                                                                            (str parsed-location "/" type-name)))
                          parsed-type (assoc type-fragment :sources sources)]
-                     (assoc acc (keyword type-name) parsed-type)))
+                     (assoc acc (keyword (utils/alias-chain type-name context)) parsed-type)))
                  {}))))
 
 (defn find-extend-tags [{:keys [location parsed-location references] :as context}]
@@ -278,6 +277,7 @@
                                                           (name extend-name)
                                                           (:id parsed-domain-element)))))
        flatten))
+
 
 (defmethod parse-ast :root [node {:keys [location parsed-location is-fragment references] :as context :or {references {}}}]
   (debug "Parsing RAML root")
@@ -518,7 +518,7 @@
         node (if (and
                   (not (shapes/inline-json-schema? node))
                   (string? node))
-               {:type node} ;; it can be a string because it's a inline json-schema
+               {:type node}
                node)
         type-id (str parsed-location "/type")
         shape-context (assoc context :parsed-location type-id)

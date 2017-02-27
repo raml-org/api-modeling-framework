@@ -23,45 +23,97 @@
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
+(defn process-library [node {:keys [location parsed-location] :as context}]
+  (let [uses (:uses (syntax/<-data node) {})
+        libraries (reduce (fn [acc [alias library]]
+                            (let [declares (parse-ast library context)]
+                              (assoc acc alias declares)))
+                          {}
+                          uses)
+        declares (reduce (fn [acc [alias library]]
+                           (merge acc
+                                  (->> (document/declares library)
+                                       (map (fn [declare]
+                                              (let [is-type-tag (-> declare (document/find-tag document/is-type-tag) first)
+                                                    is-trait-tag (-> declare (document/find-tag document/is-trait-tag) first)
+                                                    declaration-alias (cond
+                                                                        (some? is-type-tag) (-> is-type-tag (document/value))
+                                                                        (some? is-trait-tag) (-> is-trait-tag (document/value))
+                                                                        :else nil)]
+                                                (if (some? declaration-alias)
+                                                  [(keyword (utils/alias-chain (str (utils/safe-str alias) "." (utils/safe-str declaration-alias)) context))
+                                                   declare]
+                                                  nil))))
+                                       (filter some?)
+                                       (into {}))))
+                         {}
+                         libraries)]
+    {:libraries libraries
+     :library-declarations declares}))
+
+(defn process-uses-tags [node {:keys [location parsed-location]}]
+  (let [uses (:uses (syntax/<-data node) {})]
+    (let [source-map-id (str parsed-location "/source-map/uses")
+          tags (map (fn [[alias library]]
+                      (document/->UsesLibraryTag source-map-id (utils/safe-str alias) (syntax/<-location library))) uses)]
+      [(document/->DocumentSourceMap source-map-id location tags)])))
+
 (defmethod parse-ast "#%RAML 1.0" [node context]
   (let [location (syntax/<-location node)
         _ (debug "Parsing RAML Document at " location)
         fragments (or (:fragments context) (atom {}))
+        fragments (or (:fragments context) (atom {}))
+        {:keys [libraries library-declarations]} (process-library node {:location (str location "#")
+                                                                        :fragments fragments
+                                                                        :document-parser parse-ast
+                                                                        :parsed-location (str location "#/libraries")})
+        uses-tags (process-uses-tags node context)
         ;; we parse traits and types and add the information into the context
         traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
                                                                    :fragments fragments
+                                                                   :references library-declarations
                                                                    :document-parser parse-ast
                                                                    :parsed-location (str location "#/declares")})
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
                                                                  :fragments fragments
+                                                                 :references library-declarations
                                                                  :document-parser parse-ast
                                                                  :parsed-location (str location "#/declares")})
         declarations (merge traits types)
         encoded (domain-parser/parse-ast (syntax/<-data node) {:location (str location "#")
                                                                :fragments fragments
                                                                :parsed-location (str location "#")
-                                                               :references declarations
+                                                               :references (merge declarations library-declarations)
                                                                :document-parser parse-ast
                                                                :is-fragment false})]
+    (println "ASSIGNING SOURCES " uses-tags)
     (document/map->ParsedDocument {:id location
                                    :location location
                                    :encodes encoded
                                    :declares (vals declarations)
-                                   :references (vals @fragments)
+                                   :references (concat (vals @fragments)
+                                                       (flatten (vals libraries)))
+                                   :sources uses-tags
                                    :document-type "#%RAML 1.0"})))
 
-(defmethod parse-ast "#%RAML 1.0 Library" [node context]
+(defmethod parse-ast "#%RAML 1.0 Library" [node {:keys [alias-chain] :as context}]
   (println "PARSING RAML LIBRARY")
   (let [location (syntax/<-location node)
         _ (debug "Parsing RAML Library at " location)
         fragments (or (:fragments context) (atom {}))
+        {:keys [libraries library-declarations]} (process-library node (dissoc context :alias-chain))
+        uses-tags (process-uses-tags node context)
         ;; we parse traits and types and add the information into the context
         traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
                                                                    :fragments fragments
+                                                                   :references library-declarations
+                                                                   :alias-chain alias-chain
                                                                    :document-parser parse-ast
                                                                    :parsed-location (str location "#/declares")})
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
                                                                  :fragments fragments
+                                                                 :alias-chain alias-chain
+                                                                 :references library-declarations
                                                                  :document-parser parse-ast
                                                                  :parsed-location (str location "#/declares")})
         declarations (merge traits types)
@@ -71,7 +123,9 @@
                                   :location location
                                   :description usage
                                   :declares (vals declarations)
-                                  :references (vals @fragments)
+                                  :references (concat (vals @fragments)
+                                                      (flatten (vals libraries)))
+                                  :sources uses-tags
                                   :document-type "#%RAML 1.0 Library"}))))
 
 

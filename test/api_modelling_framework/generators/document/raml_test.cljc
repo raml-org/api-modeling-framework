@@ -6,7 +6,6 @@
             [api-modelling-framework.parser.document.raml :as parser]
             [api-modelling-framework.generators.document.raml :as generator]))
 
-(require '[clojure.data])
 (deftest generate-fragments
   (let [location "file://path/to/resource.raml"
         input {(keyword "@location") location
@@ -45,6 +44,21 @@
                                   :traits {:drm {:headers {:drm-key {:type "string"}}}}}}
         parsed (parser/parse-ast input {})
         generated (generator/to-raml parsed {})]
-    (clojure.pprint/pprint generated)
-    (prn (clojure.data/diff generated input))
+    (is (= generated input))))
+
+(deftest generate-libraries-2-test
+  (let [location "file://path/to/library.raml"
+        input-library {(keyword "@location") location
+                       (keyword "@fragment") "#%RAML 1.0 Library"
+                       (keyword "@data") {:usage "Use to define some basic file-related constructs."
+                                          :types {:File {:type "object"
+                                                         :properties {:name {:type "string"}
+                                                                      :length {:type "integer"}}}}
+                                          :traits {:drm {:headers {:drm-key {:type "string"}}}}}}
+        input {(keyword "@location") "file://path/to/api.raml"
+               (keyword "@fragment") "#%RAML 1.0"
+               (keyword "@data") {:uses {:lib input-library}
+                                  (keyword "/test") {:get {:responses {"200" {:body "lib.File"}}}}}}
+        parsed (parser/parse-ast input {})
+        generated (generator/to-raml parsed {})]
     (is (= generated input))))
