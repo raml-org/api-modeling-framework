@@ -12,10 +12,33 @@
 
   #?(:clj (:import [api_modelling_framework.java IncludeConstructor])))
 
+
 #?(:cljs (enable-console-print!))
 #?(:cljs (def __dirname (js* "__dirname")))
 #?(:cljs (def yaml (nodejs/require (str __dirname "/../../../../js/yaml"))))
 
+(declare parse-file)
+
+(defn resolve-path [location path]
+  (let [last-component (-> location (string/split #"/") last)
+        base (string/replace location last-component "")]
+    (if (or (= (string/index-of path "/") 0)
+            (some? (string/index-of path "://")))
+      path
+      (str base path))))
+
+(defn resolve-libraries [location parsed]
+  (go (let [uses (:uses parsed {})
+            uses (loop [acc []
+                        libraries uses]
+                   (if (empty? libraries)
+                     acc
+                     (let [[alias path] (first libraries)
+                           library-content (<! (parse-file (resolve-path location path)))]
+                       (recur (concat acc [[alias library-content]])
+                              (rest libraries)))))
+            uses (into {} uses)]
+        (assoc parsed :uses uses))))
 
 #?(:cljs (defn parse-file [uri]
            (let [ch (chan)]
@@ -36,11 +59,10 @@
                          raw (.load yaml (java.io.FileInputStream. file))
                          parsed (decode raw)]
                      (-> {}
-                         (assoc (keyword "@data") parsed)
+                         (assoc (keyword "@data") (<! (resolve-libraries (.getAbsolutePath file) parsed)))
                          (assoc (keyword "@location") (.getAbsolutePath file))
                          (assoc (keyword "@fragment") header)))
                    (catch #?(:cljs js/Error :clj Exception) ex ex)))))
-
 
 #?(:cljs (defn parse-string [uri string]
            (let [ch (chan)]
@@ -61,7 +83,7 @@
                          raw (.load yaml string)
                          parsed (decode raw)]
                      (-> {}
-                         (assoc (keyword "@data") parsed)
+                         (assoc (keyword "@data") (resolve-libraries (.getAbsolutePath file) parsed))
                          (assoc (keyword "@location") (.getAbsolutePath file))
                          (assoc (keyword "@fragment") header)))
                    (catch #?(:cljs js/Error :clj Exception) ex ex)))))
