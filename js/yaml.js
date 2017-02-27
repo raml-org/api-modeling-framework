@@ -4,6 +4,7 @@ var yaml = require('js-yaml');
 var path = require("path");
 
 global.FRAGMENTS_CACHE = {};
+global.PENDING_LIBRARIES = [];
 
 function Fragment(location, type, data) {
     this["@location"] = location;
@@ -77,12 +78,46 @@ var cacheFragments = function (fileOrData, cb, pending) {
 
 };
 
+var loadLibraries = function (loaded, cb, pending) {
+    if (pending == null) {
+        pending = PENDING_LIBRARIES;
+        PENDING_LIBRARIES = [];
+        loadLibraries(loaded, cb, pending);
+    } else {
+        if (pending.length == 0) {
+            cb(null, loaded);
+        } else {
+            var next = pending.shift();
+            parseYamlFile(next.location, function (err, loadedFragment) {
+                if (err) {
+                    cb(err, loaded);
+                } else {
+                    loaded.uses[next.alias] = loadedFragment;
+                    loadLibraries(loaded, cb, pending);
+                }
+            });
+        }
+    }
+};
+
 var getFragmentInfo = function (fragment) {
     var fragmentInfo = fragment.data.split("\n")[0];
     if (!fragmentInfo.indexOf("#%RAML") === 0) {
         fragmentInfo = null;
     }
     return fragmentInfo;
+};
+
+var collectLibraries = function (fragment, location) {
+    var libraries = fragment.uses || {};
+    for (var p in libraries) {
+        var resolvedLocation = resolvePath(location, libraries[p]);
+        PENDING_LIBRARIES.push({
+            "path": libraries[p],
+            "location": resolvedLocation,
+            "alias": p
+        });
+    }
 };
 
 var FragmentType = new yaml.Type("!include", {
@@ -102,7 +137,6 @@ var FragmentType = new yaml.Type("!include", {
         } catch (e) {
             parsed = fragment.data;
         }
-
         var fragmentInfo = getFragmentInfo(fragment);
 
         var location = fragment.location;
@@ -119,14 +153,16 @@ var FragmentType = new yaml.Type("!include", {
 var FRAGMENT_SCHEMA = yaml.Schema.create([FragmentType]);
 
 var parseYamlFile = function (location, cb) {
-    global.FRAGMENTS_CACHE = {};
     cacheFragments({ "location": location }, function (err, data) {
         try {
             var loaded = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
-            var result = { "@data": loaded };
-            result["@location"] = location;
-            result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
-            cb(null, result);
+            collectLibraries(loaded, location);
+            loadLibraries(loaded, function (err, loaded) {
+                var result = { "@data": loaded };
+                result["@location"] = location;
+                result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
+                cb(null, result);
+            });
         } catch (e) {
             cb(e);
         }
@@ -134,14 +170,21 @@ var parseYamlFile = function (location, cb) {
 };
 
 var parseYamlString = function (location, data, cb) {
-    global.FRAGMENTS_CACHE = {};
     cacheFragments({ "location": location, "data": data }, function (err, data) {
         try {
             var loaded = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
-            var result = { "@data": loaded };
-            result["@location"] = location;
-            result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
-            cb(null, result);
+            collectLibraries(loaded, location);
+            loadLibraries(loaded, function (err, loaded) {
+                if (err != null) {
+                    var result = { "@data": loaded };
+                    result["@location"] = location;
+                    result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
+                    cb(null, result);
+                } else {
+                    cb(err, data);
+                }
+
+            });
         } catch (e) {
             cb(e);
         }
