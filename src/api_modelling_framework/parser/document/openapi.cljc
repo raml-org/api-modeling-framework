@@ -29,13 +29,15 @@
         _ (debug "Parsing OpenAPI Document at " location)
         fragments (or (:fragments context) (atom {}))
         ;; we parse traits and types and add the information into the context
-        declarations (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
-                                                                         :fragments fragments
-                                                                         :document-parser parse-ast
-                                                                         :parsed-location (str location "#/declares")})
+        traits(domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
+                                                                  :fragments fragments
+                                                                  :document-parser parse-ast})
+        types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :fragments fragments
+                                                                 :document-parser parse-ast})
+        declarations (merge traits types)
         encoded (domain-parser/parse-ast (syntax/<-data node) {:location (str location "#")
                                                                :fragments fragments
-                                                               :parsed-location (str location "#")
                                                                :references declarations
                                                                :document-parser parse-ast
                                                                :is-fragment false})]
@@ -58,7 +60,6 @@
                                                                      {:location (str location "#")
                                                                       :fragments fragments
                                                                       :references references
-                                                                      :parsed-location (str location "#")
                                                                       :document-parser parse-ast
                                                                       :is-fragment true}))]
     (document/map->ParsedFragment {:id location

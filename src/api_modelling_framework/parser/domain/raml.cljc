@@ -3,6 +3,7 @@
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.parser.domain.common :as common]
             [api-modelling-framework.parser.domain.json-schema-shapes :as json-schema-shapes]
             [api-modelling-framework.parser.domain.raml-types-shapes :as shapes]
             [api-modelling-framework.utils :as utils]
@@ -214,12 +215,6 @@
         is-trait-tag (document/->IsTraitTag source-map-id trait-name)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-trait-tag])]))
 
-(defn generate-is-type-sources [type-name location parsed-location]
-  (let [source-map-id (str parsed-location "/source-map/is-type")
-        is-type-tag (document/->IsTypeTag source-map-id type-name)]
-    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-type-tag])]))
-
-
 (defn process-traits [node {:keys [location parsed-location] :as context}]
   (debug "Processing " (count (:traits node [])) "traits")
   (let [location (str location "/traits")
@@ -259,9 +254,9 @@
                                                                 (assoc :is-fragment false)
                                                                 (assoc :type-hint :type)))
                          sources (or (-> type-fragment :sources) [])
-                         sources (concat sources (generate-is-type-sources type-name
-                                                                           (str location "/" type-name)
-                                                                           (str parsed-location "/" type-name)))
+                         sources (concat sources (common/generate-is-type-sources type-name
+                                                                                  (str location "/" type-name)
+                                                                                  (str parsed-location "/" type-name)))
                          parsed-type (assoc type-fragment :sources sources)]
                      (assoc acc (keyword (utils/alias-chain type-name context)) parsed-type)))
                  {}))))

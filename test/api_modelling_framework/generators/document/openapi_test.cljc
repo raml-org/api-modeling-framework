@@ -44,3 +44,26 @@
         parsed (parser/parse-ast input {})
         generated (generator/to-openapi parsed {})]
     (is (= generated input))))
+
+(deftest generate-types
+  (let [location "file://path/to/resource.json"
+        input {(keyword "@location") location
+               (keyword "@fragment") "OpenAPI"
+               (keyword "@data") {:swagger "2.0"
+                                  :info {:title "title"
+                                         :description "description"
+                                         :termsOfService "terms-of-service"
+                                         :version "2.0"}
+                                  :definitions {:File {:type "object"
+                                                       :properties {:name {:type "string"}}}}
+                                  :host "api.test.com"
+                                  :basePath "/test/endpoint"
+                                  :schemes ["http" "https"]
+                                  :consumes ["application/json" "application/xml"]
+                                  :produces "application/ld+json"
+                                  :paths {(keyword "/files") {:get {:operationId "get"
+                                                                    :responses {"default" {:description "the reponse"
+                                                                                           :schema {(keyword "$ref") "#/definitions/File"}}}}}}}}
+        parsed (parser/parse-ast input {})
+        generated (generator/to-openapi parsed {})]
+    (is (= input  generated))))

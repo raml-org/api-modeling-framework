@@ -1,0 +1,11 @@
+{"swagger": "2.0",
+ "info": {"title": "title",
+          "description": "description",
+          "termsOfService": "terms",
+          "version": "1.0"},
+ "definitions": {"File": {"type": "object",
+                          "properties": {"name": {"type": "string"}}}},
+ "host": "api.test.com",
+ "paths": {"/files": {"get": {"operationId": "get",
+                              "responses": {"default": {"description": "response",
+                                                        "schema": {"$ref": "#/definitions/File"}}}}}}}

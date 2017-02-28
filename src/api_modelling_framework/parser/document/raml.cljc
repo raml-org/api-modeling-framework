@@ -86,7 +86,6 @@
                                                                :references (merge declarations library-declarations)
                                                                :document-parser parse-ast
                                                                :is-fragment false})]
-    (println "ASSIGNING SOURCES " uses-tags)
     (document/map->ParsedDocument {:id location
                                    :location location
                                    :encodes encoded
@@ -97,7 +96,6 @@
                                    :document-type "#%RAML 1.0"})))
 
 (defmethod parse-ast "#%RAML 1.0 Library" [node {:keys [alias-chain] :as context}]
-  (println "PARSING RAML LIBRARY")
   (let [location (syntax/<-location node)
         _ (debug "Parsing RAML Library at " location)
         fragments (or (:fragments context) (atom {}))

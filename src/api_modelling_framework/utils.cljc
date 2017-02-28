@@ -2,9 +2,7 @@
   (:require [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.vocabulary :as v]
             [clojure.string :as string]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [log]]))
+            [taoensso.timbre :as timbre #?(:clj :refer :cljs :refer-macros) [log]]))
 
 (defn safe-str [x]
   (cond

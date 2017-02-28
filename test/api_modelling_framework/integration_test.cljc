@@ -135,24 +135,23 @@
   (async done
          (go (let [open-api-parser (core/->OpenAPIParser)
                    open-api-generator (core/->OpenAPIGenerator)]
-               (core/parse-file open-api-parser "resources/petstore.json"
+               (core/parse-file open-api-parser "resources/test.json"
                                 (fn [error model]
                                   (is (nil? error))
                                   (is (some? model))
                                   (let [domain-model (core/domain-model model)]
-                                    (prn domain-model)
-                                    (println "GENEARTING STRING NOW...")
+                                    ;;(prn domain-model)
+                                    ;;(println "GENEARTING STRING NOW...")
                                     (core/generate-string open-api-generator "file://resources/petstore.json"
                                                           domain-model
                                                           {}
                                                           (fn [error raml-string]
-                                                            (println "BACK!")
-                                                            (prn error)
-                                                            (println "I'M BACK")
-                                                            (println raml-string)
+                                                            ;;(println "BACK!")
+                                                            ;;(prn error)
+                                                            ;;(println "I'M BACK")
+                                                            ;;(println raml-string)
                                                             (is true)
                                                             (done))))))))))
-
 
 (deftest integration-test-6
   (async done
@@ -163,19 +162,19 @@
                                   (is (nil? error))
                                   (is (some? model))
                                   (let [output-model (core/document-model model)]
-                                    (println "ALL DECLARED TYPES")
-                                    (doseq [dec (:declares output-model)]
-                                      (println (:id dec)))
+                                    ;; (println "ALL DECLARED TYPES")
+                                    ;; (doseq [dec (:declares output-model)]
+                                    ;;  (println (:id dec)))
                                     ;; (prn output-model)
-                                    (println "GENEARTING STRING NOW...")
+                                    ;; (println "GENEARTING STRING NOW...")
                                     (core/generate-string generator "resources/world-music-api/real_api.raml"
                                                           output-model
                                                           {}
                                                           (fn [error raml-string]
-                                                            (println "BACK!")
-                                                            (prn error)
-                                                            (println "I'M BACK")
-                                                            (println raml-string)
+                                                            ;;(println "BACK!")
+                                                            ;;(prn error)
+                                                            ;;(println "I'M BACK")
+                                                            ;;(println raml-string)
                                                             (is true)
                                                             (done))))))))))
 

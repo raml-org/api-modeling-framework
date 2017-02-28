@@ -34,6 +34,7 @@
                                  (assoc acc (document/location fragment) fragment))
                                {}))
         context (-> ctx
+                    (assoc :document-location (document/location model))
                     (assoc :references declares)
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
@@ -53,6 +54,7 @@
                                  {})))
         context (-> ctx
                     (assoc :fragments fragments)
+                    (assoc :document-location (document/location model))
                     (assoc :expanded-fragments (or (:expanded-fragments ctx)
                                                    (atom {})))
                     (assoc :document-generator to-openapi))]

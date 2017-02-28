@@ -3,6 +3,7 @@
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.parser.domain.common :as common]
             [api-modelling-framework.parser.domain.json-schema-shapes :as shapes]
             [api-modelling-framework.utils :as utils]
             [api-modelling-framework.model.vocabulary :as v]
@@ -85,7 +86,8 @@
 
 (defn parse-ast-dispatch-function [node context]
   (cond
-    (some? (syntax/<-location node)) :fragment
+    (some? (syntax/<-location node))         :fragment
+    (some? (get node :$ref))                 :local-ref
     (nil? node)                              :undefined
     (some? (:type-hint context))             (:type-hint context)
     :else                                    (guess-type node)))
@@ -135,6 +137,26 @@
                          parsed-trait (assoc-in trait-fragment [:properties :sources] sources)]
                      (assoc acc (keyword trait-name) parsed-trait)))
                  {}))))
+
+(defn process-types [node {:keys [location parsed-location alias-chain] :as context}]
+  (debug "Processing " (count (:definitions node [])) " types")
+  (->> (:definitions node {})
+       (reduce (fn [acc [type-name type-node]]
+                 (debug (str "Processing type " type-name))
+                 (let [type-id (str "#/definitions/" (url/url-encode (utils/safe-str type-name)))
+                       alias (str "#/definitions/" (url/url-encode (utils/safe-str type-name)))
+                       type-fragment (parse-ast type-node (-> context
+                                                              (assoc :location type-id)
+                                                              (assoc :parsed-location type-id)
+                                                              (assoc :is-fragment false)
+                                                              (assoc :type-hint :type)))
+                       sources (or (-> type-fragment :sources) [])
+                       sources (concat sources (common/generate-is-type-sources type-name type-id type-id))
+                       parsed-type (-> type-fragment
+                                       (assoc :sources sources)
+                                       (assoc :id type-id))]
+                   (assoc acc alias parsed-type)))
+               {})))
 
 (defn generate-parsed-node-sources [node-name location parsed-location]
   (let [source-map-parsed-location (str parsed-location "/source-map/" node-name)
@@ -442,32 +464,37 @@
       (domain/map->ParsedType {:id type-id
                                :shape shape}))))
 
-(defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
-                                      :or {fragments (atom {})}
-                                      :as context}]
-  (let [fragment-location (syntax/<-location node)]
-    (let [parsed-fragment (document-parser node context)
-          encoded-element (document/encodes parsed-fragment)
-          encoded-element-sources (-> encoded-element :properties :sources)
-          clean-encoded-element (condp = type-hint
-                                  ;; this information is sensitive to the context, can never be in the fragment
-                                  :operation (-> encoded-element
-                                                 (assoc-in [:properties :method] nil)
-                                                 (assoc-in [:properties :sources] nil))
-                                  :path-item (-> encoded-element
-                                                 (assoc [:properties:path] nil)
-                                                 (assoc [:properties:path :sources] nil))
-                                  encoded-element)
-          parsed-location (str parsed-location "/includes")
-          extends [(document/map->ParsedExtends {:id parsed-location
-                                                 :sources (generate-extend-include-fragment-sources parsed-location fragment-location)
-                                                 :target fragment-location
-                                                 :label "!includes"
-                                                 :arguments []})]]
+(defn parse-included-fragment
+  "Generates a Includes element from an $ref occurrence in the AST. The $ref tag might point to a local or remote reference.
+   If it points to the remote reference, the encoded element in the remote fragment and the remote fragment need to be passed as
+   arguments, the function will update  the list of fragments with the parsed one and will generate the right include or an abstrace
+   element extending the reference depending on the type of included node.
+   In the case of a local reference, no parsed fragment must be passed and only the right output node will be generated without
+   updating the list of references.
+   - See parse-ast :fragment and parse-ast :local-ref for more info"
+  [fragment-location encoded-element parsed-fragment {:keys [location parsed-location is-fragment fragments type-hint document-parser]
+                                                                                  :or {fragments (atom {})}}]
+  (let [encoded-element-sources (-> encoded-element :properties :sources)
+        clean-encoded-element (condp = type-hint
+                                ;; this information is sensitive to the context, can never be in the fragment
+                                :operation (-> encoded-element
+                                               (assoc-in [:properties :method] nil)
+                                               (assoc-in [:properties :sources] nil))
+                                :path-item (-> encoded-element
+                                               (assoc [:properties:path] nil)
+                                               (assoc [:properties:path :sources] nil))
+                                encoded-element)
+        parsed-location (str parsed-location "/includes")
+        extends [(document/map->ParsedExtends {:id parsed-location
+                                               :sources (generate-extend-include-fragment-sources parsed-location fragment-location)
+                                               :target fragment-location
+                                               :label "$ref"
+                                               :arguments []})]]
+    (when (some? parsed-fragment)
       (swap! fragments (fn [acc]
                          (if (some? (get acc fragment-location))
                            acc
-                           (assoc acc fragment-location (assoc parsed-fragment :encodes clean-encoded-element)))))
+                           (assoc acc fragment-location (assoc parsed-fragment :encodes clean-encoded-element))))))
       (condp = type-hint
         :operation (domain/map->ParsedOperation {:id parsed-location
                                                  :method (utils/safe-str (-> encoded-element :properties :method))
@@ -480,7 +507,20 @@
         (let [properties {:id parsed-location
                           :label "$ref"
                           :target fragment-location}]
-          (document/map->ParsedIncludes properties))))))
+          (document/map->ParsedIncludes properties)))))
+
+(defmethod parse-ast :fragment [node {:keys [document-parser] :as context}]
+  (let [fragment-location (syntax/<-location node)
+        parsed-fragment (document-parser node context)
+        encoded-element (document/encodes parsed-fragment)]
+    (parse-included-fragment fragment-location encoded-element parsed-fragment context)))
+
+(defmethod parse-ast :local-ref [node {:keys [fragments references] :as context}]
+  (let [fragment-location (get node :$ref)
+        fragment (get references fragment-location)]
+    (if (nil? fragment)
+      (throw (new #?(:cljs js/Error :clj Exception) (str "Unknown $ref " (get node :$ref))))
+      (parse-included-fragment fragment-location fragment nil context))))
 
 (defmethod parse-ast :undefined [_ _]
   (debug "Parsing undefined")

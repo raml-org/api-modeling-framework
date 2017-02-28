@@ -269,10 +269,13 @@
           :headers (compute-headers model ctx)}
          utils/clean-nils))))
 
-(defmethod resolve document/Includes [model {:keys [fragments] :as ctx}]
+(defmethod resolve document/Includes [model {:keys [fragments declarations] :as ctx}]
   (debug "Resolving Includes " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
-        fragment (get fragments (document/target model))]
+        fragment-target (document/target model)
+        fragment (get fragments fragment-target)
+        declaration (get declarations fragment-target)
+        fragment (or fragment declaration)]
     (if (nil? fragment)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " (document/target model) " in include relationship " (document/id model))))
       (resolve fragment ctx))))

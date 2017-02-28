@@ -104,6 +104,7 @@
          :consumes (if (= 1 (count (domain/accepts model)))
                      (first (domain/accepts model))
                      (domain/accepts model))
+         :definitions (common/model->types (assoc ctx :resolve-types true) to-openapi!)
          :x-traits (common/model->traits (assoc ctx :abstract true) to-openapi!)
          :paths paths}
         utils/clean-nils)))
@@ -219,18 +220,25 @@
   (debug "Generating type")
   (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context)))
 
-(defmethod to-openapi document/Includes [model {:keys [fragments expanded-fragments document-generator]
+(defmethod to-openapi document/Includes [model {:keys [fragments expanded-fragments document-generator references]
                                                 :as context
                                                 :or {expanded-fragments (atom {})}}]
   (let [fragment-target (document/target model)
-        fragment (get fragments fragment-target)]
-    (if (nil? fragment)
-      (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
-      (if-let [expanded-fragment (get expanded-fragments fragment-target)]
-        expanded-fragment
-        (let [expanded-fragment (document-generator fragment context)]
-          (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
-          expanded-fragment)))))
+        fragment (get fragments fragment-target)
+        reference (->> references
+                       (filter #(= (document/id %) fragment-target))
+                       first)]
+    (cond
+      ;; if it is a fragment, is a link to an external node, I need to generate the document
+      (some? fragment) (if-let [expanded-fragment (get expanded-fragments fragment-target)]
+                         expanded-fragment
+                         (let [expanded-fragment (document-generator fragment context)]
+                           (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
+                           expanded-fragment))
+      ;; If it is a reference, is a link to internally defined node, I just need the reference
+      (some? reference) {:$ref fragment-target}
+      ;; Unknown reference @todo Should I throw an exception in this case?
+      :else             {:$ref fragment-target})))
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")
