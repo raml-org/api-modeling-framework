@@ -157,17 +157,17 @@
   (async done
          (go (let [parser (core/->RAMLParser)
                    generator (core/->RAMLGenerator)]
-               (core/parse-file parser "resources/world-music-api/real_api.raml"
+               (core/parse-file parser "resources/world-music-api/wip.raml"
                                 (fn [error model]
                                   (is (nil? error))
                                   (is (some? model))
                                   (let [output-model (core/document-model model)]
-                                    ;; (println "ALL DECLARED TYPES")
-                                    ;; (doseq [dec (:declares output-model)]
-                                    ;;  (println (:id dec)))
-                                    ;; (prn output-model)
-                                    ;; (println "GENEARTING STRING NOW...")
-                                    (core/generate-string generator "resources/world-music-api/real_api.raml"
+                                    ;;(println "ALL DECLARED TYPES")
+                                    ;;(doseq [dec (:declares output-model)]
+                                    ;; (println (:id dec)))
+                                    ;;(prn output-model)
+                                    ;;(println "GENEARTING STRING NOW...")
+                                    (core/generate-string generator "resources/world-music-api/wip.raml"
                                                           output-model
                                                           {}
                                                           (fn [error raml-string]
@@ -181,7 +181,7 @@
 (deftest integration-test-7
   (async done
          (go (let [parser (core/->RAMLParser)
-                   generator (core/->OpenAPIGenerator)]
+                   generator (core/->APIModelGenerator)]
                (core/parse-file parser "resources/world-music-api/wip.raml"
                                 (fn [error model]
                                   (is (nil? error))

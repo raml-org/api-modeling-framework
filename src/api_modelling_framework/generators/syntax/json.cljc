@@ -24,10 +24,17 @@
       ("$ref" (last (string/split fragment-lcation #"#")))
       {"$ref" location})))
 
+(defn include-libraries [document]
+  (if-let [libraries (get document :x-uses)]
+    (let [locations (mapv #(syntax/<-location %) libraries)]
+      (assoc document "x-uses" locations))
+    document))
+
 (defn generate-ast
   ([ast {:keys [location inline-fragments] :as context}]
    (cond
      (map? ast)  (->> ast
+                      (include-libraries)
                       (mapv (fn [[k v]]
                               (if (syntax/fragment? v)
                                 [k (if inline-fragments

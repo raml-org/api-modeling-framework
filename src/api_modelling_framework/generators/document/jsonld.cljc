@@ -59,6 +59,16 @@
        (with-source-maps source-maps? m)
        (utils/clean-nils)))
 
+(defmethod to-jsonld :library [m source-maps?]
+  (debug "Generating Library")
+  (->> {"@id" (document/id m)
+        "@type" [v/document:Module
+                 v/document:Unit]
+        v/document:declares (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/declares m))
+        v/document:references (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/references m))}
+       (with-source-maps source-maps? m)
+       (utils/clean-nils)))
+
 (defmethod to-jsonld nil [_ _] nil)
 
 (defmethod to-jsonld :unknown [model source-maps?]

@@ -9,6 +9,8 @@ baseUriParameters:
   region-id:
     description: Region of th server
     type: string
+uses:
+  SongsLib: libraries/songs_wip.lib.raml
 traits:
   secured: !include secured/accessToken.raml
 types:
@@ -22,8 +24,8 @@ types:
   Track:
     type: object
     properties:
-      name:
-        type: string
+      song:
+        type: SongsLib.Song
       position:
         type: integer
 

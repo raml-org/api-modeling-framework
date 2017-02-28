@@ -113,6 +113,9 @@
        (string? (get json "$ref"))
        (not (string/starts-with? (get json "$ref") "#"))))
 
+(defn library-reference? [json]
+  (some? (get json "x-uses")))
+
 (defn find-references
   ([id json] (find-references id json []))
   ([id json acc]
@@ -131,14 +134,17 @@
                                                  (let [[k v] (first pairs)
                                                        [processed-acc processed] (find-references current-id v [])]
                                                    (swap! pending #(concat % @processed-acc))
+                                                   (when (library-reference? json)
+                                                     (let [library-ids (flatten [(get json "x-uses")])]
+                                                       (swap! pending #(concat % library-ids))))
                                                    (recur (rest pairs)
                                                           (assoc acc k processed))))))
-                (coll? json)                (->> json
-                                                 (mapv #(find-references id % []))
-                                                 (mapv (fn [[processed-acc processed]]
-                                                         (swap! pending #(concat % @processed-acc))
-                                                         processed)))
-                :else json)])))
+                (coll? json)               (->> json
+                                                (mapv #(find-references id % []))
+                                                (mapv (fn [[processed-acc processed]]
+                                                        (swap! pending #(concat % @processed-acc))
+                                                        processed)))
+                :else                      json)])))
 
 (defn fill-references
   ([id json acc]
@@ -149,12 +155,16 @@
                                                    (join-path id (get json "id"))
                                                    id)]
                                   (loop [pairs json
-                                         map-acc{}]
+                                         map-acc {}]
                                     (if (empty? pairs)
                                       map-acc
                                       (let [[k v] (first pairs)]
-                                        (recur (rest pairs)
-                                               (assoc map-acc k (fill-references current-id v acc)))))))
+                                        (if (= k "x-uses")
+                                          (recur (rest pairs)
+                                                 (assoc map-acc k
+                                                        (mapv (fn [library-id] (get acc library-id)) (flatten [v]))))
+                                          (recur (rest pairs)
+                                                 (assoc map-acc k (fill-references current-id v acc))))))))
      (coll? json)                (->> json
                                       (mapv #(fill-references id % acc)))
      :else json)))

@@ -104,6 +104,7 @@
                                (let [label (utils/extract-jsonld-literal property (v/shapes-ns "propertyLabel"))
                                      required (utils/extract-jsonld-literal property (v/sh-ns "minCount") #(if (= % 0) false true))
                                      range (utils/extract-jsonld property (v/shapes-ns "range") #(parse-shape % context))
+                                     range (if (string? range) {:type range} range)
                                      raml-type (-> range
                                                    (assoc :required required)
                                                    utils/clean-nils)]
