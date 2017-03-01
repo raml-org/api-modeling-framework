@@ -6,8 +6,16 @@ var path = require("path");
 global.FRAGMENTS_CACHE = {};
 global.PENDING_LIBRARIES = [];
 
+var ensureFileUri = function (uri) {
+    if (uri.indexOf("://") === -1) {
+        return "file://" + uri;
+    } else {
+        return uri;
+    }
+}
+
 function Fragment(location, type, data) {
-    this["@location"] = location;
+    this["@location"] = ensureFileUri(location);
     this["@fragment"] = type;
     this["@data"] = data;
 }
@@ -143,7 +151,7 @@ var FragmentType = new yaml.Type("!include", {
 
         // return new Fragment(location, fragmentInfo, parsed);
         return {
-            "@location": location,
+            "@location": ensureFileUri(location),
             "@fragment": fragmentInfo,
             "@data": parsed
         };
@@ -159,7 +167,7 @@ var parseYamlFile = function (location, cb) {
             collectLibraries(loaded, location);
             loadLibraries(loaded, function (err, loaded) {
                 var result = { "@data": loaded };
-                result["@location"] = location;
+                result["@location"] = ensureFileUri(location);
                 result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
                 cb(null, result);
             });
@@ -177,7 +185,7 @@ var parseYamlString = function (location, data, cb) {
             loadLibraries(loaded, function (err, loaded) {
                 if (err != null) {
                     var result = { "@data": loaded };
-                    result["@location"] = location;
+                    result["@location"] = ensureFileUri(location);
                     result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
                     cb(null, result);
                 } else {

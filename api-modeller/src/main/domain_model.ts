@@ -4,6 +4,24 @@ import {ModelProxy, ModelLevel} from "./model_proxy";
 export const HYDRA_NS: string = "http://www.w3.org/ns/hydra/core#";
 export const DOCUMENT_NS: string = "http://raml.org/vocabularies/document#";
 export const HTTP_NS: string = "http://raml.org/vocabularies/http#";
+export const SHAPES_NS: string = "http://raml.org/vocabularies/shapes#";
+export const RDF_NS: string = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+export const RDFS_NS: string = "http://www.w3.org/2000/01/rdf-schema#";
+export const SHACL_NS: string = "http://www.w3.org/ns/shacl#";
+export const XSD_NS: string = "http://www.w3.org/2001/XMLSchema#";
+export const SCHEMA_ORG_NS: string = "http://schema.org/";
+
+export const NS_MAPPING = {};
+NS_MAPPING[HYDRA_NS]= "hydra";
+NS_MAPPING[DOCUMENT_NS]= "doc";
+NS_MAPPING[HTTP_NS]= "http";
+NS_MAPPING[SHAPES_NS]= "shapes";
+NS_MAPPING[SHACL_NS]= "shacl";
+NS_MAPPING[RDF_NS]= "rdf";
+NS_MAPPING[RDFS_NS]= "rdfs";
+NS_MAPPING[XSD_NS]= "xsd";
+NS_MAPPING[SCHEMA_ORG_NS]= "schema-org";
+
 
 // RDF Classes
 export const DOMAIN_ELEMENT: string = DOCUMENT_NS + "DomainElement";

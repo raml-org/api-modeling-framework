@@ -3,6 +3,8 @@ import * as domain from "../main/domain_model";
 import {label} from "../utils";
 import {Operation, EndPoint} from "../main/domain_model";
 import {Response} from "../main/domain_model";
+import {RdfValue} from "rdfstore";
+import {NS_MAPPING} from "../main/domain_model";
 
 export class UI {
     iconClassForUnit(unit: units.DocumentId) {
@@ -62,6 +64,24 @@ export class UI {
             } else {
                 return label(unit.id)
             }
+        }
+    }
+
+    bindingLabel(binding: RdfValue) {
+        if (binding) {
+            if (binding.token === "uri") {
+                for (let prefix in NS_MAPPING) {
+                    if (binding.value.startsWith(prefix)) {
+                        const rest = binding.value.replace(prefix, "");
+                        return NS_MAPPING[prefix] + ":" + rest;
+                    }
+                }
+                return label(binding.value);
+            } else {
+                return binding.value;
+            }
+        } else {
+            return "";
         }
     }
 }

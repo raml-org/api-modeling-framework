@@ -20,6 +20,7 @@
     "jsonld": "^0.4.11",
     "knockout": "^3.4.1",
     "monaco-editor": "^0.8.1",
+    "rdfstore": "^0.9.17",
     "ts-loader": "^2.0.0"
   }
 }

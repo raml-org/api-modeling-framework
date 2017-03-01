@@ -158,3 +158,16 @@
 
 (defn alias-chain [alias {:keys [alias-chain]}]
   (if (some? alias-chain) (str (safe-str alias-chain) "." (safe-str alias)) (safe-str alias)))
+
+(defn path-join [base & parts]
+  (if-let [next (first parts)]
+    (let [base (safe-str base)
+          next (safe-str next)
+          base (if (= (last base) \/)
+                 (->> base drop-last (apply str))
+                 base)
+          next (if (= (first (into [] next)) \/)
+                 next
+                 (str "/" next))]
+      (apply path-join (concat [(str base next)] (rest parts))))
+    base))

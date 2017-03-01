@@ -10,9 +10,10 @@ import {Document, Fragment, Module, DocumentId, Unit} from "./main/units_model";
 import { label } from "./utils";
 import { UI } from "./view_models/ui";
 import { DomainElement, DomainModel } from "./main/domain_model";
+import {Query} from "./view_models/query";
 
 export type NavigatorSection = "files" | "logic";
-export type EditorSection = "raml" | "open-api" | "api-model" | "graph";
+export type EditorSection = "raml" | "open-api" | "api-model" | "diagram" | "query";
 
 export interface ReferenceFile {
     id: string;
@@ -40,6 +41,7 @@ export class ViewModel {
     public generateSourceMaps: KnockoutObservable<string> = ko.observable<string>("no");
     public referenceToDomainUnits: { [id: string]: DomainModel[] } = {};
     public diagram: any;
+    public query: Query = new Query();
 
 
     constructor(public editor: IStandaloneCodeEditor) {
@@ -138,6 +140,7 @@ export class ViewModel {
                     if (this.editorSection() === "open-api") {
                         this.editor.setModel(createModel(this.model!.openAPIString, "json"));
                     }
+                    this.resetQuery();
                 }
             });
 
@@ -180,19 +183,22 @@ export class ViewModel {
             } else {
                 this.editor.setModel(createModel("# no model loaded", "yaml"));
             }
+            window['resizeFn']();
         } else if (section === "open-api") {
             if (this.model != null) {
                 this.editor.setModel(createModel(this.model!.openAPIString, "json"));
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
             }
+            window['resizeFn']();
         } else if (section === "api-model") {
             if (this.model != null) {
                 this.editor.setModel(createModel(this.model!.apiModeltring, "json"));
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
             }
-        } else {
+            window['resizeFn']();
+        } else if (section === "diagram") {
             // Collecting the units for the diagram
             const units: (DocumentId & Unit)[] = ([] as (DocumentId & Unit)[])
                 .concat(this.documentUnits())
@@ -201,6 +207,8 @@ export class ViewModel {
             this.diagram = new (require("./view_models/diagram").Diagram)();
             this.diagram.process(units);
             this.diagram.render("graph-container");
+        } else {
+
         }
     }
 
@@ -305,6 +313,18 @@ export class ViewModel {
         if (this.selectedReference() != null && this.selectedReference() !.id === reference) {
             console.log("Adding default domain units " + reference);
             this.resetDomainUnits();
+        }
+    }
+
+    resetQuery() {
+        if (this.model && this.model.apiModeltring && this.model.apiModeltring !== "") {
+            this.query.process(this.model.apiModeltring, (err, store) => {
+                if (err) {
+                    alert("Error loading data into string " + err);
+                }
+            });
+        } else {
+            console.log("Cannot load data in store, not ready yet");
         }
     }
 }

@@ -94,10 +94,15 @@
                     console.log("** Resizing **");
                     var height = document.documentElement.clientHeight;
                     var containerDiv = document.getElementById("editor-container");
-                    containerDiv.setAttribute("style", "height: " + (height - 200) + "px");
+                    var style = window.getComputedStyle(containerDiv);
+                    var hidden = style.display == "none";
+                    if (!hidden) {
+                        containerDiv.setAttribute("style", "height: " + (height - 200) + "px");
+                    }
                 };
 
                 window.onresize = resize;
+                window.resizeFn = resize;
                 resize();
 
                 var editor = monaco.editor.create(document.getElementById("editor-container"), {
