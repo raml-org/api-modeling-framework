@@ -6,13 +6,13 @@ import { ApiModellerWindow } from "./main/api_modeller_window";
 import { Nav } from "./view_models/nav";
 import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor;
 import createModel = monaco.editor.createModel;
-import { Document, Fragment, Module } from "./main/units_model";
+import {Document, Fragment, Module, DocumentId, Unit} from "./main/units_model";
 import { label } from "./utils";
 import { UI } from "./view_models/ui";
 import { DomainElement, DomainModel } from "./main/domain_model";
 
 export type NavigatorSection = "files" | "logic";
-export type EditorSection = "raml" | "open-api" | "api-model";
+export type EditorSection = "raml" | "open-api" | "api-model" | "graph";
 
 export interface ReferenceFile {
     id: string;
@@ -39,6 +39,7 @@ export class ViewModel {
     public generationOptions: KnockoutObservable<any> = ko.observable<any>({ "source-maps?": false });
     public generateSourceMaps: KnockoutObservable<string> = ko.observable<string>("no");
     public referenceToDomainUnits: { [id: string]: DomainModel[] } = {};
+    public diagram: any;
 
 
     constructor(public editor: IStandaloneCodeEditor) {
@@ -179,18 +180,27 @@ export class ViewModel {
             } else {
                 this.editor.setModel(createModel("# no model loaded", "yaml"));
             }
-        } else if (section == "open-api") {
+        } else if (section === "open-api") {
             if (this.model != null) {
                 this.editor.setModel(createModel(this.model!.openAPIString, "json"));
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
             }
-        } else {
+        } else if (section === "api-model") {
             if (this.model != null) {
                 this.editor.setModel(createModel(this.model!.apiModeltring, "json"));
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
             }
+        } else {
+            // Collecting the units for the diagram
+            const units: (DocumentId & Unit)[] = ([] as (DocumentId & Unit)[])
+                .concat(this.documentUnits())
+                .concat(this.fragmentUnits())
+                .concat(this.moduleUnits());
+            this.diagram = new (require("./view_models/diagram").Diagram)();
+            this.diagram.process(units);
+            this.diagram.render("graph-container");
         }
     }
 

@@ -11,6 +11,9 @@
             <li data-bind="click: () => { editorSection('api-model') },
                            css: { 'is-active': editorSection() === 'api-model' }">
                 <a>API Model</a></li>
+            <li data-bind="click: () => { editorSection('graph') },
+                           css: { 'is-active': editorSection() === 'graph' }">
+                <a>Graph</a></li>
         </ul>
         <p class="control"
            style="border-bottom-color: lightgrey; border-bottom-width: 1px; border-bottom-style: solid"
@@ -26,5 +29,6 @@
             </label>
         </p>
     </div>
-    <div id="editor-container"></div>
+    <div id="editor-container" data-bind="visible: editorSection() !== 'graph'"></div>
+    <div id="graph-container" style="overflow: auto" data-bind="visible: editorSection() === 'graph'"></div>
 </div>
