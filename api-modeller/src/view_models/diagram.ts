@@ -9,6 +9,16 @@ import Paper = joint.dia.Paper;
 
 const CHAR_SIZE = 10;
 
+const COLORS = {
+    "encodes": "wheat",
+    "declares": "lightpink",
+    "references": "mediumseagreen",
+
+    "unit": "azure",
+    "domain": "beige",
+    "declaration": "lavenderblush"
+};
+
 export class Diagram {
     public nodes: {[id:string]: Rect};
     public links: Link[];
@@ -52,9 +62,10 @@ export class Diagram {
                 joint.layout.DirectedGraph.layout(cells, {
                     marginX: 50,
                     marginY: 50,
-                    nodeSep: 50,
-                    edgeSep: 50,
-                    rankDir: "TB"
+                    nodeSep: 100,
+                    edgeSep: 100,
+                    // clusterPadding: { top: 30, left: 10, right: 10, bottom: 10 },
+                    rankDir: "LR"
                 });
             }
             const maxX = cells
@@ -117,7 +128,7 @@ export class Diagram {
                 return true;
             }
         }
-        }, 1000);
+        }, 100);
     }
 
     paperScale(paper, sx, sy) {
@@ -140,190 +151,39 @@ export class Diagram {
     }
 
     private processFragmentNode(element: Fragment) {
-        this.nodes[element.id] = new Rect({
-            attrs: {
-                rect: {
-                    fill: '#31D0C6'
-                },
-                text: {
-                    text: element.label
-                }
-            },
-            position: {
-                x: 0,
-                y: 0
-            },
-            size: {
-                width: element.label.length * CHAR_SIZE,
-                height: 30
-            }
-        });
+        this.makeNode(element, "unit");
         if (element.encodes != null) {
             const encodes = element.encodes;
-            this.nodes[encodes.id] = new Rect({
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                attrs: {
-                    rect: {
-                        fill: '#31D0C6'
-                    },
-                    text: {
-                        text: encodes.label
-                    }
-                },
-                size: { width: encodes.label.length * CHAR_SIZE, height: 30 }
-            });
-            this.links.push(new Link({
-                source: {id: this.nodes[element.id].id},
-                target: {id: this.nodes[element.encodes.id].id},
-                labels: [{
-                    position: 0.5,
-                    attrs: {
-                        text: {text: "encodes"}
-                    }
-                }]
-            }));
+            this.makeNode(encodes, "domain");
+            this.makeLink(element.id, element.encodes.id, "encodes");
         }
     }
 
     private processModuleNode(element: Module) {
-        this.nodes[element.id] = new Rect({
-            attrs: {
-                rect: {
-                    fill: '#31D0C6'
-                },
-                text: {
-                    text: element.label
-                }
-            },
-            position: {
-                x: 0,
-                y: 0
-            },
-            size: {
-                width: element.label.length * CHAR_SIZE,
-                height: 30
-            }
-        });
+        this.makeNode(element, "unit")
         if (element.declares != null) {
             element.declares.forEach(declaration => {
                 if (this.nodes[declaration.id] == null) {
-                    this.nodes[declaration.id] = new Rect({
-                        attrs: {
-                            rect: {
-                                fill: '#31D0C6'
-                            },
-                            text: {
-                                text: declaration.label
-                            }
-                        },
-                        position: {
-                            x: 0,
-                            y: 0
-                        },
-                        size: {
-                            width: declaration.label.length * CHAR_SIZE,
-                            height: 30
-                        }
-                    });
+                    this.makeNode(declaration, "declaration");
                 }
-                this.links.push(new Link({
-                    source: {id: this.nodes[element.id].id},
-                    target: {id: this.nodes[declaration.id].id},
-                    labels: [{
-                        position: 0.5,
-                        attrs: {
-                            text: {text: "declares"}
-                        }
-                    }]
-                }));
-            })
+                this.makeLink(element.id, declaration.id, "declares");
+            });
         }
     }
 
     private processDocumentNode(document: Document) {
-        this.nodes[document.id] = new Rect({
-            attrs: {
-                rect: {
-                    fill: '#31D0C6'
-                },
-                text: {
-                    text: document.label
-                }
-            },
-            position: {
-                x: 0,
-                y: 0
-            },
-            size: {
-                width: document.label.length * CHAR_SIZE,
-                height: 30
-            }
-        });
+        this.makeNode(document, "unit");
         if (document.encodes != null) {
             const encodes = document.encodes;
-            this.nodes[encodes.id] = new Rect({
-                attrs: {
-                    rect: {
-                        fill: '#31D0C6'
-                    },
-                    text: {
-                        text: encodes.label
-                    }
-                },
-                position: {
-                    x: 0,
-                    y: 0
-                },
-                size: {
-                    width: encodes.label.length * CHAR_SIZE,
-                    height: 30
-                }
-            });
-            this.links.push(new Link({
-                source: {id: this.nodes[document.id].id},
-                target: {id: this.nodes[document.encodes.id].id},
-                labels: [{
-                    position: 0.5,
-                    attrs: {
-                        text: { text: "encodes" }
-                    }
-                }]
-            }));
+            this.makeNode(encodes, "domain");
+            this.makeLink(document.id, document.encodes.id, "encodes");
         }
         if (document.declares != null) {
             document.declares.forEach(declaration => {
                 if (this.nodes[declaration.id] == null) {
-                    this.nodes[declaration.id] = new Rect({
-                        attrs: {
-                            rect: {
-                                fill: '#31D0C6'
-                            }, text: {
-                                text: declaration.label
-                            }
-                        },
-                        position: {
-                            x: 0,
-                            y: 0
-                        },
-                        size: {
-                            width: declaration.label.length * CHAR_SIZE,
-                            height: 30
-                        }
-                    });
+                    this.makeNode(declaration, "declaration");
                 }
-                this.links.push(new Link({
-                    source: {id: this.nodes[document.id].id},
-                    target: {id: this.nodes[declaration.id].id},
-                    labels: [{
-                        position: 0.5,
-                        attrs: {
-                            text: {text: "declares"}
-                        }
-                    }]
-                }));
+                this.makeLink(document.id, declaration.id, "declares");
             })
         }
     }
@@ -333,18 +193,54 @@ export class Diagram {
             element.references.forEach(ref => {
                 const reference = ref as DocumentId;
                 if (reference.id && this.nodes[reference.id] != null) {
-                    this.links.push(new Link({
-                        source: {id: this.nodes[element.id].id },
-                        target: {id: this.nodes[reference.id].id },
-                        labels: [{
-                            position: 0.5,
-                            attrs: {
-                                text: {text: "references"}
-                            }
-                        }]
-                    }));
+                    this.makeLink(element.id, reference.id, "references");
                 }
             });
         }
+    }
+
+    private makeNode(node: DocumentId, kind: string) {
+        this.nodes[node.id] = new Rect({
+            attrs: {
+                rect: {
+                    fill: COLORS[kind]
+                },
+                text: {
+                    text: node.label,
+                    fill: "black"
+                }
+            },
+            position: {
+                x: 0,
+                y: 0
+            },
+            size: {
+                width: node.label.length * CHAR_SIZE,
+                height: 30
+            }
+        });
+    }
+
+    private makeLink(sourceId: string, targetId: string, label: string) {
+        this.links.push(new Link({
+            source: {id: this.nodes[sourceId].id },
+            target: {id: this.nodes[targetId].id },
+            attrs: {
+                ".marker-target": {
+                    d: "M 10 0 L 0 5 L 10 10 z",
+                    fill: COLORS[label],
+                    stroke: COLORS[label]
+                },
+                ".connection": { stroke: COLORS[label] }
+            },
+            labels: [{
+                position: 0.5,
+                attrs: {
+                    text: {
+                        text: label
+                    }
+                }
+            }]
+        }));
     }
 }
