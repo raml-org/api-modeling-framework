@@ -76,7 +76,6 @@
                                                :path "/Users"})
         generated (generator/to-openapi parsed {})]
     (is (= node generated))))
-
 (deftest to-openapi-response
   (let [node {:operationId "get method"
               :description "get description"
@@ -101,19 +100,19 @@
                                       "text/plain"       {:type "string"}}}
                           400 {:description "400 response"
                                :body {:type "string"}}}}
+        expected {:operationId "get method",
+                  :description "get description",
+                  :x-response-bodies-with-media-types true,
+                  :schemes ["http"],
+                  :produces ["application/json" "text/plain"],
+                  :responses
+                  {"200--application/json" {:description "200 response", :schema {:type "string"}},
+                   "200--text/plain" {:description "200 response", :schema {:type "string"}},
+                   "400" {:description "400 response", :schema {:type "string"}}}}
         parsed (raml-parser/parse-ast node parsing-context)
         generated (generator/to-openapi parsed {})]
-    (is (= {:operationId "get method",
-            :description "get description",
-            :x-response-bodies-with-media-types true,
-            :schemes ["http"],
-            :produces ["application/json" "text/plain"],
-            :responses
-            {"200--application/json" {:description "200 response", :schema {:type "string"}},
-             "200--text/plain" {:description "200 response", :schema {:type "string"}},
-             "400" {:description "400 response", :schema {:type "string"}}}}
+    (is (= expected
            generated))))
-
 
 (deftest top-openapi-method-with-params
   (let [node {:get {:operationId "get"

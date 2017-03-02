@@ -126,11 +126,11 @@
     nil
     (let [body (<-domain (domain/schema request) ctx)
           schema (to-openapi! body ctx)
-          parsed-body (-> {:name (document/name body)
+          parsed-body (-> {:name (or (document/name body) "body")
                            :description (document/description body)
                            :schema schema}
                           utils/clean-nils)]
-      (if (= parsed-body {})
+      (if (or (= parsed-body {}) (= parsed-body {:name "body"}))
         nil
         (assoc parsed-body :in "body")))))
 
@@ -209,7 +209,7 @@
 (defmethod to-openapi domain/Parameter [model ctx]
   (debug "Generating parameter " (document/name model))
   (let [base {:description (document/description model)
-              :name (document/name model)
+              :name (or (document/name model) "unnamed")
               :required (domain/required model)
               :in (domain/parameter-kind model)}
         type-info (merge (keywordize-keys (shapes-parser/parse-shape (domain/shape model) ctx)))]
