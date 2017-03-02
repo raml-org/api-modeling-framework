@@ -94,7 +94,7 @@
 (defn model->media-type [model]
   (let [contents (or (domain/content-type model) [])
         accepts (or (domain/accepts model) [])
-        media-types (concat contents accepts)]
+        media-types (distinct (concat contents accepts))]
     (cond
       (empty? media-types)      nil
       (nil? media-types)        nil

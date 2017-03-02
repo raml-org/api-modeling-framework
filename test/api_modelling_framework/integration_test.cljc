@@ -257,7 +257,7 @@
     (async done
            (go (let [parser (core/->RAMLParser)
                      generator (core/->APIModelGenerator)]
-                 (core/parse-file parser "resources/world-music-api/wip.raml"
+                 (core/parse-file parser "resources/world-music-api/real_api.raml"
                                   (fn [error model]
                                     (is (nil? error))
                                     (is (some? model))
