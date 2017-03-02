@@ -242,10 +242,12 @@
 
 (defmethod to-raml domain/Type [model context]
   (debug "Generating type")
-  (if (and (not (:resolve-types context))
-           (common/type-reference? model))
-    (common/type-reference-name model)
-    (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context))))
+  (cond
+    (and (not (:resolve-types context))
+         (common/type-reference? model)) (common/type-reference-name model)
+    :else                                (keywordize-keys
+                                          (shapes-parser/parse-shape
+                                           (domain/shape model) context))))
 
 
 (defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments document-generator]

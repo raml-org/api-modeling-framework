@@ -20,8 +20,8 @@ export class Query {
     public variables: KnockoutObservableArray<string> = ko.observableArray<string>([]);
     public bindings: KnockoutObservableArray<Bindings> = ko.observableArray<Bindings>([]);
     public predefinedQueries: KnockoutObservableArray<PredefinedQuery> = ko.observableArray<PredefinedQuery>([
-        new PredefinedQuery("All assertions order by subject", "SELECT * { ?s ?p ?o } ORDER BY DESC(?s)"),
-        new PredefinedQuery("All assertions order by predicate", "SELECT * { ?s ?p ?o } ORDER BY DESC(?p)"),
+        new PredefinedQuery("All assertions ordered by subject", "SELECT * { ?s ?p ?o } ORDER BY DESC(?s)"),
+        new PredefinedQuery("All assertions ordered by predicate", "SELECT * { ?s ?p ?o } ORDER BY DESC(?p)"),
         new PredefinedQuery("All properties in the graph",
         `SELECT DISTINCT ?property 
  { ?s ?property ?o } 
@@ -46,7 +46,16 @@ ORDER BY DESC(?property)`),
    ?response hydra:statusCode ?status .
    FILTER (?status = "200"^^xsd:string) .
                  
-} ORDER BY DESC(?path)`)
+} ORDER BY DESC(?path)`),
+        new PredefinedQuery("Encoded Domain elements",
+        `SELECT * { 
+  
+  ?document doc:encodes ?domainElement . 
+  ?domainElement rdf:type ?type .
+
+  FILTER (?type != doc:DomainElement) .
+
+} ORDER BY DESC(?domainElement)`)
     ]);
     public selectedPredefinedQuery: KnockoutObservable<PredefinedQuery|undefined> = ko.observable<PredefinedQuery|undefined>(undefined);
 

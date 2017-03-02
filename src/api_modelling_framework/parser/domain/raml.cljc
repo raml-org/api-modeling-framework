@@ -48,7 +48,7 @@
    :type #{:resource :type}
    :types #{:root}
    :uriParameters #{:resource}
-   :uses #{:root}
+   :uses #{:root :method :resource}
    :version #{:root}
    })
 

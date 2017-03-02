@@ -119,8 +119,10 @@
   [model]
   (if (document/resolved model)
     (-> model
+        (document/remove-tag document/uses-library-tag)
         (assoc :resolved nil)
         (assoc :references nil)
+        (assoc :uses nil)
         (assoc :declares nil))
     model))
 

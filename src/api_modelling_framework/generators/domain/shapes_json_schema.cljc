@@ -1,16 +1,39 @@
 (ns api-modelling-framework.generators.domain.shapes-json-schema
   (:require [api-modelling-framework.model.vocabulary :as v]
+            [api-modelling-framework.model.document :as document]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.generators.domain.common :as common]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
+(defn ref-shape [shape ctx]
+  (let [ref (common/ref-shape? shape ctx)
+        is-type-tag (-> ref
+                        (document/find-tag document/is-type-tag)
+                        first)
+        type-name (if (some? is-type-tag)
+                    (-> is-type-tag
+                        (document/value)
+                        keyword)
+                    (-> ref document/id (string/split #"/") last))
+        type-name (utils/safe-str type-name)]
+    (if (:from-library ref)
+      {:$ref (document/id ref)}
+      (if (string/starts-with? type-name "#")
+        {:$ref type-name}
+        {:$ref (str "#/definitions/" type-name)}))))
+
 (defn parse-shape-dispatcher-fn [shape ctx]
   (cond
-    (utils/has-class? shape (v/shapes-ns "Scalar")) (v/shapes-ns "Scalar")
-    (utils/has-class? shape (v/shapes-ns "Array")) (v/shapes-ns "Array")
-    (utils/has-class? shape (v/sh-ns "Shape"))      (v/sh-ns "Shape")
+    (nil? shape)            nil
+    (utils/has-class? shape (v/shapes-ns "Scalar"))     (v/shapes-ns "Scalar")
+    (utils/has-class? shape (v/shapes-ns "Array"))      (v/shapes-ns "Array")
+    (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
+    (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/sh-ns "JSONSchema")
+    (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/sh-ns "XMLSchema")
+    (common/ref-shape? shape ctx)                       :inheritance
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -33,9 +56,10 @@
                         (map (fn [property]
                                (let [label (utils/extract-jsonld-literal property (v/shapes-ns "propertyLabel"))
                                      required (utils/extract-jsonld-literal property (v/sh-ns "minCount") #(if (= % 0) false true))
-                                     raml-type(utils/extract-jsonld property (v/shapes-ns "range") #(parse-shape % context))]
+                                     range (utils/extract-jsonld property (v/shapes-ns "range") #(parse-shape % context))
+                                     range (if (string? range) {:type range} range)]
                                  (when required (swap! required-props #(concat % [label])))
-                                 [label raml-type])))
+                                 [label range])))
                         (into {}))]
     (-> {:type "object"
          :properties properties
@@ -75,5 +99,18 @@
                                                    :x-rdf-type "shapes:any"}
                     (throw (new #?(:clj Exception :cljs js/Error) (str "Unknown scalar data type " sh-type))))]
     (parse-constraints raml-type shape)))
+
+(defmethod parse-shape (v/sh-ns "JSONSchema") [shape context]
+  (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
+    {:type "EmbeddedJSONSchema"
+     :value value}))
+
+(defmethod parse-shape (v/sh-ns "XMLSchema") [shape context]
+  (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
+    {:type "EmbeddedXMLSchema"
+     :value value}))
+
+(defmethod parse-shape :inheritance [shape context]
+  (ref-shape shape context))
 
 (defmethod parse-shape nil [_ _] nil)

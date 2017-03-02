@@ -36,10 +36,16 @@
                                {}))
         uses (->> (common/model->uses model)
                   (mapv (fn [[alias location]]
-                          (to-openapi (get fragments location) ctx))))
+                          (get fragments location))))
+        library-declares (->> uses
+                              (mapv (fn [fragment]
+                                      (document/declares fragment)))
+                              flatten
+                              (mapv (fn [declaration] (assoc declaration :from-library true))))
+        uses (mapv (fn [library] (to-openapi library ctx)) uses)
         context (-> ctx
                     (assoc :document-location (document/location model))
-                    (assoc :references declares)
+                    (assoc :references (concat declares library-declares))
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
                     (assoc :document-generator to-openapi))

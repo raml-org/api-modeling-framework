@@ -153,8 +153,7 @@
 ;; coming from the encoded element, that can be incomplete
 (defmethod to-jsonld :DomainElement [m context]
   (debug "Generating DomainElement " (document/id m))
-  (let [domain-element-types  [v/http:Payload
-                               v/document:DomainElement
+  (let [domain-element-types  [v/document:DomainElement
                                v/document:AbstractDomainElement]
         domain-element-properties (-> {}
                                       (with-node-properties m context)

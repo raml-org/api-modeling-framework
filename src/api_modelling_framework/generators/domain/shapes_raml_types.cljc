@@ -3,21 +3,14 @@
             [api-modelling-framework.utils :as utils]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.generators.domain.common :as common]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
-(defn ref-shape? [shape {:keys [references]}]
-  (->> references
-       (filter (fn [ref]
-                 (satisfies? domain/Type ref)))
-       (filter (fn [type]
-                 (= (get (domain/shape type) "@id") (first (get shape "@type")))))
-       first))
-
 (defn ref-shape [shape ctx]
-  (let [ref (ref-shape? shape ctx)
+  (let [ref (common/ref-shape? shape ctx)
         is-type-tag (-> ref
                         (document/find-tag document/is-type-tag)
                         first)
@@ -35,7 +28,7 @@
     (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
     (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/sh-ns "JSONSchema")
     (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/sh-ns "XMLSchema")
-    (ref-shape? shape ctx)                              :inheritance
+    (common/ref-shape? shape ctx)                       :inheritance
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))

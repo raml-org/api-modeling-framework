@@ -41,7 +41,7 @@
     (is (= 2 (-> generated (get v/document:source) first (get v/document:tag) count)))))
 
 
-(deftest document-test
+(deftest document-test2
   (let [location "http://test.com/location.json"
         doc (document/map->ParsedFragment {:location location
                                            :encodes nil

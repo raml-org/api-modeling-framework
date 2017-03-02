@@ -3,7 +3,8 @@
 
   #?(:cljs (:require [cljs.nodejs :as nodejs]
                      [clojure.walk :refer [keywordize-keys stringify-keys]]
-                     [cljs.core.async :refer [<! >! chan]]))
+                     [cljs.core.async :refer [<! >! chan]]
+                     [clojure.string :as string]))
 
   #?(:clj (:require [clj-yaml.core :refer [decode]]
                     [clojure.core.async :refer [<! >! go]]
@@ -83,7 +84,7 @@
                          raw (.load yaml string)
                          parsed (decode raw)]
                      (-> {}
-                         (assoc (keyword "@data") (resolve-libraries (.getAbsolutePath file) parsed))
+                         (assoc (keyword "@data") (<! (resolve-libraries (.getAbsolutePath file) parsed)))
                          (assoc (keyword "@location") (.getAbsolutePath file))
                          (assoc (keyword "@fragment") header)))
                    (catch #?(:cljs js/Error :clj Exception) ex ex)))))

@@ -93,6 +93,25 @@
         (assoc node :sources new-sources))
       node)))
 
+(defn remove-tag [node tag-to-remove]
+  (let [sources (or (:sources  node) (try (sources node) (catch #?(:cljs js/Error :clj Exception) ex nil)))]
+    (if (some? sources)
+      (let [new-sources (loop [old-sources sources
+                               new-sources []]
+                          (if (empty? old-sources)
+                            new-sources
+                            (let [next-source (first old-sources)
+                                  new-source (assoc next-source :tags (->> (tags next-source)
+                                                                           (filter (fn [tag]
+                                                                                     (not= tag-to-remove (tag-id tag))))))
+                                  new-sources (if (> (count (:tags new-source)) 0)
+                                                (conj new-sources new-source)
+                                                new-sources)]
+                              (recur (rest old-sources)
+                                     new-sources))))]
+        (assoc node :sources new-sources))
+      node)))
+
 (def file-parsed-tag "file-parsed")
 
 (defrecord FileParsedTag [id location]

@@ -31,35 +31,36 @@
     :else node))
 
 (defn resolve-dispatch-fn [model ctx]
-  (cond
-    (and (satisfies? document/Fragment model)
-         (satisfies? document/Module model))    :Document
+  (let [dispatched (cond
+                     (and (satisfies? document/Fragment model)
+                          (satisfies? document/Module model))    :Document
 
-    (satisfies? document/Fragment model)        document/Fragment
+                     (satisfies? document/Fragment model)        document/Fragment
 
-    (satisfies? domain/APIDocumentation model)  domain/APIDocumentation
+                     (satisfies? domain/APIDocumentation model)  domain/APIDocumentation
 
-    (satisfies? domain/EndPoint model)          domain/EndPoint
+                     (satisfies? domain/EndPoint model)          domain/EndPoint
 
-    (satisfies? domain/DomainElement model)     domain/DomainElement
+                     (satisfies? domain/DomainElement model)     domain/DomainElement
 
-    (satisfies? domain/Operation model)         domain/Operation
+                     (satisfies? domain/Operation model)         domain/Operation
 
-    (satisfies? domain/Request model)           domain/Request
+                     (satisfies? domain/Request model)           domain/Request
 
-    (satisfies? domain/Parameter model)         domain/Parameter
+                     (satisfies? domain/Parameter model)         domain/Parameter
 
-    (satisfies? domain/Type model)              domain/Type
+                     (satisfies? domain/Type model)              domain/Type
 
-    (satisfies? domain/Response model)          domain/Response
+                     (satisfies? domain/Response model)          domain/Response
 
-    (satisfies? document/Extends model)         document/Extends
+                     (satisfies? document/Extends model)         document/Extends
 
-    (satisfies? document/Includes model)        document/Includes
+                     (satisfies? document/Includes model)        document/Includes
 
-    (nil? model)                                nil
+                     (nil? model)                                nil
 
-    :else                                       :unknown))
+                     :else                                       :unknown)]
+    dispatched))
 
 (defmulti resolve (fn [model ctx] (resolve-dispatch-fn model ctx)))
 

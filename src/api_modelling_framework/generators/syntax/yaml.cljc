@@ -49,11 +49,15 @@
    (cond
      (map? ast)  (->> ast
                       (mapv (fn [[k v]]
-                              (if (syntax/fragment? v)
-                                [k (if inline-fragments
-                                     (generate-ast v)
-                                     (include-fragment v))]
-                                [k (generate-ast v context)])))
+                              (cond
+                                ;; libraries are not regular includes, we need to treat them in a different way
+                                (= :uses k)          [k (->> v
+                                                             (mapv (fn [[k l]] [k (syntax/<-location l)]))
+                                                             (into {}))]
+                                (syntax/fragment? v) [k (if inline-fragments
+                                                          (generate-ast v)
+                                                          (include-fragment v))]
+                                :else                [k (generate-ast v context)])))
                       (into {}))
      (coll? ast) (mapv #(generate-ast % context) ast)
 

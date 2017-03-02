@@ -20,6 +20,7 @@ export class UI {
     }
 
     iconClassForDomainUnit(unit: units.DomainElement) {
+        console.log("ICON FOR " + unit.id + " => " + unit.elementClass);
         if (unit.elementClass.endsWith("#APIDocumentation")) {
             return "fa fa-book"
         } else if (unit.elementClass.endsWith("#Payload")) {

@@ -79,12 +79,14 @@
                      :schemes ["https"]
                      :tags ["experimantl" "foo" "bar"]
                      :produces ["application/ld+json"]
+                     :responses {"default" {:description ""}}
                      :consumes ["application/json"]}
                :post {:operationId "post"
                       :description "post description"
                       :schemes ["https"]
                       :tags ["experimantl" "foo" "bar"]
                       :produces ["application/ld+json"]
+                      :responses {"default" {:description ""}}
                       :consumes ["application/json"]}}
         model-parsed (openapi-parser/parse-ast input
                                                {:location "file://path/to/resource.raml#"
@@ -92,10 +94,11 @@
                                                 :is-fragment false
                                                 :path "/Users"})
         generated (generator/to-jsonld model-parsed {:source-maps? true})
-        parsed (jsonld-parser/from-jsonld generated)]
-    (is (= input (openapi-genenerator/to-openapi parsed {})))))
+        parsed (jsonld-parser/from-jsonld generated)
+        output (openapi-genenerator/to-openapi parsed {})]
+    (is (= input output))))
 
-(deftest from-jsonld-Operation
+(deftest from-jsonld-Operation2
   (let [input {:displayName "Users"
                :get {:displayName "get method"
                      :description "get description"

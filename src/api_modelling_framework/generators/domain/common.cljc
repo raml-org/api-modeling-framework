@@ -1,6 +1,7 @@
 (ns api-modelling-framework.generators.domain.common
   (:require [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.utils :as utils]
             [clojure.string :as string]))
 
 (defn find-traits [model context]
@@ -14,29 +15,6 @@
                   (if (some? trait-tag)
                     (document/value trait-tag)
                     (-> (document/target trait) (string/split #"/") last))))))))
-
-;;(defn model->traits [model {:keys [references] :as ctx} domain-generator]
-;;  (->> (document/find-tag model document/inline-fragment-parsed-tag)
-;;       (map (fn [tag]
-;;              (let [trait-id (document/value tag)
-;;                    reference (->> references
-;;                                   (filter (fn [reference] (= (document/id reference) trait-id)))
-;;                                   first)
-;;                    is-trait-tag (-> reference
-;;                                     (document/find-tag document/is-trait-tag)
-;;                                     first)]
-;;                (if is-trait-tag
-;;                  (let [trait-name (-> is-trait-tag
-;;                                       (document/value)
-;;                                       keyword)
-;;                        method (if (some? reference)
-;;                                 (domain/to-domain-node reference)
-;;                                 (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
-;;                        generated (domain-generator method ctx)]
-;;                    [trait-name generated])
-;;                  nil))))
-;;       (filter some?)
-;;       (into {})))
 
 (defn model->traits [{:keys [references] :as ctx} domain-generator]
   (->> references
@@ -76,9 +54,10 @@
                     type-name (-> is-type-tag
                                   (document/value)
                                   keyword)
-                    generated (domain-generator reference ctx)]
+                    generated (domain-generator reference (assoc ctx :from-library (:from-library reference)))]
                 [type-name generated])))
-       (into {})))
+       (into {})
+       (utils/clean-nils)))
 
 (defn model->uses [node]
   (->> (document/find-tag node document/uses-library-tag)
@@ -98,3 +77,11 @@
       (document/find-tag document/is-type-tag)
       first
       some?))
+
+(defn ref-shape? [shape {:keys [references]}]
+  (->> references
+       (filter (fn [ref]
+                 (satisfies? domain/Type ref)))
+       (filter (fn [type]
+                 (= (get (domain/shape type) "@id") (first (get shape "@type")))))
+       first))
