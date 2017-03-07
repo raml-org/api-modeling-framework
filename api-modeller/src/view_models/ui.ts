@@ -5,6 +5,8 @@ import {Operation, EndPoint} from "../main/domain_model";
 import {Response} from "../main/domain_model";
 import {RdfValue} from "rdfstore";
 import {NS_MAPPING} from "../main/domain_model";
+import {Payload} from "../main/domain_model";
+import {Schema} from "../main/domain_model";
 
 export class UI {
     iconClassForUnit(unit: units.DocumentId) {
@@ -39,9 +41,13 @@ export class UI {
             return "fa fa-link"
         } else if (unit.kind === "Operation") {
             return "fa fa-rocket"
+        } else if (unit.kind === "Request") {
+            return "fa fa-envelope"
         } else if (unit.kind === "Response") {
             return "fa fa-envelope-open"
         } else if (unit.kind === "Payload") {
+            return "fa fa-paper-plane"
+        } else if (unit.kind === "Schema") {
             return "fa fa-cubes"
         } else {
             return "fa fa-code"
@@ -61,7 +67,13 @@ export class UI {
             } else if (unit.kind === "Response") {
                 return (unit as Response).status || label(unit.id)
             } else if (unit.kind === "Payload") {
-                return label(unit.id);
+                return (unit as Payload).mediaType || "*/*";
+            } else if (unit.kind === "Schema") {
+                if ((unit as Schema).shape != null) {
+                    return label((unit as Schema).shape["@id"]);
+                } else {
+                    return label(unit.id);
+                }
             } else {
                 return label(unit.id)
             }

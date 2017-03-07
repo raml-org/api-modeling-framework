@@ -144,7 +144,7 @@
 
 (defmethod to-jsonld :Payload [m context]
   (debug "Generating Payload " (document/id m))
-  (-> {"@type" [v/http:Schema
+  (-> {"@type" [v/http:Payload
                 v/document:DomainElement]}
       (with-node-properties m context)
       (utils/assoc-object m v/http:schema domain/schema (fn [x] (to-jsonld x context)))
@@ -153,7 +153,7 @@
 
 (defmethod to-jsonld :Type [m context]
   (debug "Generating Type " (document/id m))
-  (-> {"@type" [v/http:Payload
+  (-> {"@type" [v/http:Schema
                 v/document:DomainElement]}
       (with-node-properties m context)
       (utils/assoc-object m v/http:shape domain/shape identity)

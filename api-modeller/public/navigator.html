@@ -203,7 +203,7 @@
                 </span>
                 <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
                                        click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
-                <span data-bind="template: {name: 'schema-template', data: $data}"></span>
+                <span data-bind="template: {name: 'payload-template', data: $data}"></span>
             </li>
         </ul>
         <p class="menu-label">Payloads</p>
@@ -220,14 +220,30 @@
     </aside>
     <!-- templates -->
     <script type="text/html" id="schema-template">
-        <span data-bind="if: ($data.payload && $data.expanded)">
+        <span data-bind="if: ($data.schema && $data.expanded)">
             <p class="menu-label submenu-label imported">Schema</p>
             <ul>
                 <li>
                     <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
-                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit(payload) }"></i>
+                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data.schema) }"></i>
                     </span>
-                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit(payload)"></a>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data.schema)"></a>
+                </li>
+            </ul>
+        </span>
+    </script>
+
+    <script type="text/html" id="payload-template">
+        <span data-bind="if: ($data.payloads && $data.expanded)">
+            <p class="menu-label submenu-label imported">Payloads</p>
+            <ul data-bind="foreach: $data.payloads">
+                <li>
+                    <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                    </span>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                    <span data-bind="template: {name: 'schema-template', data: $data}"></span>
                 </li>
             </ul>
         </span>
@@ -242,8 +258,8 @@
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                     </span>
                     <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
-                    <span data-bind="template: {name: 'schema-template', data: $data}"></span>
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                    <span data-bind="template: {name: 'payload-template', data: $data}"></span>
                 </li>
             </ul>
         </span>

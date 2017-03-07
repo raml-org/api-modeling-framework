@@ -125,8 +125,8 @@
                                  :payloads (mapv from-jsonld (-> m (get v/http:payload [])))
                                  :status-code (utils/find-value m v/hydra:statusCode)})))
 
-(defmethod from-jsonld v/http:Schema [m]
-  (debug "Parsing " v/http:Schema " " (get m "@id"))
+(defmethod from-jsonld v/http:Payload [m]
+  (debug "Parsing " v/http:Payload " " (get m "@id"))
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedPayload {:id (get m "@id")
@@ -136,8 +136,8 @@
                                 :media-type (utils/find-value m v/http:media-type)
                                 :schema (from-jsonld (first (get m v/http:schema)))})))
 
-(defmethod from-jsonld v/http:Payload [m]
-  (debug "Parsing " v/http:Payload " " (get m "@id"))
+(defmethod from-jsonld v/http:Schema [m]
+  (debug "Parsing " v/http:Schema " " (get m "@id"))
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedType {:id (get m "@id")
