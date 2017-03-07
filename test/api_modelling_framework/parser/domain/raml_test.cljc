@@ -167,24 +167,25 @@
                                             :path "/users"
                                             :method "get"
                                             :is-fragment false})
-        responses (-> parsed (domain/responses))]
-    (is (= 3 (count responses)))
-    (is (= ["200" "200" "400"] (->> responses
-                                    (map domain/status-code))))
+        responses (-> parsed (domain/responses))
+        payloads (->> parsed (domain/responses) (mapv #(domain/payloads %)) flatten)]
+    (is (= 2 (count responses)))
+    (is (= ["200" "400"] (->> responses
+                              (map domain/status-code))))
     (is (= ["application/json" "text/plain" nil]
-           (->> responses
-                (map domain/content-type)
+           (->> payloads
+                (map domain/media-type)
                 flatten)))
-    (is (= 1 (-> parsed domain/headers count)))
-    (is (= "Zencoder-Api-Key" (-> parsed domain/headers first document/name)))
+    (is (= 1 (-> parsed domain/request domain/headers count)))
+    (is (= "Zencoder-Api-Key" (-> parsed domain/request domain/headers first document/name)))
     (is (= (v/xsd-ns "string")
-           (-> parsed domain/headers first domain/shape (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))
+           (-> parsed domain/request domain/headers first domain/shape (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))
     (is (= ["page" "per_page"] (->> parsed domain/request domain/parameters (map document/name))))
     (is (= [(v/xsd-ns "integer") (v/xsd-ns "integer")])
         (->> parsed domain/request domain/parameters (map #(-> % domain/shape
                                                                (utils/extract-jsonld (v/sh-ns "dataType") (fn [t] (get t "@id")))))))
     (is (= (v/xsd-ns "string")
-           (-> parsed domain/request domain/schema (domain/shape) (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))))
+           (-> parsed domain/request domain/payloads first  domain/schema (domain/shape) (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))))
 
 
 (deftest parser-ast-type-scalars

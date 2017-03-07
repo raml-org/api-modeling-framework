@@ -120,19 +120,25 @@
         (assoc :x-is (common/find-traits model ctx))
         (utils/clean-nils))))
 
-(defn unparse-body [request ctx]
+(defn unparse-bodies [request ctx]
   (if (or (nil? request)
-          (nil? (domain/schema request)))
+          (nil? (domain/payloads request))
+          (empty? (domain/payloads request)))
     nil
-    (let [body (<-domain (domain/schema request) ctx)
-          schema (to-openapi! body ctx)
-          parsed-body (-> {:name (or (document/name body) "body")
-                           :description (document/description body)
-                           :schema schema}
-                          utils/clean-nils)]
-      (if (or (= parsed-body {}) (= parsed-body {:name "body"}))
-        nil
-        (assoc parsed-body :in "body")))))
+    (let [payloads (domain/payloads request)]
+      (->> payloads
+           (mapv (fn [payload]
+                   (let [body (<-domain (domain/schema payload) ctx)
+                         schema (to-openapi! body ctx)
+                         parsed-body (-> {:name (if (some? body) (document/name body) "body")
+                                          :description (document/description payload)
+                                          :x-media-type (domain/media-type payload)
+                                          :schema schema}
+                                         utils/clean-nils)]
+                     (if (or (= {} parsed-body)
+                             (= {:name "body", :x-media-type "*/*"} parsed-body))
+                       nil
+                       (assoc parsed-body :in "body")))))))))
 
 (defn unparse-params [request ctx]
   (if (nil? request) []
@@ -144,46 +150,33 @@
   (let [tags (->> (document/find-tag model document/api-tag-tag)
                   (map #(document/value %)))
         produces (domain/content-type model)
-        responses-produces (->> (or (domain/responses model) [])
-                                (map #(or (domain/content-type %) []))
-                                flatten
-                                (filter some?))
         traits  (common/find-traits model ctx)
-        headers (map #(to-openapi! % ctx) (domain/headers model))
         request (domain/request model)
-        parameters (unparse-params request ctx)
-        body (unparse-body request ctx)
-        response-bodies-with-media-types (or (not (empty? responses-produces)) nil)
+        headers (if (some? request)
+                  (map #(to-openapi! % ctx) (domain/headers request))
+                  [])
+        parameters (if (some? request)
+                     (unparse-params request ctx)
+                     [])
+
+        ;; we split the main request from the extra requests
+        bodies (if (some? request)
+                 (unparse-bodies request ctx)
+                 [])
+        main-body (-> [(first bodies)
+                       (->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
+                       (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)]
+                      first)
+        x-requests (->> bodies
+                        (filter (fn [body] (not= body main-body)))
+                        (mapv (fn [body]
+                                {:x-media-type (:x-media-type body)
+                                 :parameters [(dissoc body :x-media-type)]})))
+
+        ;; we process the responses
         responses (->> (domain/responses model)
-                         (map (fn [response] [(document/name response) response]))
-                         ;; we need to avoid multiple responses with the same key
-                         ;; this is not allowed in OpenAPI, we deal with this generating an altered key
-                         ;; for the duplicated responses.
-                         ;; the x-response-bodies-with-media-types guards against this condition
-
-                         ;; first we group
-                         (reduce (fn [acc [k v]]
-                                   (let [vs (get acc k [])
-                                         vs (concat vs [v])]
-                                     (assoc acc k vs)))
-                                 {})
-
-                         ;; now we generate the keys
-                         (map (fn [[k vs]]
-                                (if (> (count vs) 1)
-                                  (map (fn [i response]
-                                         (let [v (to-openapi! response ctx)]
-                                           [(str (utils/safe-str k) "--" (utils/safe-str (or (-> response domain/content-type first) i)))
-                                            v]))
-                                       (range 0 (count vs))
-                                       vs)
-                                  [k (to-openapi (first vs) ctx)])))
-                         ;; we recreate the responses hash by flattening and then partitioning
-                         flatten
-                         (partition 2)
-                         (map #(into [] %))
-                         (into [])
-                         (into {}))
+                       (mapv (fn [response] [(document/name response) (to-openapi! response ctx)]))
+                       (into {}))
         responses (if (and (or (nil? responses) (= {} responses))
                            (not (:abstract ctx)))
                     {:default {:description ""}}
@@ -192,19 +185,32 @@
          :description (document/description model)
          :tags tags
          :x-is traits
-         :x-response-bodies-with-media-types response-bodies-with-media-types
          :schemes (domain/scheme model)
-         :parameters (filter some? (concat headers parameters [body]))
+         :parameters (filter some? (concat headers parameters [main-body]))
+         :x-requests x-requests
          :consumes (domain/accepts model)
-         :produces (concat produces responses-produces)
+         :produces produces
          :responses responses}
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Response [model ctx]
   (debug "Generating response " (document/name model))
-  (-> {:description (or (document/description model) "")
-       :schema (to-openapi! (domain/schema model) ctx)}
-      utils/clean-nils))
+  (let [bodies (unparse-bodies model ctx)
+        main-body (-> [(first bodies)
+                       (->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
+                       (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)]
+                      first)
+        x-responses (->> bodies
+                         (filter (fn [body] (not= body main-body)))
+                         (mapv (fn [body]
+                                 {:x-media-type (:x-media-type body)
+                                  :schema (:schema body)})))]
+
+    (-> {:description (or (document/description model) "")
+         :schema (:schema main-body)
+         :x-media-type (:x-media-type main-body)
+         :x-responses x-responses}
+        utils/clean-nils)))
 
 (defmethod to-openapi domain/Parameter [model ctx]
   (debug "Generating parameter " (document/name model))

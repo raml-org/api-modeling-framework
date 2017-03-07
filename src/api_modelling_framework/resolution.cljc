@@ -45,9 +45,14 @@
 
                      (satisfies? domain/Operation model)         domain/Operation
 
-                     (satisfies? domain/Request model)           domain/Request
+                     (and (satisfies? domain/PayloadHolder model)
+                          (satisfies? domain/HeadersHolder model)
+                          (satisfies? domain/ParametersHolder model)
+                          (satisfies? document/Node model))          :Request
 
                      (satisfies? domain/Parameter model)         domain/Parameter
+
+                     (satisfies? domain/Payload model)           domain/Payload
 
                      (satisfies? domain/Type model)              domain/Type
 
@@ -104,7 +109,7 @@
   (let [api-documentation (get ctx domain/APIDocumentation)
         base-headers (if (some? api-documentation)
                        (or (domain/headers api-documentation) [])
-                       api-documentation)
+                       [])
         headers (or (domain/headers model) [])]
     (->> (concat headers base-headers)
          (reduce (fn [acc h] (assoc acc (document/name h) h)) {})
@@ -218,19 +223,21 @@
           :scheme(compute-scheme model ctx)
           :responses responses
           :accepts (compute-accepts model ctx)
-          :headers (compute-headers model ctx)}
+          :content-type (compute-content-type model ctx)}
          utils/clean-nils))))
 
-(defmethod resolve domain/Request [model ctx]
+(defmethod resolve :Request [model ctx]
   (debug "Resolving Request " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
-        ctx (assoc ctx domain/Request model)
+        ctx (assoc ctx :Request model)
         parameters (mapv #(resolve % ctx) (domain/parameters model))
-        schema (resolve (domain/schema model) ctx)]
+        headers (compute-headers model ctx)
+        schema (map #(resolve % ctx) (domain/payloads model))]
     (domain/map->ParsedRequest
      (-> {:id (document/id model)
           :name (document/name model)
           :parameters parameters
+          :headers headers
           :schema schema}
          utils/clean-nils))))
 
@@ -260,14 +267,24 @@
   (debug "Resolving Response " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx domain/Response model)
-        schema (resolve (domain/schema model) ctx)]
+        schema (map #(resolve % ctx) (domain/payloads model))]
     (domain/map->ParsedResponse
      (-> {:id (document/id model)
           :name (document/name model)
           :status-code (domain/status-code model)
-          :content-type (compute-content-type model ctx)
           :schema schema
           :headers (compute-headers model ctx)}
+         utils/clean-nils))))
+
+(defmethod resolve domain/Payload [model ctx]
+  (let [model (ensure-applied-fragment model ctx)
+        ctx (assoc ctx domain/Parameter model)
+        schema(domain/schema model)]
+    (domain/map->ParsedPayload
+     (-> {:id (document/id model)
+          :name (document/name model)
+          :media-type (domain/media-type model)
+          :schema (resolve schema ctx)}
          utils/clean-nils))))
 
 (defmethod resolve document/Includes [model {:keys [fragments declarations] :as ctx}]

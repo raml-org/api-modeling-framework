@@ -19,6 +19,7 @@
     (utils/has-class? model v/hydra:Operation)                v/hydra:Operation
     (utils/has-class? model v/http:Response)                  v/http:Response
     (utils/has-class? model v/http:Request)                   v/http:Request
+    (utils/has-class? model v/http:Schema)                    v/http:Schema
     (utils/has-class? model v/http:Payload)                   v/http:Payload
     (utils/has-class? model v/http:Parameter)                 v/http:Parameter
     (utils/has-class? model v/document:IncludeRelationship)   v/document:IncludeRelationship
@@ -94,23 +95,13 @@
         (document/valid? [this] true)))))
 
 
-(defn parse-request [request]
-  (if (nil? request) {:request nil :headers nil}
-      (let [params (get request v/http:parameter [])
-            headers (->> params
-                         (filter #(= "header" (utils/find-value % v/http:param-binding)))
-                         (map #(from-jsonld %)))
-            not-headers (filter #(not= "header" (utils/find-value % v/http:param-binding)) params)]
-        {:headers headers
-         :request (from-jsonld (assoc request v/http:parameter not-headers))})))
-
 (defmethod from-jsonld v/hydra:Operation [m]
   (debug "Parsing " v/hydra:Operation " " (get m "@id"))
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)
         extend-rels (get m v/document:extends [])
         extensions (map from-jsonld extend-rels)
-        {:keys [request headers]} (parse-request (-> m (get v/hydra:expects) first))]
+        request (first (map from-jsonld (-> m (get v/hydra:expects))))]
     (domain/map->ParsedOperation {:id (get m "@id")
                                   :sources parsed-sources
                                   :name (utils/find-value m v/sorg:name)
@@ -119,9 +110,8 @@
                                   :content-type (utils/find-values m v/http:content-type)
                                   :scheme (utils/find-values m v/http:scheme)
                                   :method (utils/find-value m v/hydra:method)
-                                  :headers headers
-                                  :request request
                                   :extends extensions
+                                  :request request
                                   :responses (map from-jsonld (-> m (get v/hydra:returns [])))})))
 
 (defmethod from-jsonld v/http:Response [m]
@@ -132,10 +122,19 @@
                                  :sources parsed-sources
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
-                                 :accepts (utils/find-values m v/http:accepts)
-                                 :content-type (utils/find-values m v/http:content-type)
-                                 :schema (from-jsonld (first (get m v/http:payload)))
+                                 :payloads (mapv from-jsonld (-> m (get v/http:payload [])))
                                  :status-code (utils/find-value m v/hydra:statusCode)})))
+
+(defmethod from-jsonld v/http:Schema [m]
+  (debug "Parsing " v/http:Schema " " (get m "@id"))
+  (let [sources (get m v/document:source)
+        parsed-sources (map from-jsonld sources)]
+    (domain/map->ParsedPayload {:id (get m "@id")
+                                :sources parsed-sources
+                                :name (utils/find-value m v/sorg:name)
+                                :description (utils/find-value m v/sorg:description)
+                                :media-type (utils/find-value m v/http:media-type)
+                                :schema (from-jsonld (first (get m v/http:schema)))})))
 
 (defmethod from-jsonld v/http:Payload [m]
   (debug "Parsing " v/http:Payload " " (get m "@id"))
@@ -164,13 +163,21 @@
 (defmethod from-jsonld v/http:Request [m]
   (debug "Parsing " v/http:Request " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+        parsed-sources (map from-jsonld sources)
+        params (get m v/http:parameter [])
+        headers (->> params
+                     (filter #(= "header" (utils/find-value % v/http:param-binding)))
+                     (map #(from-jsonld %)))
+        not-headers (->> params
+                         (filter #(not= "header" (utils/find-value % v/http:param-binding)))
+                         (map #(from-jsonld %)))]
     (domain/map->ParsedRequest {:id (get m "@id")
                                 :sources parsed-sources
                                 :name (utils/find-value m v/sorg:name)
                                 :description (utils/find-value m v/sorg:description)
-                                :parameters (map #(from-jsonld %) (get m v/http:parameter []))
-                                :schema (from-jsonld (-> m (get v/http:payload) first))})))
+                                :headers headers
+                                :parameters not-headers
+                                :payloads (mapv from-jsonld (get m v/http:payload []))})))
 
 (defmethod from-jsonld v/document:ExtendRelationship [m]
   (debug "Parsing " v/document:ExtendRelationship " " (get m "@id"))

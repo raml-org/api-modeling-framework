@@ -383,59 +383,6 @@
               [(domain/map->ParsedEndPoint properties)])
             (or nested-resources []))))
 
-(defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method references] :as context}]
-  (debug "Parsing method " method)
-  (let [method-id (utils/path-join parsed-location method)
-        location (utils/path-join location method)
-        next-context (-> context
-                         (assoc :is-fragment false)
-                         (assoc :parsed-location method-id)
-                         (assoc :location location))
-        node-parsed-source-map (generate-parse-node-sources location method-id)
-        headers (parse-parameters "header" "headers" (:headers node) next-context)
-        query-parameters (parse-parameters "query" "queryParameters" (:queryParameters node) next-context)
-        ;; @todo we need to fix the problem with the query-string
-        ;;query-string (parse-parameters "query" "queryString" (:queryString node) next-context)
-        query-string []
-        request-id (str method-id "/request")
-        traits (parse-traits method-id node references next-context)
-        body (parse-ast (:body node) (-> context
-                                         (assoc :is-fragment false)
-                                         (assoc :location (utils/path-join location "/body"))
-                                         (assoc :parsed-location (utils/path-join parsed-location "/body"))
-                                         (assoc :type-hint :type)))
-        request (domain/map->ParsedRequest (utils/clean-nils {:id request-id
-                                                              :sources (generate-parse-node-sources location request-id)
-                                                              :parameters (concat  query-parameters query-string)
-                                                              :schema body}))
-        responses (parse-ast (:responses node {}) (-> next-context
-                                                      (assoc :type-hint :responses)))
-        properties (-> {:id method-id
-                        :sources node-parsed-source-map
-                        :method (utils/safe-str method)
-                        :name (extract-scalar (:displayName node))
-                        :description (extract-scalar (:description node))
-                        :scheme (extract-scalar (:protocols node))
-                        :headers headers
-                        :request request
-                        :responses (flatten responses)
-                        :extends traits}
-                       utils/clean-nils)]
-    (if is-fragment
-      (domain/map->ParsedDomainElement {:id method-id
-                                        :fragment-node :parsed-operation
-                                        :properties properties})
-      (domain/map->ParsedOperation properties))))
-
-(defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment] :as context}]
-  (debug "Parsing responses")
-  (->> node
-       (mapv (fn [[key response]]
-               (parse-ast response (-> context
-                                       (assoc :location (utils/path-join location "/responses"))
-                                       (assoc :type-hint :response)
-                                       (assoc :status-code key)))))))
-
 (defn extract-bodies [node {:keys [location parsed-location] :as context}]
   (let [location (utils/path-join location "/body")
         parsed-location (utils/path-join parsed-location "/body")
@@ -456,40 +403,94 @@
                    :else                                (throw (new #?(:clj Exception :cljs js/Error)
                                                                     (str "Cannot parse body response at " location ", media-type or type declaration expected")))))))))
 
-(defmethod parse-ast :response [node {:keys [location parsed-location is-fragment status-code] :as context}]
-  (debug "Parsing response " status-code)
-  (let [response-id (utils/path-join parsed-location (utils/safe-str status-code))
-        location (utils/path-join location status-code)
-        status-code (if (integer? status-code) (str status-code) (name status-code))
-        node-parsed-source-map (generate-parse-node-sources location response-id)
-        headers (parse-parameters "header" "headers" (:headers node) (-> context
-                                                                         (assoc :location location)
-                                                                         (assoc :parsed-location response-id)))
-        properties (-> {:name status-code
-                        :status-code status-code
-                        :headers headers
-                        :description (extract-scalar (:description node))}
-                       utils/clean-nils)
-        bodies (extract-bodies (:body node) (-> context
-                                                (assoc :location location)
-                                                (assoc :parsed-location response-id)))]
+(defn parse-http-payloads [body-id node {:keys [location parsed-location is-fragment] :as context}]
+  (let [bodies (extract-bodies (:body node) context)]
     (->> bodies
+         (filter some?)
          (mapv (fn [{:keys [media-type body-id location schema] :as data}]
                  (let [media-type-node-sources (if (some? media-type)
                                                  (generate-parse-node-sources location body-id)
-                                                 [])]
-                   (-> properties
-                       (assoc :sources (concat node-parsed-source-map media-type-node-sources))
-                       (assoc :id (or body-id response-id))
-                       (assoc :content-type [media-type])
-                       (assoc :schema schema)
-                       utils/clean-nils))))
-         (mapv (fn [properties]
-                 (if is-fragment
-                   (domain/map->ParsedDomainElement {:id response-id
-                                                     :fragment-node :parsed-response
-                                                     :properties properties})
-                   (domain/map->ParsedResponse properties)))))))
+                                                 [])
+                       node-parsed-source-map (generate-parse-node-sources location body-id)]
+                   (domain/map->ParsedPayload (utils/clean-nils {:id body-id
+                                                                 :media-type media-type
+                                                                 :schema schema
+                                                                 :sources (concat node-parsed-source-map media-type-node-sources)}))))))))
+
+(defn parse-request [node {:keys [location parsed-location] :as context}]
+  (let [request-id (str parsed-location "/request")
+        node-parsed-source-map (generate-parse-node-sources location request-id)
+        query-parameters (parse-parameters "query" "queryParameters" (:queryParameters node) context)
+        ;; @todo we need to fix the problem with the query-string
+        ;;query-string (parse-parameters "query" "queryString" (:queryString node) next-context)
+        query-string []
+        headers (parse-parameters "header" "headers" (:headers node) context)
+        payloads (parse-http-payloads (utils/path-join request-id "payload") node context)]
+    (domain/map->ParsedRequest {:id request-id
+                                :sources node-parsed-source-map
+                                :parameters (concat query-parameters query-string)
+                                :headers headers
+                                :payloads payloads})))
+
+(defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method references] :as context}]
+  (debug "Parsing method " method)
+  (let [method-id (utils/path-join parsed-location method)
+        location (utils/path-join location method)
+        next-context (-> context
+                         (assoc :is-fragment false)
+                         (assoc :parsed-location method-id)
+                         (assoc :location location))
+        node-parsed-source-map (generate-parse-node-sources location method-id)
+        traits (parse-traits method-id node references next-context)
+        request (parse-request node next-context)
+        responses (parse-ast (:responses node {}) (assoc next-context :type-hint :responses))
+        properties (-> {:id method-id
+                        :sources node-parsed-source-map
+                        :method (utils/safe-str method)
+                        :name (extract-scalar (:displayName node))
+                        :description (extract-scalar (:description node))
+                        :scheme (extract-scalar (:protocols node))
+                        :request request
+                        :responses (flatten responses)
+                        :extends traits}
+                       utils/clean-nils)]
+    (if is-fragment
+      (domain/map->ParsedDomainElement {:id method-id
+                                        :fragment-node :parsed-operation
+                                        :properties properties})
+      (domain/map->ParsedOperation properties))))
+
+(defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment] :as context}]
+  (debug "Parsing responses")
+  (->> node
+       (mapv (fn [[key response]]
+               (parse-ast response (-> context
+                                       (assoc :location (utils/path-join location "/responses"))
+                                       (assoc :type-hint :response)
+                                       (assoc :status-code key)))))))
+
+(defmethod parse-ast :response [node {:keys [location parsed-location is-fragment status-code] :as context}]
+  (debug "Parsing response " status-code)
+  (let [response-id (utils/path-join parsed-location (utils/safe-str status-code))
+        sources (generate-parse-node-sources location response-id)
+        location (utils/path-join location status-code)
+        next-context (-> context
+                         (assoc :location location)
+                         (assoc :parsed-location response-id))
+        status-code (if (integer? status-code) (str status-code) (utils/safe-str status-code))
+        description (extract-scalar (:description node))
+        payloads (parse-http-payloads response-id node next-context)
+        properties {:id response-id
+                    :sources sources
+                    :status-code status-code
+                    :description description
+                    :name (utils/safe-str status-code)
+                    :payloads payloads}]
+    (if is-fragment
+      (domain/map->ParsedDomainElement {:id (:id properties)
+                                        :fragment-node :parsed-response
+                                        :properties properties})
+      (domain/map->ParsedResponse properties))))
 
 (defmethod parse-ast :body-media-type [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing body media-type")

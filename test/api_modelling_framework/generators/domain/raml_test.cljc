@@ -132,3 +132,33 @@
                                              :is-fragment false})
         generated (generator/to-raml parsed {:references (vals declarations)})]
     (is (= input generated))))
+
+
+(deftest to-raml-body
+  (let [location "file://path/to/file.raml#"
+        input {:post {:body {"application/json" {:type "object"
+                                                 :properties {:name {:type "string"}}}}}}
+        parsed (raml-parser/parse-ast input {:location location
+                                             :parsed-location location})
+        generated (generator/to-raml (first parsed) {})]
+    (is (= input generated))))
+
+(deftest to-raml-body-2
+  (let [location "file://path/to/file.raml#"
+        input {:post {:body {:type "object"
+                             :properties {:name {:type "string"}}}}}
+        parsed (raml-parser/parse-ast input {:location location
+                                             :parsed-location location})
+        generated (generator/to-raml (first parsed) {})]
+    (is (= input generated))))
+
+(deftest to-raml-body-3
+  (let [location "file://path/to/file.raml#"
+        input {:post {:body {"application/json" {:type "object"
+                                                 :properties {:name {:type "string"}}}
+                             "application/json-ld" {:type "object"
+                                                    :properties {:name2 {:type "string"}}}}}}
+        parsed (raml-parser/parse-ast input {:location location
+                                             :parsed-location location})
+        generated (generator/to-raml (first parsed) {})]
+    (is (= input generated))))

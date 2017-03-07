@@ -30,6 +30,11 @@
     (and (satisfies? domain/Operation model)
          (satisfies? document/Node model))          domain/Operation
 
+    (and (satisfies? domain/PayloadHolder model)
+         (satisfies? domain/HeadersHolder model)
+         (satisfies? domain/ParametersHolder model)
+         (satisfies? document/Node model))          :Request
+
     (and (satisfies? domain/Response model)
          (satisfies? document/Node model))          domain/Response
 
@@ -160,38 +165,24 @@
         (merge-children-resources children-resources ctx)
         (utils/clean-nils))))
 
+(defn project-bodies [bodies context]
+  (if (= 1 (count bodies))
+    ;; just one body, either it has a content type and become a  map or we plug it directly
+    (let [body (first bodies)
+          schema(to-raml! (domain/schema body) context)]
+      (if-let [content-type (domain/media-type body)]
+        {(utils/safe-str content-type) schema}
+        schema))
+    ;; If there are more than one, it has to have a content-type
+    (reduce (fn [acc body]
+              (let [schema (to-raml! (domain/schema body) context)]
+                (assoc acc (-> body domain/media-type utils/safe-str) schema)))
+            {}
+            bodies)))
+
 (defn group-responses [responses context]
   (->> responses
-       (map (fn [response] [(document/name response) response]))
-       ;; multiple responses sharing the status-code belong to the same group in RAML
-       (reduce (fn [acc [key response]]
-                 (let [responses (get acc key [])
-                       responses (concat responses [response])]
-                   (assoc acc key responses)))
-               {})
-       ;; We expand element in the groups based in the presence of content type
-       (map (fn [[key responses]]
-              (if (= 1 (count responses))
-                ;; just one response, either it has a content type and become a  map or we plug it directly
-                (let [response (first responses)
-                      parsed-response (to-raml response context)
-                      body (:body parsed-response)]
-                  (if-let [content-type (some? (-> response domain/content-type first))]
-                    [key (-> parsed-response
-                             (assoc :body {(utils/safe-str content-type) body})
-                             utils/clean-nils)]
-                    [key (utils/clean-nils parsed-response)]))
-                ;; If there are more than one, it has to have a content-type
-                (let [responses (reduce (fn [acc response]
-                                          (assoc acc (-> response domain/content-type first utils/safe-str) (to-raml response context)))
-                                        {}
-                                        responses)
-                      common-response (dissoc (->> responses vals first) :body)
-                      responses-bodies (->> responses
-                                            (map (fn [[k response]]
-                                                   [k (:body response)]))
-                                            (into {}))]
-                  [key (utils/clean-nils (assoc common-response :body responses-bodies))]))))
+       (map (fn [response] [(document/name response) (to-raml! response context)]))
        (into {})))
 
 (defn unparse-parameters [parameters context]
@@ -210,12 +201,6 @@
                      parsed-type])))
            (into {}))))
 
-(defn unparse-domain-body [request context]
-  (if (nil? request) nil
-      (if-let [body (domain/schema request)]
-        (to-raml! body context)
-        nil)))
-
 (defn unparse-query-parameters [request context]
   (if (nil? request) nil
       (if-let [parameters (domain/parameters request)]
@@ -224,21 +209,32 @@
 
 (defmethod to-raml domain/Operation [model context]
   (debug "Generating operation " (document/id model))
-  (-> {:displayName (document/name model)
-       :description (document/description model)
-       :protocols (domain/scheme model)
-       :responses (-> (domain/responses model)
-                      (group-responses context))
-       :is (common/find-traits model context)
-       :body (unparse-domain-body (domain/request model) context)
-       :queryParameters (unparse-query-parameters (domain/request model) context)
-       :headers (unparse-parameters (domain/headers model) context)}
-      utils/clean-nils))
+  (let [request (to-raml! (domain/request model) context)
+        bodies ()]
+    (-> {:displayName (document/name model)
+         :description (document/description model)
+         :protocols (domain/scheme model)
+         :responses (-> (domain/responses model)
+                        (group-responses context))
+         :is (common/find-traits model context)}
+        (merge request)
+        utils/clean-nils)))
 
 (defmethod to-raml domain/Response [model context]
   (debug "Generating response " (document/name model))
-  {:description (document/description model)
-   :body (to-raml! (domain/schema model) context)})
+  (let [bodies (project-bodies (domain/payloads model) context)]
+    (utils/clean-nils {:description (document/description model)
+                       :headers (unparse-parameters (domain/headers model) context)
+                       :body bodies})))
+
+
+(defmethod to-raml :Request [model context]
+  (debug "Generating request " (document/name model))
+  (let [bodies (project-bodies (domain/payloads model) context)]
+    (utils/clean-nils {:description (document/description model)
+                       :queryParameters (unparse-query-parameters model context)
+                       :body bodies
+                       :headers (unparse-parameters (domain/headers model) context)})))
 
 (defmethod to-raml domain/Type [model context]
   (debug "Generating type")

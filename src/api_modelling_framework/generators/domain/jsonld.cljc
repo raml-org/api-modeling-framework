@@ -10,42 +10,46 @@
 
 (defn to-jsonld-dispatch-fn [model context]
   (cond
-    (nil? model)                                 nil
+    (nil? model)                                    nil
 
-    (satisfies? domain/DomainElement model)      :DomainElement
+    (satisfies? domain/DomainElement model)         :DomainElement
 
-    (satisfies? document/Extends model)          :Extends
+    (satisfies? document/Extends model)             :Extends
 
-    (satisfies? document/Includes model)         :Includes
+    (satisfies? document/Includes model)            :Includes
+
+    (satisfies? domain/Payload model)               :Payload
 
     (and (satisfies? domain/APIDocumentation model)
-         (satisfies? document/Node model))       :APIDocumentation
+         (satisfies? document/Node model))          :APIDocumentation
 
     (and (satisfies? document/SourceMap model)
-         (satisfies? document/Node model))       :SourceMap
+         (satisfies? document/Node model))          :SourceMap
 
     (and (satisfies? document/Tag  model)
-         (satisfies? document/Node model))       :Tag
+         (satisfies? document/Node model))          :Tag
 
     (and (satisfies? domain/EndPoint model)
-         (satisfies? document/Node model))       :EndPoint
+         (satisfies? document/Node model))          :EndPoint
 
     (and (satisfies? domain/Operation model)
-         (satisfies? document/Node model))       :Operation
+         (satisfies? document/Node model))          :Operation
 
     (and (satisfies? domain/Response model)
-         (satisfies? document/Node model))       :Response
+         (satisfies? document/Node model))          :Response
 
-    (and (satisfies? domain/Request model)
-         (satisfies? document/Node model))       :Request
+    (and (satisfies? domain/PayloadHolder model)
+         (satisfies? domain/HeadersHolder model)
+         (satisfies? domain/ParametersHolder model)
+         (satisfies? document/Node model))          :Request
 
     (and (satisfies? domain/Parameter model)
-         (satisfies? document/Node model))       :Parameter
+         (satisfies? document/Node model))          :Parameter
 
     (and (satisfies? domain/Type model)
-         (satisfies? document/Node model))       :Type
+         (satisfies? document/Node model))          :Type
 
-    :else                                        (type model)))
+    :else                                           (type model)))
 
 (defmulti to-jsonld (fn [model context] (to-jsonld-dispatch-fn model context)))
 
@@ -92,18 +96,17 @@
 
 (defmethod to-jsonld :Operation [m context]
   (debug "Generating Operation " (document/id m))
-  (let [headers (map #(to-jsonld % context) (or (domain/headers m) []))]
-    (-> {"@type" [v/hydra:Operation
-                  v/document:DomainElement]}
-        (with-node-properties m context)
-        (utils/assoc-value m v/hydra:method domain/method)
-        (utils/assoc-values m v/http:accepts domain/accepts)
-        (utils/assoc-values m v/http:content-type domain/content-type)
-        (utils/assoc-values m v/http:scheme domain/scheme)
-        (utils/assoc-objects m v/hydra:returns domain/responses (fn [x] (to-jsonld x context)))
-        (utils/assoc-object m v/hydra:expects domain/request (fn [x] (to-jsonld x (assoc context :headers headers))))
-        (utils/assoc-objects m v/document:extends document/extends (fn [x] (to-jsonld x context)))
-        utils/clean-nils)))
+  (-> {"@type" [v/hydra:Operation
+                v/document:DomainElement]}
+      (with-node-properties m context)
+      (utils/assoc-value m v/hydra:method domain/method)
+      (utils/assoc-values m v/http:accepts domain/accepts)
+      (utils/assoc-values m v/http:content-type domain/content-type)
+      (utils/assoc-values m v/http:scheme domain/scheme)
+      (utils/assoc-objects m v/hydra:returns domain/responses (fn [x] (to-jsonld x context)))
+      (utils/assoc-object m v/hydra:expects domain/request (fn [x] (to-jsonld x context)))
+      (utils/assoc-objects m v/document:extends document/extends (fn [x] (to-jsonld x context)))
+      utils/clean-nils))
 
 (defmethod to-jsonld :Response [m context]
   (debug "Generating Response " (document/id m))
@@ -111,18 +114,17 @@
                 v/document:DomainElement]}
       (with-node-properties m context)
       (utils/assoc-value m v/hydra:statusCode domain/status-code)
-      (utils/assoc-values m v/http:accepts domain/accepts)
-      (utils/assoc-values m v/http:content-type domain/content-type)
-      (utils/assoc-object m v/http:payload domain/schema (fn [x] (to-jsonld x context)))
+      (utils/assoc-objects m v/http:payload domain/payloads (fn [x] (to-jsonld x context)))
       utils/clean-nils))
 
-(defmethod to-jsonld :Request [m {:keys [headers] :as context :or {headers []}}]
+(defmethod to-jsonld :Request [m context]
   (debug "Generating Request " (document/id m))
-  (let [request (-> {"@type" [v/http:Request
+  (let [headers (map #(to-jsonld % context) (or (domain/headers m) []))
+        request (-> {"@type" [v/http:Request
                               v/document:DomainElement]}
                     (with-node-properties m context)
                     (utils/assoc-objects m v/http:parameter domain/parameters (fn [x] (to-jsonld x context)))
-                    (utils/assoc-object m v/http:payload domain/schema (fn [x] (to-jsonld x context)))
+                    (utils/assoc-objects m v/http:payload domain/payloads (fn [x] (to-jsonld x context)))
                     utils/clean-nils)
         params (get request v/http:parameter [])
         all-params (concat params headers)]
@@ -138,6 +140,15 @@
       (utils/assoc-value m v/hydra:required domain/required)
       (utils/assoc-value m v/http:param-binding domain/parameter-kind)
       (utils/assoc-object m v/http:shape domain/shape identity)
+      utils/clean-nils))
+
+(defmethod to-jsonld :Payload [m context]
+  (debug "Generating Payload " (document/id m))
+  (-> {"@type" [v/http:Schema
+                v/document:DomainElement]}
+      (with-node-properties m context)
+      (utils/assoc-object m v/http:schema domain/schema (fn [x] (to-jsonld x context)))
+      (utils/assoc-value m v/http:media-type domain/media-type)
       utils/clean-nils))
 
 (defmethod to-jsonld :Type [m context]

@@ -95,6 +95,7 @@
                                                 :path "/Users"})
         generated (generator/to-jsonld model-parsed {:source-maps? true})
         parsed (jsonld-parser/from-jsonld generated)
+        _ (clojure.pprint/pprint parsed)
         output (openapi-genenerator/to-openapi parsed {})]
     (is (= input output))))
 
@@ -182,6 +183,7 @@
                                   :in "query"
                                   :type "string"}
                                  {:name "the-body"
+                                  :x-media-type "*/*"
                                   :in "body"
                                   :schema {:type "string"}}]}
               :post {:operationId "post"

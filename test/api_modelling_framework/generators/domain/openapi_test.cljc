@@ -76,6 +76,7 @@
                                                :path "/Users"})
         generated (generator/to-openapi parsed {})]
     (is (= node generated))))
+
 (deftest to-openapi-response
   (let [node {:operationId "get method"
               :description "get description"
@@ -100,15 +101,19 @@
                                       "text/plain"       {:type "string"}}}
                           400 {:description "400 response"
                                :body {:type "string"}}}}
-        expected {:operationId "get method",
-                  :description "get description",
-                  :x-response-bodies-with-media-types true,
-                  :schemes ["http"],
-                  :produces ["application/json" "text/plain"],
+        expected {:operationId "get method"
+                  :description "get description"
+                  :schemes ["http"]
                   :responses
-                  {"200--application/json" {:description "200 response", :schema {:type "string"}},
-                   "200--text/plain" {:description "200 response", :schema {:type "string"}},
-                   "400" {:description "400 response", :schema {:type "string"}}}}
+                  {"200"
+                   {:description "200 response"
+                    :schema {:type "string"}
+                    :x-media-type "application/json"
+                    :x-responses
+                    [{:x-media-type "text/plain"
+                      :schema {:type "string"}}]}
+                   "400" {:description "400 response"
+                          :schema {:type "string"}}}}
         parsed (raml-parser/parse-ast node parsing-context)
         generated (generator/to-openapi parsed {})]
     (is (= expected
@@ -133,6 +138,7 @@
                                   :in "query"
                                   :type "string"}
                                  {:name "the-body"
+                                  :x-media-type "*/*"
                                   :in "body"
                                   :schema {:type "string"}}]}
               :post {:operationId "post"
@@ -148,7 +154,6 @@
                                                :path "/Users"})
         generated (generator/to-openapi parsed {})]
     (is (= generated node))))
-
 
 (deftest from-traits-test
   (let [input {:swagger "2.0",
@@ -180,6 +185,7 @@
                                                                      :type "string"}
                                                                     {:name "the-body"
                                                                      :in "body"
+                                                                     :x-media-type "*/*"
                                                                      :schema {:type "string"}}]}}}}
         traits (openapi-parser/process-traits input {:location "file://location/#"
                                                      :fragments []
