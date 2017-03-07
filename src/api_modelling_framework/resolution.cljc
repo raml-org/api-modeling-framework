@@ -2,6 +2,7 @@
   (:require [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.model.vocabulary :as v]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
@@ -32,6 +33,8 @@
 
 (defn resolve-dispatch-fn [model ctx]
   (let [dispatched (cond
+                     (some? (get model "@type"))                 :Type
+
                      (and (satisfies? document/Fragment model)
                           (satisfies? document/Module model))    :Document
 
@@ -133,6 +136,23 @@
         content-type(or (domain/content-type model) [])]
     (or content-type base-content-type)))
 
+(defn compute-types [fragments declarations]
+  (let [declarations (->> fragments
+                          (reduce (fn [acc fragment]
+                                    (if (satisfies? document/Module fragment)
+                                      (concat acc (document/declares fragment))
+                                      acc))
+                                  declarations))
+        shapes(->> declarations
+                   (mapv (fn [declaration]
+                           (if (satisfies? domain/Type declaration)
+                             (domain/shape declaration)
+                             nil)))
+                   (filterv some?))]
+    (->> shapes
+         (mapv (fn [shape] [(get shape "@id") shape]))
+         (into {}))))
+
 (defmethod resolve :Document [model ctx]
   (debug "Resolving Document " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
@@ -141,12 +161,14 @@
                                [(document/location fragment) (ensure-encoded-fragment
                                                               (resolve fragment ctx))]))
                        (into {}))
+        types-fragments (compute-types (vals fragments) [])
         declarations (->> (document/declares model)
                           (mapv (fn [declaration]
                                   [(document/id declaration) (ensure-encoded-fragment
                                                               (resolve declaration (-> ctx
                                                                                        (assoc :fragments fragments)
                                                                                        (assoc :document model)
+                                                                                       (assoc :types types-fragments)
                                                                                        (assoc domain/APIDocumentation (document/encodes model)))))]))
                           (into {}))]
     (-> model
@@ -154,7 +176,8 @@
         (assoc :encodes (resolve (document/encodes model) (-> ctx
                                                               (assoc :document model)
                                                               (assoc :declarations declarations)
-                                                              (assoc :fragments fragments)))))))
+                                                              (assoc :fragments fragments)
+                                                              (assoc :types (compute-types (vals fragments) (vals declarations)))))))))
 
 
 (defmethod resolve document/Fragment [model ctx]
@@ -169,7 +192,8 @@
         (assoc :resolved true)
         (assoc :encodes (resolve (document/encodes model) (-> ctx
                                                               (assoc :document model)
-                                                              (assoc :fragments fragments)))))))
+                                                              (assoc :fragments fragments)
+                                                              (assoc :types (compute-types fragments []))))))))
 
 
 (defmethod resolve domain/DomainElement [model ctx]
@@ -251,7 +275,7 @@
           :name (document/name model)
           :parameter-kind (domain/parameter-kind model)
           :required (domain/required model)
-          :shape shape}
+          :shape (resolve shape ctx)}
          utils/clean-nils))))
 
 (defmethod resolve domain/Type [model ctx]
@@ -261,25 +285,25 @@
     (domain/map->ParsedType
      (-> {:id (document/id model)
           :name (document/name model)
-          :shape shape}))))
+          :shape (resolve shape ctx)}))))
 
 (defmethod resolve domain/Response [model ctx]
   (debug "Resolving Response " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx domain/Response model)
-        schema (map #(resolve % ctx) (domain/payloads model))]
+        payloads(map #(resolve % ctx) (domain/payloads model))]
     (domain/map->ParsedResponse
      (-> {:id (document/id model)
           :name (document/name model)
           :status-code (domain/status-code model)
-          :schema schema
+          :payloads payloads
           :headers (compute-headers model ctx)}
          utils/clean-nils))))
 
 (defmethod resolve domain/Payload [model ctx]
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx domain/Parameter model)
-        schema(domain/schema model)]
+        schema (domain/schema model)]
     (domain/map->ParsedPayload
      (-> {:id (document/id model)
           :name (document/name model)
@@ -316,3 +340,49 @@
 
 (defmethod resolve :unknown [m _]
   (debug "Resolving nil value")m)
+
+(defn scalar-type? [type] (->> type
+                               (get type "@type")
+                               (filter (fn [type] (= type (v/shapes-ns "Scalar"))))
+                               first
+                               some?))
+
+(defn array-type? [type] (->> type
+                              (get type "@type")
+                              (filter (fn [type] (= type (v/shapes-ns "Array"))))
+                              first
+                              some?))
+
+(defn object-type? [type] (->> type
+                              keys
+                              (filter (fn [type] (= type (v/sh-ns "property"))))
+                              first
+                              some?))
+
+(defn type-reference? [type {:keys [fragments declarations types]}]
+  (let [type-id (first (get type "@type"))]
+    (or (get fragments type-id)
+        (get declarations type-id)
+        (get types type-id))))
+
+(defn resolve-type [type ctx]
+  (cond
+    (scalar-type? type) type
+
+    (array-type? type)  (assoc type (v/shapes-ns "item") (mapv #(resolve-type % ctx)
+                                                               (get type (v/shapes-ns "item"))))
+
+    (object-type? type) (assoc type (v/sh-ns "property") (->> (get type (v/sh-ns "property") [])
+                                                              (mapv (fn [property]
+                                                                      (let [property-range (get property (v/shapes-ns "range"))]
+                                                                        (assoc property (v/shapes-ns "range")
+                                                                               (mapv #(resolve-type % ctx)
+                                                                                     property-range)))))))
+
+    (some? (type-reference? type ctx))  (resolve-type (type-reference? type ctx) ctx)
+
+    :else type))
+
+(defmethod resolve :Type [m ctx]
+  (debug "Resolving type " (get m "@id"))
+  (resolve-type m ctx))

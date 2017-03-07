@@ -63,10 +63,10 @@
         open-shape (:additionalProperties node)]
         (->> {"@type" [(v/sh-ns "Shape")]
              "@id" parsed-location
-             (v/sh-ns "property") properties
-             (v/sh-ns "closed") (if (some? open-shape)
-                                  [{"@value" (not open-shape)}]
-                                  nil)}
+              (v/sh-ns "property") properties
+              (v/sh-ns "closed") (if (some? open-shape)
+                                   [{"@value" (not open-shape)}]
+                                   nil)}
             utils/clean-nils
             (parse-type-constraints node)
             )))

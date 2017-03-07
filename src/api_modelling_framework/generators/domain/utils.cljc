@@ -14,11 +14,19 @@
         (apply method [(-> fragment document/encodes domain/to-domain-node)])))
     (apply method [obj])))
 
-(defn <-domain [obj {:keys [fragments]}]
+(defn <-domain [obj {:keys [fragments references] :as context}]
   (if (document/includes-element? obj)
-    (let [fragment (get fragments (document/target obj))]
-      (if (nil? fragment)
-        (throw (new #?(:clj Exception :cljs js/Error)
-                    (str "Cannot find fragment " (document/target obj))))
-        (-> fragment document/encodes domain/to-domain-node)))
+    (let [fragment-target (document/target obj)
+          fragment (get fragments fragment-target)
+          reference (->> references
+                         (filter #(= (document/id %) fragment-target))
+                         first)]
+      (cond
+        ;; if it is a fragment, is a link to an external node, I need to generate the document
+        (some? fragment) (-> fragment document/encodes domain/to-domain-node)
+        ;; If it is a reference, is a link to internally defined node, I just need the reference
+        (some? reference)  obj
+        ;; Unknown reference @todo Should I throw an exception in this case?
+        :else              (throw (new #?(:clj Exception :cljs js/Error)
+                                       (str "Cannot find fragment " (document/target obj))))))
     obj))

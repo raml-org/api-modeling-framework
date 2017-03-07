@@ -34,10 +34,7 @@
                     method (if (some? reference)
                              (domain/to-domain-node reference)
                              (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
-                    _ (println "GENERATING DOMAIN MODEL: " (:id method))
-                    _ (prn method)
                     generated (domain-generator method ctx)]
-                (println "AND BACK!")
                 [trait-name generated])))
        (into {})))
 

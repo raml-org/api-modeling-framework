@@ -200,7 +200,6 @@
   (fragment-node [this] fragment-node)
   (properties [this] properties)
   (to-domain-node [this]
-    (println "TO DOMAIN NODE :::: " fragment-node " ID " id)
     (condp = fragment-node
       :parsed-api-documentation (map->ParsedAPIDocumentation properties)
       :parsed-parameter         (map->ParsedParameter properties)

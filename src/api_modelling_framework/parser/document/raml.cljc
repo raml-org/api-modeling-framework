@@ -64,7 +64,7 @@
         fragments (or (:fragments context) (atom {}))
         fragments (or (:fragments context) (atom {}))
         ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored
-        ;; in the model, we ill just keep a reference to the library through the uses tags
+        ;; in the model, we will just keep a reference to the library through the uses tags
         {:keys [libraries library-declarations]} (process-library node {:location (str location "#")
                                                                         :fragments fragments
                                                                         :document-parser parse-ast

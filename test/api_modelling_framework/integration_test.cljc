@@ -6,6 +6,7 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.platform :as platform]
             [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
+            [api-modelling-framework.utils :as utils]
             [clojure.string :as string]
             #?(:cljs [cljs.core.async :refer [<! >! chan]])
             #?(:clj [api-modelling-framework.platform :refer [async]])
@@ -81,6 +82,34 @@
                (is (some? (-> output :traits :secured)))
                (is (= ["secured"] (-> output (get (keyword "/albums")) :is)))
                (is (= "Album" (-> output (get (keyword "/albums")) :get :responses :200 :body :items)))
+               (done)))))
+
+(deftest integration-test-raml->domain->raml
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->RAMLGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/world-music-api/wip.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/domain-model model)
+                   _ (is (not (error? output-model)))
+                   output-string (<! (cb->chan (partial core/generate-string generator "resources/world-music-api/wip.raml"
+                                                      output-model
+                                                      {})))
+                   _ (is (not (error? output-string)))
+                   output (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string)))
+                   types (->> output
+                              (filter (fn [[k v]] (string/starts-with? (utils/safe-str k) "/")))
+                              (map last)
+                              (map :get)
+                              (map :responses)
+                              (map :200)
+                              (map :body))]
+               (doseq [type types]
+                 (is (or (= (:type type) "array")
+                         (= (:type type) "object")))
+                 (if (= "array" (:type type))
+                   (is (> (count (:items type)) 0))
+                   (is (> (count (:properties type)) 0))))
                (done)))))
 
 (comment
