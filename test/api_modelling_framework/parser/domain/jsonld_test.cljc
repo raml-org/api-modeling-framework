@@ -95,7 +95,6 @@
                                                 :path "/Users"})
         generated (generator/to-jsonld model-parsed {:source-maps? true})
         parsed (jsonld-parser/from-jsonld generated)
-        _ (clojure.pprint/pprint parsed)
         output (openapi-genenerator/to-openapi parsed {})]
     (is (= input output))))
 
