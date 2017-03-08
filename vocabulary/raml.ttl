@@ -1,0 +1,326 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix hydra: <http://www.w3.org/ns/hydra/core#> .
+@prefix shacl: <http://www.w3.org/ns/shacl#> .
+@prefix raml-doc: <http://raml.org/vocabularies/document#> .
+@prefix raml-http: <http://raml.org/vocabularies/http#> .
+@prefix schema-org: <http://schema.org/> .
+@prefix raml-shapes: <http://raml.org/vocabularies/shapes#> .
+@base <http://raml.org/ontology> .
+
+<http://raml.org/ontology> rdf:type owl:Ontology ;
+    owl:versionIRI <http://raml.org/ontology/0.0.1> .
+
+
+raml-doc:declares rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-doc:Module ;
+    rdfs:range raml-doc:DomainElement ;
+    rdfs:label "The declares relationship exposes a DomainElement as a re-usable unit that can be referenced from other units. URIs for the declared DomainElement are considered to be stable and safe to reference from other DomainElements." .
+
+
+###  http://raml.org/vocabularies/document#encodes
+raml-doc:encodes rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-doc:Fragment ;
+    rdfs:range raml-doc:DomainElement ;
+    rdfs:label "The encodes relationship links a parsing Unit with the DomainElement from a particular domain the unit contains." .
+
+
+###  http://raml.org/vocabularies/document#location
+raml-doc:location rdf:type owl:ObjectProperty ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    rdfs:domain raml-doc:SourceMap ;
+    rdfs:label "Dereferencable location of a particular element in the model" .
+
+
+###  http://raml.org/vocabularies/document#references
+raml-doc:references rdf:type owl:ObjectProperty ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    rdfs:label "The references relationship makes public that some DomainElement within this Unit includes a DomainElement within other unit. It can be used to track references between units at the document level." .
+
+
+###  http://raml.org/vocabularies/document#source
+raml-doc:source rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-doc:Unit ;
+    rdfs:range raml-doc:Unit ;
+    rdfs:label "Indicates that this parsing Unit has SourceMaps" .
+
+
+###  http://raml.org/vocabularies/document#tag
+raml-doc:tag rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-doc:SourceMap ;
+    rdfs:range raml-doc:Tag ;
+    rdfs:label "Tags for a SourceMap" .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://raml.org/vocabularies/document#tagId
+raml-doc:tagId rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-doc:Tag ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Identifier for a Tag" .
+
+
+###  http://raml.org/vocabularies/document#tagValue
+raml-doc:tagValue rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-doc:Tag ;
+    rdfs:comment "Value for the tag. It is private to the parser/generator tool that build the model. We make no assumptions about the type of the range" .
+
+schema-org:name rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-doc:DomainElement ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Name of a element" .
+
+schema-org:description rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-doc:DomainElement ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Description of a element" .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://raml.org/vocabularies/document#Document
+raml-doc:Document rdf:type owl:Class ;
+    rdfs:subClassOf raml-doc:Fragment ,
+        raml-doc:Module ;
+    rdfs:label """A Document is a parsing Unit that encodes a stand-alone DomainElement and can include references to other DomainElements that reference from the encoded DomainElement.
+Since it encodes a DomainElement, but also declares references, it behaves like a Fragment and a Module at the same time. The main difference is that the Document encoded DomainElement is stand-alone and that the references declared are supposed to be private not for re-use from other Units""" .
+
+
+###  http://raml.org/vocabularies/document#DomainElement
+raml-doc:DomainElement rdf:type owl:Class ;
+               rdfs:label "Base class for any element describing a domain model. Domain Elements are encoded into fragments" .
+
+
+###  http://raml.org/vocabularies/document#ExtendRelationship
+raml-doc:ExtendRelationship rdf:type owl:Class ;
+                    rdfs:subClassOf raml-doc:Relationship ;
+                    rdfs:label "ExtendRelationship are resolved when generating the domain model for the document model by merging recursively the referenced DomainElement with the referencer DomainElement" .
+
+
+###  http://raml.org/vocabularies/document#Fragment
+raml-doc:Fragment rdf:type owl:Class ;
+          rdfs:subClassOf raml-doc:Unit ;
+          rdfs:label "A Fragment is a parsing Unit that encodes a DomainElement" .
+
+
+###  http://raml.org/vocabularies/document#IncludeRelationship
+raml-doc:IncludeRelationship rdf:type owl:Class ;
+                     rdfs:subClassOf raml-doc:Relationship ;
+                     rdfs:label "IncludeRelationship are resolved when generating the domain model from the document model by replacing the relationship node with the referenced DomainElement in the resulting model" .
+
+
+###  http://raml.org/vocabularies/document#Module
+raml-doc:Module rdf:type owl:Class ;
+        rdfs:subClassOf raml-doc:Unit ;
+        rdfs:label "A Module is a parsing Unit that declares DomainElements that can be referenced from the DomainElements in other parsing Units. It main purpose is to expose the declared references so they can be re-used" .
+
+
+###  http://raml.org/vocabularies/document#Relationship
+raml-doc:Relationship rdf:type owl:Class ;
+              rdfs:subClassOf raml-doc:DomainElement ;
+              rdfs:label """Reified relationship between two DomainElements.
+The type of the relationship provide the semantics about thow the referenced and referencer elements must be combined when generating the domain model from the document model.""" .
+
+
+###  http://raml.org/vocabularies/document#SourceMap
+raml-doc:SourceMap rdf:type owl:Class ;
+           rdfs:label "SourceMaps include tags with syntax specific information obtained when parsing a particular specification syntax like RAML or OpenAPI. It can be used to re-generate the document from the RDF model with a similar syntax" .
+
+
+###  http://raml.org/vocabularies/document#Tag
+raml-doc:Tag rdf:type owl:Class ;
+     rdfs:label "Particular annotation about the syntax an element in the RDF domain was parsed from. It is identified by a label for the kind of annotation that is private to the parser/generator tool that generated the RDF model" .
+
+
+###  http://raml.org/vocabularies/document#Unit
+raml-doc:Unit rdf:type owl:Class ;
+      rdfs:label "Base class for every single document model unit. After parsing a document the parser generate parsing Units. Units encode the domain elements and can reference other units to re-use descriptions." .
+
+raml-http:APIDocumentation a owl:Class ;
+    rdfs:subClassOf raml-doc:DomainElement ;
+    rdfs:comment "Top level element describing a HTTP API" .
+
+
+raml-http:host rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "Host for the API" .
+
+raml-http:scheme rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "URI Scheme for the API protocol" .
+
+raml-http:basePath rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "Base path for end-points in the API" .
+
+
+raml-http:accepts rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "Media-types accepted in a API request" .
+
+
+raml-http:contentType rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "Media-types returned by a API response" .
+
+
+schema-org:provider rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "organisation or person providing the API " .
+
+
+raml-http:termsOfService rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "Terms and conditions when using the API" .
+
+schema-org:version rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "Version of the API" .
+
+schema-org:license rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range xsd:string ;
+    rdfs:comment "License for the API" .
+
+raml-http:endpoint rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-http:APIDocumentation;
+    rdfs:range raml-http:EndPoint ;
+    rdfs:comment "EndPoints defined in the API" .
+
+
+#########################################
+
+
+raml-http:EndPoint a owl:Class ;
+    rdfs:subClassOf raml-doc:DomainElement ;
+    rdfs:comment "EndPoint in the API holding a number of executable operations" .
+
+:path rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:EndPoint ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Path template for the end-point" .
+
+hydra:supportedOperation rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-http:EndPoint;
+    rdfs:range hydra:Operation ;
+    rdfs:comment "Operations supported by this end-point" .
+
+
+#########################################
+
+hydra:Operation a owl:Class ;
+    rdfs:subClassOf raml-doc:DomainElement ;
+    rdfs:comment "Action that can be executed using a particular HTTP invocation" .
+
+hydra:method rdf:type owl:DatatypeProperty ;
+    rdfs:domain hydra:Operation ;
+    rdfs:range xsd:string ;
+    rdfs:comment "HTTP method required to invoke the operation" .
+
+hydra:expects rdf:type owl:ObjectProperty ;
+    rdfs:domain hydra:Operation;
+    rdfs:range raml-http:Request ;
+    rdfs:comment "Request information required by the operation" .
+
+hydra:returns rdf:type owl:ObjectProperty ;
+    rdfs:domain hydra:Operation;
+    rdfs:range raml-http:Response ;
+    rdfs:comment "Response data returned by the operation" .
+
+#########################################
+
+raml-http:Request a owl:Class ;
+    rdfs:subClassOf raml-doc:DomainElement ;
+    rdfs:comment "Request information for an Operation" .
+
+raml-http:Response a owl:Class ;
+    rdfs:subClassOf raml-doc:DomainElement ;
+    rdfs:comment "Response information for an Operation" .
+
+raml-http:statusCode rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:Response ;
+    rdfs:range xsd:string ;
+    rdfs:comment "HTTP status-code returned by an operation" .
+
+
+raml-http:parameter rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-http:Request, raml-http:Response ;
+    rdfs:range raml-http:Parameter ;
+    rdfs:comment "Type of data required or returned by an operation" .
+
+raml-http:payload rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-http:Request, raml-http:Response ;
+    rdfs:range raml-http:Payload ;
+    rdfs:comment "Payload for a request/response" .
+
+
+#########################################
+
+raml-http:Parameter a owl:Class ;
+    rdfs:subClassOf raml-doc:DomainElement ;
+    rdfs:comment "Piece of data required or returned by an Operation" .
+
+hydra:required rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:Parameter ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Is this parameter required?" .
+
+
+raml-http:paramBinding rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:Parameter ;
+    rdfs:range [
+        a rdfs:Datatype ;
+        owl:oneOf [
+            a rdf:List ;
+            rdf:first "header" ;
+            rdf:rest [
+                a rdf:List ;
+                rdf:first "query" ;
+                rdf:rest ()
+                ]
+            ]
+        ] ;
+    rdfs:comment "Location of the parameter" .
+
+#########################################
+
+raml-http:Payload a owl:Class ;
+    rdfs:subClassOf raml-doc:DomainElement ;
+    rdfs:comment "Encoded payload for a particular media-type" .
+
+raml-http:mediaType rdf:type owl:DatatypeProperty ;
+    rdfs:domain raml-http:Response ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Media type for this payload" .
+
+raml-http:schema rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-http:Request, raml-http:Response ;
+    rdfs:range raml-http:Schema ;
+    rdfs:comment "Link to the schema information for this payload" .
+
+#########################################
+
+raml-http:Schema a owl:Class ;
+    rdfs:subClassOf raml-doc:DomainElement ;
+    rdfs:comment "Encoded information for the shape of the payload" .
+
+
+raml-http:schema rdf:type owl:ObjectProperty ;
+    rdfs:domain raml-http:Schema ;
+    rdfs:range shacl:Shape ;
+    rdfs:comment "Link to the schema information for this payload" .

@@ -68,7 +68,7 @@ schema-org:provider rdf:type owl:DatatypeProperty ;
     rdfs:range xsd:string ;
     rdfs:comment "Terms and conditions when using the API" .
 
-schema-org:vesion rdf:type owl:DatatypeProperty ;
+schema-org:version rdf:type owl:DatatypeProperty ;
     rdfs:domain :APIDocumentation;
     rdfs:range xsd:string ;
     rdfs:comment "Version of the API" .
@@ -87,7 +87,7 @@ schema-org:license rdf:type owl:DatatypeProperty ;
 #########################################
 
 
-:EndPoints a owl:Class ;
+:EndPoint a owl:Class ;
     rdfs:subClassOf raml-doc:DomainElement ;
     rdfs:comment "EndPoint in the API holding a number of executable operations" .
 
