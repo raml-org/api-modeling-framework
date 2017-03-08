@@ -1,0 +1,147 @@
+@prefix : <http://raml.org/vocabularies/document#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema-org: <http://schema.org/> .
+@base <http://raml.org/vocabularies/document> .
+
+<http://raml.org/vocabularies/document> rdf:type owl:Ontology ;
+                                         owl:versionIRI <http://raml.org/vocabularies/document/0.0.1> .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://raml.org/vocabularies/document#declares
+:declares rdf:type owl:ObjectProperty ;
+          rdfs:domain :Module ;
+          rdfs:range :DomainElement ;
+          rdfs:label "The declares relationship exposes a DomainElement as a re-usable unit that can be referenced from other units. URIs for the declared DomainElement are considered to be stable and safe to reference from other DomainElements." .
+
+
+###  http://raml.org/vocabularies/document#encodes
+:encodes rdf:type owl:ObjectProperty ;
+         rdfs:domain :Fragment ;
+         rdfs:range :DomainElement ;
+         rdfs:label "The encodes relationship links a parsing Unit with the DomainElement from a particular domain the unit contains." .
+
+
+###  http://raml.org/vocabularies/document#location
+:location rdf:type owl:ObjectProperty ;
+          rdfs:subPropertyOf owl:topObjectProperty ;
+          rdfs:domain :SourceMap ;
+          rdfs:label "Dereferencable location of a particular element in the model" .
+
+
+###  http://raml.org/vocabularies/document#references
+:references rdf:type owl:ObjectProperty ;
+            rdfs:subPropertyOf owl:topObjectProperty ;
+            rdfs:label "The references relationship makes public that some DomainElement within this Unit includes a DomainElement within other unit. It can be used to track references between units at the document level." .
+
+
+###  http://raml.org/vocabularies/document#source
+:source rdf:type owl:ObjectProperty ;
+        rdfs:domain :Unit ;
+        rdfs:range :Unit ;
+        rdfs:label "Indicates that this parsing Unit has SourceMaps" .
+
+
+###  http://raml.org/vocabularies/document#tag
+:tag rdf:type owl:ObjectProperty ;
+     rdfs:domain :SourceMap ;
+     rdfs:range :Tag ;
+     rdfs:label "Tags for a SourceMap" .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://raml.org/vocabularies/document#tagId
+:tagId rdf:type owl:DatatypeProperty ;
+       rdfs:domain :Tag ;
+       rdfs:range xsd:string ;
+       rdfs:comment "Identifier for a Tag" .
+
+
+###  http://raml.org/vocabularies/document#tagValue
+:tagValue rdf:type owl:DatatypeProperty ;
+          rdfs:domain :Tag ;
+          rdfs:comment "Value for the tag. It is private to the parser/generator tool that build the model. We make no assumptions about the type of the range" .
+
+schema-org:name rdf:type owl:DatatypeProperty ;
+    rdfs:domain :DomainElement ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Name of a element" .
+
+schema-org:description rdf:type owl:DatatypeProperty ;
+    rdfs:domain :DomainElement ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Description of a element" .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://raml.org/vocabularies/document#Document
+:Document rdf:type owl:Class ;
+          rdfs:subClassOf :Fragment ,
+                          :Module ;
+          rdfs:label """A Document is a parsing Unit that encodes a stand-alone DomainElement and can include references to other DomainElements that reference from the encoded DomainElement.
+Since it encodes a DomainElement, but also declares references, it behaves like a Fragment and a Module at the same time. The main difference is that the Document encoded DomainElement is stand-alone and that the references declared are supposed to be private not for re-use from other Units""" .
+
+
+###  http://raml.org/vocabularies/document#DomainElement
+:DomainElement rdf:type owl:Class ;
+               rdfs:label "Base class for any element describing a domain model. Domain Elements are encoded into fragments" .
+
+
+###  http://raml.org/vocabularies/document#ExtendRelationship
+:ExtendRelationship rdf:type owl:Class ;
+                    rdfs:subClassOf :Relationship ;
+                    rdfs:label "ExtendRelationship are resolved when generating the domain model for the document model by merging recursively the referenced DomainElement with the referencer DomainElement" .
+
+
+###  http://raml.org/vocabularies/document#Fragment
+:Fragment rdf:type owl:Class ;
+          rdfs:subClassOf :Unit ;
+          rdfs:label "A Fragment is a parsing Unit that encodes a DomainElement" .
+
+
+###  http://raml.org/vocabularies/document#IncludeRelationship
+:IncludeRelationship rdf:type owl:Class ;
+                     rdfs:subClassOf :Relationship ;
+                     rdfs:label "IncludeRelationship are resolved when generating the domain model from the document model by replacing the relationship node with the referenced DomainElement in the resulting model" .
+
+
+###  http://raml.org/vocabularies/document#Module
+:Module rdf:type owl:Class ;
+        rdfs:subClassOf :Unit ;
+        rdfs:label "A Module is a parsing Unit that declares DomainElements that can be referenced from the DomainElements in other parsing Units. It main purpose is to expose the declared references so they can be re-used" .
+
+
+###  http://raml.org/vocabularies/document#Relationship
+:Relationship rdf:type owl:Class ;
+              rdfs:subClassOf :DomainElement ;
+              rdfs:label """Reified relationship between two DomainElements.
+The type of the relationship provide the semantics about thow the referenced and referencer elements must be combined when generating the domain model from the document model.""" .
+
+
+###  http://raml.org/vocabularies/document#SourceMap
+:SourceMap rdf:type owl:Class ;
+           rdfs:label "SourceMaps include tags with syntax specific information obtained when parsing a particular specification syntax like RAML or OpenAPI. It can be used to re-generate the document from the RDF model with a similar syntax" .
+
+
+###  http://raml.org/vocabularies/document#Tag
+:Tag rdf:type owl:Class ;
+     rdfs:label "Particular annotation about the syntax an element in the RDF domain was parsed from. It is identified by a label for the kind of annotation that is private to the parser/generator tool that generated the RDF model" .
+
+
+###  http://raml.org/vocabularies/document#Unit
+:Unit rdf:type owl:Class ;
+      rdfs:label "Base class for every single document model unit. After parsing a document the parser generate parsing Units. Units encode the domain elements and can reference other units to re-use descriptions." .
+
+
+###  Generated by the OWL API (version 4.2.5.20160517-0735) https://github.com/owlcs/owlapi
