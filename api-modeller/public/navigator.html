@@ -157,7 +157,8 @@
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
                 <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                       css: {'is-active': viewModel.focusedId() === $data.id || $data.id.indexOf(viewModel.focusedId()) === 0}"></a>
                 <span data-bind="if: $data.expanded && $data.endpoints && $data.endpoints.length > 0">
                     <p class="menu-label submenu-label">Endpoints</p>
                     <ul data-bind="foreach: $data.endpoints">
@@ -166,7 +167,8 @@
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                             </span>
                             <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                                   click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                                                   click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                                   css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                             <span data-bind="template: {name: 'operations-template', data: $data}"></span>
                         </li>
                     </ul>
@@ -180,7 +182,8 @@
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
                 <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                       css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                 <span data-bind="template: {name: 'operations-template', data: $data}"></span>
             </li>
         </ul>
@@ -191,7 +194,8 @@
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
                 <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                       css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                 <span data-bind="template: {name: 'responses-template', data: $data}"></span>
             </li>
         </ul>
@@ -202,13 +206,14 @@
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
                 <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                       css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                 <span data-bind="template: {name: 'payload-template', data: $data}"></span>
             </li>
         </ul>
         <p class="menu-label">Payloads</p>
         <ul class="menu-list" data-bind="foreach: domainUnits()['Payload']">
-            <li>
+            <li data-bind="css: {'is-active': viewModel.focusedId() === $data.id}">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
@@ -227,7 +232,8 @@
                     <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data.schema) }"></i>
                     </span>
-                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data.schema)"></a>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data.schema),
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                 </li>
             </ul>
         </span>
@@ -242,7 +248,8 @@
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                     </span>
                     <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                     <span data-bind="template: {name: 'schema-template', data: $data}"></span>
                 </li>
             </ul>
@@ -258,12 +265,14 @@
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                     </span>
                     <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                     <span data-bind="template: {name: 'payload-template', data: $data}"></span>
                 </li>
             </ul>
         </span>
     </script>
+
     <script type="text/html" id="operations-template">
         <span data-bind="if: $data.expanded && $data.operations && $data.operations.length > 0">
             <p class="menu-label submenu-label">Supported Operations</p>
@@ -273,7 +282,8 @@
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                     </span>
                     <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
-                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                     <span data-bind="template: {name: 'responses-template', data: $data}"></span>
                 </li>
             </ul>

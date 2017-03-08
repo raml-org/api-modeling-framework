@@ -102,9 +102,11 @@
                        (domain-model this))
                model (*find-element model id)]
            (if (some? model)
-             (document/map->ParsedFragment {:location (first (string/split id #"#"))
-                                            :encodes model
-                                            :resolved (= model "domain")})
+             (to-model (document/map->ParsedDocument {:location id
+                                                      :encodes model
+                                                      :resolved (= model "domain")
+                                                      :references (:references res)
+                                                      :declares (:declares res)}))
              nil)))))))
 
 (defrecord RAMLParser []

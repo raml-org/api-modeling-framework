@@ -12,7 +12,7 @@ import { UI } from "./view_models/ui";
 import { DomainElement, DomainModel } from "./main/domain_model";
 import {Query} from "./view_models/query";
 
-export type NavigatorSection = "files" | "logic";
+export type NavigatorSection = "files" | "logic" | "domain";
 export type EditorSection = "raml" | "open-api" | "api-model" | "diagram" | "query";
 
 export interface ReferenceFile {
@@ -23,6 +23,17 @@ export interface ReferenceFile {
 
 export class ViewModel {
 
+    // The model information stored as the global information, this will be used to generate the units and
+    // navigation options, subsets of this model can be selected anc become the active model
+    public documentModel?: ModelProxy = undefined;
+    // The global 'level' for the active document
+    public documentLevel: ModelLevel = "document";
+    // The model used to show the spec text in the editor, this can change as different parts fo the global
+    // model are selected and we need to show different spec texts
+    public model?: ModelProxy = undefined;
+    public referenceToDomainUnits: { [id: string]: DomainModel[] } = {};
+
+    // Observables for the main interface state
     public navigatorSection: KnockoutObservable<NavigatorSection> = ko.observable<NavigatorSection>("files");
     public editorSection: KnockoutObservable<EditorSection> = ko.observable<EditorSection>("raml");
     public references: KnockoutObservableArray<ReferenceFile> = ko.observableArray<ReferenceFile>([]);
@@ -31,18 +42,16 @@ export class ViewModel {
     public fragmentUnits: KnockoutObservableArray<Fragment> = ko.observableArray<Fragment>([]);
     public moduleUnits: KnockoutObservableArray<Module> = ko.observableArray<Module>([]);
     public domainUnits: KnockoutObservable<{ [kind: string]: DomainElement[] }> = ko.observable<{ [kind: string]: DomainElement[] }>({});
+    public generationOptions: KnockoutObservable<any> = ko.observable<any>({ "source-maps?": false });
+    public generateSourceMaps: KnockoutObservable<string> = ko.observable<string>("no");
+    public focusedId: KnockoutObservable<string> = ko.observable<string>("");
+
+    // Nested interfaces
     public ui: UI = new UI();
     public nav: Nav = new Nav("document");
     public loadModal: LoadModal = new LoadModal();
-    public documentLevel: ModelLevel = "document";
-    public documentModel?: ModelProxy = undefined;
-    public model?: ModelProxy = undefined;
-    public generationOptions: KnockoutObservable<any> = ko.observable<any>({ "source-maps?": false });
-    public generateSourceMaps: KnockoutObservable<string> = ko.observable<string>("no");
-    public referenceToDomainUnits: { [id: string]: DomainModel[] } = {};
     public diagram: any;
     public query: Query = new Query();
-
 
     constructor(public editor: IStandaloneCodeEditor) {
         // events we are subscribed
@@ -55,12 +64,34 @@ export class ViewModel {
                     this.documentModel = model;
                     this.model = model;
                     this.selectedReference(this.makeReference(this.documentModel!.location(), this.documentModel!.location()));
+                    this.focusedId(this.documentModel!.location());
                     this.resetUnits();
                     this.resetReferences();
                     this.resetDocuments();
                 }
             });
         });
+        this.navigatorSection.subscribe((section) => {
+            switch(section) {
+                case "files": {
+                    if (this.model && this.selectedReference() && this.model.location() !== this.selectedReference()!.id) {
+                        this.selectNavigatorFile(this.selectedReference()!);
+                    }
+                    break;
+                }
+                case "logic": {
+                    if (this.model && this.selectedReference() && this.model.location() !== this.selectedReference()!.id) {
+                        this.selectNavigatorFile(this.selectedReference()!);
+                    }
+                    break;
+                }
+                case "domain": {
+                    break;
+                }
+            }
+            this.resetDiagram();
+        });
+
         this.nav.on(Nav.DOCUMENT_LEVEL_SELECTED_EVENT, (level: ModelLevel) => {
             this.onDocumentLevelChange(level);
         });
@@ -77,6 +108,7 @@ export class ViewModel {
 
     public selectNavigatorFile(reference: ReferenceFile) {
         this.selectedReference(reference);
+        this.focusedId(reference.id);
         if (this.documentModel != null) {
             if (this.documentModel.location() !== reference.id) {
                 this.model = this.documentModel.nestedModel(reference.id);
@@ -90,8 +122,39 @@ export class ViewModel {
 
     public expandDomainUnit(unit: DomainElement) {
         unit["expanded"] = !unit["expanded"];
+        this.focusedId(unit.id);
         this.domainUnits({});
         this.resetDomainUnits();
+        this.selectElementDocument(unit);
+    }
+
+    public selectElementDocument(unit: DomainElement) {
+        if (this.documentModel) {
+            const topLevelUnit = this.isTopLevelUnit(unit);
+            if (topLevelUnit != null) {
+                const foundRef = this.references().find(ref => unit.id.startsWith(ref.id));
+                if (foundRef) {
+                    this.selectNavigatorFile(foundRef);
+                }
+            } else {
+                const unitModel = this.documentModel.findElement(this.documentLevel, unit.id);
+                if (unitModel != null) {
+                    this.model = unitModel;
+                    this.resetDocuments();
+                } else {
+                    console.log(`Cannot find element with id ${unit.id}`);
+                }
+            }
+        }
+    }
+
+    public isTopLevelUnit(unit: DomainElement) {
+        for (var kind in this.domainUnits()) {
+            const found = this.domainUnits()[kind].find( domainUnit => domainUnit.id === unit.id);
+            if (found != null) {
+                return found;
+            }
+        }
     }
 
     private onDocumentLevelChange(level: ModelLevel) {
@@ -199,17 +262,21 @@ export class ViewModel {
             }
             window['resizeFn']();
         } else if (section === "diagram") {
-            // Collecting the units for the diagram
-            const units: (DocumentId & Unit)[] = ([] as (DocumentId & Unit)[])
-                .concat(this.documentUnits())
-                .concat(this.fragmentUnits())
-                .concat(this.moduleUnits());
-            this.diagram = new (require("./view_models/diagram").Diagram)();
-            this.diagram.process(units);
-            this.diagram.render("graph-container");
+            this.resetDiagram();
         } else {
 
         }
+    }
+
+    public resetDiagram() {
+        // Collecting the units for the diagram
+        const units: (DocumentId & Unit)[] = ([] as (DocumentId & Unit)[])
+            .concat(this.documentUnits())
+            .concat(this.fragmentUnits())
+            .concat(this.moduleUnits());
+        this.diagram = new (require("./view_models/diagram").Diagram)(this.navigatorSection() === "domain" ? "domain" : "document");
+        this.diagram.process(units);
+        this.diagram.render("graph-container");
     }
 
     // Reset the list of references for the current model

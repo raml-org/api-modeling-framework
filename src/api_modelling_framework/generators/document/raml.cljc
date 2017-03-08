@@ -77,10 +77,24 @@
                     (assoc :type-hint :method)
                     (assoc :document-generator to-raml))
         fragment-type-tag (first (document/find-tag model document/document-type-tag))
-        fragment-type (if (some? fragment-type-tag) (document/value fragment-type-tag) nil)]
+        fragment-type (if (some? fragment-type-tag) (document/value fragment-type-tag) nil)
+        ;; Parsing this is going to be a always a DomainElement,
+        ;; there's a corner case when we invoke find-element in the core/Domain interface
+        ;; In this case we wrap the found domain element into a Fragment but there's
+        ;; no currently logic to transform the specific domain element (APIDocumentation, Operation, etc)
+        ;; into a generic DomainElement, we just assign it as we find it, that's the reason we need to
+        ;; do this check here.
+        ;;
+        ;; @todo
+        ;; Write a to-domain-element function so we can get rid of this logic and have
+        ;; a unified behaviour
+        encoded (document/encodes model)
+        encoded (if (satisfies? domain/DomainElement encoded)
+                  (domain/to-domain-node encoded)
+                  encoded)]
     (utils/clean-nils {(keyword "@location") (document/location model)
                        (keyword "@data") (utils/clean-nils
-                                          (merge (domain-generator/to-raml (domain/to-domain-node (document/encodes model)) context)
+                                          (merge (domain-generator/to-raml encoded context)
                                                  {:usage (document/description model)}))
                        (keyword "@fragment") fragment-type})))
 

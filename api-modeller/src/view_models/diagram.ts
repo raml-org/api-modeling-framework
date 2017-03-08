@@ -36,7 +36,7 @@ export class Diagram {
     public scale = 1;
     public elements: (DocumentId & Unit)[];
 
-    constructor() {}
+    constructor(public level: "domain" | "document") {}
 
     process(elements: (DocumentId & Unit)[]) {
         this.nodes = {};
@@ -165,7 +165,7 @@ export class Diagram {
         if (element.encodes != null) {
             const encodes = element.encodes;
             const encoded =  encodes.domain ? encodes.domain.root : undefined;
-            if (encoded) {
+            if (encoded && this.level === "domain") {
                 this.processDomainElement(element.id, encodes.domain ? encodes.domain.root : undefined);
             } else {
                 this.makeNode(encodes, "domain");
@@ -191,7 +191,7 @@ export class Diagram {
         if (document.encodes != null) {
             const encodes = document.encodes;
             const encoded =  encodes.domain ? encodes.domain.root : undefined;
-            if (encoded) {
+            if (encoded && this.level === "domain") {
                 this.processDomainElement(document.id, encodes.domain ? encodes.domain.root : undefined);
             } else {
                 this.makeNode(encodes, "domain");
