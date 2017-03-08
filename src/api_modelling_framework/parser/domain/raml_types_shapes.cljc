@@ -81,21 +81,29 @@
         items  (map (fn [i item-type]
                       (parse-type item-type (assoc context :parsed-location (str parsed-location "/items/" i))))
                     (range 0 (count item-types))
-                    item-types)]
+                    item-types)
+        label (let [items-label (->> items (map #(get % v/sorg:name)) flatten (filter some?) first)]
+                (if (some? items-label)
+                  (str (get items-label "@value") "[]")
+                  nil))]
 
     (->> {"@type" [(v/sh-ns "Shape")
                    (v/shapes-ns "Array")]
           "@id" parsed-location
+          v/sorg:name (if (some? label) [{"@value" label}] nil)
           (v/shapes-ns "item") items}
+         (utils/clean-nils)
          (parse-type-constraints node))))
 
 (defn parse-scalar [parsed-location scalar-type]
   {"@id" (str parsed-location "/scalar-shape")
+   v/sorg:name [{"@value" "XML-Schema Type"}]
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "Scalar")]
    (v/sh-ns "dataType") [{"@id" scalar-type}]})
 
 (defn parse-json-node [parsed-location text]
   {"@id" (str parsed-location "/json-schema-shape")
+   v/sorg:name [{"@value" "JSON-Schema Type"}]
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "JSONSchema")]
    (v/shapes-ns "schemaRaw") [{"@value" text}]})
 
@@ -108,8 +116,13 @@
   "Checks if a provided string points to one of the types defined at the APIDocumentation level"
   [type-string {:keys [references parsed-location]}]
   (if-let [type-reference (get references (keyword type-string))]
-    {"@id" (str parsed-location "/ref-shape")
-     "@type" [(-> type-reference domain/shape (get "@id"))]}
+    (let [remote-id (-> type-reference domain/shape (get "@id"))
+          label (or (-> type-reference :name)
+                    (-> type-reference domain/shape :name)
+                    (str "#" (last (string/split remote-id #"#"))))]
+      {"@id" (str parsed-location "/ref-shape")
+       v/sorg:name [{"@value" (str "#" label)}]
+       "@type" [remote-id]})
     nil))
 
 (defn check-multiple-inheritance

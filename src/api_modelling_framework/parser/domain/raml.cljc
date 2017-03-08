@@ -256,7 +256,10 @@
                          sources (concat sources (common/generate-is-type-sources type-name
                                                                                   (utils/path-join location type-name)
                                                                                   (utils/path-join parsed-location type-name)))
-                         parsed-type (assoc type-fragment :sources sources)]
+                         parsed-type (assoc type-fragment :sources sources)
+                         parsed-type (if (nil? (:name parsed-type))
+                                       (assoc parsed-type :name type-name)
+                                       parsed-type)]
                      (assoc acc (keyword (utils/alias-chain type-name context)) parsed-type)))
                  {}))))
 
@@ -363,6 +366,7 @@
                         (mapv (fn [op] (if-let [operation (#{:get :post :patch :put :delete :head :options} op)]
                                         (assoc (parse-ast (get node operation {})
                                                           (-> context
+                                                              (assoc :method (utils/safe-str op))
                                                               (assoc :parsed-location resource-id)
                                                               (assoc :type-hint :method)))
                                                :method (utils/safe-str operation))

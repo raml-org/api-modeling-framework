@@ -13,6 +13,7 @@
                     [api-modelling-framework.generators.document.raml :as raml-document-generator]
                     [api-modelling-framework.generators.document.openapi :as openapi-document-generator]
                     [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
+                    [clojure.string :as string]
                     [api-modelling-framework.platform :as platform]
                     [clojure.walk :refer [keywordize-keys]]
                     [taoensso.timbre :as timbre :refer [debug]]))
@@ -31,6 +32,7 @@
                      [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
                      [api-modelling-framework.platform :as platform]
                      [clojure.walk :refer [keywordize-keys]]
+                     [clojure.string :as string]
                      [taoensso.timbre :as timbre :refer-macros [debug]])))
 
 (defn -registerInterface [] nil)
@@ -44,7 +46,8 @@
   (^:export location [this] "Location of the model if any")
   (^:export document-model [this] "returns the domain model for the parsed document")
   (^:export domain-model [this] "Resolves the document model generating a domain model")
-  (^:export reference-model [this location] "Returns a model for a nested reference "))
+  (^:export reference-model [this location] "Returns a model for a nested reference ")
+  (^:eport find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment"))
 
 (defprotocol Parser
   (^:export parse-file [this uri cb]
@@ -57,6 +60,20 @@
    "Serialises a model into a string")
   (^:export generate-file [this uri model options cb]
    "Serialises a model into a file located at the provided URI"))
+
+(defn *find-element [model id]
+  (cond
+    (map? model) (if (= id (:id model))
+                   model
+                   (->> (vals model)
+                        (map (fn [m] (*find-element m id)))
+                        (filter some?)
+                        first))
+    (coll? model) (->> model
+                       (map (fn [m] (*find-element m id)))
+                       (filter some?)
+                       first)
+    :else         nil))
 
 (defn to-model
   ([res]
@@ -78,7 +95,17 @@
                                 first)]
              (if (some? reference)
                (to-model reference)
-               (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find reference " location " in the model")))))))))))
+               (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find reference " location " in the model")))))))
+       (find-element [this level id]
+         (let [model (if (= level "document")
+                       res
+                       (domain-model this))
+               model (*find-element model id)]
+           (if (some? model)
+             (document/map->ParsedFragment {:location (first (string/split id #"#"))
+                                            :encodes model
+                                            :resolved (= model "domain")})
+             nil)))))))
 
 (defrecord RAMLParser []
   Parser

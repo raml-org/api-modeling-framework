@@ -1,4 +1,4 @@
-import {DocumentId, Fragment, Module, Document, Unit} from "../main/units_model";
+import {DocumentId, Fragment, Module, Document, Unit, DomainElement} from "../main/units_model";
 import * as joint from "jointjs";
 import Rect = joint.shapes.basic.Rect;
 import Link = joint.dia.Link;
@@ -6,8 +6,18 @@ import Generic = joint.shapes.basic.Generic;
 import Cell = joint.dia.Cell;
 import Graph = joint.dia.Graph;
 import Paper = joint.dia.Paper;
+import * as domain from "../main/domain_model";
+import {APIDocumentation} from "../main/domain_model";
+import {EndPoint} from "../main/domain_model";
+import {Operation} from "../main/domain_model";
+import {Response} from "../main/domain_model";
+import {Request} from "../main/domain_model";
+import {Payload} from "../main/domain_model";
+import * as utils from "../utils";
 
 const CHAR_SIZE = 10;
+
+const DEFAULT_DOMAIN_COLOR = "wheat";
 
 const COLORS = {
     "encodes": "wheat",
@@ -154,13 +164,18 @@ export class Diagram {
         this.makeNode(element, "unit");
         if (element.encodes != null) {
             const encodes = element.encodes;
-            this.makeNode(encodes, "domain");
-            this.makeLink(element.id, element.encodes.id, "encodes");
+            const encoded =  encodes.domain ? encodes.domain.root : undefined;
+            if (encoded) {
+                this.processDomainElement(element.id, encodes.domain ? encodes.domain.root : undefined);
+            } else {
+                this.makeNode(encodes, "domain");
+                this.makeLink(element.id, encodes.id, "encodes");
+            }
         }
     }
 
     private processModuleNode(element: Module) {
-        this.makeNode(element, "unit")
+        this.makeNode(element, "unit");
         if (element.declares != null) {
             element.declares.forEach(declaration => {
                 if (this.nodes[declaration.id] == null) {
@@ -175,8 +190,13 @@ export class Diagram {
         this.makeNode(document, "unit");
         if (document.encodes != null) {
             const encodes = document.encodes;
-            this.makeNode(encodes, "domain");
-            this.makeLink(document.id, document.encodes.id, "encodes");
+            const encoded =  encodes.domain ? encodes.domain.root : undefined;
+            if (encoded) {
+                this.processDomainElement(document.id, encodes.domain ? encodes.domain.root : undefined);
+            } else {
+                this.makeNode(encodes, "domain");
+                this.makeLink(document.id, encodes.id, "encodes");
+            }
         }
         if (document.declares != null) {
             document.declares.forEach(declaration => {
@@ -185,6 +205,81 @@ export class Diagram {
                 }
                 this.makeLink(document.id, declaration.id, "declares");
             })
+        }
+    }
+
+    private processDomainElement(parentId: string,  element: domain.DomainElement | undefined) {
+        if (element) {
+            const domainKind = element.kind;
+            switch(domainKind) {
+                case "APIDocumentation": {
+                    console.log("Processing APIDomain in graph " + element.id);
+                    this.makeNode(element, "domain");
+                    this.makeLink(parentId, element.id, "encodes");
+                    ((element as APIDocumentation).endpoints||[]).forEach(endpoint => {
+                        this.processDomainElement(element.id, endpoint);
+                    });
+                    break;
+                }
+                case "EndPoint": {
+                    console.log("Processing EndPoint in graph " + element.id);
+                    this.makeNode(element, "domain");
+                    this.makeLink(parentId, element.id, "endpoint");
+                    ((element as EndPoint).operations||[]).forEach(operation => {
+                        this.processDomainElement(element.id, operation);
+                    });
+                    break;
+                }
+                case "Operation": {
+                    console.log("Processing Operation in graph " + element.id);
+                    this.makeNode({id: element.id, label: (element as Operation).method}, "domain");
+                    this.makeLink(parentId, element.id, "supportedOperation");
+                    ((element as Operation).requests||[]).forEach(request => {
+                        this.processDomainElement(element.id, request);
+                    });
+                    ((element as Operation).responses||[]).forEach(response => {
+                        this.processDomainElement(element.id, response);
+                    });
+                    break;
+                }
+                case "Response": {
+                    console.log("Processing Response in graph " + element.id);
+                    this.makeNode({id: element.id, label: (element as Response).status}, "domain");
+                    this.makeLink(parentId, element.id, "returns");
+                    ((element as Response).payloads||[]).forEach(payload => {
+                        this.processDomainElement(element.id, payload);
+                    });
+                    break;
+                }
+                case "Request": {
+                    console.log("Processing Request in graph " + element.id);
+                    this.makeNode({id: element.id, label: "request"}, "domain");
+                    this.makeLink(parentId, element.id, "expects");
+                    ((element as Request).payloads||[]).forEach(payload => {
+                        this.processDomainElement(element.id, payload);
+                    });
+                    break;
+                }
+                case "Payload": {
+                    console.log("Processing Payload in graph " + element.id);
+                    this.makeNode({id: element.id, label: (element as Payload).mediaType || "*/*"}, "domain");
+                    this.makeLink(parentId, element.id, "payload");
+                    this.processDomainElement(element.id, (element as Payload).schema);
+                    break;
+                }
+                case "Schema": {
+                    console.log("Processing Schema in graph " + element.id);
+                    this.makeNode(element, "domain");
+                    this.makeLink(parentId, element.id, "schema");
+                    break;
+                }
+                default: {
+                    this.makeNode(element, "domain");
+                    break;
+                }
+            }
+        } else {
+            return undefined
         }
     }
 
@@ -199,14 +294,15 @@ export class Diagram {
         }
     }
 
-    private makeNode(node: DocumentId, kind: string) {
+    private makeNode(node: {id: string, label: string}, kind: string) {
+        const label = node.label != null ? node.label : utils.label(node.id);
         this.nodes[node.id] = new Rect({
             attrs: {
                 rect: {
                     fill: COLORS[kind]
                 },
                 text: {
-                    text: node.label,
+                    text: label,
                     fill: "black"
                 }
             },
@@ -215,23 +311,25 @@ export class Diagram {
                 y: 0
             },
             size: {
-                width: node.label.length * CHAR_SIZE,
+                width: label.length * CHAR_SIZE,
                 height: 30
             }
         });
+        console.log("GENERATING NODE " + node.id + " => " + this.nodes[node.id].id);
     }
 
     private makeLink(sourceId: string, targetId: string, label: string) {
+        console.log("GENERATING LINK FROM " + this.nodes[sourceId].id + " TO " + this.nodes[targetId].id);
         this.links.push(new Link({
             source: {id: this.nodes[sourceId].id },
             target: {id: this.nodes[targetId].id },
             attrs: {
                 ".marker-target": {
                     d: "M 10 0 L 0 5 L 10 10 z",
-                    fill: COLORS[label],
-                    stroke: COLORS[label]
+                    fill: COLORS[label] || DEFAULT_DOMAIN_COLOR,
+                    stroke: COLORS[label] || DEFAULT_DOMAIN_COLOR
                 },
-                ".connection": { stroke: COLORS[label] }
+                ".connection": { stroke: COLORS[label] || DEFAULT_DOMAIN_COLOR }
             },
             labels: [{
                 position: 0.5,

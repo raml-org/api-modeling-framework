@@ -61,21 +61,23 @@ export class UI {
             if (unit.kind === "APIDocumentation") {
                 return label(unit.id)
             } else if (unit.kind === "EndPoint") {
-                return (unit as EndPoint).path || label(unit.id);
+                return (unit as EndPoint).path || unit.label || label(unit.id);
             } else if (unit.kind === "Operation") {
-                return (unit as Operation).method || label(unit.id)
+                return (unit as Operation).method || unit.label || label(unit.id)
             } else if (unit.kind === "Response") {
-                return (unit as Response).status || label(unit.id)
+                return (unit as Response).status || unit.label || label(unit.id)
             } else if (unit.kind === "Payload") {
                 return (unit as Payload).mediaType || "*/*";
             } else if (unit.kind === "Schema") {
-                if ((unit as Schema).shape != null) {
+                if (unit.label) {
+                    return unit.label;
+                } else if ((unit as Schema).shape != null) {
                     return label((unit as Schema).shape["@id"]);
                 } else {
                     return label(unit.id);
                 }
             } else {
-                return label(unit.id)
+                return unit.label || label(unit.id)
             }
         }
     }

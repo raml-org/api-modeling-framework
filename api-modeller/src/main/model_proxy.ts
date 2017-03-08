@@ -19,7 +19,6 @@ function from_clj(x: any) {
 }
 
 function to_clj(x: any) {
-    console.log("********** TO CLJ");
     try {
         return apiFramework.toClj(x)
     } catch (e) {
@@ -165,5 +164,14 @@ export class ModelProxy {
     nestedModel(location: string): ModelProxy {
         const rawModel = apiFramework.reference_model(this.raw, location);
         return new ModelProxy(rawModel, this.sourceType);
+    }
+
+    findElement(level: ModelLevel, id: string): ModelProxy | undefined {
+        const rawModel = apiFramework.find_element(this.raw, level, id);
+        if (rawModel) {
+            return new ModelProxy(rawModel, this.sourceType);
+        } else {
+            return undefined;
+        }
     }
 }

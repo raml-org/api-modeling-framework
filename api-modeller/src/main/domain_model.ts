@@ -35,6 +35,7 @@ export const SCHEMA: string = HTTP_NS + "Schema";
 
 // RDF Properties
 export const LABEL: string = DOCUMENT_NS + "label";
+export const NAME: string = SCHEMA_ORG_NS + "name";
 export const ENCODES: string = DOCUMENT_NS + "encodes";
 export const ENDPOINT: string = HTTP_NS + "endpoint";
 export const PATH: string = HTTP_NS + "path";
@@ -169,7 +170,7 @@ export class DomainModel {
     private buildDomainElement(encoded: any) {
         if (encoded == null) { return undefined }
         console.log("* Building DomainElement " + encoded["@id"]);
-        const label = extract_value(encoded, LABEL);
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const element = new DomainElement(encoded, encoded["@id"], label);
         this.elements[element.id] = element;
         return element;
@@ -178,7 +179,7 @@ export class DomainModel {
     private buildAPIDocumentation(encoded: any) {
         if (encoded == null) { return undefined }
         console.log("* Building APIDocumentation " + encoded["@id"]);
-        const label = extract_value(encoded, LABEL);
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const endpoints = extract_links(encoded, ENDPOINT).map(elm => this.buildEndPoint(elm));
         const element = new APIDocumentation(encoded, encoded["@id"], label, endpoints);
         this.elements[element.id] = element;
@@ -189,7 +190,7 @@ export class DomainModel {
         if (encoded == null) { return undefined }
         console.log("* Building EndPoint " + encoded["@id"]);
         const path = extract_value(encoded, PATH);
-        const label = extract_value(encoded, LABEL);
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const operations = extract_links(encoded, SUPPORTED_OPERATION).map(elm => this.buildOperation(elm));
         const element = new EndPoint(encoded, encoded["@id"], path, label, operations);
         this.elements[element.id] = element;
@@ -200,8 +201,8 @@ export class DomainModel {
         if (encoded == null) { return undefined }
         console.log("* Building Operation " + encoded["@id"]);
         const method = extract_value(encoded, METHOD);
-        const label = extract_value(encoded, LABEL);
-        const requests = extract_links(encoded, EXPECTS).map(elm => this.buildResponse(elm));
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
+        const requests = extract_links(encoded, EXPECTS).map(elm => this.buildRequest(elm));
         const responses = extract_links(encoded, RETURNS).map(elm => this.buildResponse(elm));
         const element = new Operation(encoded, encoded["@id"], label, method, requests, responses);
         this.elements[element.id] = element;
@@ -214,7 +215,7 @@ export class DomainModel {
         console.log("* Building Response " + encoded["@id"]);
         const status = extract_value(encoded, STATUS_CODE);
         const payloads = extract_links(encoded, RESPONSE_PAYLOAD).map(elm => this.buildPayload(elm));
-        const label = extract_value(encoded, LABEL);
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const element = new Response(encoded, encoded["@id"], label, status, payloads);
         this.elements[element.id] = element;
         return element;
@@ -222,10 +223,9 @@ export class DomainModel {
 
     private buildRequest(encoded: any) {
         if (encoded == null) { return undefined }
-        const status = extract_value(encoded, STATUS_CODE);
         const payloads = extract_links(encoded, RESPONSE_PAYLOAD).map(elm => this.buildPayload(elm));
-        const label = extract_value(encoded, LABEL);
-        const element = new Response(encoded, encoded["@id"], label, status, payloads);
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
+        const element = new Request(encoded, encoded["@id"], label, payloads);
         this.elements[element.id] = element;
         return element;
     }
@@ -234,12 +234,8 @@ export class DomainModel {
         if (encoded == null) { return undefined }
         console.log("* Building Payload " + encoded["@id"]);
         const mediaType = extract_value(encoded, MEDIA_TYPE);
-        console.log("GOT MEDIA TYPE " + mediaType);
-        console.log("CHECKING SCHEMA " + PAYLOAD_SCHEMA);
         const schema = this.buildSchema(extract_link(encoded, PAYLOAD_SCHEMA));
-        console.log("GOT A SCHEMA");
-        console.log(JSON.stringify(schema, null, 2));
-        const label = extract_value(encoded, LABEL);
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const element = new Payload(encoded, encoded["@id"], label, mediaType, schema);
         this.elements[element.id] = element;
         return element;
@@ -247,9 +243,8 @@ export class DomainModel {
 
     private buildSchema(encoded: any) {
         if (encoded == null) { return undefined }
-        console.log("* Building shape " + encoded["@id"]);
         const shape = extract_link(encoded, SCHEMA_SHAPE);
-        const label = extract_value(encoded, LABEL);
+        const label = extract_value(shape, NAME) || extract_value(encoded, LABEL);
         const element = new Schema(encoded, encoded["@id"], label, shape);
         this.elements[element.id] = element;
         return element;
