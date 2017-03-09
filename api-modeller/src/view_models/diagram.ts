@@ -18,6 +18,7 @@ import * as utils from "../utils";
 const CHAR_SIZE = 10;
 
 const DEFAULT_DOMAIN_COLOR = "wheat";
+const SELECTED_STROKE_COLOR = "red";
 
 const COLORS = {
     "encodes": "wheat",
@@ -36,7 +37,7 @@ export class Diagram {
     public scale = 1;
     public elements: (DocumentId & Unit)[];
 
-    constructor(public level: "domain" | "document") {}
+    constructor(public selectedId: string, public level: "domain" | "document", public handler: (id: string, unit: any) => undefined) {}
 
     process(elements: (DocumentId & Unit)[]) {
         this.nodes = {};
@@ -122,16 +123,17 @@ export class Diagram {
                 options["model"] = graph;
                 this.paper = new Paper(options);
 
-                /*
-                 paper.on("cell:pointerdown",
-                 (cellView, evt, x, y) => {
-                 let query = cellView.model.attributes.attrs.query as QueryNode;
-                 if (query) {
-                 openQueryTransformerWindow(query.toJson());
-                 }
-                 }
+
+                this.paper.on("cell:pointerdown",
+                    (cellView, evt, x, y) => {
+                        const nodeId = cellView.model.attributes.attrs.nodeId;
+                        const unit = cellView.model.attributes.attrs.unit;
+                        //console.log(cellView);
+                        //console.log(nodeId);
+                        this.handler(nodeId, unit);
+                    }
                  );
-                 */
+
                 graph.addCells(cells);
                 //this.paper.fitToContent();
                 //this.resetZoom();
@@ -161,25 +163,25 @@ export class Diagram {
     }
 
     private processFragmentNode(element: Fragment) {
-        this.makeNode(element, "unit");
+        this.makeNode(element, "unit", element);
         if (element.encodes != null) {
             const encodes = element.encodes;
             const encoded =  encodes.domain ? encodes.domain.root : undefined;
             if (encoded && this.level === "domain") {
                 this.processDomainElement(element.id, encodes.domain ? encodes.domain.root : undefined);
             } else {
-                this.makeNode(encodes, "domain");
+                this.makeNode(encodes, "domain", encodes);
                 this.makeLink(element.id, encodes.id, "encodes");
             }
         }
     }
 
     private processModuleNode(element: Module) {
-        this.makeNode(element, "unit");
+        this.makeNode(element, "unit", element);
         if (element.declares != null) {
             element.declares.forEach(declaration => {
                 if (this.nodes[declaration.id] == null) {
-                    this.makeNode(declaration, "declaration");
+                    this.makeNode(declaration, "declaration", declaration);
                 }
                 this.makeLink(element.id, declaration.id, "declares");
             });
@@ -187,21 +189,21 @@ export class Diagram {
     }
 
     private processDocumentNode(document: Document) {
-        this.makeNode(document, "unit");
+        this.makeNode(document, "unit", document);
         if (document.encodes != null) {
             const encodes = document.encodes;
             const encoded =  encodes.domain ? encodes.domain.root : undefined;
             if (encoded && this.level === "domain") {
                 this.processDomainElement(document.id, encodes.domain ? encodes.domain.root : undefined);
             } else {
-                this.makeNode(encodes, "domain");
+                this.makeNode(encodes, "domain", encodes);
                 this.makeLink(document.id, encodes.id, "encodes");
             }
         }
         if (document.declares != null) {
             document.declares.forEach(declaration => {
                 if (this.nodes[declaration.id] == null) {
-                    this.makeNode(declaration, "declaration");
+                    this.makeNode(declaration, "declaration", declaration);
                 }
                 this.makeLink(document.id, declaration.id, "declares");
             })
@@ -213,8 +215,8 @@ export class Diagram {
             const domainKind = element.kind;
             switch(domainKind) {
                 case "APIDocumentation": {
-                    console.log("Processing APIDomain in graph " + element.id);
-                    this.makeNode(element, "domain");
+                    //console.log("Processing APIDomain in graph " + element.id);
+                    this.makeNode(element, "domain", element);
                     this.makeLink(parentId, element.id, "encodes");
                     ((element as APIDocumentation).endpoints||[]).forEach(endpoint => {
                         this.processDomainElement(element.id, endpoint);
@@ -222,8 +224,8 @@ export class Diagram {
                     break;
                 }
                 case "EndPoint": {
-                    console.log("Processing EndPoint in graph " + element.id);
-                    this.makeNode(element, "domain");
+                    //console.log("Processing EndPoint in graph " + element.id);
+                    this.makeNode(element, "domain", element);
                     this.makeLink(parentId, element.id, "endpoint");
                     ((element as EndPoint).operations||[]).forEach(operation => {
                         this.processDomainElement(element.id, operation);
@@ -231,8 +233,8 @@ export class Diagram {
                     break;
                 }
                 case "Operation": {
-                    console.log("Processing Operation in graph " + element.id);
-                    this.makeNode({id: element.id, label: (element as Operation).method}, "domain");
+                    //console.log("Processing Operation in graph " + element.id);
+                    this.makeNode({id: element.id, label: (element as Operation).method}, "domain", element);
                     this.makeLink(parentId, element.id, "supportedOperation");
                     ((element as Operation).requests||[]).forEach(request => {
                         this.processDomainElement(element.id, request);
@@ -243,8 +245,8 @@ export class Diagram {
                     break;
                 }
                 case "Response": {
-                    console.log("Processing Response in graph " + element.id);
-                    this.makeNode({id: element.id, label: (element as Response).status}, "domain");
+                    //console.log("Processing Response in graph " + element.id);
+                    this.makeNode({id: element.id, label: (element as Response).status}, "domain", element);
                     this.makeLink(parentId, element.id, "returns");
                     ((element as Response).payloads||[]).forEach(payload => {
                         this.processDomainElement(element.id, payload);
@@ -252,8 +254,8 @@ export class Diagram {
                     break;
                 }
                 case "Request": {
-                    console.log("Processing Request in graph " + element.id);
-                    this.makeNode({id: element.id, label: "request"}, "domain");
+                    //console.log("Processing Request in graph " + element.id);
+                    this.makeNode({id: element.id, label: "request"}, "domain", element);
                     this.makeLink(parentId, element.id, "expects");
                     ((element as Request).payloads||[]).forEach(payload => {
                         this.processDomainElement(element.id, payload);
@@ -261,20 +263,20 @@ export class Diagram {
                     break;
                 }
                 case "Payload": {
-                    console.log("Processing Payload in graph " + element.id);
-                    this.makeNode({id: element.id, label: (element as Payload).mediaType || "*/*"}, "domain");
+                    //console.log("Processing Payload in graph " + element.id);
+                    this.makeNode({id: element.id, label: (element as Payload).mediaType || "*/*"}, "domain", element);
                     this.makeLink(parentId, element.id, "payload");
                     this.processDomainElement(element.id, (element as Payload).schema);
                     break;
                 }
                 case "Schema": {
-                    console.log("Processing Schema in graph " + element.id);
-                    this.makeNode(element, "domain");
+                    //console.log("Processing Schema in graph " + element.id);
+                    this.makeNode(element, "domain", element);
                     this.makeLink(parentId, element.id, "schema");
                     break;
                 }
                 default: {
-                    this.makeNode(element, "domain");
+                    this.makeNode(element, "domain", element);
                     break;
                 }
             }
@@ -294,17 +296,21 @@ export class Diagram {
         }
     }
 
-    private makeNode(node: {id: string, label: string}, kind: string) {
+    private makeNode(node: {id: string, label: string}, kind: string, unit: any) {
         const label = node.label != null ? node.label : utils.label(node.id);
         this.nodes[node.id] = new Rect({
             attrs: {
                 rect: {
-                    fill: COLORS[kind]
+                    fill: COLORS[kind],
+                    stroke: node.id === this.selectedId ? SELECTED_STROKE_COLOR : "black",
+                    "stroke-width": node.id === this.selectedId ? "3" : "1"
                 },
                 text: {
                     text: label,
                     fill: "black"
-                }
+                },
+                nodeId: node.id,
+                unit: unit
             },
             position: {
                 x: 0,
@@ -315,11 +321,11 @@ export class Diagram {
                 height: 30
             }
         });
-        console.log("GENERATING NODE " + node.id + " => " + this.nodes[node.id].id);
+        //console.log("GENERATING NODE " + node.id + " => " + this.nodes[node.id].id);
     }
 
     private makeLink(sourceId: string, targetId: string, label: string) {
-        console.log("GENERATING LINK FROM " + this.nodes[sourceId].id + " TO " + this.nodes[targetId].id);
+        //console.log("GENERATING LINK FROM " + this.nodes[sourceId].id + " TO " + this.nodes[targetId].id);
         this.links.push(new Link({
             source: {id: this.nodes[sourceId].id },
             target: {id: this.nodes[targetId].id },

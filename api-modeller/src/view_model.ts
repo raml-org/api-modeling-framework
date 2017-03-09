@@ -7,10 +7,12 @@ import { Nav } from "./view_models/nav";
 import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor;
 import createModel = monaco.editor.createModel;
 import {Document, Fragment, Module, DocumentId, Unit} from "./main/units_model";
+import * as units_model from "./main/units_model";
 import { label } from "./utils";
 import { UI } from "./view_models/ui";
 import { DomainElement, DomainModel } from "./main/domain_model";
 import {Query} from "./view_models/query";
+import {type} from "os";
 
 export type NavigatorSection = "files" | "logic" | "domain";
 export type EditorSection = "raml" | "open-api" | "api-model" | "diagram" | "query";
@@ -117,14 +119,58 @@ export class ViewModel {
             }
             this.resetDocuments()
         }
+        this.resetDiagram();
         this.resetDomainUnits();
     }
 
+
+    public pathTo(target: string, next: any, acc: any[]) {
+        if (next != null && (typeof(next) === "object" && next.id != null || next.root || next.encodes || next.declares || next.references)) {
+            if (next.id === target) {
+                return acc.concat([next]);
+            } else {
+                for (var p in next) {
+                    if (next.hasOwnProperty(p)) {
+                        const elem = next[p];
+                        if (elem instanceof Array) {
+                            for (let i = 0; i < elem.length; i++) {
+                                const item = elem[i];
+
+                                const res = this.pathTo(target, item, acc.concat([next]));
+                                if (res != null) {
+                                    return res;
+                                }
+                            }
+                        } else {
+                            const res = this.pathTo(target, elem, acc.concat([next]));
+                            if (res != null) {
+                                return res;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     public expandDomainUnit(unit: DomainElement) {
         unit["expanded"] = !unit["expanded"];
+        if (unit["expanded"]) {
+            const units = this.allUnits();
+            for (let i = 0; i < units.length; i++) {
+                const domain = units[i];
+                const elems = this.pathTo(unit.id, domain, []);
+                if (elems) {
+                    elems.forEach(elem => elem["expanded"] = true);
+                    break;
+                }
+            }
+        }
         this.focusedId(unit.id);
         this.domainUnits({});
         this.resetDomainUnits();
+        this.resetDiagram();
         this.selectElementDocument(unit);
     }
 
@@ -268,14 +314,36 @@ export class ViewModel {
         }
     }
 
-    public resetDiagram() {
+    private onSelectedDiagramId(id, unit) {
+        const foundReference = this.references().find(ref => ref.id === id);
+        if (foundReference) {
+            this.selectNavigatorFile(foundReference);
+        } else {
+            if (this.navigatorSection() === "domain") {
+                this.expandDomainUnit(unit)
+            }
+        }
+    }
+
+    private allUnits() {
         // Collecting the units for the diagram
         const units: (DocumentId & Unit)[] = ([] as (DocumentId & Unit)[])
             .concat(this.documentUnits())
             .concat(this.fragmentUnits())
             .concat(this.moduleUnits());
-        this.diagram = new (require("./view_models/diagram").Diagram)(this.navigatorSection() === "domain" ? "domain" : "document");
-        this.diagram.process(units);
+        return units;
+    }
+
+    public resetDiagram() {
+
+        this.diagram = new (require("./view_models/diagram").Diagram)(
+            this.focusedId(),
+            this.navigatorSection() === "domain" ? "domain" : "document",
+            (id: string, unit: any) => {
+                this.onSelectedDiagramId(id, unit);
+            }
+        );
+        this.diagram.process(this.allUnits());
         this.diagram.render("graph-container");
     }
 

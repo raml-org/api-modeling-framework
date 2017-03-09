@@ -5,7 +5,6 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.parser.document.raml :as parser]
             [api-modelling-framework.generators.document.raml :as generator]))
-(require '[clojure.data])
 (deftest generate-fragments
   (let [location "file://path/to/resource.raml"
         input {(keyword "@location") location
@@ -61,5 +60,4 @@
                                   (keyword "/test") {:get {:responses {"200" {:body "lib.File"}}}}}}
         parsed (parser/parse-ast input {})
         generated (generator/to-raml parsed {})]
-    (clojure.pprint/pprint (clojure.data/diff generated input))
     (is (= generated input))))

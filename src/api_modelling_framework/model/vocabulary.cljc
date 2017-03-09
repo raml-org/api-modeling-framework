@@ -36,7 +36,7 @@
 (def document:Tag (document-ns "Tag"))
 (def document:DomainElement (document-ns "DomainElement"))
 (def document:AbstractDomainElement (document-ns "AbstractDomainElement"))
-(def document:ExtendRelationship (document-ns "ExtendsRelationship"))
+(def document:ExtendRelationship (document-ns "ExtendRelationship"))
 (def document:IncludeRelationship (document-ns "IncludeRelationship"))
 
 (def document:source (document-ns "source"))
