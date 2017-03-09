@@ -33,7 +33,7 @@
     (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
     (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/sh-ns "JSONSchema")
     (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/sh-ns "XMLSchema")
-    (common/ref-shape? shape ctx)                       :inheritance
+    (some? (get shape "@type"))                         :inheritance
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -42,10 +42,10 @@
   (->> shape
        (map (fn [[p v]]
               (condp = p
-                (v/sh-ns "minLength")       #(assoc % :minLength v)
-                (v/sh-ns "maxLength")       #(assoc % :maxLength v)
-                (v/sh-ns "pattern")         #(assoc % :pattern   v)
-                (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems v)
+                (v/sh-ns "minLength")       #(assoc % :minLength (get (first v) "@value"))
+                (v/sh-ns "maxLength")       #(assoc % :maxLength (get (first v) "@value"))
+                (v/sh-ns "pattern")         #(assoc % :pattern   (get (first v) "@value"))
+                (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems (get (first v) "@value"))
                 identity)))
        (reduce (fn [acc p] (p acc)) raml-type)))
 
@@ -59,7 +59,7 @@
                                      range (utils/extract-jsonld property (v/shapes-ns "range") #(parse-shape % context))
                                      range (if (string? range) {:type range} range)]
                                  (when required (swap! required-props #(concat % [label])))
-                                 [label range])))
+                                 [label (or range {})])))
                         (into {}))]
     (-> {:type "object"
          :properties properties
@@ -93,7 +93,7 @@
                                                    :x-rdf-type "xsd:dateTime"}
                     (v/shapes-ns "datetime-only") {:type "string"
                                                    :x-rdf-type "shapes:datetime-only"}
-                    (v/xsd-ns "date")             {:type "sting"
+                    (v/xsd-ns "date")             {:type "string"
                                                    :x-rdf-type "xsd:date"}
                     (v/shapes-ns "any")           {:type "string"
                                                    :x-rdf-type "shapes:any"}
@@ -111,6 +111,13 @@
      :value value}))
 
 (defmethod parse-shape :inheritance [shape context]
-  (ref-shape shape context))
+  (let [types (->> (get shape "@type")
+                   (mapv (fn [type]
+                           (if (common/ref-shape? type context)
+                             (ref-shape type context)
+                             (parse-shape type context)))))]
+    (if (= 1 (count types))
+      (first types)
+      {:x-merge types})))
 
-(defmethod parse-shape nil [_ _] nil)
+(defmethod parse-shape nil [_ _] {})

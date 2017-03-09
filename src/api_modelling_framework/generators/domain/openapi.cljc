@@ -130,7 +130,10 @@
            (mapv (fn [payload]
                    (let [body (<-domain (domain/schema payload) ctx)
                          schema (to-openapi! body ctx)
-                         parsed-body (-> {:name (if (some? body) (document/name body) "body")
+                         parsed-body (-> {:name (if (and  (some? body)
+                                                          (some? (document/name body)))
+                                                  (document/name body)
+                                                  "body")
                                           :description (document/description payload)
                                           :x-media-type (domain/media-type payload)
                                           :schema schema}

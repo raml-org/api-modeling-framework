@@ -119,7 +119,8 @@
                          required (extract-scalar (:required header-value))
                          header-shape (shapes/parse-type header-value (-> context
                                                                           (assoc :location location)
-                                                                          (assoc :parsed-location parsed-location)))
+                                                                          (assoc :parsed-location parsed-location)
+                                                                          (assoc :parse-ast parse-ast)))
                          properties {:id parsed-location
                                      :name (utils/safe-str header-name)
                                      :sources node-parsed-source-map
@@ -247,7 +248,9 @@
          (reduce (fn [acc [type-name type-node]]
                    (debug (str "Processing type " type-name))
                    (let [type-name     (url/url-encode (utils/safe-str type-name))
+                         references (get nested-context :references {})
                          type-fragment (parse-ast type-node (-> nested-context
+                                                                (assoc :references (merge references acc))
                                                                 (assoc :location location)
                                                                 (assoc :parsed-location (utils/path-join parsed-location type-name))
                                                                 (assoc :is-fragment false)
@@ -520,7 +523,9 @@
                {:type node}
                node)
         type-id (utils/path-join parsed-location "/type")
-        shape-context (assoc context :parsed-location type-id)
+        shape-context (-> context
+                          (assoc :parsed-location type-id)
+                          (assoc :parse-ast parse-ast))
         shape (if (shapes/inline-json-schema? node)
                 (json-schema-shapes/parse-type (keywordize-keys (platform/decode-json node)) shape-context)
                 (shapes/parse-type node shape-context))]

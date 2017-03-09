@@ -256,13 +256,13 @@
         ctx (assoc ctx :Request model)
         parameters (mapv #(resolve % ctx) (domain/parameters model))
         headers (compute-headers model ctx)
-        schema (map #(resolve % ctx) (domain/payloads model))]
+        payloads (map #(resolve % ctx) (domain/payloads model))]
     (domain/map->ParsedRequest
      (-> {:id (document/id model)
           :name (document/name model)
           :parameters parameters
           :headers headers
-          :schema schema}
+          :payloads payloads}
          utils/clean-nils))))
 
 (defmethod resolve domain/Parameter [model ctx]
@@ -291,7 +291,7 @@
   (debug "Resolving Response " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx domain/Response model)
-        payloads(map #(resolve % ctx) (domain/payloads model))]
+        payloads (map #(resolve % ctx) (domain/payloads model))]
     (domain/map->ParsedResponse
      (-> {:id (document/id model)
           :name (document/name model)
@@ -359,29 +359,50 @@
                               first
                               some?))
 
-(defn type-reference? [type {:keys [fragments declarations types]}]
-  (let [type-id (first (get type "@type"))]
-    (or (get fragments type-id)
-        (get declarations type-id)
-        (get types type-id))))
+;; (first (get type "@type"))
+(defn type-reference? [type-id {:keys [fragments declarations types] :as ctx}]
+  (let [res (or (get fragments type-id)
+                (get declarations type-id)
+                (get types type-id)
+                nil)]
+    ;; fragments don't store the type but the Type node,
+    ;; we need to extract it
+    (or (:shape res)
+        res)))
+
+(declare resolve-type)
+(defn process-object-type [type ctx]
+  (assoc type (v/sh-ns "property") (->> (get type (v/sh-ns "property") [])
+                                        (mapv (fn [property]
+                                                (let [property-range (get property (v/shapes-ns "range"))]
+                                                  (assoc property (v/shapes-ns "range")
+                                                         (mapv #(resolve-type % ctx)
+                                                               property-range))))))))
+
+;;(some? (type-reference? type ctx))  (resolve-type (type-reference? type ctx) ctx)
+
+(defn check-inheritance [type ctx]
+  (let [super-types (get type "@type")]
+    (assoc type "@type" (mapv (fn [super-type]
+                                (cond
+                                  (map? super-type)                 (resolve-type super-type ctx)
+                                  (type-reference? super-type ctx)  (resolve-type (type-reference? super-type ctx) ctx)
+                                  :else super-type))
+                              super-types))))
 
 (defn resolve-type [type ctx]
-  (cond
-    (scalar-type? type) type
+  (let [resolved-type (cond
+                        (nil? type)         type
 
-    (array-type? type)  (assoc type (v/shapes-ns "item") (mapv #(resolve-type % ctx)
-                                                               (get type (v/shapes-ns "item"))))
+                        (scalar-type? type) type
 
-    (object-type? type) (assoc type (v/sh-ns "property") (->> (get type (v/sh-ns "property") [])
-                                                              (mapv (fn [property]
-                                                                      (let [property-range (get property (v/shapes-ns "range"))]
-                                                                        (assoc property (v/shapes-ns "range")
-                                                                               (mapv #(resolve-type % ctx)
-                                                                                     property-range)))))))
+                        (array-type? type)  (assoc type (v/shapes-ns "item") (mapv #(resolve-type % ctx)
+                                                                                   (get type (v/shapes-ns "item"))))
 
-    (some? (type-reference? type ctx))  (resolve-type (type-reference? type ctx) ctx)
+                        (object-type? type) (process-object-type type ctx)
 
-    :else type))
+                        :else type)]
+    (check-inheritance resolved-type ctx)))
 
 (defmethod resolve :Type [m ctx]
   (debug "Resolving type " (get m "@id"))

@@ -78,10 +78,10 @@
       first
       some?))
 
-(defn ref-shape? [shape {:keys [references]}]
+(defn ref-shape? [shape-type {:keys [references]}]
   (->> references
        (filter (fn [ref]
                  (satisfies? domain/Type ref)))
        (filter (fn [type]
-                 (= (get (domain/shape type) "@id") (first (get shape "@type")))))
+                 (= (get (domain/shape type) "@id") shape-type)))
        first))

@@ -25,10 +25,10 @@
   (cond
     (utils/has-class? shape (v/shapes-ns "Scalar"))     (v/shapes-ns "Scalar")
     (utils/has-class? shape (v/shapes-ns "Array"))      (v/shapes-ns "Array")
-    (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
     (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/sh-ns "JSONSchema")
     (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/sh-ns "XMLSchema")
-    (common/ref-shape? shape ctx)                       :inheritance
+    (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
+    (some? (get shape "@type"))                         :inheritance
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -47,10 +47,10 @@
   (->> shape
        (map (fn [[p v]]
               (condp = p
-                (v/sh-ns "minLength")       #(assoc % :minLength v)
-                (v/sh-ns "maxLength")       #(assoc % :maxLength v)
-                (v/sh-ns "pattern")         #(assoc % :pattern   v)
-                (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems v)
+                (v/sh-ns "minLength")       #(assoc % :minLength (get (first v) "@value"))
+                (v/sh-ns "maxLength")       #(assoc % :maxLength (get (first v) "@value"))
+                (v/sh-ns "pattern")         #(assoc % :pattern   (get (first v) "@value"))
+                (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems (get (first v) "@value"))
                 identity)))
        (reduce (fn [acc p] (p acc)) raml-type)
        (parse-generic-keywords shape)
@@ -118,6 +118,13 @@
     value))
 
 (defmethod parse-shape :inheritance [shape context]
-  (ref-shape shape context))
+  (let [types (->> (get shape "@type")
+                   (mapv (fn [type]
+                           (if (common/ref-shape? type context)
+                             (ref-shape type context)
+                             (parse-shape type context)))))]
+    (if (= 1 (count types))
+      (first types)
+      {:type types})))
 
 (defmethod parse-shape nil [_ _] nil)

@@ -4,6 +4,7 @@
   (:require [api-modelling-framework.core :as core]
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
+            [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.platform :as platform]
             [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
             [api-modelling-framework.utils :as utils]
@@ -110,6 +111,94 @@
                  (if (= "array" (:type type))
                    (is (> (count (:items type)) 0))
                    (is (> (count (:properties type)) 0))))
+               (done)))))
+
+(deftest integration-test-raml->wm
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->RAMLGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/other-examples/world-music-api/api.raml")))
+                   document-model (core/document-model model)
+                   api-documentation (document/encodes document-model)
+                   paths (->> (domain/endpoints api-documentation)
+                              (mapv (fn [endpoint] [(domain/path endpoint) endpoint]))
+                              (into {}))
+                   api-resource (get paths "/api")
+                   song-resource (get paths "/songs/{songId}")]
+               (is (= "World Music API" (document/name api-documentation)))
+               (is (= "This is an example of a music API." (document/description api-documentation)))
+               (is (= "/{version}" (domain/base-path api-documentation)))
+               (is (= "v1" (domain/version api-documentation)))
+               (is (= 4 (count (domain/endpoints api-documentation))))
+               (is (= 2 (count (domain/supported-operations api-resource))))
+               (is (= "get" (->>
+                             (domain/supported-operations api-resource)
+                             first
+                             (domain/method))))
+               (is (= "post" (->>
+                             (domain/supported-operations api-resource)
+                             last
+                             (domain/method))))
+               (is (= 1 (->>
+                         (domain/supported-operations api-resource)
+                         last
+                         (domain/request)
+                         (domain/payloads)
+                         count)))
+               (is (= "application/json" (->>
+                                          (domain/supported-operations api-resource)
+                                          last
+                                          (domain/request)
+                                          (domain/payloads)
+                                          first
+                                          domain/media-type
+                                          utils/safe-str)))
+               (is (= "/declares/types/RamlDataType/type/shape"
+                      (let [type (->>
+                                  (domain/supported-operations api-resource)
+                                  last
+                                  (domain/request)
+                                  (domain/payloads)
+                                  first
+                                  (domain/schema)
+                                  (domain/shape))]
+                        (last (string/split (first (get type "@type")) #"#")))))
+               (is (= "application/xml"
+                      (->> song-resource
+                           (domain/supported-operations)
+                           first
+                           (domain/responses)
+                           first
+                           (domain/payloads)
+                           last
+                           (domain/media-type)
+                           (utils/safe-str))))
+               (is (->> song-resource
+                             (domain/supported-operations)
+                             first
+                             (domain/responses)
+                             first
+                             (domain/payloads)
+                             last
+                             (domain/schema)
+                             (domain/shape)
+                             some?))
+               (done)))))
+
+(deftest integration-test-raml-wm->domain
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator-openapi (core/->OpenAPIGenerator)
+                   generator-raml (core/->RAMLGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/other-examples/world-music-api/api.raml")))
+                   output-model (core/domain-model model)
+                   _ (is (not (error? output-model)))
+                   output-openapi (<! (cb->chan (partial core/generate-string generator-openapi "resources/world-music-api/wip.raml"
+                                                         output-model
+                                                         {})))
+                   output-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/world-music-api/wip.raml"
+                                                        output-model
+                                                        {})))]
                (done)))))
 
 (comment

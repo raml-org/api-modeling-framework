@@ -110,10 +110,13 @@ var loadLibraries = function (loaded, cb, pending) {
 
 var getFragmentInfo = function (fragment) {
     var fragmentInfo = fragment.data.split("\n")[0];
-    if (!fragmentInfo.indexOf("#%RAML") === 0) {
-        fragmentInfo = null;
+    if (fragmentInfo.indexOf("#%RAML") === 0) {
+        return fragmentInfo;
+
+    } else {
+        return null;
     }
-    return fragmentInfo;
+
 };
 
 var collectLibraries = function (fragment, location) {
@@ -165,6 +168,7 @@ var parseYamlFile = function (location, cb) {
         try {
             var loaded = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
             collectLibraries(loaded, location);
+
             loadLibraries(loaded, function (err, loaded) {
                 var result = { "@data": loaded };
                 result["@location"] = ensureFileUri(location);

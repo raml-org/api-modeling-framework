@@ -122,8 +122,10 @@
          (reduce (fn [acc [trait-name trait-node]]
                    (debug (str "Processing trait " trait-name))
                    (let [fragment-name (url/url-encode (utils/safe-str trait-name))
+                         references (get nested-context :references {})
                          trait-fragment (parse-ast trait-node (-> nested-context
                                                                   (assoc :method fragment-name)
+                                                                  (assoc :references (merge references acc))
                                                                   (assoc :location location)
                                                                   (assoc :parsed-location parsed-location)
                                                                   (assoc :is-fragment true)
