@@ -68,10 +68,6 @@
 #?(:cljs (defn parse-string [uri string]
            (let [ch (chan)]
              (.parseYamlString yaml uri string (fn [e result]
-                                                 (println "ERROR?")
-                                                 (prn e)
-                                                 (println "GOT A RESULT")
-                                                 (prn result)
                                                  (go (try (if e
                                                             (>! ch (ex-info (str e) e))
                                                             (>! ch (->> result js->clj keywordize-keys)))

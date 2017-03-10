@@ -37,7 +37,7 @@ export class Diagram {
     public scale = 1;
     public elements: (DocumentId & Unit)[];
 
-    constructor(public selectedId: string, public level: "domain" | "document", public handler: (id: string, unit: any) => undefined) {}
+    constructor(public selectedId: string, public level: "domain" | "document" | "files", public handler: (id: string, unit: any) => undefined) {}
 
     process(elements: (DocumentId & Unit)[]) {
         this.nodes = {};
@@ -164,12 +164,12 @@ export class Diagram {
 
     private processFragmentNode(element: Fragment) {
         this.makeNode(element, "unit", element);
-        if (element.encodes != null) {
+        if (element.encodes != null && this.level !== "files") {
             const encodes = element.encodes;
             const encoded =  encodes.domain ? encodes.domain.root : undefined;
             if (encoded && this.level === "domain") {
                 this.processDomainElement(element.id, encodes.domain ? encodes.domain.root : undefined);
-            } else {
+            } else if(this.level === "document") {
                 this.makeNode(encodes, "domain", encodes);
                 this.makeLink(element.id, encodes.id, "encodes");
             }
@@ -178,7 +178,7 @@ export class Diagram {
 
     private processModuleNode(element: Module) {
         this.makeNode(element, "unit", element);
-        if (element.declares != null) {
+        if (element.declares != null && this.level !== "files") {
             element.declares.forEach(declaration => {
                 if (this.nodes[declaration.id] == null) {
                     this.makeNode(declaration, "declaration", declaration);
@@ -190,7 +190,7 @@ export class Diagram {
 
     private processDocumentNode(document: Document) {
         this.makeNode(document, "unit", document);
-        if (document.encodes != null) {
+        if (document.encodes != null && this.level !== "files") {
             const encodes = document.encodes;
             const encoded =  encodes.domain ? encodes.domain.root : undefined;
             if (encoded && this.level === "domain") {
@@ -200,7 +200,7 @@ export class Diagram {
                 this.makeLink(document.id, encodes.id, "encodes");
             }
         }
-        if (document.declares != null) {
+        if (document.declares != null && this.level !== "files") {
             document.declares.forEach(declaration => {
                 if (this.nodes[declaration.id] == null) {
                     this.makeNode(declaration, "declaration", declaration);

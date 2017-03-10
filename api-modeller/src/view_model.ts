@@ -336,9 +336,15 @@ export class ViewModel {
 
     public resetDiagram() {
 
+        let level = "files";
+        if (this.navigatorSection() === "domain") {
+            level = "domain";
+        } else if (this.navigatorSection() === "logic") {
+            level = "document";
+        }
         this.diagram = new (require("./view_models/diagram").Diagram)(
             this.focusedId(),
-            this.navigatorSection() === "domain" ? "domain" : "document",
+            level,
             (id: string, unit: any) => {
                 this.onSelectedDiagramId(id, unit);
             }

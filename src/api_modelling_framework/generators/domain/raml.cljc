@@ -287,9 +287,7 @@
       ;; OpenAPI internal references pointing to something we don't expose in RAML
       ;; we need a new way of poinitnt at this, we cannot use !include
       ;; we will use a new element and the (reference) annotation
-      (some? reference)                        (do
-                                                 (prn reference)
-                                                 {(keyword "(reference)") target})
+      (some? reference)                        {(keyword "(reference)") target}
 
       ;; Reference to something we don't know about
       :else                                    (throw (new #?(:clj Exception :cljs js/Error)

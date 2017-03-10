@@ -215,8 +215,6 @@
                                        (syntax/<-data raw)
                                        ;; js
                                        (:data (get raw (keyword "resources/world-music-api/wip.raml"))))]
-        (println "PARSED DOMIN RAML OUTPUT")
-        (prn parsed-domain-raml-output)
         (is (string? (-> parsed-domain-raml-output
                          (get (keyword "/{version}/songs/{songId}"))
                          :get
@@ -229,18 +227,19 @@
   (go (let [output-document-openapi (<! (cb->chan (partial core/generate-string generator-openapi "resources/world-music-api/wip.json"
                                                         output-document-model
                                                         {})))
-            parsed-document-openapi-output (platform/decode-json output-document-openapi)]
-        (is (-> parsed-document-openapi-output
-                 (get "paths")
-                 (get "/songs/{songId}")
-                 (get "get")
-                 (get "responses")
-                 (get "200")
-                 (get "x-responses")
-                 first
-                 (get "schema")
-                 (get "$ref")
-                 string?)))))
+            parsed-document-openapi-output (platform/decode-json output-document-openapi)
+            fragment-location (-> parsed-document-openapi-output
+                                  (get "paths")
+                                  (get "/songs/{songId}")
+                                  (get "get")
+                                  (get "responses")
+                                  (get "200")
+                                  (get "x-responses")
+                                  first
+                                  (get "schema")
+                                  (get "$ref"))]
+        (is (string? fragment-location))
+        (is (string/ends-with? fragment-location ".xsd")))))
 
 (defn test-openapi-domain-level [generator-openapi output-domain-model]
   (go (let [output-domain-openapi (<! (cb->chan (partial core/generate-string generator-openapi "resources/world-music-api/wip.json"

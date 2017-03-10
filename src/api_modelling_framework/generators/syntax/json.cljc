@@ -18,11 +18,12 @@
 
 
 (defn include-fragment [location fragment]
-  (let [fragment-lcation (syntax/<-location fragment)]
-    (if (and (string/starts-with? fragment-lcation location)
-             (string/includes? fragment-lcation "#"))
-      ("$ref" (last (string/split fragment-lcation #"#")))
-      {"$ref" location})))
+  (let [fragment-location (syntax/<-location fragment)]
+    (let [res (if (and (string/starts-with? fragment-location location)
+                       (string/includes? fragment-location "#"))
+                ("$ref" (last (string/split fragment-location #"#")))
+                {"$ref" fragment-location})]
+      res)))
 
 (defn include-libraries [document]
   (if-let [libraries (get document :x-uses)]
