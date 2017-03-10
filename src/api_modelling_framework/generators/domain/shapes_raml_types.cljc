@@ -117,12 +117,22 @@
   (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
     value))
 
+(defn include-shape? [type {:keys [fragments]}] (get fragments type))
+
+(defn include-shape [type {:keys [fragments document-generator] :as context}]
+  (let [fragment (include-shape? type context)]
+    (if (some? fragment)
+      (let [expanded (document-generator fragment context)]
+        expanded)
+      nil)))
+
 (defmethod parse-shape :inheritance [shape context]
   (let [types (->> (get shape (v/shapes-ns "inherits"))
                    (mapv (fn [type]
-                           (if (common/ref-shape? type context)
-                             (ref-shape type context)
-                             (parse-shape type context)))))]
+                           (cond
+                             (common/ref-shape? type context)    (ref-shape type context)
+                             (include-shape? type context)       (include-shape type context)
+                             :else                               (parse-shape type context)))))]
     (if (= 1 (count types))
       (first types)
       {:type types})))

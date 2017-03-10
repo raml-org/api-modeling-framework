@@ -209,7 +209,7 @@
   (if (nil? parameters) nil
       (->> parameters
            (map (fn [parameter]
-                  (let [parsed-type (keywordize-keys (shapes-parser/parse-shape (domain/shape parameter) context))
+                  (let [parsed-type (keywordize-keys (shapes-parser/parse-shape (domain/shape parameter) (assoc context :to-raml to-raml!)))
                         ;; @todo should we really keep a source-map to see if we should add this mapping by default?
                         ;;parsed-type (if (= "string" (:type parsed-type))
                         ;;              (dissoc parsed-type :type)
@@ -263,7 +263,7 @@
          (common/type-reference? model)) (common/type-reference-name model)
     :else                                (keywordize-keys
                                           (shapes-parser/parse-shape
-                                           (domain/shape model) context))))
+                                           (domain/shape model) (assoc context :to-raml to-raml)))))
 
 
 (defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments references document-generator type-hint]

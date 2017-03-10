@@ -187,6 +187,78 @@
                              some?))
                (done)))))
 
+(defn test-raml-document-level [generator-raml output-document-model]
+  (go (let [output-document-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/world-music-api/wip.raml"
+                                                        output-document-model
+                                                        {})))
+            raw (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-document-raml))
+            ;; JS / JAVA parsers behave in a slightly different way, that's the reason for the or
+            parsed-document-raml-output (or (syntax/<-data raw)
+                                            (:data (get raw (keyword "resources/world-music-api/wip.raml"))))]
+        (is (string? (-> parsed-document-raml-output
+                         (get (keyword "/songs"))
+                         (get (keyword "/{songId}"))
+                         :get
+                         :responses
+                         :200
+                         :body
+                         (get (keyword "application/xml"))))))))
+
+(defn test-raml-domain-level [generator-raml output-domain-model]
+  (go (let [output-domain-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/world-music-api/wip.raml"
+                                                      output-domain-model
+                                                      {})))
+            raw (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-domain-raml))
+            ;; JS / JAVA parsers behave in a slightly different way, that's the reason for the or
+            parsed-domain-raml-output (or
+                                       ;; java
+                                       (syntax/<-data raw)
+                                       ;; js
+                                       (:data (get raw (keyword "resources/world-music-api/wip.raml"))))]
+        (println "PARSED DOMIN RAML OUTPUT")
+        (prn parsed-domain-raml-output)
+        (is (string? (-> parsed-domain-raml-output
+                         (get (keyword "/{version}/songs/{songId}"))
+                         :get
+                         :responses
+                         :200
+                         :body
+                         (get (keyword "application/xml"))))))))
+
+(defn test-openapi-document-level [generator-openapi output-document-model]
+  (go (let [output-document-openapi (<! (cb->chan (partial core/generate-string generator-openapi "resources/world-music-api/wip.json"
+                                                        output-document-model
+                                                        {})))
+            parsed-document-openapi-output (platform/decode-json output-document-openapi)]
+        (is (-> parsed-document-openapi-output
+                 (get "paths")
+                 (get "/songs/{songId}")
+                 (get "get")
+                 (get "responses")
+                 (get "200")
+                 (get "x-responses")
+                 first
+                 (get "schema")
+                 (get "$ref")
+                 string?)))))
+
+(defn test-openapi-domain-level [generator-openapi output-domain-model]
+  (go (let [output-domain-openapi (<! (cb->chan (partial core/generate-string generator-openapi "resources/world-music-api/wip.json"
+                                                      output-domain-model
+                                                      {})))
+            parsed-domain-openapi-output (platform/decode-json output-domain-openapi)]
+        (is (-> parsed-domain-openapi-output
+                (get "paths")
+                (get "/{version}/songs/{songId}")
+                (get "get")
+                (get "responses")
+                (get "200")
+                (get "x-responses")
+                first
+                (get "schema")
+                (get "value")
+                string?)))))
+
 (deftest integration-test-raml-wm->domain
   (async done
          (go (let [parser (core/->RAMLParser)
@@ -195,25 +267,16 @@
                    generator-jsonld (core/->APIModelGenerator)
                    model (<! (cb->chan (partial core/parse-file parser "resources/other-examples/world-music-api/api.raml")))
                    output-model (core/domain-model model)
+                   output-document-model (core/document-model model)
                    _ (is (not (error? output-model)))
-                   output-openapi (<! (cb->chan (partial core/generate-string generator-openapi "resources/world-music-api/wip.raml"
-                                                         output-model
-                                                         {})))
-                   output-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/world-music-api/wip.raml"
-                                                        output-model
-                                                        {})))
                    output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/world-music-api/wip.raml"
                                                         output-model
                                                         {})))
-                   paths (-> (platform/decode-json output-openapi)
-                             (get "paths"))
-                   api-resource (get paths "/{version}/api")]
-               (is (= ["/{version}/api" "/{version}/entry" "/{version}/songs" "/{version}/songs/{songId}"]
-                      (-> (platform/decode-json output-openapi)
-                          (get "paths")
-                          (keys))))
-               ;; @todo ADD ASSERTIONS HERE
-               ;;(prn api-resource)
+                   _ (is (not (error? output-jsonld)))]
+               (<! (test-raml-document-level generator-raml output-document-model))
+               (<! (test-raml-domain-level generator-raml output-model))
+               (<! (test-openapi-document-level generator-openapi output-document-model))
+               (<! (test-openapi-domain-level generator-openapi output-model))
                (done)))))
 
 (deftest integration-test-openapi-ps->domain

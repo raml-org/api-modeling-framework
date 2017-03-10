@@ -21,7 +21,7 @@ function Fragment(location, type, data) {
 }
 
 var resolveFile = function (location, cb) {
-    fs.readFile(location, function (err, data) {
+    fs.readFile(location.replace("file://", ""), function (err, data) {
         if (err) {
             cb(err);
         } else {
@@ -34,10 +34,10 @@ var resolvePath = function (location, path) {
     var lastComponent = location.split("/").pop();
     var base = location.replace(lastComponent, "");
     if (path.indexOf("/") === 0 || path.indexOf("://") !== -1) {
-        // console.log("RESOLVING PATH (" + base + " + " + path + ") --> " + path);
+        //console.log("RESOLVING PATH (" + base + " + " + path + ") --> " + path);
         return path;
     } else {
-        // console.log("RESOLVING PATH (" + base + " + " + path + ") --> " + (base + path));
+        //console.log("RESOLVING PATH (" + base + " + " + path + ") --> " + (base + path));
         return base + path;
     }
 };
@@ -46,6 +46,7 @@ var updateFragments = function (file, data, pending, cb) {
     var matches = data.match(/!include\s+(.+)/g) || [];
     var files = matches.map(function (f) {
         var filePath = f.split(/!include\s+/)[1];
+        filePath = filePath.replace(/'|"$/, "");
         var location = resolvePath(file.location, filePath);
         return {
             "path": filePath,
@@ -75,6 +76,7 @@ var cacheFragments = function (fileOrData, cb, pending) {
     if (fileOrData.data != null) {
         updateFragments(fileOrData, fileOrData.data, pending, cb);
     } else {
+        console.log(fileOrData);
         resolveFile(fileOrData.location, function (err, data) {
             if (err) {
                 cb(err);
@@ -187,13 +189,13 @@ var parseYamlString = function (location, data, cb) {
             var loaded = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
             collectLibraries(loaded, location);
             loadLibraries(loaded, function (err, loaded) {
-                if (err != null) {
+                if (err == null) {
                     var result = { "@data": loaded };
                     result["@location"] = ensureFileUri(location);
                     result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
                     cb(null, result);
                 } else {
-                    cb(err, data);
+                    cb(err);
                 }
 
             });

@@ -29,11 +29,11 @@
   (cond
     (nil? shape)            nil
     (some? (get shape (v/shapes-ns "inherits")))        :inheritance
+    (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/shapes-ns "JSONSchema")
+    (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/shapes-ns "XMLSchema")
     (utils/has-class? shape (v/shapes-ns "Scalar"))     (v/shapes-ns "Scalar")
     (utils/has-class? shape (v/shapes-ns "Array"))      (v/shapes-ns "Array")
     (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
-    (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/sh-ns "JSONSchema")
-    (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/sh-ns "XMLSchema")
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -100,22 +100,32 @@
                     (throw (new #?(:clj Exception :cljs js/Error) (str "Unknown scalar data type " sh-type))))]
     (parse-constraints raml-type shape)))
 
-(defmethod parse-shape (v/sh-ns "JSONSchema") [shape context]
+(defmethod parse-shape (v/shapes-ns "JSONSchema") [shape context]
   (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
     {:type "EmbeddedJSONSchema"
      :value value}))
 
-(defmethod parse-shape (v/sh-ns "XMLSchema") [shape context]
+(defmethod parse-shape (v/shapes-ns "XMLSchema") [shape context]
   (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
     {:type "EmbeddedXMLSchema"
      :value value}))
 
+(defn include-shape? [type {:keys [fragments]}] (get fragments type))
+
+(defn include-shape [type {:keys [fragments document-generator] :as context}]
+  (let [fragment (include-shape? type context)]
+    (if (some? fragment)
+      (let [expanded (document-generator fragment context)]
+        expanded)
+      nil)))
+
 (defmethod parse-shape :inheritance [shape context]
   (let [types (->> (get shape (v/shapes-ns "inherits"))
                    (mapv (fn [type]
-                           (if (common/ref-shape? type context)
-                             (ref-shape type context)
-                             (parse-shape type context)))))]
+                           (cond
+                             (common/ref-shape? type context) (ref-shape type context)
+                             (include-shape? type context)    (include-shape type context)
+                             :else                            (parse-shape type context)))))]
     (if (= 1 (count types))
       (first types)
       {:x-merge types})))

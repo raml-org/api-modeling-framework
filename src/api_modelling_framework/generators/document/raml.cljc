@@ -91,11 +91,16 @@
         encoded (document/encodes model)
         encoded (if (satisfies? domain/DomainElement encoded)
                   (domain/to-domain-node encoded)
-                  encoded)]
+                  encoded)
+        data (domain-generator/to-raml encoded context)]
     (utils/clean-nils {(keyword "@location") (document/location model)
-                       (keyword "@data") (utils/clean-nils
-                                          (merge (domain-generator/to-raml encoded context)
-                                                 {:usage (document/description model)}))
+                       (keyword "@data") (if (string? data)
+                                           ;; this is possible because the fragment can be just
+                                           ;; a XML schema string or JSON-schema or documentation string
+                                           data
+                                           (utils/clean-nils
+                                            (merge data
+                                                   {:usage (document/description model)})))
                        (keyword "@fragment") fragment-type})))
 
 (defmethod to-raml :library [model ctx]

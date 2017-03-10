@@ -110,8 +110,10 @@
                     :schema {:type "string"}
                     :x-media-type "application/json"
                     :x-responses
-                    [{:x-media-type "text/plain"
-                      :schema {:type "string"}}]}
+                    [{:name "body",
+                      :x-media-type "text/plain",
+                      :schema {:type "string"},
+                      :in "body"}]}
                    "400" {:description "400 response"
                           :schema {:type "string"}}}}
         parsed (raml-parser/parse-ast node parsing-context)

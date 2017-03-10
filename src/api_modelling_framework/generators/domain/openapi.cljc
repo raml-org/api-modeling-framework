@@ -206,8 +206,10 @@
         x-responses (->> bodies
                          (filter (fn [body] (not= body main-body)))
                          (mapv (fn [body]
-                                 {:x-media-type (:x-media-type body)
-                                  :schema (:schema body)})))]
+                                 body
+                                 ;;{:x-media-type (:x-media-type body)
+                                 ;; :schema (:schema body)}
+                                 )))]
 
     (-> {:description (or (document/description model) "")
          :schema (:schema main-body)
