@@ -16,14 +16,16 @@
                     (document/value trait-tag)
                     (-> (document/target trait) (string/split #"/") last))))))))
 
+(defn trait-reference? [model]
+  (-> model
+      (document/find-tag document/is-trait-tag)
+      first
+      some?))
+
 (defn model->traits [{:keys [references] :as ctx} domain-generator]
   (->> references
        (filter (fn [ref] (nil? (:from-library ref))))
-       (filter (fn [reference]
-                 (let [is-trait-tag (-> reference
-                                       (document/find-tag document/is-trait-tag)
-                                       first)]
-                   (some? is-trait-tag))))
+       (filter trait-reference?)
        (map (fn [reference]
               (let [is-trait-tag (-> reference
                                      (document/find-tag document/is-trait-tag)
@@ -38,6 +40,13 @@
                 [trait-name generated])))
        (into {})))
 
+(defn type-reference-name [reference]
+  (let [is-type-tag (-> reference
+                        (document/find-tag document/is-type-tag)
+                        first)
+        type-name (-> is-type-tag
+                      (document/value))]
+    type-name))
 
 (defn model->types [{:keys [references] :as ctx} domain-generator]
   (->> references
@@ -48,14 +57,9 @@
                                        first)]
                    (some? is-type-tag))))
        (map (fn [reference]
-              (let [is-type-tag (-> reference
-                                     (document/find-tag document/is-type-tag)
-                                     first)
-                    type-name (-> is-type-tag
-                                  (document/value)
-                                  keyword)
+              (let [type-name (type-reference-name reference)
                     generated (domain-generator reference (assoc ctx :from-library (:from-library reference)))]
-                [type-name generated])))
+                [(keyword type-name) generated])))
        (into {})
        (utils/clean-nils)))
 
@@ -64,13 +68,6 @@
        (map (fn [tag] [(document/name tag) (document/value tag)]))
        (into {})))
 
-(defn type-reference-name [reference]
-  (let [is-type-tag (-> reference
-                        (document/find-tag document/is-type-tag)
-                        first)
-        type-name (-> is-type-tag
-                      (document/value))]
-    type-name))
 
 (defn type-reference? [model]
   (-> model

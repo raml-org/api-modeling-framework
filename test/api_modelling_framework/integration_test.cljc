@@ -204,7 +204,38 @@
                                                         {})))
                    output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/world-music-api/wip.raml"
                                                         output-model
+                                                        {})))
+                   paths (-> (platform/decode-json output-openapi)
+                             (get "paths"))
+                   api-resource (get paths "/{version}/api")]
+               (is (= ["/{version}/api" "/{version}/entry" "/{version}/songs" "/{version}/songs/{songId}"]
+                      (-> (platform/decode-json output-openapi)
+                          (get "paths")
+                          (keys))))
+               ;; @todo ADD ASSERTIONS HERE
+               ;;(prn api-resource)
+               (done)))))
+
+(deftest integration-test-openapi-ps->domain
+  (async done
+         (go (let [parser (core/->OpenAPIParser)
+                   generator-openapi (core/->OpenAPIGenerator)
+                   generator-raml (core/->RAMLGenerator)
+                   generator-jsonld (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "file://resources/petstore.json")))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-openapi (<! (cb->chan (partial core/generate-string generator-openapi "resources/pestore.json"
+                                                         output-model
+                                                         {})))
+                   output-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/petstore.raml"
+                                                        output-model
+                                                        {})))
+                   output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/petstore.jsonld"
+                                                        output-model
                                                         {})))]
+               ;; @todo ADD ASSERTIONS HERE
+               ;;(println output-raml)
                (done)))))
 
 (comment

@@ -72,7 +72,7 @@
 
 
 (defn parse-type [node {:keys [parsed-location] :as context}]
-  (let [type-string (:type node)
+  (let [type-string (if (string? node) node (:type node))
         shape (condp = type-string
                 "string"  (condp = (:x-rdf-type node)
                             "xsd:time" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "time")))
@@ -87,6 +87,8 @@
 
                             nil (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "string"))))
 
+                "float"   (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float")))
+                "integer" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "integer")))
                 "number"  (condp = (:x-rdf-type node)
 
                             "xsd:float" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float")))
@@ -95,9 +97,11 @@
 
                             nil (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float"))))
 
-                "boolean" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "boolean")))
-                "null"    (parse-type-constraints node  (parse-scalar parsed-location (v/shapes-ns "null")))
-                "object"  (parse-shape node context)
-                "array"   (parse-array node context)
-                nil)]
+                "boolean"                       (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "boolean")))
+                "null"                          (parse-type-constraints node  (parse-scalar parsed-location (v/shapes-ns "null")))
+                "object"                        (parse-shape node context)
+                "array"                         (parse-array node context)
+                (if (some? (get node :properties))
+                  (parse-shape node context)
+                  nil))]
     shape))

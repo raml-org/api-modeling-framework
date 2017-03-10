@@ -133,6 +133,13 @@
         children-node (into {} children-node)]
     (merge node children-node)))
 
+(defn model->generic-declarations [{:keys [references] :as ctx}]
+  (->> references
+       (filter (fn [ref] (and (not (common/trait-reference? ref))
+                             (not (common/type-reference? ref)))))
+       (map (fn [ref] [(:id ref) (to-raml! ref ctx)]))
+       (into {})))
+
 (defmethod to-raml domain/APIDocumentation [model ctx]
   (debug "Generating RAML root node")
   (let [all-resources (domain/endpoints model)
@@ -147,6 +154,13 @@
          :baseUri (model->base-uri model)
          :protocols (model->protocols model)
          :mediaType (model->media-type model)
+         ;; In our model declared references are not restricted to types, traits
+         ;; etc as in RAML, we need to provide a reference for them
+         ;; We will use the (declares) annotation for this.
+         ;; This can happen for example, when the model comes from an OpenAPI
+         ;; document using #definitions containing a random part of the document
+         ;; we cannot match with the parts of the document exposed by RAML
+         (keyword "(declares)") (model->generic-declarations ctx)
          :types  (common/model->types (assoc ctx :resolve-types true) to-raml!)
          :traits (common/model->traits ctx to-raml!)}
         (merge-children-resources children-resources ctx)
@@ -171,9 +185,15 @@
     (let [body (first bodies)
           schema(to-raml! (domain/schema body) context)]
       (if-let [content-type (domain/media-type body)]
-        {(utils/safe-str content-type) schema}
+        (let [media-type (utils/safe-str content-type)]
+          ;; */* is the default media type generated automatialy when parsing OpenAPI documents
+          ;; If it's the only one we find when generating RAML we can ignore it
+          ;; and link the schema directly
+          (if (not= media-type "*/*")
+            {media-type schema}
+            schema))
         schema))
-    ;; If there are more than one, it has to have a content-type
+    ;; If there are more than one, it must have a content-type
     (reduce (fn [acc body]
               (let [schema (to-raml! (domain/schema body) context)]
                 (assoc acc (-> body domain/media-type utils/safe-str) schema)))
@@ -246,18 +266,34 @@
                                            (domain/shape model) context))))
 
 
-(defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments document-generator]
+(defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments references document-generator type-hint]
                                              :as context
                                              :or {expanded-fragments (atom {})}}]
-  (let [fragment-target (document/target model)
-        fragment (get fragments fragment-target)]
-    (if (nil? fragment)
-      (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
-      (if-let [expanded-fragment (get expanded-fragments fragment-target)]
-        expanded-fragment
-        (let [expanded-fragment (document-generator fragment context)]
-          (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
-          expanded-fragment)))))
+  (let [target (document/target model)
+        fragment (get fragments target)
+        reference (->> references (filter (fn [ref] (= (document/id ref) target))) first)]
+    (cond
+      ;; usual path for RAML !includes and OpenAPI 'external' references
+      (some? fragment)                         (if-let [expanded-fragment (get expanded-fragments target)]
+                                                 expanded-fragment
+                                                 (let [expanded-fragment (document-generator fragment context)]
+                                                   (swap! expanded-fragments (fn [acc] (assoc acc target expanded-fragment)))
+                                                   expanded-fragment))
+
+      ;; OpenAPI internal references pointing to types
+      (and (some? reference)
+           (satisfies? domain/Type reference)) {:type (common/type-reference-name reference)}
+
+      ;; OpenAPI internal references pointing to something we don't expose in RAML
+      ;; we need a new way of poinitnt at this, we cannot use !include
+      ;; we will use a new element and the (reference) annotation
+      (some? reference)                        (do
+                                                 (prn reference)
+                                                 {(keyword "(reference)") target})
+
+      ;; Reference to something we don't know about
+      :else                                    (throw (new #?(:clj Exception :cljs js/Error)
+                                                           (str "Cannot find fragment " target " for generation"))))))
 
 (defmethod to-raml nil [_ _]
   (debug "Generating nil")
