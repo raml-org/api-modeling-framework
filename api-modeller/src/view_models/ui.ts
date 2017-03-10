@@ -22,15 +22,17 @@ export class UI {
     }
 
     iconClassForDomainUnit(unit: units.DomainElement) {
-        console.log("ICON FOR " + unit.id + " => " + unit.elementClass);
+        //console.log("ICON FOR " + unit.id + " => " + unit.elementClass);
         if (unit.elementClass.endsWith("#APIDocumentation")) {
-            return "fa fa-book"
+            return "fa fa-book";
         } else if (unit.elementClass.endsWith("#Payload")) {
-            return "fa fa-cubes"
+            return "fa fa-paper-plane";
+        } else if (unit.elementClass.endsWith("#Schema")) {
+            return "fa fa-cubes";
         } else if (unit.elementClass.endsWith("#Operation")) {
-            return "fa fa-rocket"
+            return "fa fa-rocket";
         } else {
-            return "fa fa-code"
+            return "fa fa-code";
         }
     }
 

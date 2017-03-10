@@ -32,6 +32,7 @@ export const RESPONSE: string = HTTP_NS + "Response";
 export const REQUEST: string = HTTP_NS + "Request";
 export const PAYLOAD: string = HTTP_NS + "Payload";
 export const SCHEMA: string = HTTP_NS + "Schema";
+export const INCLUDE_RELATIONSHIP: string = DOCUMENT_NS + "IncludeRelationship";
 
 // RDF Properties
 export const LABEL: string = DOCUMENT_NS + "label";
@@ -48,6 +49,7 @@ export const RESPONSE_PAYLOAD: string = HTTP_NS + "payload";
 export const MEDIA_TYPE: string = HTTP_NS + "mediaType";
 export const SCHEMA_SHAPE: string = HTTP_NS + "shape";
 export const PAYLOAD_SCHEMA: string = HTTP_NS + "schema";
+export const TARGET: string = DOCUMENT_NS + "target";
 
 // Utility functions
 function extract_link(node: any, property: string) {
@@ -71,7 +73,7 @@ function has_type(node, type) {
 }
 
 // Model Classes
-export type DomainElementKind = "APIDocumentation" | "EndPoint" | "Operation" | "Response" | "Request" | "Payload" | "DomainElement" | "Schema";
+export type DomainElementKind = "APIDocumentation" | "EndPoint" | "Operation" | "Response" | "Request" | "Payload" | "DomainElement" | "Schema" | "Include" | "Extends";
 
 export interface DomainModelElement {
     id: string;
@@ -118,13 +120,19 @@ export class Response extends DomainElement {
 export class Payload extends DomainElement {
     kind: DomainElementKind = "Payload";
 
-    constructor(public raw: any, public id: string, public label: string, public mediaType: string, public schema: Schema | undefined) { super(raw, id, label) }
+    constructor(public raw: any, public id: string, public label: string, public mediaType: string, public schema: Schema | IncludeRelationship | undefined) { super(raw, id, label) }
 }
 
 export class Schema extends DomainElement {
     kind: DomainElementKind = "Schema";
 
     constructor(public raw: any, public id: string, public label: string, public shape: any) { super(raw, id, label); }
+}
+
+export class IncludeRelationship extends DomainElement {
+    kind: DomainElementKind = "Include";
+
+    constructor(public raw: any, public id, public target: string, public label: string) { super(raw, id, label) };
 }
 
 // Factory
@@ -161,6 +169,9 @@ export class DomainModel {
         } else if(has_type(encoded, SCHEMA)) {
             console.log("* Processing Schema");
             return this.buildSchema(encoded);
+        } else if(has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            console.log("* Processing Include");
+            return this.buildInclude(encoded);
         } else {
             return this.buildDomainElement(encoded);
         }
@@ -168,7 +179,10 @@ export class DomainModel {
 
 
     private buildDomainElement(encoded: any) {
-        if (encoded == null) { return undefined }
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            return this.buildInclude(encoded);
+        }
         console.log("* Building DomainElement " + encoded["@id"]);
         const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const element = new DomainElement(encoded, encoded["@id"], label);
@@ -177,7 +191,10 @@ export class DomainModel {
     }
 
     private buildAPIDocumentation(encoded: any) {
-        if (encoded == null) { return undefined }
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            return this.buildInclude(encoded);
+        }
         console.log("* Building APIDocumentation " + encoded["@id"]);
         const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const endpoints = extract_links(encoded, ENDPOINT).map(elm => this.buildEndPoint(elm));
@@ -187,7 +204,10 @@ export class DomainModel {
     }
 
     private buildEndPoint(encoded: any) {
-        if (encoded == null) { return undefined }
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            return this.buildInclude(encoded);
+        }
         console.log("* Building EndPoint " + encoded["@id"]);
         const path = extract_value(encoded, PATH);
         const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
@@ -198,7 +218,10 @@ export class DomainModel {
     }
 
     private buildOperation(encoded: any) {
-        if (encoded == null) { return undefined }
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            return this.buildInclude(encoded);
+        }
         console.log("* Building Operation " + encoded["@id"]);
         const method = extract_value(encoded, METHOD);
         const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
@@ -211,7 +234,10 @@ export class DomainModel {
 
 
     private buildResponse(encoded: any) {
-        if (encoded == null) { return undefined }
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            return this.buildInclude(encoded);
+        }
         console.log("* Building Response " + encoded["@id"]);
         const status = extract_value(encoded, STATUS_CODE);
         const payloads = extract_links(encoded, RESPONSE_PAYLOAD).map(elm => this.buildPayload(elm));
@@ -222,7 +248,10 @@ export class DomainModel {
     }
 
     private buildRequest(encoded: any) {
-        if (encoded == null) { return undefined }
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            return this.buildInclude(encoded);
+        }
         const payloads = extract_links(encoded, RESPONSE_PAYLOAD).map(elm => this.buildPayload(elm));
         const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const element = new Request(encoded, encoded["@id"], label, payloads);
@@ -231,7 +260,10 @@ export class DomainModel {
     }
 
     private buildPayload(encoded: any) {
-        if (encoded == null) { return undefined }
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            return this.buildInclude(encoded);
+        }
         console.log("* Building Payload " + encoded["@id"]);
         const mediaType = extract_value(encoded, MEDIA_TYPE);
         const schema = this.buildSchema(extract_link(encoded, PAYLOAD_SCHEMA));
@@ -242,10 +274,26 @@ export class DomainModel {
     }
 
     private buildSchema(encoded: any) {
-        if (encoded == null) { return undefined }
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
+            return this.buildInclude(encoded);
+        }
         const shape = extract_link(encoded, SCHEMA_SHAPE);
         const label = extract_value(shape, NAME) || extract_value(encoded, LABEL);
+
         const element = new Schema(encoded, encoded["@id"], label, shape);
+        this.elements[element.id] = element;
+        return element;
+    }
+
+    private buildInclude(encoded: any) {
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        console.log("* Building Include " + encoded["@id"]);
+        console.log(JSON.stringify(encoded, null, 2));
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
+        const target = extract_link(encoded, TARGET);
+        console.log("  Target: " + target["@id"]);
+        const element = new IncludeRelationship(encoded, encoded["@id"], target["@id"], label);
         this.elements[element.id] = element;
         return element;
     }

@@ -177,18 +177,20 @@
 
 (defmethod to-jsonld :Extends [m context]
   (debug "Generating Extends " (document/id m))
-  (-> {"@type" [v/document:ExtendRelationship]}
+  (-> {"@id" (document/id m)
+       "@type" [v/document:ExtendRelationship]}
       (with-node-properties m context)
-      (utils/assoc-link m v/document:target document/id)
+      (utils/assoc-link m v/document:target document/target)
       (utils/assoc-value m v/document:label document/label)
       (assoc v/document:arguments (->> m document/arguments (map (fn [arg] {"@value" (platform/encode-json arg)}))))
       ))
 
 (defmethod to-jsonld :Includes [m context]
   (debug "Generating Includes " (document/id m))
-  (-> {"@type" [v/document:IncludeRelationship]}
+  (-> {"@id" (document/id m)
+       "@type" [v/document:IncludeRelationship]}
       (with-node-properties m context)
-      (utils/assoc-link m v/document:target document/id)
+      (utils/assoc-link m v/document:target document/target)
       (utils/assoc-value m v/document:label document/label)))
 
 (defmethod to-jsonld :SourceMap [m {:keys [source-maps?]}]

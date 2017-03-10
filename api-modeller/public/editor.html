@@ -31,6 +31,20 @@
                 No
             </label>
         </p>
+        <p class="control"
+           style="border-bottom-color: lightgrey; border-bottom-width: 1px; border-bottom-style: solid"
+           data-bind="if: editorSection() === 'diagram'">
+            <a class="button" data-bind="click: function() { viewModel.diagram.zoomOut() }" style="float: left">
+                <span class="icon">
+                    <i class="fa fa-search-minus"></i>
+                </span>
+            </a>
+            <a class="button" data-bind="click: function() { viewModel.diagram.zoomIn() }">
+                <span class="icon">
+                    <i class="fa fa-search-plus"></i>
+                </span>
+            </a>
+        </p>
     </div>
     <div id="editor-container" data-bind="visible: (editorSection() !== 'diagram' && editorSection() !== 'query')"></div>
     <div id="graph-container" style="overflow: auto" data-bind="visible: editorSection() === 'diagram'"></div>

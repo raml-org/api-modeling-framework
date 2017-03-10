@@ -70,6 +70,7 @@ export class ViewModel {
                     this.resetUnits();
                     this.resetReferences();
                     this.resetDocuments();
+                    this.resetDiagram();
                 }
             });
         });
@@ -213,6 +214,7 @@ export class ViewModel {
         this.resetDocuments();
         this.resetReferences();
         this.resetUnits();
+        this.resetDiagram();
     }
 
 
@@ -335,22 +337,31 @@ export class ViewModel {
     }
 
     public resetDiagram() {
-
-        let level = "files";
-        if (this.navigatorSection() === "domain") {
-            level = "domain";
-        } else if (this.navigatorSection() === "logic") {
-            level = "document";
-        }
-        this.diagram = new (require("./view_models/diagram").Diagram)(
-            this.focusedId(),
-            level,
-            (id: string, unit: any) => {
-                this.onSelectedDiagramId(id, unit);
+        try {
+            let level = "files";
+            if (this.navigatorSection() === "domain") {
+                level = "domain";
+            } else if (this.navigatorSection() === "logic") {
+                level = "document";
             }
-        );
-        this.diagram.process(this.allUnits());
-        this.diagram.render("graph-container");
+            let oldDiagram = this.diagram;
+            this.diagram = new (require("./view_models/diagram").Diagram)(
+                this.focusedId(),
+                level,
+                (id: string, unit: any) => {
+                    this.onSelectedDiagramId(id, unit);
+                }
+            );
+            this.diagram.process(this.allUnits());
+            this.diagram.render("graph-container", () => {
+                if (oldDiagram != null) {
+                    this.diagram.paperScale(oldDiagram.scaleX, oldDiagram.scaleY);
+                }
+            });
+
+        } catch (e) {
+            // ignore
+        }
     }
 
     // Reset the list of references for the current model

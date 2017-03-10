@@ -14,6 +14,7 @@ import {Response} from "../main/domain_model";
 import {Request} from "../main/domain_model";
 import {Payload} from "../main/domain_model";
 import * as utils from "../utils";
+import {IncludeRelationship} from "../main/domain_model";
 
 const CHAR_SIZE = 10;
 
@@ -34,7 +35,8 @@ export class Diagram {
     public nodes: {[id:string]: Rect};
     public links: Link[];
     public paper: Paper;
-    public scale = 1;
+    public scaleX = 1;
+    public scaleY = 1;
     public elements: (DocumentId & Unit)[];
 
     constructor(public selectedId: string, public level: "domain" | "document" | "files", public handler: (id: string, unit: any) => undefined) {}
@@ -58,7 +60,7 @@ export class Diagram {
         })
     }
 
-    render(div: string) {
+    render(div: string, cb: () => undefined) {
         setTimeout(() => {
         const diagContainer = document.getElementById(div);
         if (diagContainer != null) {
@@ -69,8 +71,15 @@ export class Diagram {
             }
 
             let cells: Cell[] = (classes).concat(this.links);
+            let acc = {};
+            cells.forEach(c => acc[c.id] = true);
+
+            const finalCells = cells.filter(c => {
+                return (c.attributes.source == null) || (acc[c.attributes.source.id] && acc[c.attributes.target.id]);
+            });
+            // const finalCells = cells;
             if (joint.layout != null) {
-                joint.layout.DirectedGraph.layout(cells, {
+                joint.layout.DirectedGraph.layout(finalCells, {
                     marginX: 50,
                     marginY: 50,
                     nodeSep: 100,
@@ -79,7 +88,7 @@ export class Diagram {
                     rankDir: "LR"
                 });
             }
-            const maxX = cells
+            const maxX = finalCells
                 .map(c => c['attributes'].position ? (c['attributes'].position.x + c['attributes'].size.width) : 0)
                 .sort((a, b) => {
                     if (a > b) {
@@ -90,7 +99,7 @@ export class Diagram {
                         return 0;
                     }
                 })[0];
-            const maxY = cells
+            const maxY = finalCells
                 .map(c => c['attributes'].position ? (c['attributes'].position.y + c['attributes'].size.height) : 0)
                 .sort((a, b) => {
                     if (a > b) {
@@ -101,7 +110,7 @@ export class Diagram {
                         return 0;
                     }
                 })[0];
-            cells.map(c => c['attributes'].position ? c['attributes'].position.x : 0);
+            finalCells.map(c => c['attributes'].position ? c['attributes'].position.x : 0);
 
 
             const graph: any = new Graph();
@@ -112,7 +121,9 @@ export class Diagram {
                 diagContainer.innerHTML = "";
 
                 let minWidth = diagContainer.clientWidth;
-                let minHeight = diagContainer.clientHeight;
+                // let minHeight = diagContainer.clientHeight;
+                let minHeight = window.innerHeight - 300;
+
                 const options = {
                     el: diagContainer,
                     width: (minWidth > width ? minWidth : width),
@@ -134,32 +145,53 @@ export class Diagram {
                     }
                  );
 
-                graph.addCells(cells);
+                graph.addCells(finalCells);
                 //this.paper.fitToContent();
                 //this.resetZoom();
+
+                let zoomx = 1;
+                let zoomy = 1;
+                if (minWidth < width) {
+                    zoomx = minWidth / width;
+                }
+                if (minHeight < height) {
+                    zoomy = minHeight /height;
+                }
+                let zoom = zoomy < zoomx ? zoomy : zoomx;
+                this.paperScale(zoom, zoom);
+                if (cb) {
+                    cb();
+                } else {
+
+                }
                 return true;
             }
         }
         }, 100);
     }
 
-    paperScale(paper, sx, sy) {
-        paper.scale(sx, sy);
+    paperScale(sx, sy) {
+        this.scaleX = sx;
+        this.scaleY = sy;
+        this.paper.scale(sx, sy);
     }
 
     zoomOut() {
-        this.scale -= 0.05;
-        this.paperScale(this.paper, this.scale, this.scale);
+        this.scaleX -= 0.05;
+        this.scaleY -= 0.05;
+        this.paperScale(this.scaleX, this.scaleY);
     }
 
     zoomIn() {
-        this.scale += 0.05;
-        this.paperScale(this.paper, this.scale, this.scale);
+        this.scaleX += 0.05;
+        this.scaleY += 0.05;
+        this.paperScale(this.scaleX, this.scaleY);
     }
 
     resetZoom() {
-        this.scale = 1;
-        this.paperScale(this.paper, this.scale, this.scale);
+        this.scaleX = 1;
+        this.scaleY = 1;
+        this.paperScale(this.scaleX, this.scaleY);
     }
 
     private processFragmentNode(element: Fragment) {
@@ -190,6 +222,16 @@ export class Diagram {
 
     private processDocumentNode(document: Document) {
         this.makeNode(document, "unit", document);
+        // first declarations to avoid refs in the domain level pointing
+        // to declarations not added yet
+        if (document.declares != null && this.level !== "files") {
+            document.declares.forEach(declaration => {
+                if (this.nodes[declaration.id] == null) {
+                    this.makeNode(declaration, "declaration", declaration);
+                }
+                this.makeLink(document.id, declaration.id, "declares");
+            })
+        }
         if (document.encodes != null && this.level !== "files") {
             const encodes = document.encodes;
             const encoded =  encodes.domain ? encodes.domain.root : undefined;
@@ -199,14 +241,6 @@ export class Diagram {
                 this.makeNode(encodes, "domain", encodes);
                 this.makeLink(document.id, encodes.id, "encodes");
             }
-        }
-        if (document.declares != null && this.level !== "files") {
-            document.declares.forEach(declaration => {
-                if (this.nodes[declaration.id] == null) {
-                    this.makeNode(declaration, "declaration", declaration);
-                }
-                this.makeLink(document.id, declaration.id, "declares");
-            })
         }
     }
 
@@ -275,6 +309,13 @@ export class Diagram {
                     this.makeLink(parentId, element.id, "schema");
                     break;
                 }
+                case "Include": {
+                    //console.log("Processing Schema in graph " + parentId + " <-> " + element.id + " <-> " + (element as IncludeRelationship).target);
+                    this.makeNode(element, "relationship", element);
+                    this.makeLink(parentId, element.id, "schema");
+                    this.makeLink(element.id, (element as IncludeRelationship).target, "includes");
+                    break;
+                }
                 default: {
                     this.makeNode(element, "domain", element);
                     break;
@@ -298,53 +339,57 @@ export class Diagram {
 
     private makeNode(node: {id: string, label: string}, kind: string, unit: any) {
         const label = node.label != null ? node.label : utils.label(node.id);
-        this.nodes[node.id] = new Rect({
-            attrs: {
-                rect: {
-                    fill: COLORS[kind],
-                    stroke: node.id === this.selectedId ? SELECTED_STROKE_COLOR : "black",
-                    "stroke-width": node.id === this.selectedId ? "3" : "1"
+        if (this.nodes[node.id] == null) {
+            this.nodes[node.id] = new Rect({
+                attrs: {
+                    rect: {
+                        fill: COLORS[kind],
+                        stroke: node.id === this.selectedId ? SELECTED_STROKE_COLOR : "black",
+                        "stroke-width": node.id === this.selectedId ? "3" : "1"
+                    },
+                    text: {
+                        text: label,
+                        fill: "black"
+                    },
+                    nodeId: node.id,
+                    unit: unit
                 },
-                text: {
-                    text: label,
-                    fill: "black"
+                position: {
+                    x: 0,
+                    y: 0
                 },
-                nodeId: node.id,
-                unit: unit
-            },
-            position: {
-                x: 0,
-                y: 0
-            },
-            size: {
-                width: label.length * CHAR_SIZE,
-                height: 30
-            }
-        });
-        //console.log("GENERATING NODE " + node.id + " => " + this.nodes[node.id].id);
+                size: {
+                    width: label.length * CHAR_SIZE,
+                    height: 30
+                }
+            });
+            //console.log("GENERATING NODE " + node.id + " => " + this.nodes[node.id].id);
+        }
     }
 
     private makeLink(sourceId: string, targetId: string, label: string) {
-        //console.log("GENERATING LINK FROM " + this.nodes[sourceId].id + " TO " + this.nodes[targetId].id);
-        this.links.push(new Link({
-            source: {id: this.nodes[sourceId].id },
-            target: {id: this.nodes[targetId].id },
-            attrs: {
-                ".marker-target": {
-                    d: "M 10 0 L 0 5 L 10 10 z",
-                    fill: COLORS[label] || DEFAULT_DOMAIN_COLOR,
-                    stroke: COLORS[label] || DEFAULT_DOMAIN_COLOR
-                },
-                ".connection": { stroke: COLORS[label] || DEFAULT_DOMAIN_COLOR }
-            },
-            labels: [{
-                position: 0.5,
+        if (this.nodes[sourceId] && this.nodes[targetId]) {
+            //console.log("GENERATING LINK FROM " + this.nodes[sourceId].id + " TO " + this.nodes[targetId].id);
+            this.links.push(new Link({
+                source: {id: this.nodes[sourceId].id},
+                target: {id: this.nodes[targetId].id},
                 attrs: {
-                    text: {
-                        text: label
+                    ".marker-target": {
+                        d: "M 10 0 L 0 5 L 10 10 z",
+                        fill: COLORS[label] || DEFAULT_DOMAIN_COLOR,
+                        stroke: COLORS[label] || DEFAULT_DOMAIN_COLOR
+                    },
+                    ".connection": {stroke: COLORS[label] || DEFAULT_DOMAIN_COLOR}
+                },
+                labels: [{
+                    position: 0.5,
+                    attrs: {
+                        text: {
+                            text: label
+                        }
                     }
-                }
-            }]
-        }));
+                }]
+            }));
+        }
     }
 }

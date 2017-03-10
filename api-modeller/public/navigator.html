@@ -197,6 +197,7 @@
                                        click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
                                        css: {'is-active': viewModel.focusedId() === $data.id}"></a>
                 <span data-bind="template: {name: 'responses-template', data: $data}"></span>
+                <span data-bind="template: {name: 'requests-template', data: $data}"></span>
             </li>
         </ul>
         <p class="menu-label">Responses</p>
@@ -273,6 +274,23 @@
         </span>
     </script>
 
+    <script type="text/html" id="requests-template">
+        <span data-bind="if: $data.expanded && $data.requests && $data.requests.length > 0">
+            <p class="menu-label submenu-label">Expects</p>
+            <ul data-bind="foreach: $data.requests">
+                <li>
+                    <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                    </span>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                    <span data-bind="template: {name: 'payload-template', data: $data}"></span>
+                </li>
+            </ul>
+        </span>
+    </script>
+
     <script type="text/html" id="operations-template">
         <span data-bind="if: $data.expanded && $data.operations && $data.operations.length > 0">
             <p class="menu-label submenu-label">Supported Operations</p>
@@ -284,6 +302,7 @@
                     <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
                                            click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
                                            css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                    <span data-bind="template: {name: 'requests-template', data: $data}"></span>
                     <span data-bind="template: {name: 'responses-template', data: $data}"></span>
                 </li>
             </ul>
