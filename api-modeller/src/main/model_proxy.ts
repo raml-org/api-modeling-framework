@@ -56,8 +56,6 @@ export class ModelProxy {
             liftedModel,
             {},
             (err, res) => {
-                console.log("BACK!");
-                console.log(err);
                 if (err != null) {
                     cb(err,res);
                 } else {

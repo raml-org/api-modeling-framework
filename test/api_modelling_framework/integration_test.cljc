@@ -4,6 +4,7 @@
   (:require [api-modelling-framework.core :as core]
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
+            [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.platform :as platform]
             [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
@@ -105,6 +106,7 @@
                               (map :responses)
                               (map :200)
                               (map :body))]
+               (prn types)
                (doseq [type types]
                  (is (or (= (:type type) "array")
                          (= (:type type) "object")))
@@ -162,7 +164,7 @@
                                   first
                                   (domain/schema)
                                   (domain/shape))]
-                        (last (string/split (first (get type "@type")) #"#")))))
+                        (last (string/split (first (get type (v/shapes-ns "inherits"))) #"#")))))
                (is (= "application/xml"
                       (->> song-resource
                            (domain/supported-operations)
@@ -190,6 +192,7 @@
          (go (let [parser (core/->RAMLParser)
                    generator-openapi (core/->OpenAPIGenerator)
                    generator-raml (core/->RAMLGenerator)
+                   generator-jsonld (core/->APIModelGenerator)
                    model (<! (cb->chan (partial core/parse-file parser "resources/other-examples/world-music-api/api.raml")))
                    output-model (core/domain-model model)
                    _ (is (not (error? output-model)))
@@ -197,6 +200,9 @@
                                                          output-model
                                                          {})))
                    output-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/world-music-api/wip.raml"
+                                                        output-model
+                                                        {})))
+                   output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/world-music-api/wip.raml"
                                                         output-model
                                                         {})))]
                (done)))))

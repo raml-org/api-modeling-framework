@@ -382,13 +382,15 @@
 ;;(some? (type-reference? type ctx))  (resolve-type (type-reference? type ctx) ctx)
 
 (defn check-inheritance [type ctx]
-  (let [super-types (get type "@type")]
-    (assoc type "@type" (mapv (fn [super-type]
-                                (cond
-                                  (map? super-type)                 (resolve-type super-type ctx)
-                                  (type-reference? super-type ctx)  (resolve-type (type-reference? super-type ctx) ctx)
-                                  :else super-type))
-                              super-types))))
+  (let [super-types (get type (v/shapes-ns "inherits"))]
+    (if (some? super-types)
+      (assoc type (v/shapes-ns "inherits") (mapv (fn [super-type]
+                                                   (cond
+                                                     (map? super-type)                 (resolve-type super-type ctx)
+                                                     (type-reference? super-type ctx)  (resolve-type (type-reference? super-type ctx) ctx)
+                                                     :else super-type))
+                                                 super-types))
+      type)))
 
 (defn resolve-type [type ctx]
   (let [resolved-type (cond
@@ -406,4 +408,4 @@
 
 (defmethod resolve :Type [m ctx]
   (debug "Resolving type " (get m "@id"))
-  (resolve-type m ctx))
+  (utils/trace (resolve-type m ctx)))

@@ -530,8 +530,10 @@
                 (json-schema-shapes/parse-type (keywordize-keys (platform/decode-json node)) shape-context)
                 (shapes/parse-type node shape-context))]
     (if is-fragment
-      {:id type-id
-       :shape shape}
+      (domain/map->ParsedDomainElement {:id type-id
+                                        :fragment-node :parsed-type
+                                        :properties {:id type-id
+                                                     :shape shape}})
       (domain/map->ParsedType {:id type-id
                                :shape shape}))))
 

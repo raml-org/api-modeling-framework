@@ -205,6 +205,7 @@
       :parsed-parameter         (map->ParsedParameter properties)
       :parsed-request           (map->ParsedRequest properties)
       :parsed-operation         (map->ParsedOperation properties)
+      :parsed-type              (map->ParsedType properties)
       :trait                    (map->ParsedOperation properties)
       :parsed-end-point         (map->ParsedEndPoint properties)
       :parsed-includes          (document/map->ParsedIncludes properties)

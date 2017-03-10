@@ -28,12 +28,12 @@
 (defn parse-shape-dispatcher-fn [shape ctx]
   (cond
     (nil? shape)            nil
+    (some? (get shape (v/shapes-ns "inherits")))        :inheritance
     (utils/has-class? shape (v/shapes-ns "Scalar"))     (v/shapes-ns "Scalar")
     (utils/has-class? shape (v/shapes-ns "Array"))      (v/shapes-ns "Array")
     (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
     (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/sh-ns "JSONSchema")
     (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/sh-ns "XMLSchema")
-    (some? (get shape "@type"))                         :inheritance
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -111,7 +111,7 @@
      :value value}))
 
 (defmethod parse-shape :inheritance [shape context]
-  (let [types (->> (get shape "@type")
+  (let [types (->> (get shape (v/shapes-ns "inherits"))
                    (mapv (fn [type]
                            (if (common/ref-shape? type context)
                              (ref-shape type context)

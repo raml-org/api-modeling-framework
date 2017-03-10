@@ -124,7 +124,8 @@
                     (str "#" (last (string/split remote-id #"#"))))]
       {"@id" (str parsed-location "/ref-shape")
        v/sorg:name [{"@value" (str "#" label)}]
-       "@type" [remote-id]})
+       "@type" [(v/shapes-ns "Shape")]
+       (v/shapes-ns "inherits") [remote-id]})
     nil))
 
 (defn check-multiple-inheritance
@@ -132,22 +133,25 @@
   [types {:keys [parsed-location default-type] :as context}]
   (let [types (mapv #(parse-type % context) types)]
     {"@id" (str parsed-location "/ref-shape")
-     "@type" types}))
+     "@type" [(v/shapes-ns "Shape")]
+     (v/shapes-ns "inherits") types}))
 
 (defn check-inheritance
   [node {:keys [location parsed-location] :as context}]
   (let [parsed-location (utils/path-join parsed-location "type")
         location (utils/path-join location "type")]
     {"@id"  parsed-location
-     "@type" [(parse-type (:type node) (-> context
-                                           (assoc :parsed-location parsed-location)
-                                           (assoc :location location)))]}))
+     "@type" [(v/shapes-ns "Shape")]
+     (v/shapes-ns "inherits") [(parse-type (:type node) (-> context
+                                                            (assoc :parsed-location parsed-location)
+                                                            (assoc :location location)))]}))
 
 (defn check-inclusion [node {:keys [parse-ast parsed-location] :as context}]
   (let [parsed (parse-ast node context)
         location (syntax/<-location node)]
     {"@id" (str parsed-location "/include-shape")
-     "@type" [location]}))
+     "@type" [(v/shapes-ns "Shape")]
+     (v/shapes-ns "inherits") [location]}))
 
 (defn parse-type [node {:keys [parsed-location default-type] :as context}]
   (cond
@@ -177,8 +181,8 @@
                                                    (map? type-ref)               (check-inheritance node context)
                                                    (coll? type-ref)              (check-multiple-inheritance node context)
                                                    (string? type-ref)            (cond
-                                                                                   (string/starts-with? type-ref "{") (parse-json-node parsed-location node)
-                                                                                   (string/starts-with? type-ref "<") (parse-xml-node parsed-location node)
+                                                                                   (string/starts-with? type-ref "{") (parse-json-node parsed-location type-ref)
+                                                                                   (string/starts-with? type-ref "<") (parse-xml-node parsed-location type-ref)
                                                                                    :else (check-reference type-ref context))
                                                    :else                           nil)]
                                        (if (some? shape)
