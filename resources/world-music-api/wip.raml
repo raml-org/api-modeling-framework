@@ -2,6 +2,12 @@
 title: World Music API (WIP)
 baseUri: http://example.api.com/{version}/{region-id}
 version: v1
+annotationTypes:
+  test: string
+  behaviour:
+    type: object
+    properties:
+      name: string
 baseUriParameters:
   version:
     description: Version of the API
@@ -32,6 +38,7 @@ types:
 /albums:
   is: [ secured ]
   post:
+    (test): albumsTest
     body: Album
   get:
     queryParameters:
@@ -39,6 +46,8 @@ types:
         description: filter the songs by genre
     responses:
       200:
+        (behaviour):
+          name: safe
         body:
           type: array
           items: Album

@@ -171,3 +171,27 @@
                  (str "/" next))]
       (apply path-join (concat [(str base next)] (rest parts))))
     base))
+
+(defn last-component [s]
+  (let [maybe-hash (-> s safe-str (string/split #"/") last)]
+    (-> maybe-hash (string/split #"#") last)))
+
+
+(defn annotation->jsonld [base-uri data]
+  (cond
+    (map? data) (->> data
+                     (map (fn [[k v]]
+                            [(path-join base-uri k) (annotation->jsonld base-uri v)]))
+                     (into {}))
+    (coll? data) (mapv #(annotation->jsonld %) data)
+    :else        {"@value" data}))
+
+(defn jsonld->annotation [data]
+  (cond
+    (some? (get data "@value")) (get data "@value")
+    (map? data)                 (->> data
+                                     (map (fn [[k v]]
+                                            [(last-component k) (jsonld->annotation v)]))
+                                     (into {}))
+    (coll? data)                (mapv (fn [v] (jsonld->annotation v)) data)
+    :else                       data))

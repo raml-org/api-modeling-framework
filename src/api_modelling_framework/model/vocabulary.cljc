@@ -52,6 +52,7 @@
 (def document:label (document-ns "label"))
 (def document:arguments (document-ns "arguments"))
 (def document:fragment-node (document-ns "fragmentNode"))
+(def document:additional-properties (document-ns "additionalProperties"))
 
 (def http:APIDocumentation (http-ns "APIDocumentation"))
 (def sorg:name (sorg-ns "name"))
@@ -96,3 +97,10 @@
 (def http:Parameter (http-ns "Parameter"))
 (def hydra:required (hydra-ns "required"))
 (def http:param-binding (http-ns "paramBinding"))
+
+(def document:DomainPropertySchema (document-ns "DomainPropertySchema"))
+(def document:domain (document-ns "domain"))
+(def document:range (document-ns "range"))
+
+(def document:DomainProperty (document-ns "DomainProperty"))
+(def document:object (document-ns "object"))

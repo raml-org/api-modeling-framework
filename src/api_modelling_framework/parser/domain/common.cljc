@@ -5,4 +5,4 @@
 (defn generate-is-type-sources [type-name location parsed-location]
   (let [source-map-id (utils/path-join parsed-location "/source-map/is-type")
         is-type-tag (document/->IsTypeTag source-map-id type-name)]
-    [(document/->DocumentSourceMap (utils/path-join parsed-location "/source-map") location [is-type-tag])]))
+    [(document/->DocumentSourceMap (utils/path-join parsed-location "/source-map") location [is-type-tag] [])]))

@@ -13,6 +13,9 @@
     (nil? model)                                              nil
     (utils/has-class? model v/document:AbstractDomainElement) v/document:AbstractDomainElement
     (utils/has-class? model v/http:APIDocumentation)          v/http:APIDocumentation
+    (utils/has-class? model v/document:DomainPropertySchema)  v/document:DomainPropertySchema
+    (utils/has-class? model v/document:DomainProperty)        v/document:DomainProperty
+    (utils/has-class? model v/document:Tag)                   v/document:Tag
     (utils/has-class? model v/document:SourceMap)             v/document:SourceMap
     (utils/has-class? model v/document:Tag)                   v/document:Tag
     (utils/has-class? model v/http:EndPoint)                  v/http:EndPoint
@@ -67,7 +70,7 @@
   (let [id (get m "@id")
         location (-> m (get v/document:location) first (get "@id"))
         tags (map from-jsonld (get m v/document:tag []))]
-    (document/->DocumentSourceMap  id location tags)))
+    (document/->DocumentSourceMap id location tags [])))
 
 
 (defmethod from-jsonld v/document:Tag [m]
@@ -213,6 +216,17 @@
     (domain/map->ParsedDomainElement {:id (get m "@id")
                                       :properties properties
                                       :fragment-node (keyword (utils/find-value m v/document:fragment-node))})))
+
+(defmethod from-jsonld v/document:DomainPropertySchema [m]
+  (debug "Parsing " v/document:DomainPropertySchema  " " (get m "@id"))
+  (let [sources (get m v/document:source)
+        parsed-sources (map from-jsonld sources)]
+    (domain/map->ParsedDomainPropertySchema {:id (get m "@id")
+                                             :name (utils/find-value m v/sorg:name)
+                                             :description (utils/find-value m v/sorg:description)
+                                             :sources sources
+                                             :domain (utils/find-values m v/document:domain)
+                                             :range (get m v/document:range)})))
 
 (defmethod from-jsonld nil [m]
   (debug "Parsing " nil)

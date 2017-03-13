@@ -5,6 +5,7 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.generators.domain.raml :as generator]
+            [api-modelling-framework.generators.domain.common :as common]
             [api-modelling-framework.parser.domain.raml :as raml-parser]))
 
 (deftest to-raml-APIDocumentation
@@ -162,3 +163,28 @@
                                              :parsed-location location})
         generated (generator/to-raml (first parsed) {})]
     (is (= input generated))))
+
+
+(deftest to-raml-Annotations
+  (let [base-uri "file://path/to/resource.raml"
+        location "file://path/to/resource.raml#"
+        input {:annotationTypes {:testHarness {:type "string"
+                                               :displayName "test harness"}}
+               (keyword "/users") {:displayName "Users"
+                                   "(testHarness)" "usersTest"
+                                   :get {:displayName "get method"
+                                         :description "get description"
+                                         :protocols ["http"]}}}
+        annotations (raml-parser/process-annotations input {:base-uri base-uri
+                                                            :location location
+                                                            :parsed-location (str location "/annotations")})
+        parsed (raml-parser/parse-ast input
+                                      {:location location
+                                       :parsed-location "file://path/to/resource.raml#"
+                                       :is-fragment false
+                                       :annotations annotations
+                                       :path "/test"})
+        generated-annotations (common/model->annotationTypes (vals annotations) {} generator/to-raml!)
+        generated (generator/to-raml parsed {})]
+    (is (= input (assoc generated
+                        :annotationTypes generated-annotations)))))

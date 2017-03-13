@@ -42,13 +42,15 @@
                                       (document/declares fragment)))
                               flatten
                               (mapv (fn [declaration] (assoc declaration :from-library true))))
+        annotations (common/model->annotationTypes declares ctx domain-generator/to-openapi!)
         uses (mapv (fn [library] (to-openapi library ctx)) uses)
         context (-> ctx
                     (assoc :document-location (document/location model))
                     (assoc :references (concat declares library-declares))
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
-                    (assoc :document-generator to-openapi))
+                    (assoc :document-generator to-openapi)
+                    (assoc :annotations annotations))
         encoded (domain-generator/to-openapi (document/encodes model) context)
         encoded (if (> (count uses) 0) (assoc encoded :x-uses uses) encoded)]
     {syntax/at-location (document/location model)
@@ -84,6 +86,7 @@
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))
                                {}))
+        annotations (common/model->annotationTypes declares ctx domain-generator/to-openapi!)
         context (-> ctx
                     (assoc :document-location (document/location model))
                     (assoc :references declares)
@@ -99,6 +102,7 @@
      syntax/at-data (-> {:swagger "Swagger Library"
                          :types types
                          :traits traits
+                         :x-annotationTypes annotations
                          :x-uses uses}
                         (utils/clean-nils))
      syntax/at-fragment "OpenAPI Library"}))

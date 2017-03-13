@@ -16,6 +16,8 @@
   (cond
     (nil? model)                                 model
 
+    (satisfies? domain/DomainPropertySchema model)  domain/DomainPropertySchema
+
     (and (satisfies? document/Includes model)
          (satisfies? document/Node model))          document/Includes
 
@@ -40,6 +42,17 @@
     :else                                        (type model)))
 
 (defmulti to-openapi (fn [model ctx] (to-openapi-dispatch-fn model ctx)))
+
+(defn with-annotations [model ctx generated]
+  (if (map? generated)
+    (let [annotations (document/additional-properties model)
+          annotations-map (->> annotations
+                               (map (fn [annotation]
+                                      [(str "x-" (document/name annotation)) (->  annotation domain/object utils/jsonld->annotation)]))
+                               (into {}))]
+      (merge generated
+             annotations-map))
+    generated))
 
 (defn includes? [x]
   (if (and (some? x) (some? (document/extends x)) (= 1 (count (document/extends x))))
@@ -73,9 +86,11 @@
                 expanded-fragment (document-generator fragment ctx)]
             ;; before returning the expanded fragment, we saved it in the cache
             (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
-            expanded-fragment))))
+            (with-annotations encoded-fragment ctx
+              expanded-fragment)))))
     ;; Nothing to merge
-    (to-openapi x ctx)))
+    (with-annotations x ctx
+      (to-openapi x ctx))))
 
 (defmethod to-openapi domain/APIDocumentation [model ctx]
   (debug "Generating Swagger")
@@ -106,6 +121,7 @@
                      (domain/accepts model))
          :definitions (common/model->types (assoc ctx :resolve-types true) to-openapi!)
          :x-traits (common/model->traits (assoc ctx :abstract true) to-openapi!)
+         :x-annotationTypes (:annotations ctx)
          :paths paths}
         utils/clean-nils)))
 
@@ -251,6 +267,17 @@
       (some? reference) {:$ref fragment-target}
       ;; Unknown reference @todo Should I throw an exception in this case?
       :else             {:$ref fragment-target})))
+
+(defmethod to-openapi domain/DomainPropertySchema [model ctx]
+  (debug "Generating DomainPropertySchema")
+  (let [range (to-openapi! (domain/range model) ctx)
+        name  (document/name model)
+        domain (domain/domain model)
+        description (document/description model)]
+    (utils/clean-nils (merge range
+                             {:displayName name
+                              :description description
+                              :allowedTargets domain}))))
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")

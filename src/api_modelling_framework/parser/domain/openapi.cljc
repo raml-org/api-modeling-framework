@@ -94,24 +94,67 @@
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
+(defn generate-is-annotation-sources [annotation-name location parsed-location]
+  (let [source-map-id (utils/path-join parsed-location "/source-map/is-annotation")
+        is-trait-tag (document/->IsAnnotationTag source-map-id annotation-name)]
+    [(document/->DocumentSourceMap (utils/path-join parsed-location "/source-map") location [is-trait-tag] [])]))
+
+(defn parse-annotation-ast [p model {:keys [base-uri annotations parsed-location]}]
+  (let [annotation-name (-> p
+                            utils/safe-str
+                            (string/replace #"x-" ""))
+        annotation (get @annotations annotation-name)
+        schema-id (str base-uri "#" (url/url-encode annotation-name))]
+
+    (when (and (nil? annotation)
+               (not= annotation-name "traits")
+               (not= annotation-name "is")
+               (not= annotation-name "media-type")
+               (not= annotation-name "requests")
+               (not= annotation-name "responses"))
+      (swap! annotations (fn [acc]
+                           (assoc acc annotation-name (domain/map->ParsedDomainPropertySchema {:id schema-id
+                                                                                               :name annotation-name
+                                                                                               :sources (generate-is-annotation-sources annotation-name schema-id parsed-location)
+                                                                                               :range (shapes/parse-scalar
+                                                                                                       (str base-uri "#" annotation-name "/range")
+                                                                                                       (v/xsd-ns "string"))})))))
+    (domain/map->ParsedDomainProperty {:id (document/id annotation)
+                                       :name annotation-name
+                                       :object (utils/annotation->jsonld (document/id annotation) model)})))
+
+(defn annotation? [x] (string/starts-with? (utils/safe-str x) "x-"))
+
+(defn with-annotations [node ctx model]
+  (let [parsed-annotations (->> node
+                                (filter (fn [[k v]] (annotation? k)))
+                                (map (fn [[k v]] (parse-annotation-ast k v ctx))))]
+    (if (> (count parsed-annotations) 0)
+      (if (some? (:properties model))
+        (assoc-in model [:properties :additional-properties] parsed-annotations)
+        (assoc model :additional-properties parsed-annotations))
+      model)))
+
 (defn generate-inline-fragment-parsed-sources [parsed-location fragment-name fragment-location]
   (let [source-map-id (str parsed-location "/source-map/inline-fragment/" fragment-name)
         inline-fragment-parsed-tag (document/->InlineFragmentParsedTag source-map-id fragment-location)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map")
                                    fragment-location
-                                   [inline-fragment-parsed-tag])]))
+                                   [inline-fragment-parsed-tag]
+                                   [])]))
 
 (defn generate-extend-include-fragment-sources [parsed-location fragment-location]
   (let [source-map-id (str parsed-location "/source-map/inline-fragment")
         parsed-tag (document/->ExtendIncludeFragmentParsedTag source-map-id fragment-location)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map")
                                    fragment-location
-                                   [parsed-tag])]))
+                                   [parsed-tag]
+                                   [])]))
 
 (defn generate-is-trait-sources [trait-name location parsed-location]
   (let [source-map-id (str parsed-location "/source-map/is-trait")
         is-trait-tag (document/->IsTraitTag source-map-id trait-name)]
-    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-trait-tag])]))
+    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-trait-tag] [])]))
 
 (defn process-traits [node {:keys [location parsed-location] :as context}]
   (debug "Processing " (count (:x-traits node [])) "traits")
@@ -163,7 +206,7 @@
 (defn generate-parsed-node-sources [node-name location parsed-location]
   (let [source-map-parsed-location (str parsed-location "/source-map/" node-name)
         node-parsed-tag (document/->NodeParsedTag source-map-parsed-location location)]
-    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [node-parsed-tag])]))
+    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [node-parsed-tag] [])]))
 
 (defn generate-open-api-tags-sources [tags location parsed-location]
   (let [tags (or tags [])]
@@ -173,7 +216,8 @@
                    (document/->DocumentSourceMap
                     (str parsed-location "/source-map/api-tags-" i)
                     location
-                    [(document/->APITagTag parsed-location tag)])))
+                    [(document/->APITagTag parsed-location tag)]
+                    [])))
                (range 0 (count tags))))))
 
 (defn find-extend-tags [{:keys [location parsed-location references] :as context}]
@@ -261,7 +305,7 @@
 (defn generate-extends-trait-sources [trait-name location parsed-location]
   (let [source-map-id (str parsed-location "/source-map/extend-trait")
         extends-trait-tag (document/->ExtendsTraitTag source-map-id trait-name)]
-    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [extends-trait-tag])]))
+    [(document/->DocumentSourceMap (str parsed-location "/source-map") location [extends-trait-tag] [])]))
 
 (defn parse-traits [resource-id node references {:keys [location parsed-location]}]
   (let [traits (flatten [(:x-is node [])])]

@@ -12,6 +12,10 @@
   (cond
     (nil? model)                                    nil
 
+    (satisfies? domain/DomainPropertySchema model)  :DomainPropertySchema
+
+    (satisfies? domain/DomainProperty model)        :DomainProperty
+
     (satisfies? domain/DomainElement model)         :DomainElement
 
     (satisfies? document/Extends model)             :Extends
@@ -64,7 +68,8 @@
   (-> (initial-value node m context)
       (assoc "@id" (document/id m))
       (utils/assoc-value m v/sorg:name document/name)
-      (utils/assoc-value m v/sorg:description document/description)))
+      (utils/assoc-value m v/sorg:description document/description)
+      (utils/assoc-objects m v/document:additional-properties document/additional-properties (fn [x] (to-jsonld x context)))))
 
 
 (defmethod to-jsonld :APIDocumentation [m context]
@@ -207,6 +212,25 @@
         "@type" [v/document:Tag]
         v/document:tag-id [{"@value" (document/tag-id m)}]
         v/document:tag-value [{"@value" (document/value m)}]}
+       (utils/clean-nils)))
+
+(defmethod to-jsonld :DomainPropertySchema [m context]
+  (debug "Generating DomainPropertySchema" (document/id m))
+  (->> {"@id" (document/id m)
+        "@type" [v/document:DomainPropertySchema]}
+       (with-node-properties m context)
+       (utils/assoc-values m v/document:domain domain/domain)
+       (utils/assoc-object m v/document:range domain/range to-jsonld)
+       (utils/clean-nils)))
+
+
+(defmethod to-jsonld :DomainProperty [m context]
+  (debug "Generating DomainProperty" (document/id m))
+  (->> {"@id" (document/id m)
+        "@type" [v/document:DomainProperty]}
+       (with-node-properties m context)
+       (utils/assoc-values m v/document:domain domain/domain)
+       (utils/assoc-object m v/document:object domain/object identity)
        (utils/clean-nils)))
 
 (defmethod to-jsonld nil [_ _] nil)

@@ -17,6 +17,8 @@
   (cond
     (nil? model)                                    model
 
+    (satisfies? domain/DomainPropertySchema model)  domain/DomainPropertySchema
+
     (and (satisfies? document/Includes model)
          (satisfies? document/Node model))          document/Includes
 
@@ -44,6 +46,18 @@
     :else                                           (type model)))
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
+
+
+(defn with-annotations [model ctx generated]
+  (if (map? generated)
+    (let [annotations (document/additional-properties model)
+          annotations-map (->> annotations
+                               (map (fn [annotation]
+                                      [(str "(" (document/name annotation) ")") (->  annotation domain/object utils/jsonld->annotation)]))
+                               (into {}))]
+      (merge generated
+             annotations-map))
+    generated))
 
 (defn includes? [x]
   (if (and (some? x) (some? (document/extends x)) (= 1 (count (document/extends x))))
@@ -76,9 +90,11 @@
                 expanded-fragment (document-generator fragment ctx)]
             ;; before returning the expanded fragment, we saved it in the cache
             (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
-            expanded-fragment))))
+            (with-annotations encoded-fragment ctx
+              expanded-fragment)))))
     ;; Nothing to merge
-    (to-raml x ctx)))
+    (with-annotations x ctx
+      (to-raml x ctx))))
 
 (defn model->base-uri [model]
   (let [scheme (or (domain/scheme model) [])
@@ -153,6 +169,7 @@
          :version (domain/version model)
          :baseUri (model->base-uri model)
          :protocols (model->protocols model)
+         :annotationTypes (:annotations ctx)
          :mediaType (model->media-type model)
          ;; In our model declared references are not restricted to types, traits
          ;; etc as in RAML, we need to provide a reference for them
@@ -269,6 +286,7 @@
 (defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments references document-generator type-hint]
                                              :as context
                                              :or {expanded-fragments (atom {})}}]
+  (debug "Generating Includes")
   (let [target (document/target model)
         fragment (get fragments target)
         reference (->> references (filter (fn [ref] (= (document/id ref) target))) first)]
@@ -292,6 +310,17 @@
       ;; Reference to something we don't know about
       :else                                    (throw (new #?(:clj Exception :cljs js/Error)
                                                            (str "Cannot find fragment " target " for generation"))))))
+
+(defmethod to-raml domain/DomainPropertySchema [model ctx]
+  (debug "Generating DomainPropertySchema")
+  (let [range (to-raml! (domain/range model) ctx)
+        name  (document/name model)
+        domain (domain/domain model)
+        description (document/description model)]
+    (utils/clean-nils (merge range
+                             {:displayName name
+                              :description description
+                              :allowedTargets domain}))))
 
 (defmethod to-raml nil [_ _]
   (debug "Generating nil")

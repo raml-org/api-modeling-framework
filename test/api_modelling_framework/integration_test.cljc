@@ -38,11 +38,11 @@
                    _ (is (not (error? model)))
                    output-model (core/document-model model)
                    _ (is (not (error? output-model)))
-                   raml-string (<! (cb->chan (partial core/generate-string generator "resources/world-music-api/wip.raml"
+                   open-api-string (<! (cb->chan (partial core/generate-string generator "resources/world-music-api/wip.raml"
                                                       output-model
                                                       {})))
-                   _ (is (not (error? raml-string)))
-                   output (platform/decode-json raml-string)]
+                   _ (is (not (error? open-api-string)))
+                   output (platform/decode-json open-api-string)]
                (is (= ["Album" "Track"] (-> output (get "definitions") keys)))
                (is (some? (-> output
                               (get "definitions")
@@ -63,6 +63,11 @@
                           (get "schema")
                           (get "items")
                           (get "$ref"))))
+               (is (= 2 (-> output (get "x-annotationTypes") count)))
+               (is (= ["name"] (-> output (get "x-annotationTypes") (get "behaviour") (get "properties") keys)))
+               (is (= "string" (-> output (get "x-annotationTypes") (get "test") (get "type"))))
+               (is (= "albumsTest" (-> output (get "paths") (get "/albums") (get "post") (get "x-test"))))
+               (is (= "safe" (-> output (get "paths") (get "/albums") (get "get") (get "responses") (get "200") (get "x-behaviour") (get "name"))))
                (done)))))
 
 (deftest integration-test-raml->raml
@@ -78,12 +83,17 @@
                                                       {})))
                    _ (is (not (error? output-string)))
                    output (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string)))]
+
                (is (= [:Album :Track] (-> output :types keys)))
                (is (= "SongsLib.Song" (-> output :types :Track :properties :song :type)))
                (is (some? (-> output :uses :SongsLib)))
                (is (some? (-> output :traits :secured)))
                (is (= ["secured"] (-> output (get (keyword "/albums")) :is)))
                (is (= "Album" (-> output (get (keyword "/albums")) :get :responses :200 :body :items)))
+               (is (= {:behaviour {:properties {:name {:type "string"}}, :type "object"}, :test {:type "string"}}
+                      (:annotationTypes output)))
+               (is (= "albumsTest" (-> output (get (keyword "/albums")) :post (get (keyword "(test)")))))
+               (is (= "safe" (-> output (get (keyword "/albums")) :get :responses :200 (get (keyword "(behaviour)")) :name)))
                (done)))))
 
 (deftest integration-test-raml->domain->raml
@@ -106,7 +116,7 @@
                               (map :responses)
                               (map :200)
                               (map :body))]
-               (prn types)
+               (prn output)
                (doseq [type types]
                  (is (or (= (:type type) "array")
                          (= (:type type) "object")))

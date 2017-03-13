@@ -46,6 +46,7 @@
                                       (mapv #(update-alias % alias) (document/declares fragment))))
                               flatten
                               (mapv (fn [declaration] (assoc declaration :from-library true))))
+        annotations (common/model->annotationTypes declares ctx domain-generator/to-raml!)
         uses (->> uses
                   (mapv (fn [[alias fragment]]
                           [(keyword alias) (to-raml fragment ctx)]))
@@ -54,7 +55,8 @@
                     (assoc :references (concat declares library-declares))
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
-                    (assoc :document-generator to-raml))
+                    (assoc :document-generator to-raml)
+                    (assoc :annotations annotations))
         encoded (domain-generator/to-raml (document/encodes model) context)
         encoded (if (> (count uses) 0) (assoc encoded :uses uses) encoded)]
     {(keyword "@location") (document/location model)
@@ -110,6 +112,7 @@
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))
                                {}))
+        annotations (common/model->annotationTypes declares ctx domain-generator/to-raml!)
         context (-> ctx
                     (assoc :references declares)
                     (assoc :fragments fragments)
@@ -124,6 +127,7 @@
     {(keyword "@location") (document/location model)
      (keyword "@data") (-> {:usage (document/description model)
                             :uses uses
+                            :annotationTypes annotations
                             :types types
                             :traits traits}
                            (utils/clean-nils))

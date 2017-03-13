@@ -21,7 +21,7 @@
   (base-path [this] "Optional base path for all API endpoints")
   (endpoints [this] "List of endpoints in the API"))
 
-(defrecord ParsedAPIDocumentation [id sources name description extends parametesr
+(defrecord ParsedAPIDocumentation [id sources name description extends parameters additional-properties
                                    host scheme base-path accepts content-type headers
                                    provider terms-of-service version license endpoints]
   CommonAPIProperties
@@ -47,19 +47,51 @@
   (sources [this] sources)
   (valid? [this] (and (some? (name this))
                       (some? (version this))))
-  (extends [this] (or extends [])))
+  (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties [])))
 
 (defprotocol DomainElement
   (fragment-node [this] "The kind of node this domain element is wrapping")
   (properties [this] "A map of properties that can be used to build a concrete domain component")
   (to-domain-node [this] "Transforms this partially parsed domain element into a concrete domain component"))
 
+(defprotocol DomainPropertySchema
+  (domain [this] "Elements in the domain of the property")
+  (range [this] "Range of the property"))
+
+(defrecord ParsedDomainPropertySchema [id name description sources additional-properties extends domain range]
+  DomainPropertySchema
+  (domain [this] domain)
+  (range [this] (or range []))
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources)
+  (valid? [this] true)
+  (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties [])))
+
+(defprotocol DomainProperty
+  (object [this] "Value of the domain property"))
+
+(defrecord ParsedDomainProperty [id name description sources extends object]
+  DomainProperty
+  (object [this] object)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] sources)
+  (valid? [this] true)
+  (extends [this] (or extends []))
+  (additional-properties [this] []))
 
 (defprotocol EndPoint
   (supported-operations [this] "HTTP operations supported by this end-point")
   (path [this] "(partial) IRI template where the operations are bound to"))
 
-(defrecord ParsedEndPoint [id sources name description extends path supported-operations parameters]
+(defrecord ParsedEndPoint [id sources name description extends additional-properties path supported-operations parameters]
   EndPoint
   (supported-operations [this] supported-operations)
   (path [this] path)
@@ -71,13 +103,14 @@
   (description [this] description)
   (sources [this] sources)
   (valid? [this] true)
-  (extends [this] (or extends [])))
+  (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties [])))
 
 (defprotocol Payload
   (schema [this] "Schema for the payload")
   (media-type [this] "Media type associated to this payload"))
 
-(defrecord ParsedPayload [id sources name description extends
+(defrecord ParsedPayload [id sources name description extends additional-properties
                           schema media-type]
   document/Node
   (id [this] id)
@@ -86,6 +119,7 @@
   (sources [this] sources)
   (valid? [this] true)
   (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties []))
   Payload
   (schema [this] schema)
   (media-type [this] media-type))
@@ -98,7 +132,7 @@
   (request [this] "HTTP request information")
   (responses [this] "HTTP responses"))
 
-(defrecord ParsedOperation [id sources name description extends
+(defrecord ParsedOperation [id sources name description extends additional-properties
                             method host scheme accepts content-type
                             responses request]
   Operation
@@ -112,6 +146,7 @@
   (sources [this] sources)
   (valid? [this] true)
   (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties []))
   CommonAPIProperties
   (scheme [this] scheme)
   (accepts [this] accepts)
@@ -121,7 +156,7 @@
   (status-code [this] "Status code for the response"))
 
 
-(defrecord ParsedResponse [id sources name description extends
+(defrecord ParsedResponse [id sources name description extends additional-properties
                            status-code headers payloads]
   Response
   (status-code [this] status-code)
@@ -134,6 +169,7 @@
   (sources [this] sources)
   (valid? [this] true)
   (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties []))
   HeadersHolder
   (headers [this] (or headers [])))
 
@@ -142,7 +178,7 @@
   (shape [this] "Constraints for the data type"))
 
 
-(defrecord ParsedType [id sources name extends description shape ]
+(defrecord ParsedType [id sources name extends description shape additional-properties]
   Type
   (shape [this] shape)
   document/Node
@@ -151,14 +187,15 @@
   (description [this] description)
   (sources [this] sources)
   (valid? [this] true)
-  (extends [this] (or extends [])))
+  (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties [])))
 
 
 (defprotocol Parameter
   (parameter-kind [this] "What kind of parameter is this")
   (required [this] "Is this parameter required"))
 
-(defrecord ParsedParameter [id sources name description extends
+(defrecord ParsedParameter [id sources name description extends additional-properties
                             parameter-kind shape required]
   Parameter
   (parameter-kind [this] parameter-kind)
@@ -171,9 +208,10 @@
   (description [this] description)
   (sources [this] sources)
   (valid? [this] true)
-  (extends [this] (or extends [])))
+  (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties [])))
 
-(defrecord ParsedRequest [id sources name description extends parameters accepts headers payloads]
+(defrecord ParsedRequest [id sources name description extends additional-properties parameters accepts headers payloads]
   HeadersHolder
   (headers [this] (or headers []))
   ParametersHolder
@@ -186,9 +224,10 @@
   (description [this] description)
   (sources [this] sources)
   (valid? [this] true)
-  (extends [this] (or extends [])))
+  (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties [])))
 
-(defrecord  ParsedDomainElement [id fragment-node properties extends ]
+(defrecord  ParsedDomainElement [id fragment-node properties extends additional-properties]
   document/Node
   (id [this] id)
   (name [this] "Domain element [" fragment-node "]")
@@ -196,6 +235,7 @@
   (sources [this] (:sources properties))
   (valid? [this] true)
   (extends [this] (or extends []))
+  (additional-properties [this] (or additional-properties []))
   DomainElement
   (fragment-node [this] fragment-node)
   (properties [this] properties)

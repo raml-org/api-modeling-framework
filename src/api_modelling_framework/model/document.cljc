@@ -7,7 +7,8 @@
   (description [this] "A human readable description of this node")
   (sources [this] "Collection of source maps for this node")
   (valid? [this] "Checks if this node is valid")
-  (extends [this] "Nodes extended by this node"))
+  (extends [this] "Nodes extended by this node")
+  (additional-properties [this] "List of additional properties associated to this node"))
 
 (defprotocol Extends
   (arguments [this] "Arguments for the extension"))
@@ -18,7 +19,7 @@
 
 (defn includes-element? [x] (satisfies? Includes x))
 
-(defrecord ParsedExtends [id name description sources target label arguments]
+(defrecord ParsedExtends [id name description sources additional-properties target label arguments]
   Includes
   (target [this] target)
   (label  [this] label)
@@ -29,9 +30,10 @@
   (name [this] name)
   (description [this] description)
   (sources [this] sources)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
-(defrecord ParsedIncludes [id name description sources target label ]
+(defrecord ParsedIncludes [id name description sources additional-properties target label ]
   Includes
   (target [this] target)
   (label  [this] label)
@@ -40,7 +42,8 @@
   (name [this] name)
   (description [this] description)
   (sources [this] sources)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 (defprotocol SourceMap
   "Defines basic behaviour for all nodes in the model"
@@ -48,7 +51,7 @@
                     In the document model, the location will be a file or HTTP resource, in the service layer, it will be a node in the document layer.")
   (tags [this] "Annotations describing the kind of relationship between the source of information and the target node"))
 
-(defrecord DocumentSourceMap [id source tags]
+(defrecord DocumentSourceMap [id source tags additional-properties]
   SourceMap
   (source [this] source)
   (tags [this] tags)
@@ -58,7 +61,8 @@
   (description [this] (str "Source map for a document located at " source))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] (or additional-properties [])))
 
 (defprotocol Tag
   (tag-id [this] "Identifier for the tag")
@@ -124,7 +128,8 @@
   (description [this] (str "This node was generating parsing a file located at " location))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 (def document-type-tag "document-type")
 
@@ -138,7 +143,8 @@
   (description [this] (str "This node was generating parsing a file of type " document-type))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 (def node-parsed-tag "node-parsed")
 
@@ -152,7 +158,8 @@
   (description [this] (str "This node was generating parsing a node located at " path))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 (def nested-resource-path-parsed-tag "nested-resource-path-parsed")
 
@@ -166,7 +173,8 @@
   (description [this] (str "This node was generating parsing a nested resource with path " path))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 (def nested-resource-children-tag "nested-resource-nested-children")
 
@@ -180,7 +188,8 @@
   (description [this] (str "This resource has a nested resource " children-id))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 (def nested-resource-parent-id-tag "nested-resource-parent-id")
 
@@ -194,7 +203,8 @@
   (description [this] (str "This resource has a parent resource " parent-id))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 (def api-tag-tag "api-tag-tag")
 
@@ -208,7 +218,8 @@
   (description [this] (str "API specific tag with value " tag-value))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 ;; used to makr that some declared extended fragments in a document are
 ;; related to this node, for example as traits or types
@@ -224,7 +235,8 @@
   (description [this] (str "Inline fragment tag with value " tag-value))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 ;; used to mark that an included fragment has been extended by the node
   (def extend-include-fragment-parsed-tag "extend-include-fragment-parsed-tag")
@@ -239,7 +251,8 @@
   (description [this] (str "Extend Include Fragment tag with value " tag-value))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 ;; Is trait is used to mark that the fragment is a RAML trait
 (def is-trait-tag "is-trait-tag")
@@ -254,7 +267,8 @@
   (description [this] (str "Is trait tag with name " value))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 ;; Is type is used to mark that the fragment is a RAML type
 (def is-type-tag "is-type-tag")
@@ -269,7 +283,24 @@
   (description [this] (str "Is type tag with name " value))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
+
+;; Is annotation is used to mark that the fragment is a RAML annotation
+(def is-annotation-tag "is-annotation-tag")
+
+(defrecord IsAnnotationTag [id value]
+  Tag
+  (tag-id [this] is-annotation-tag)
+  (value [this] value)
+  Node
+  (id [this] id)
+  (name [this] "Is annotation tag")
+  (description [this] (str "Is annotation tag with name " value))
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] [])
+  (additional-properties [this] []))
 
 ;; Extends trait is used to mark that an extend relationship in a node is actually the application of a RAML trait
 (def extends-trait-tag "extends-trait-tag")
@@ -284,7 +315,8 @@
   (description [this] (str "Extends trait tag with name " trait-name))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 ;; Uses library is used to mark that a particular module is a RAML library/document using another library
 (def uses-library-tag "uses-library-tag")
@@ -299,7 +331,8 @@
   (description [this] (str "Uses library tag with name " library-alias " located at " library))
   (sources [this] [])
   (valid? [this] true)
-  (extends [this] []))
+  (extends [this] [])
+  (additional-properties [this] []))
 
 (defprotocol Fragment
   "Units encoding domain fragments"
@@ -324,10 +357,10 @@
                             (DocumentTypeTag. (str source-map-id "/tag/document-type") document-type)
                             nil)]
     (if (some? source)
-      [(DocumentSourceMap. source-map-id source (filter some? [file-parsed-tag document-type-tag]))]
+      [(DocumentSourceMap. source-map-id source (filter some? [file-parsed-tag document-type-tag]) [])]
       [])))
 
-(defrecord ParsedDocument [location encodes declares references document-type resolved ]
+(defrecord ParsedDocument [location encodes declares references additional-properties document-type resolved ]
   Node
   (id [this] location)
   (name [this] location)
@@ -335,6 +368,7 @@
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])
+  (additional-properties [this] (or additional-properties []))
   Unit
   (location [this] location)
   (references [this] (or references []))
@@ -344,7 +378,7 @@
   Module
   (declares [this] (or declares [])))
 
-(defrecord ParsedModule [location declares references document-type resolved description]
+(defrecord ParsedModule [location declares references additional-properties document-type resolved description]
   Node
   (id [this] location)
   (name [this] location)
@@ -352,6 +386,7 @@
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])
+  (additional-properties [this] (or additional-properties []))
   Unit
   (location [this] location)
   (references [this] (or references []))
@@ -359,7 +394,7 @@
   Module
   (declares [this] (or declares [])))
 
-(defrecord ParsedFragment [location encodes references document-type resolved]
+(defrecord ParsedFragment [location encodes additional-properties references document-type resolved]
   Node
   (id [this] location)
   (name [this] location)
@@ -367,6 +402,7 @@
   (sources [this] (generate-document-sources location document-type))
   (valid? [this] true)
   (extends [this] [])
+  (additional-properties [this] (or additional-properties []))
   Unit
   (location [this] location)
   (references [this] (or references []))

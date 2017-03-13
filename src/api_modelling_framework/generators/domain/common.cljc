@@ -16,11 +16,24 @@
                     (document/value trait-tag)
                     (-> (document/target trait) (string/split #"/") last))))))))
 
+(defn annotation-reference? [model]
+  (-> model
+      (document/find-tag document/is-annotation-tag)
+      first
+      some?))
+
 (defn trait-reference? [model]
   (-> model
       (document/find-tag document/is-trait-tag)
       first
       some?))
+
+(defn model->annotationTypes [declares context domain-generator]
+  (->> declares
+       (filter (fn [declare] (some? (-> declare (document/find-tag document/is-annotation-tag) first))))
+       (mapv (fn [annotation]
+               [(-> annotation (document/find-tag document/is-annotation-tag) first document/value) (domain-generator annotation context)]))
+       (into {})))
 
 (defn model->traits [{:keys [references] :as ctx} domain-generator]
   (->> references
