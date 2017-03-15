@@ -20,6 +20,8 @@
 (deftest parse-ast-root
   (let [node {:title "GithHub API"
               :baseUri "https://api.github.com"
+              :baseUriParameters {:bucketName
+                                  {:description "The name of the bucket"}}
               :version "v3"
               :mediaType ["application/json" "application/xml"]
               :protocols ["http" "https"]
@@ -42,7 +44,10 @@
                 (document/sources)
                 (map document/tags)
                 flatten
-                (map document/value))))))
+                (map document/value))))
+    (is (= 1 (count (domain/parameters parsed))))
+    (is (= "bucketName" (->> parsed domain/parameters first document/name)))
+    (is (-> parsed domain/parameters first domain/shape some?))))
 
 
 (deftest parse-ast-traits

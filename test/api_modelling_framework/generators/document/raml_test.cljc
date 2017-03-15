@@ -5,6 +5,7 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.parser.document.raml :as parser]
             [api-modelling-framework.generators.document.raml :as generator]))
+
 (deftest generate-fragments
   (let [location "file://path/to/resource.raml"
         input {(keyword "@location") location
@@ -13,6 +14,9 @@
                                   :baseUri "http://api.github.com"
                                   :protocols "http"
                                   :version "v3"
+                                  :baseUriParameters {:bucketName
+                                                      {:description "The name of the bucket"
+                                                       :type "string"}}
                                   :traits {:paged
                                            {:queryParameters
                                             {:start {:type "number"}}}}

@@ -79,10 +79,11 @@
       (with-node-properties m context)
       (utils/assoc-value m v/http:host domain/host)
       (utils/assoc-values m v/http:scheme domain/scheme)
+      (utils/assoc-objects m v/http:parameter domain/parameters (fn [x] (to-jsonld x context)))
       (utils/assoc-value m v/http:base-path domain/base-path)
       (utils/assoc-values m v/http:accepts domain/accepts)
       (utils/assoc-values m v/http:content-type domain/content-type)
-      (utils/assoc-object m v/sorg:provider domain/provider to-jsonld)
+      (utils/assoc-object m v/sorg:provider domain/provider #(to-jsonld % context))
       (utils/assoc-value m v/http:terms-of-service domain/terms-of-service)
       (utils/assoc-value m v/sorg:version domain/version)
       (utils/assoc-object m v/sorg:license domain/license (fn [x] (to-jsonld x context)))
@@ -216,21 +217,20 @@
 
 (defmethod to-jsonld :DomainPropertySchema [m context]
   (debug "Generating DomainPropertySchema" (document/id m))
-  (->> {"@id" (document/id m)
-        "@type" [v/document:DomainPropertySchema]}
-       (with-node-properties m context)
-       (utils/assoc-values m v/document:domain domain/domain)
-       (utils/assoc-object m v/document:range domain/range to-jsonld)
-       (utils/clean-nils)))
+  (-> {"@id" (document/id m)
+       "@type" [v/document:DomainPropertySchema]}
+      (with-node-properties m context)
+      (utils/assoc-values m v/document:domain domain/domain)
+      (utils/assoc-object m v/document:range domain/range #(to-jsonld % context))
+      (utils/clean-nils)))
 
 
 (defmethod to-jsonld :DomainProperty [m context]
   (debug "Generating DomainProperty" (document/id m))
-  (->> {"@id" (document/id m)
-        "@type" [v/document:DomainProperty]}
-       (with-node-properties m context)
-       (utils/assoc-values m v/document:domain domain/domain)
-       (utils/assoc-object m v/document:object domain/object identity)
-       (utils/clean-nils)))
+  (-> {"@id" (document/id m)
+       "@type" [v/document:DomainProperty]}
+      (with-node-properties m context)
+      (utils/assoc-object m v/document:object domain/object identity)
+      (utils/clean-nils)))
 
 (defmethod to-jsonld nil [_ _] nil)

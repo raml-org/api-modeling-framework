@@ -358,6 +358,7 @@
                                              location
                                              parsed-location
                                              nested-resources)
+        base-uri-parameters (parse-parameters "domain" "base-uri" (:baseUriParameters node {}) context)
         properties {:id parsed-location
                     :sources (concat (generate-parse-node-sources location parsed-location)
                                      children-tags
@@ -365,6 +366,7 @@
                                      ;;types-sources
                                      )
                     :name (extract-scalar (:title node))
+                    :parameters base-uri-parameters
                     :description (extract-scalar (:description node))
                     :host (base-uri->host (extract-scalar (:baseUri node)))
                     :scheme (root->scheme node)

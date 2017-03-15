@@ -43,6 +43,9 @@
                      :version "2.0"}
               :host "api.test.com"
               :basePath "/test/endpoint"
+              :x-baseUriParameters [{:name "bucket"
+                                     :in "domain"
+                                     :type "string"}]
               :schemes ["http" "https"]
               :consumes ["application/json" "application/xml"]
               :produces ["application/ld+json"]

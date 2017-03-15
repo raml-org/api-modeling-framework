@@ -35,7 +35,8 @@
 (defmethod from-jsonld v/http:APIDocumentation [m]
   (debug "Parsing " v/http:APIDocumentation " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+        parsed-sources (map from-jsonld sources)
+        parameters (->> (get m v/http:parameter []) (mapv #(from-jsonld %)))]
     (domain/map->ParsedAPIDocumentation {:id (get m "@id")
                                          :sources parsed-sources
                                          :name (utils/find-value m v/sorg:name)
@@ -47,6 +48,7 @@
                                          :content-type (utils/find-values m v/http:content-type)
                                          :provider (from-jsonld (-> m (get v/sorg:provider) first))
                                          :terms-of-service (utils/find-value m v/http:terms-of-service)
+                                         :parameters parameters
                                          :version (utils/find-value m v/sorg:version)
                                          :license (from-jsonld (-> m (get v/sorg:license) first))
                                          :endpoints (map from-jsonld (-> m (get v/http:endpoint [])))})))

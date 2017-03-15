@@ -133,6 +133,22 @@
 
                              id)))))
 
+(defn unparse-parameters [parameters context]
+  (if (nil? parameters) nil
+      (->> parameters
+           (map (fn [parameter]
+                  (let [parsed-type (keywordize-keys (shapes-parser/parse-shape (domain/shape parameter) (assoc context :to-raml to-raml!)))
+                        ;; @todo should we really keep a source-map to see if we should add this mapping by default?
+                        ;;parsed-type (if (= "string" (:type parsed-type))
+                        ;;              (dissoc parsed-type :type)
+                        ;;              parsed-type)
+                        parsed-type (if (some? (domain/required parameter))
+                                      (assoc parsed-type :required (domain/required parameter))
+                                      parsed-type)]
+                    [(keyword (document/name parameter))
+                     parsed-type])))
+           (into {}))))
+
 (defn merge-children-resources
   "We merge the children in the current node using the paths RAML style"
   [node children-resources ctx]
@@ -168,6 +184,7 @@
          :description (document/description model)
          :version (domain/version model)
          :baseUri (model->base-uri model)
+         :baseUriParameters (unparse-parameters (domain/parameters model) ctx)
          :protocols (model->protocols model)
          :annotationTypes (:annotations ctx)
          :mediaType (model->media-type model)
@@ -221,22 +238,6 @@
   (->> responses
        (map (fn [response] [(document/name response) (to-raml! response context)]))
        (into {})))
-
-(defn unparse-parameters [parameters context]
-  (if (nil? parameters) nil
-      (->> parameters
-           (map (fn [parameter]
-                  (let [parsed-type (keywordize-keys (shapes-parser/parse-shape (domain/shape parameter) (assoc context :to-raml to-raml!)))
-                        ;; @todo should we really keep a source-map to see if we should add this mapping by default?
-                        ;;parsed-type (if (= "string" (:type parsed-type))
-                        ;;              (dissoc parsed-type :type)
-                        ;;              parsed-type)
-                        parsed-type (if (some? (domain/required parameter))
-                                      (assoc parsed-type :required (domain/required parameter))
-                                      parsed-type)]
-                    [(keyword (document/name parameter))
-                     parsed-type])))
-           (into {}))))
 
 (defn unparse-query-parameters [request context]
   (if (nil? request) nil

@@ -355,7 +355,9 @@ export class ViewModel {
             this.diagram.process(this.allUnits());
             this.diagram.render("graph-container", () => {
                 if (oldDiagram != null) {
-                    this.diagram.paperScale(oldDiagram.scaleX, oldDiagram.scaleY);
+                    if (this.diagram.paper) {
+                        this.diagram.paperScale(oldDiagram.scaleX, oldDiagram.scaleY);
+                    }
                 }
             });
 

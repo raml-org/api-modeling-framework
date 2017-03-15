@@ -18,6 +18,9 @@
                      :version "2.0"}
               :host "api.test.com"
               :basePath "/test/endpoint"
+              :x-baseUriParameters [{:name "bucket"
+                                     :in "domain"
+                                     :type "string"}]
               :schemes ["http" "https"]
               :consumes ["application/json" "application/xml"]
               :produces ["application/ld+json"]
@@ -36,7 +39,9 @@
                         (domain/endpoints)
                         first
                         (document/sources)))))
-    (is (= "/users" (domain/path (first (domain/endpoints parsed)))))))
+    (is (= "/users" (domain/path (first (domain/endpoints parsed)))))
+    (is (= "bucket" (->> parsed domain/parameters first document/name)))
+    (is (-> parsed domain/parameters first domain/shape some?))))
 
 
 

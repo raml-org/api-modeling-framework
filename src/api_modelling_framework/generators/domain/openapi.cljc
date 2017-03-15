@@ -92,6 +92,11 @@
     (with-annotations x ctx
       (to-openapi x ctx))))
 
+(defn unparse-params [request ctx]
+  (if (nil? request) []
+      (let [params (or (domain/parameters request) [])]
+        (map #(to-openapi! % ctx) params))))
+
 (defmethod to-openapi domain/APIDocumentation [model ctx]
   (debug "Generating Swagger")
   (let [info (-> {:title (document/name model)
@@ -120,6 +125,7 @@
                      (first (domain/accepts model))
                      (domain/accepts model))
          :definitions (common/model->types (assoc ctx :resolve-types true) to-openapi!)
+         :x-baseUriParameters (unparse-params model ctx)
          :x-traits (common/model->traits (assoc ctx :abstract true) to-openapi!)
          :x-annotationTypes (:annotations ctx)
          :paths paths}
@@ -158,11 +164,6 @@
                              (= {:name "body", :x-media-type "*/*"} parsed-body))
                        nil
                        (assoc parsed-body :in "body")))))))))
-
-(defn unparse-params [request ctx]
-  (if (nil? request) []
-      (let [params (or (domain/parameters request) [])]
-        (map #(to-openapi! % ctx) params))))
 
 (defmethod to-openapi domain/Operation [model ctx]
   (debug "Generating operation " (document/id model))

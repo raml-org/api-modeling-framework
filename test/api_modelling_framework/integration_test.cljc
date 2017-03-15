@@ -96,6 +96,21 @@
                (is (= "safe" (-> output (get (keyword "/albums")) :get :responses :200 (get (keyword "(behaviour)")) :name)))
                (done)))))
 
+(deftest integration-test-raml->api-model
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/world-music-api/wip.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-string (<! (cb->chan (partial core/generate-string generator "resources/world-music-api/wip.raml"
+                                                      output-model
+                                                      {})))
+                   _ (is (not (error? output-string)))
+                   output (platform/decode-json output-string)]
+               (done)))))
+
 (deftest integration-test-raml->domain->raml
   (async done
          (go (let [parser (core/->RAMLParser)
