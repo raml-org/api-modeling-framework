@@ -16,7 +16,8 @@
                     [clojure.walk :refer [keywordize-keys]]
                     [clojure.string :as string])))
 
-#?(:cljs (def js-yaml (nodejs/require "js-yaml")))
+#?(:cljs (def __dirname (js* "__dirname")))
+#?(:cljs (def js-yaml (nodejs/require (str __dirname "/../../../../js/js-yaml/index"))))
 
 (def key-orders {"title" 0
                  "description" 1

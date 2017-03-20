@@ -6,17 +6,17 @@
                      [cljs.core.async :refer [<! >! chan]]
                      [clojure.string :as string]))
 
-  #?(:clj (:require [clj-yaml.core :refer [decode]]
+  #?(:clj (:require [clj-yaml.core :as yaml]
                     [clojure.core.async :refer [<! >! go]]
                     [clojure.walk :refer [stringify-keys]]
-                    [clojure.string :as string]))
-
-  #?(:clj (:import [api_modelling_framework.java IncludeConstructor])))
+                    [clojure.string :as string])))
 
 
 #?(:cljs (enable-console-print!))
 #?(:cljs (def __dirname (js* "__dirname")))
 #?(:cljs (def yaml (nodejs/require (str __dirname "/../../../../js/yaml"))))
+
+
 
 (declare parse-file)
 
@@ -41,12 +41,32 @@
             uses (into {} uses)]
         (assoc parsed :uses uses))))
 
+;; This function is only used by the JS parser.
+;; We transform the additional property into
+;; lexical meta-data for the parsed node.
+;; The Java version in clj-yaml already generates the
+;; lexical meta-data from the AST information
+(defn add-location-meta [node]
+  (cond
+    (map? node)  (let [location (get node (keyword "__location__"))]
+                   (if (some? location)
+                     (with-meta
+                       (->> (dissoc node (keyword "__location__"))
+                            (mapv (fn [[k v]] [k (add-location-meta v)]))
+                            (into {}))
+                       location)
+                     (->> (dissoc node (keyword "__location__"))
+                          (mapv (fn [[k v]] [k (add-location-meta v)]))
+                          (into {}))))
+    (coll? node) (mapv add-location-meta node)
+    :else        node))
+
 #?(:cljs (defn parse-file [uri]
            (let [ch (chan)]
              (.parseYamlFile yaml uri (fn [e result]
                                         (go (try (if e
                                                    (>! ch (ex-info (str e) e))
-                                                   (>! ch (->> result js->clj keywordize-keys)))
+                                                   (>! ch (->> result js->clj keywordize-keys add-location-meta)))
                                                  (catch #?(:cljs js/Error :clj Exception) ex ex)))))
              ch))
    :clj (defn parse-file [uri]
@@ -55,10 +75,7 @@
                                   header
                                   nil)
                          file (java.io.File. uri)
-                         include-constructor (IncludeConstructor. file)
-                         yaml (org.yaml.snakeyaml.Yaml. include-constructor)
-                         raw (.load yaml (java.io.FileInputStream. file))
-                         parsed (decode raw)]
+                         parsed (yaml/parse-file uri true)]
                      (-> {}
                          (assoc (keyword "@data") (<! (resolve-libraries (.getAbsolutePath file) parsed)))
                          (assoc (keyword "@location") (.getAbsolutePath file))
@@ -70,7 +87,7 @@
              (.parseYamlString yaml uri string (fn [e result]
                                                  (go (try (if e
                                                             (>! ch (ex-info (str e) e))
-                                                            (>! ch (->> result js->clj keywordize-keys)))
+                                                            (>! ch (->> result js->clj keywordize-keys add-location-meta)))
                                                           (catch #?(:cljs js/Error :clj Exception) ex ex)))))
              ch))
    :clj (defn parse-string [uri string]
@@ -79,10 +96,7 @@
                          header (if (string/starts-with? (or header "") "#%RAML")
                                   header
                                   nil)
-                         include-constructor (IncludeConstructor. file)
-                         yaml (org.yaml.snakeyaml.Yaml. include-constructor)
-                         raw (.load yaml string)
-                         parsed (decode raw)]
+                         parsed (yaml/parse-string string uri true)]
                      (-> {}
                          (assoc (keyword "@data") (<! (resolve-libraries (.getAbsolutePath file) parsed)))
                          (assoc (keyword "@location") (.getAbsolutePath file))

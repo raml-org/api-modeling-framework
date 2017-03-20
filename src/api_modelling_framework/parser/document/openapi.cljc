@@ -25,7 +25,7 @@
     (and (nil? (syntax/<-location node))
          (nil? (syntax/<-fragment node)))       (throw
                                                  (new #?(:clj Exception :cljs js/Error)
-                                                      (str "Unsupported parsing unit, missing @location or @fragment information")))
+                                                      (str "Unsupported OpenAPI parsing unit, missing @location or @fragment information")))
 
     :else                                       nil))
 

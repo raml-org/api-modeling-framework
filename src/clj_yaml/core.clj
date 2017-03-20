@@ -1,5 +1,8 @@
 (ns clj-yaml.core
-  (:import (org.yaml.snakeyaml Yaml DumperOptions DumperOptions$FlowStyle)))
+  (:require [clojure.string :as string])
+  (:import (org.yaml.snakeyaml Yaml DumperOptions DumperOptions$FlowStyle)
+           (org.yaml.snakeyaml.reader StreamReader)
+           [java.io File]))
 
 (def ^{:dynamic true} *keywordize* true)
 
@@ -13,7 +16,7 @@
   (doto (DumperOptions.)
     (.setDefaultFlowStyle (flow-styles flow-style))))
 
-(defn make-yaml
+(defn make-yaml-dumper
   [& {:keys [dumper-options]}]
   (if dumper-options
     (Yaml. (apply make-dumper-options
@@ -21,59 +24,104 @@
                           dumper-options)))
     (Yaml.)))
 
-(defprotocol YAMLCodec
-  (encode [data])
-  (decode [data]))
+(defn make-yaml-loader [] (Yaml.))
 
-(defn decode-key [k]
-  (if *keywordize* (keyword (str k)) k))
+(defn tag-location [tag]
+  (let [line (.getLine tag)
+        column (.getColumn tag)
+        index (.getIndex tag)]
+    [line column index]))
 
-(extend-protocol YAMLCodec
+(defn node-location
+  "Builds the lexical location for the parsed AST token"
+  [node]
+  (let [[start-line start-column start-index] (tag-location (.getStartMark node))
+        [end-line end-column end-index] (tag-location (.getEndMark node))]
+    {:start-line start-line
+     :start-column start-column
+     :start-index start-index
+     :end-line end-line
+     :end-column end-column
+     :end-index end-index}))
 
-  clojure.lang.IPersistentMap
-  (encode [data]
-    (into {}
-          (for [[k v] data]
-            [(encode k) (encode v)])))
+;; Multi methods for processing recursively the AST adding the
+;; lexical meta-data when required
 
-  clojure.lang.IPersistentCollection
-  (encode [data]
-    (map encode data))
+(defn node->ast-dispatch-fn
+  "We dispatch based on the type of node with the exception of the !include tag"
+  [n]
+  (let [tag-name (.getValue (.getTag n))]
+    (if (= tag-name "!include")
+      tag-name
+      (str (.getNodeId n)))))
 
-  clojure.lang.Keyword
-  (encode [data]
-    (name data))
+(defmulti node->ast (fn [node file] (node->ast-dispatch-fn node)))
 
-  java.util.LinkedHashMap
-  (decode [data]
-    (into {}
-          (for [[k v] data]
-            [(decode-key k) (decode v)])))
+(defmethod node->ast "mapping" [node file]
+  (let [location (node-location node)
+        values (.getValue node)
+        parsed (->> values
+                    (mapv (fn [tuple-value]
+                            (let [key (node->ast (.getKeyNode tuple-value) file)
+                                  value (node->ast (.getValueNode tuple-value) file)]
+                              [(if *keywordize* (keyword key) key) value])))
+                    (into {}))]
+    (with-meta parsed location)))
 
-  java.util.LinkedHashSet
-  (decode [data]
-    (into #{} data))
-
-  java.util.ArrayList
-  (decode [data]
-    (map decode data))
-
-  Object
-  (encode [data] data)
-  (decode [data] data)
+(defmethod node->ast "scalar" [node _]
+  (.getValue node))
 
 
-  nil
-  (encode [data] data)
-  (decode [data] data))
+(defmethod node->ast "sequence" [node file]
+  (mapv node->ast (.getValue node) file))
+
+
+(declare parse-file)
+
+(defn fragment-info [file]
+  (with-open [rdr (clojure.java.io/reader file)]
+    (let [first-line (first (line-seq rdr))]
+      (if (string/starts-with? first-line "#%RAML")
+        first-line
+        nil))))
+
+(defmethod node->ast "!include" [node file]
+  (let [next-file (.getValue node)]
+    (if (string/starts-with? next-file File/separator)
+      (parse-file next-file)
+      (let [current-file (java.io.File. file)
+            parent (.getAbsolutePath (.getParentFile current-file))
+            location (str parent File/separator next-file)
+            fragment (fragment-info location)]
+        {(keyword "@fragment") fragment
+         (keyword "@location") location
+         (keyword "@data") (parse-file location)}))))
+
+(defn parse-string-ast [s base-file]
+  (let [node (.compose (make-yaml-loader) (java.io.StringReader. s))]
+    (node->ast node base-file)))
+
+;; top level parsing/generation functions
 
 (defn generate-string [data & opts]
-  (.dump (apply make-yaml opts)
-         (encode data)))
+  (.dump (apply make-yaml-dumper opts) data))
 
 (defn parse-string
-  ([string keywordize]
-     (binding [*keywordize* keywordize]
-       (parse-string string)))
-  ([string]
-     (decode (.load (make-yaml) string))))
+  ([string base-file keywordize]
+   (binding [*keywordize* keywordize]
+     (parse-string-ast string base-file)))
+  ([string base-file]
+   (parse-string string base-file true)))
+
+(defn parse-file-ast [uri]
+  (let [file (java.io.File. uri)
+        node (.compose (make-yaml-loader) (java.io.FileReader. file))]
+    (node->ast node uri)))
+
+
+(defn parse-file
+  ([uri keywordize]
+   (binding [*keywordize* keywordize]
+     (parse-file-ast uri)))
+  ([uri]
+   (parse-file uri true)))

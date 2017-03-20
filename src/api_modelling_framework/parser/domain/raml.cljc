@@ -52,6 +52,11 @@
    :version #{:root}
    })
 
+(defn with-location-meta-from [n m]
+  (if (meta n)
+    (assoc m :lexical (meta n))
+    m))
+
 (defn  extract-scalar
   "Function used to unwrap an scalar value if it defined using the value syntax"
   [x]
@@ -109,9 +114,10 @@
         annotation (get annotations annotation-name)]
     (if (nil? annotation)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find annotation " p)))
-      (domain/map->ParsedDomainProperty {:id (document/id annotation)
-                                         :name annotation-name
-                                         :object (utils/annotation->jsonld (document/id annotation) model)}))))
+      (->> (domain/map->ParsedDomainProperty {:id (document/id annotation)
+                                              :name annotation-name
+                                              :object (utils/annotation->jsonld (document/id annotation) model)})
+           (with-location-meta-from model)))))
 
 (defn with-annotations [node ctx model]
   (if (map? node)
@@ -155,11 +161,12 @@
                                      :parameter-kind type
                                      :shape header-shape}]
                      (with-annotations header-value context
-                       (if is-fragment
-                            (domain/map->ParsedDomainElement {:id parsed-location
-                                                              :fragment-node :parsed-parameter
-                                                              :properties properties})
-                            (domain/map->ParsedParameter properties)))))))))
+                       (->> (if is-fragment
+                              (domain/map->ParsedDomainElement {:id parsed-location
+                                                                :fragment-node :parsed-parameter
+                                                                :properties properties})
+                              (domain/map->ParsedParameter properties))
+                            (with-location-meta-from header-value)))))))))
 
 (defn base-uri->host [base-uri]
   (when (some? base-uri)
@@ -268,12 +275,13 @@
                          allowed-targets (:allowedTargets node [])
                          id (utils/path-join (str base-uri "#") encoded-annotation-name)]
                      (assoc acc
-                            (utils/safe-str annotation-name) (domain/map->ParsedDomainPropertySchema {:id id
-                                                                                                      :name name
-                                                                                                      :description description
-                                                                                                      :sources (generate-is-annotation-sources annotation-name id parsed-location)
-                                                                                                      :domain allowed-targets
-                                                                                                      :range range}))))
+                            (utils/safe-str annotation-name) (->> (domain/map->ParsedDomainPropertySchema {:id id
+                                                                                                           :name name
+                                                                                                           :description description
+                                                                                                           :sources (generate-is-annotation-sources annotation-name id parsed-location)
+                                                                                                           :domain allowed-targets
+                                                                                                           :range range})
+                                                                  (with-location-meta-from node)))))
                  {}))))
 
 (defn process-traits [node {:keys [location parsed-location] :as context}]
@@ -383,7 +391,8 @@
                                              :fragment-node :parsed-api-documentation
                                              :properties properties})
            (domain/map->ParsedAPIDocumentation properties))
-         (with-annotations node context))))
+         (with-annotations node context)
+         (with-location-meta-from node))))
 
 (defn generate-extends-trait-sources [trait-name location parsed-location]
   (let [source-map-id (utils/path-join parsed-location "/source-map/extend-trait")
@@ -403,13 +412,15 @@
                         extend-location (utils/path-join location "/is/" i)
                         node-parsed-source-map (generate-parse-node-sources extend-location extend-id)
                         extends-trait-source-map (generate-extends-trait-sources trait-name extend-location extend-id)]
-                     (with-annotations trait context
+                     (->>
                        (document/map->ParsedExtends {:id extend-id
                                                      :sources (concat node-parsed-source-map
                                                                       extends-trait-source-map)
                                                      :target (document/id trait)
                                                      :label "trait"
-                                                     :arguments []})))
+                                                     :arguments []})
+                       (with-annotations trait context)
+                       (with-location-meta-from trait)))
                    (throw (new #?(:clj Exception :cljs js/Error)
                                (str "Cannot find trait '" trait-name "' to extend in node '" resource-id "'")))))
                (range 0 (count traits))))))
@@ -449,12 +460,16 @@
                                       :supported-operations operations
                                       :extends traits})]
     (concat (if is-fragment
-              [(with-annotations node context
+              [(->>
                  (domain/map->ParsedDomainElement {:id resource-id
                                                    :fragment-node :parsed-end-point
-                                                   :properties properties}))]
-              [(with-annotations node context
-                 (domain/map->ParsedEndPoint properties))])
+                                                   :properties properties})
+                 (with-annotations node context)
+                 (with-location-meta-from node))]
+              [(->>
+                (domain/map->ParsedEndPoint properties)
+                (with-annotations node context)
+                (with-location-meta-from node))])
             (or nested-resources []))))
 
 (defn extract-bodies [node {:keys [location parsed-location] :as context}]
@@ -486,11 +501,13 @@
                                                  (generate-parse-node-sources location body-id)
                                                  [])
                        node-parsed-source-map (generate-parse-node-sources location body-id)]
-                   (with-annotations node context
+                   (->>
                      (domain/map->ParsedPayload (utils/clean-nils {:id body-id
                                                                    :media-type media-type
                                                                    :schema schema
-                                                                   :sources (concat node-parsed-source-map media-type-node-sources)})))))))))
+                                                                   :sources (concat node-parsed-source-map media-type-node-sources)}))
+                     (with-annotations node context)
+                     (with-location-meta-from node))))))))
 
 (defn parse-request [node {:keys [location parsed-location] :as context}]
   (let [request-id (str parsed-location "/request")
@@ -501,12 +518,14 @@
         query-string []
         headers (parse-parameters "header" "headers" (:headers node) context)
         payloads (parse-http-payloads (utils/path-join request-id "payload") node context)]
-    (with-annotations node context
+    (->>
       (domain/map->ParsedRequest {:id request-id
                                   :sources node-parsed-source-map
                                   :parameters (concat query-parameters query-string)
                                   :headers headers
-                                  :payloads payloads}))))
+                                  :payloads payloads})
+      (with-annotations node context)
+      (with-location-meta-from node))))
 
 (defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method references] :as context}]
   (debug "Parsing method " method)
@@ -530,12 +549,14 @@
                         :responses (flatten responses)
                         :extends traits}
                        utils/clean-nils)]
-    (with-annotations node context
+    (->>
       (if is-fragment
         (domain/map->ParsedDomainElement {:id method-id
                                           :fragment-node :parsed-operation
                                           :properties properties})
-        (domain/map->ParsedOperation properties)))))
+        (domain/map->ParsedOperation properties))
+      (with-annotations node context)
+      (with-location-meta-from node))))
 
 (defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing responses")
@@ -563,12 +584,14 @@
                     :description description
                     :name (utils/safe-str status-code)
                     :payloads payloads}]
-    (with-annotations node context
+    (->>
       (if is-fragment
         (domain/map->ParsedDomainElement {:id (:id properties)
                                           :fragment-node :parsed-response
                                           :properties properties})
-        (domain/map->ParsedResponse properties)))))
+        (domain/map->ParsedResponse properties))
+      (with-annotations node context)
+      (with-location-meta-from node))))
 
 (defmethod parse-ast :body-media-type [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing body media-type")
@@ -600,13 +623,14 @@
         shape (if (shapes/inline-json-schema? node)
                 (json-schema-shapes/parse-type (keywordize-keys (platform/decode-json node)) shape-context)
                 (shapes/parse-type node shape-context))]
-    (if is-fragment
-      (domain/map->ParsedDomainElement {:id type-id
-                                        :fragment-node :parsed-type
-                                        :properties {:id type-id
-                                                     :shape shape}})
-      (domain/map->ParsedType {:id type-id
-                               :shape shape}))))
+    (->> (if is-fragment
+           (domain/map->ParsedDomainElement {:id type-id
+                                             :fragment-node :parsed-type
+                                             :properties {:id type-id
+                                                          :shape shape}})
+           (domain/map->ParsedType {:id type-id
+                                    :shape shape}))
+         (with-location-meta-from node))))
 
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                       :or {fragments (atom {})}
@@ -662,11 +686,13 @@
         (let [properties {:id parsed-location
                           :label "!includes"
                           :target fragment-location}]
-          (with-annotations node context
+          (->>
             (if is-fragment
               (domain/map->ParsedDomainElement {:id parsed-location
                                                 :fragment-node :parsed-includes
                                                 :properties properties})
-              (document/map->ParsedIncludes properties))))))))
+              (document/map->ParsedIncludes properties))
+            (with-annotations node context)
+            (with-location-meta-from node)))))))
 
 (defmethod parse-ast :undefined [_ _] nil)

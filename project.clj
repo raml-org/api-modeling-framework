@@ -3,7 +3,6 @@
   :url "https://github.com/mulesoft-labs/api-modelling-framework"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :java-source-paths ["java"]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.293"]
                  [io.swagger/swagger-parser "1.0.21"]

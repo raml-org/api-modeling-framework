@@ -297,6 +297,15 @@
                                                         output-model
                                                         {})))
                    _ (is (not (error? output-jsonld)))]
+               (is (= {:start-line 1,
+                       :start-column 0,
+                       :start-index 11,
+                       :end-line 196,
+                       :end-column 0,
+                       :end-index 5040}
+                      (->> output-document-model
+                           :encodes
+                           :lexical)))
                (<! (test-raml-document-level generator-raml output-document-model))
                (<! (test-raml-domain-level generator-raml output-model))
                (<! (test-openapi-document-level generator-openapi output-document-model))
@@ -326,6 +335,24 @@
                (done)))))
 
 (comment
+
+  (deftest integration-test-mobile-api
+    (async done
+           (go (let [parser (core/->RAMLParser)
+                     generator-raml (core/->RAMLGenerator)
+                     generator-openapi (core/->OpenAPIGenerator)
+                     generator-jsonld (core/->APIModelGenerator)
+                     model (<! (cb->chan (partial core/parse-file parser "resources/other-examples/mobile-order-api/api.raml")))
+                     output-raml (<! (cb->chan (partial core/generate-string
+                                                        generator-raml
+                                                        "resources/petstore.raml"
+                                                        (core/domain-model model)
+                                                        {})))]
+                 ;; @todo ADD ASSERTIONS HERE
+                 (println output-raml)
+                 (done)))))
+
+
   (deftest integration-test-1
     (async done
            (go (let [raml-parser (core/->RAMLParser)

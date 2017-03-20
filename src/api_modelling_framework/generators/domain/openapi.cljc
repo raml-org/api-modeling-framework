@@ -252,7 +252,6 @@
                                                 :as context
                                                 :or {expanded-fragments (atom {})}}]
   (let [fragment-target (document/target model)
-        _ (println fragment-target)
         fragment (get fragments fragment-target)
         reference (->> references
                        (filter #(= (document/id %) fragment-target))

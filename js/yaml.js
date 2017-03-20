@@ -1,6 +1,6 @@
 var fs = require('fs');
 var p = require('path');
-var yaml = require('js-yaml');
+var yaml = require('./js-yaml/index.js');
 var path = require("path");
 
 global.FRAGMENTS_CACHE = {};
@@ -76,7 +76,7 @@ var cacheFragments = function (fileOrData, cb, pending) {
     if (fileOrData.data != null) {
         updateFragments(fileOrData, fileOrData.data, pending, cb);
     } else {
-        console.log(fileOrData);
+        // console.log(fileOrData);
         resolveFile(fileOrData.location, function (err, data) {
             if (err) {
                 cb(err);
@@ -124,12 +124,14 @@ var getFragmentInfo = function (fragment) {
 var collectLibraries = function (fragment, location) {
     var libraries = fragment.uses || {};
     for (var p in libraries) {
-        var resolvedLocation = resolvePath(location, libraries[p]);
-        PENDING_LIBRARIES.push({
-            "path": libraries[p],
-            "location": resolvedLocation,
-            "alias": p
-        });
+        if (p !== "__location__") {
+            var resolvedLocation = resolvePath(location, libraries[p]);
+            PENDING_LIBRARIES.push({
+                "path": libraries[p],
+                "location": resolvedLocation,
+                "alias": p
+            });
+        }
     }
 };
 

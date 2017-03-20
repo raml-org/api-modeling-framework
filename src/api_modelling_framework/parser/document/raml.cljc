@@ -16,9 +16,12 @@
     (some? (syntax/<-location node))            :fragment
 
     (and (nil? (syntax/<-location node))
-         (nil? (syntax/<-fragment node)))       (throw
-                                                 (new #?(:clj Exception :cljs js/Error)
-                                                      (str "Unsupported parsing unit, missing @location or @fragment information")))
+         (nil? (syntax/<-fragment node)))       (do
+                                                  (println "NODE TO FAIL")
+                                                  (prn node)
+                                                  (throw
+                                                   (new #?(:clj Exception :cljs js/Error)
+                                                          (str "Unsupported RAML parsing unit, missing @location or @fragment information"))))
 
     :else                                               nil))
 
