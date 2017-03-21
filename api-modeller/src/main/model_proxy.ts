@@ -90,6 +90,20 @@ export class ModelProxy {
             });
     }
 
+    async update(location: string, text: string) {
+        return new Promise<undefined>((resolve, reject) => {
+            console.log("*** TRYING TO RUN THE UPDATE FOR " + location );
+            apiFramework.update_reference_model(this.raw, this.location(), this.sourceType, text, (e, newRaw) => {
+                if (e != null) {
+                    reject(e);
+                } else {
+                    this.raw = newRaw;
+                    resolve();
+                }
+            });
+        });
+    }
+
     toAPIModel(level: ModelLevel, options: any, cb) {
         console.log(`** Generating API Model JSON-LD with level ${level}`);
         this.toAPIModelProcessed(level, true, true, options, cb);

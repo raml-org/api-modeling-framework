@@ -56,7 +56,26 @@ export class ViewModel {
     public diagram: any;
     public query: Query = new Query();
 
+    // checks if we need to reparse the document
+    public shouldReload = 0;
+    public RELOAD_PERIOD = 5000;
+
     constructor(public editor: IStandaloneCodeEditor) {
+        editor.onDidChangeModelContent((e) => {
+            this.shouldReload++;
+            ((number) => {
+                setTimeout(async () => {
+                    if (this.shouldReload === number && this.model && this.documentModel) {
+                        await this.documentModel.update(this.model.location(), this.editor.getModel().getValue());
+                        this.resetUnits();
+                        this.resetReferences();
+                        this.resetDocuments();
+                        this.resetDiagram();
+                    }
+                }, this.RELOAD_PERIOD);
+            })(this.shouldReload);
+        });
+
         // events we are subscribed
         this.loadModal.on(LoadModal.LOAD_FILE_EVENT, (data: LoadFileEvent) => {
             this.apiModellerWindow().parseModelFile(data.type, data.location, (err, model) => {

@@ -42,9 +42,19 @@
 #?(:cljs (defn ^:export fromClj [x] (clj->js x)))
 #?(:cljs (defn ^:export toClj [x] (js->clj x)))
 
-(declare document-model)
 (declare to-model)
-(declare pre-process-model)
+
+(defn pre-process-model
+  "Prepares the model to be processed as a RAML document if the model has been resolved"
+  [model]
+  (if (document/resolved model)
+    (-> model
+        (document/remove-tag document/uses-library-tag)
+        (assoc :resolved nil)
+        (assoc :references nil)
+        (assoc :uses nil)
+        (assoc :declares nil))
+    model))
 
 (defprotocol Model
   (^:export location [this] "Location of the model if any")
@@ -258,15 +268,3 @@
                                                         :declares (:declares res)}))
                nil)))
          (raw [this] (:raw res)))))))
-
-(defn pre-process-model
-  "Prepares the model to be processed as a RAML document if the model has been resolved"
-  [model]
-  (if (document/resolved model)
-    (-> model
-        (document/remove-tag document/uses-library-tag)
-        (assoc :resolved nil)
-        (assoc :references nil)
-        (assoc :uses nil)
-        (assoc :declares nil))
-    model))
