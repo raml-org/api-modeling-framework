@@ -42,11 +42,16 @@
 #?(:cljs (defn ^:export fromClj [x] (clj->js x)))
 #?(:cljs (defn ^:export toClj [x] (js->clj x)))
 
+(declare document-model)
+(declare to-model)
+(declare pre-process-model)
+
 (defprotocol Model
   (^:export location [this] "Location of the model if any")
   (^:export document-model [this] "returns the domain model for the parsed document")
   (^:export domain-model [this] "Resolves the document model generating a domain model")
   (^:export reference-model [this location] "Returns a model for a nested reference ")
+  (^:export update-reference-model [this location syntax-type text cb] "Updates a model for a reference model")
   (^:eport find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment")
   (^:export raw [this] "Returns the raw text for the model"))
 
@@ -61,55 +66,6 @@
    "Serialises a model into a string")
   (^:export generate-file [this uri model options cb]
    "Serialises a model into a file located at the provided URI"))
-
-(defn *find-element [model id]
-  (cond
-    (map? model) (if (= id (:id model))
-                   model
-                   (->> (vals model)
-                        (map (fn [m] (*find-element m id)))
-                        (filter some?)
-                        first))
-    (coll? model) (->> model
-                       (map (fn [m] (*find-element m id)))
-                       (filter some?)
-                       first)
-    :else         nil))
-
-(defn to-model
-  ([res]
-   (let [domain-cache (atom nil)]
-     (reify Model
-       (location [_] (document/location res))
-       (document-model [_] res)
-       (domain-model [_]
-         (if (some? @domain-cache)
-           @domain-cache
-           (let [res (resolution/resolve res {})]
-             (reset! domain-cache res)
-             res)))
-       (reference-model [this location]
-         (if (= location (document/location res))
-           this
-           (let [reference (->> (document/references res)
-                                (filter #(= location (document/location %)))
-                                first)]
-             (if (some? reference)
-               (to-model reference)
-               (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find reference " location " in the model")))))))
-       (find-element [this level id]
-         (let [model (if (= level "document")
-                       res
-                       (domain-model this))
-               model (*find-element model id)]
-           (if (some? model)
-             (to-model (document/map->ParsedDocument {:location id
-                                                      :encodes model
-                                                      :resolved (= model "domain")
-                                                      :references (:references res)
-                                                      :declares (:declares res)}))
-             nil)))
-       (raw [this] (:raw res))))))
 
 (defrecord RAMLParser []
   Parser
@@ -144,18 +100,6 @@
             (try (cb nil (to-model (openapi-document-parser/parse-ast res {})))
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
-
-(defn pre-process-model
-  "Prepares the model to be processed as a RAML document if the model has been resolved"
-  [model]
-  (if (document/resolved model)
-    (-> model
-        (document/remove-tag document/uses-library-tag)
-        (assoc :resolved nil)
-        (assoc :references nil)
-        (assoc :uses nil)
-        (assoc :declares nil))
-    model))
 
 (defrecord APIModelGenerator []
   Generator
@@ -234,3 +178,95 @@
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
             (cb nil (platform/<-clj res)))))))
+
+(defn find-element* [model id]
+  (cond
+    (map? model) (if (= id (:id model))
+                   model
+                   (->> (vals model)
+                        (map (fn [m] (find-element* m id)))
+                        (filter some?)
+                        first))
+    (coll? model) (->> model
+                       (map (fn [m] (find-element* m id)))
+                       (filter some?)
+                       first)
+    :else         nil))
+
+(defn to-model
+  ([res]
+
+   (letfn [(update-reference-model* [old-model updated-unit]
+             (let [new-references (->> (document/references old-model)
+                                       (filter #(not= (document/location %) (document/location updated-unit))))
+                   new-references (concat new-references [(document-model updated-unit)])
+                   updated-model (assoc old-model :references new-references)]
+               (to-model updated-model)))
+
+           (parsing-channel [syntax-type location text]
+             (let [ch (chan)]
+               (condp = syntax-type
+                 "raml" (parse-string (RAMLParser.) location text (fn [e r] (go (>! ch r))))
+                 "open-api" (parse-string (OpenAPIParser.) location text (fn [e r] (go (>! ch r)))))
+               ch))]
+
+     (let [domain-cache (atom nil)]
+       (reify Model
+         (location [_] (document/location res))
+
+         (document-model [_] res)
+
+         (update-reference-model [this location syntax-type text cb]
+           (go
+             (if (or (= syntax-type "raml") (= syntax-type "open-api"))
+               (let [parsed-unit (<! (parsing-channel syntax-type location text))]
+                 (if (= (document/location res) location)
+                   (cb nil parsed-unit)
+                   (let []
+                     (cb nil (update-reference-model* res parsed-unit)))))
+               (cb {:err (new #?(:clj Exception :cljs js/Error)
+                              (str "Unsupported spec " syntax-type " only 'ram' and 'openapi' supported"))}
+                   nil))))
+
+         (domain-model [_]
+           (if (some? @domain-cache)
+             @domain-cache
+             (let [res (resolution/resolve res {})]
+               (reset! domain-cache res)
+               res)))
+
+         (reference-model [this location]
+           (if (= location (document/location res))
+             this
+             (let [reference (->> (document/references res)
+                                  (filter #(= location (document/location %)))
+                                  first)]
+               (if (some? reference)
+                 (to-model reference)
+                 (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find reference " location " in the model")))))))
+
+         (find-element [this level id]
+           (let [model (if (= level "document")
+                         res
+                         (domain-model this))
+                 model (find-element* model id)]
+             (if (some? model)
+               (to-model (document/map->ParsedDocument {:location id
+                                                        :encodes model
+                                                        :resolved (= model "domain")
+                                                        :references (:references res)
+                                                        :declares (:declares res)}))
+               nil)))
+         (raw [this] (:raw res)))))))
+
+(defn pre-process-model
+  "Prepares the model to be processed as a RAML document if the model has been resolved"
+  [model]
+  (if (document/resolved model)
+    (-> model
+        (document/remove-tag document/uses-library-tag)
+        (assoc :resolved nil)
+        (assoc :references nil)
+        (assoc :uses nil)
+        (assoc :declares nil))
+    model))

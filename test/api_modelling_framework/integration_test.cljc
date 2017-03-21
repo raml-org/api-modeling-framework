@@ -337,6 +337,25 @@
                ;;(println output-raml)
                (done)))))
 
+(deftest integration-test-update-raml
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->OpenAPIGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/world-music-api/wip.raml")))
+                   raw (core/raw model)
+                   updated-raw (string/replace raw "(WIP)" "")
+                   _ (is (not (error? model)))
+                   updated (<! (cb->chan (partial core/update-reference-model model
+                                                  (core/location model)
+                                                  "raml"
+                                                  updated-raw)))]
+               (is (= "World Music API"
+                      (-> updated
+                          core/document-model
+                          document/encodes
+                          document/name)))
+               (done)))))
+
 (comment
 
   (deftest integration-test-mobile-api
