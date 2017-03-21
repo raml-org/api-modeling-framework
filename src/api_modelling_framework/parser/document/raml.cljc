@@ -108,15 +108,16 @@
                                                                :references (merge declarations library-declarations)
                                                                :document-parser parse-ast
                                                                :is-fragment false})]
-    (document/map->ParsedDocument {:id location
-                                   :location location
-                                   :encodes encoded
-                                   :declares (concat (vals declarations)
-                                                     (vals doc-annotations))
-                                   :references (concat (vals @fragments)
-                                                       (flatten (vals libraries)))
-                                   :sources uses-tags
-                                   :document-type "#%RAML 1.0"})))
+    (-> (document/map->ParsedDocument {:id location
+                                       :location location
+                                       :encodes encoded
+                                       :declares (concat (vals declarations)
+                                                         (vals doc-annotations))
+                                       :references (concat (vals @fragments)
+                                                           (flatten (vals libraries)))
+                                       :sources uses-tags
+                                       :document-type "#%RAML 1.0"})
+        (assoc :raw (get node (keyword "@raw"))))))
 
 (defmethod parse-ast "#%RAML 1.0 Library" [node {:keys [alias-chain] :as context}]
   (let [location (syntax/<-location node)
@@ -153,15 +154,16 @@
                                                                  :parsed-location (str location "#/declares")})
         declarations (merge traits types)
         usage (:usage (syntax/<-data node))]
-    (document/map->ParsedModule (utils/clean-nils
-                                 {:id location
-                                  :location location
-                                  :description usage
-                                  :declares (concat (vals declarations) (vals doc-annotations))
-                                  :references (concat (vals @fragments)
-                                                      (flatten (vals libraries)))
-                                  :sources uses-tags
-                                  :document-type "#%RAML 1.0 Library"}))))
+    (-> (document/map->ParsedModule (utils/clean-nils
+                                     {:id location
+                                      :location location
+                                      :description usage
+                                      :declares (concat (vals declarations) (vals doc-annotations))
+                                      :references (concat (vals @fragments)
+                                                          (flatten (vals libraries)))
+                                      :sources uses-tags
+                                      :document-type "#%RAML 1.0 Library"}))
+        (assoc :raw (get node (keyword "@raw"))))))
 
 
 (defmethod parse-ast "#%RAML 1.0 Trait" [node context]
@@ -182,12 +184,13 @@
                                                                 :parsed-location (str location "#")
                                                                 :document-parser parse-ast
                                                                 :is-fragment true}))]
-    (document/map->ParsedFragment {:id location
-                                   :description usage
-                                   :location location
-                                   :encodes encoded
-                                   :references (vals @fragments)
-                                   :document-type "#%RAML 1.0 Trait"})))
+    (-> (document/map->ParsedFragment {:id location
+                                       :description usage
+                                       :location location
+                                       :encodes encoded
+                                       :references (vals @fragments)
+                                       :document-type "#%RAML 1.0 Trait"})
+        (assoc :raw (get node (keyword "@raw"))))))
 
 (defmethod parse-ast "#%RAML 1.0 DataType" [node context]
   (let [context (or context {})
@@ -207,12 +210,13 @@
                                                                 :parsed-location (str location "#")
                                                                 :document-parser parse-ast
                                                                 :is-fragment true}))]
-    (document/map->ParsedFragment {:id location
-                                   :description usage
-                                   :location location
-                                   :encodes encoded
-                                   :references (vals @fragments)
-                                   :document-type "#%RAML 1.0 DataType"})))
+    (-> (document/map->ParsedFragment {:id location
+                                       :description usage
+                                       :location location
+                                       :encodes encoded
+                                       :references (vals @fragments)
+                                       :document-type "#%RAML 1.0 DataType"})
+        (assoc :raw (get node (keyword "@raw"))))))
 
 (defn parse-fragment [node context]
   (let [context (or context {})
@@ -228,11 +232,12 @@
                                                                 :parsed-location (str location "#")
                                                                 :document-parser parse-ast
                                                                 :is-fragment true}))]
-    (document/map->ParsedFragment {:id location
-                                   :location location
-                                   :encodes encoded
-                                   :references (vals @fragments)
-                                   :document-type "#%RAML 1.0 Fragment"})))
+    (-> (document/map->ParsedFragment {:id location
+                                       :location location
+                                       :encodes encoded
+                                       :references (vals @fragments)
+                                       :document-type "#%RAML 1.0 Fragment"})
+        (assoc :raw (get node (keyword "@raw"))))))
 
 (defmethod parse-ast :fragment [node context]
   (parse-fragment node context))

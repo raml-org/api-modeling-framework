@@ -31,14 +31,6 @@
 
 (defmulti parse-ast (fn [type node] (parse-ast-dispatch-function type node)))
 
-;;(defn process-library [node {:keys [location parsed-location] :as context}]
-;;  (let [uses (:x-uses (syntax/<-data node) {})
-;;        libraries (reduce (fn [acc library]
-;;                            (let [declares (parse-ast library context)]
-;;                              (conj acc declares)))
-;;                          []
-;;                          uses)]
-;;    libraries))
 
 (defn process-uses-tags [node {:keys [location parsed-location]}]
   (let [uses (:x-uses (syntax/<-data node) {})]
@@ -72,14 +64,15 @@
                                                                :references declarations
                                                                :document-parser parse-ast
                                                                :is-fragment false})]
-    (document/map->ParsedDocument (merge context
-                                         {:id location
-                                          :location location
-                                          :encodes encoded
-                                          :declares (concat (vals declarations) (vals @annotations))
-                                          :references (vals @fragments)
-                                          :sources uses-tags
-                                          :document-type "OpenAPI"}))))
+    (-> (document/map->ParsedDocument (merge context
+                                             {:id location
+                                              :location location
+                                              :encodes encoded
+                                              :declares (concat (vals declarations) (vals @annotations))
+                                              :references (vals @fragments)
+                                              :sources uses-tags
+                                              :document-type "OpenAPI"}))
+        (assoc :raw (get node (keyword "@raw"))))))
 
 (defmethod parse-ast :fragment [node context]
   (let [context (or context {})
@@ -96,11 +89,12 @@
                                                                       :references references
                                                                       :document-parser parse-ast
                                                                       :is-fragment true}))]
-    (document/map->ParsedFragment {:id location
-                                   :location location
-                                   :encodes encoded
-                                   :references (vals @fragments)
-                                   :document-type "OpenApi Fragment"})))
+    (-> (document/map->ParsedFragment {:id location
+                                       :location location
+                                       :encodes encoded
+                                       :references (vals @fragments)
+                                       :document-type "OpenApi Fragment"})
+        (assoc :raw (get node (keyword "@raw"))))))
 
 
 (defmethod parse-ast :library [node context]
@@ -119,10 +113,11 @@
                                                                  :annotations annotations
                                                                  :document-parser parse-ast})
         declarations (merge traits types)]
-    (document/map->ParsedModule (merge context
-                                       {:id location
-                                        :location location
-                                        :declares (concat (vals declarations) (vals @annotations))
-                                        :references (vals @fragments)
-                                        :tags uses-tags
-                                        :document-type "OpenAPI Library"}))))
+    (-> (document/map->ParsedModule (merge context
+                                           {:id location
+                                            :location location
+                                            :declares (concat (vals declarations) (vals @annotations))
+                                            :references (vals @fragments)
+                                            :tags uses-tags
+                                            :document-type "OpenAPI Library"}))
+        (assoc :raw (get node (keyword "@raw"))))))

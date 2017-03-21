@@ -79,7 +79,8 @@
                      (-> {}
                          (assoc (keyword "@data") (<! (resolve-libraries (.getAbsolutePath file) parsed)))
                          (assoc (keyword "@location") (.getAbsolutePath file))
-                         (assoc (keyword "@fragment") header)))
+                         (assoc (keyword "@fragment") header)
+                         (assoc (keyword "@raw") (slurp file))))
                    (catch #?(:cljs js/Error :clj Exception) ex ex)))))
 
 #?(:cljs (defn parse-string [uri string]
@@ -100,5 +101,6 @@
                      (-> {}
                          (assoc (keyword "@data") (<! (resolve-libraries (.getAbsolutePath file) parsed)))
                          (assoc (keyword "@location") (.getAbsolutePath file))
-                         (assoc (keyword "@fragment") header)))
+                         (assoc (keyword "@fragment") header)
+                         (assoc (keyword "@raw") string)))
                    (catch #?(:cljs js/Error :clj Exception) ex ex)))))

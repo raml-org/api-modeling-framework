@@ -306,6 +306,8 @@
                       (->> output-document-model
                            :encodes
                            :lexical)))
+               (is (some? (:raw output-document-model)))
+               (prn (keys output-document-model))
                (<! (test-raml-document-level generator-raml output-document-model))
                (<! (test-raml-domain-level generator-raml output-model))
                (<! (test-openapi-document-level generator-openapi output-document-model))
@@ -330,6 +332,7 @@
                    output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/petstore.jsonld"
                                                         output-model
                                                         {})))]
+               (is (some? (:raw output-model)))
                ;; @todo ADD ASSERTIONS HERE
                ;;(println output-raml)
                (done)))))

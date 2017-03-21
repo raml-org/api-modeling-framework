@@ -182,7 +182,8 @@
              (if (empty? refs)
                acc
                (let [ref (first refs)
-                     resolved (platform/decode-json (<! (platform/read-location ref)))
+                     raw (<! (platform/read-location ref))
+                     resolved (platform/decode-json raw)
                      pointed (if (string/index-of ref "#")
                                (json-pointer (str "#" (last (string/split ref #"#"))) resolved )
                                resolved)]
@@ -192,7 +193,8 @@
                                           "id" ref
                                           "@data" pointed}
                                          {"@location" ref
-                                          "@data" pointed}))))))
+                                          "@data" pointed
+                                          "@raw" raw}))))))
            (catch #?(:clj Exception :cljs js/Error) ex
              ex))))
 
@@ -207,7 +209,8 @@
             (if (empty? processed-acc)
               (clojure.walk/keywordize-keys {"@location" id
                                              "@fragment" "root"
-                                             "@data" processed})
+                                             "@data" processed
+                                             "@raw" data})
               (let [references-map (<! (resolve-references processed-acc))
                     processed (fill-references id processed references-map)
                     [processed-acc processed] (find-references id processed)]
@@ -225,7 +228,8 @@
             (if (empty? processed-acc)
               (clojure.walk/keywordize-keys {"@location" id
                                              "@fragment" "root"
-                                             "@data" processed})
+                                             "@data" processed
+                                             "@raw" data})
               (let [references-map (<! (resolve-references processed-acc))
                     processed (fill-references id processed references-map)
                     [processed-acc processed] (find-references id processed)]

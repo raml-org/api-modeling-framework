@@ -177,6 +177,7 @@ var parseYamlFile = function (location, cb) {
                 var result = { "@data": loaded };
                 result["@location"] = ensureFileUri(location);
                 result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
+                result["@raw"] = FRAGMENTS_CACHE[location].data;
                 cb(null, result);
             });
         } catch (e) {
@@ -195,6 +196,7 @@ var parseYamlString = function (location, data, cb) {
                     var result = { "@data": loaded };
                     result["@location"] = ensureFileUri(location);
                     result["@fragment"] = getFragmentInfo(FRAGMENTS_CACHE[location]);
+                    result["@raw"] = FRAGMENTS_CACHE[location].data;
                     cb(null, result);
                 } else {
                     cb(err);

@@ -95,7 +95,8 @@
             fragment (fragment-info location)]
         {(keyword "@fragment") fragment
          (keyword "@location") location
-         (keyword "@data") (parse-file location)}))))
+         (keyword "@data") (parse-file location)
+         (keyword "@raw") (slurp current-file)}))))
 
 (defn parse-string-ast [s base-file]
   (let [node (.compose (make-yaml-loader) (java.io.StringReader. s))]
