@@ -47,7 +47,8 @@
   (^:export document-model [this] "returns the domain model for the parsed document")
   (^:export domain-model [this] "Resolves the document model generating a domain model")
   (^:export reference-model [this location] "Returns a model for a nested reference ")
-  (^:eport find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment"))
+  (^:eport find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment")
+  (^:export raw [this] "Returns the raw text for the model"))
 
 (defprotocol Parser
   (^:export parse-file [this uri cb]
@@ -107,7 +108,8 @@
                                                       :resolved (= model "domain")
                                                       :references (:references res)
                                                       :declares (:declares res)}))
-             nil)))))))
+             nil)))
+       (raw [this] (:raw res))))))
 
 (defrecord RAMLParser []
   Parser

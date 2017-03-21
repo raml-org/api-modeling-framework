@@ -1,5 +1,5 @@
 import * as ko from "knockout";
-import { LoadModal, LoadFileEvent } from "./view_models/load_modal";
+import {LoadModal, LoadFileEvent, ParserType} from "./view_models/load_modal";
 import { ModelProxy, ModelLevel } from "./main/model_proxy";
 import { remote } from "electron";
 import { ApiModellerWindow } from "./main/api_modeller_window";
@@ -47,6 +47,7 @@ export class ViewModel {
     public generationOptions: KnockoutObservable<any> = ko.observable<any>({ "source-maps?": false });
     public generateSourceMaps: KnockoutObservable<string> = ko.observable<string>("no");
     public focusedId: KnockoutObservable<string> = ko.observable<string>("");
+    public selectedParserType: KnockoutObservable<ParserType|undefined> = ko.observable<ParserType|undefined>(undefined);
 
     // Nested interfaces
     public ui: UI = new UI();
@@ -63,6 +64,7 @@ export class ViewModel {
                     console.log(err);
                     alert(err);
                 } else {
+                    this.selectedParserType(data.type);
                     this.documentModel = model;
                     this.model = model;
                     this.selectedReference(this.makeReference(this.documentModel!.location(), this.documentModel!.location()));
@@ -231,29 +233,37 @@ export class ViewModel {
     private resetDocuments() {
         if (this.model != null) {
             // We generate the RAML representation
-            this.model.toRaml(this.documentLevel, this.generationOptions(), (err, string) => {
-                if (err != null) {
-                    console.log("Error generating RAML");
-                    console.log(err);
-                } else {
-                    if (this.editorSection() === "raml") {
-                        this.editor.setModel(createModel(this.model!.ramlString, "yaml"));
+            if (this.selectedParserType() === "raml" && this.documentLevel === "document" && this.editorSection() === "raml" && this.model.text() != null) {
+                this.editor.setModel(createModel(this.model.text(), "yaml"));
+            } else {
+                this.model.toRaml(this.documentLevel, this.generationOptions(), (err, string) => {
+                    if (err != null) {
+                        console.log("Error generating RAML");
+                        console.log(err);
+                    } else {
+                        if (this.editorSection() === "raml") {
+                            this.editor.setModel(createModel(this.model!.ramlString, "yaml"));
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // We generate the OpenAPI representation
-            this.model.toOpenAPI(this.documentLevel, this.generationOptions(), (err, string) => {
-                if (err != null) {
-                    console.log("Error getting OpenAPI");
-                    console.log(err);
-                } else {
-                    if (this.editorSection() === "open-api") {
-                        this.editor.setModel(createModel(this.model!.openAPIString, "json"));
+            if (this.selectedParserType() === "open-api" && this.documentLevel === "document" && this.editorSection() === "open-api" && this.model.text() != null) {
+                this.editor.setModel(createModel(this.model.text(), "json"));
+            } else {
+                this.model.toOpenAPI(this.documentLevel, this.generationOptions(), (err, string) => {
+                    if (err != null) {
+                        console.log("Error getting OpenAPI");
+                        console.log(err);
+                    } else {
+                        if (this.editorSection() === "open-api") {
+                            this.editor.setModel(createModel(this.model!.openAPIString, "json"));
+                        }
+                        this.resetQuery();
                     }
-                    this.resetQuery();
-                }
-            });
+                });
+            }
 
             // We generate the APIModel representation
             this.model.toAPIModel(this.documentLevel, this.generationOptions(), (err, string) => {
@@ -290,14 +300,22 @@ export class ViewModel {
         // Warning, models here mean MONACO EDITOR MODELS, don't get confused with API Models
         if (section === "raml") {
             if (this.model != null) {
-                this.editor.setModel(createModel(this.model.ramlString, "yaml"));
+                if (this.selectedParserType() === "raml" && this.documentLevel === "document" && this.model.text() != null) {
+                    this.editor.setModel(createModel(this.model.text(), "yaml"));
+                } else {
+                    this.editor.setModel(createModel(this.model.ramlString, "yaml"));
+                }
             } else {
                 this.editor.setModel(createModel("# no model loaded", "yaml"));
             }
             window['resizeFn']();
         } else if (section === "open-api") {
             if (this.model != null) {
-                this.editor.setModel(createModel(this.model!.openAPIString, "json"));
+                if (this.selectedParserType() === "open-api" && this.documentLevel === "document" && this.model.text() != null) {
+                    this.editor.setModel(createModel(this.model.text(), "json"));
+                } else {
+                    this.editor.setModel(createModel(this.model!.openAPIString, "json"));
+                }
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
             }

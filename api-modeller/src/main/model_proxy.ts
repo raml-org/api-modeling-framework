@@ -41,6 +41,7 @@ export class ModelProxy {
     location(): string { return apiFramework.location(this.raw) }
     documentModel() { return apiFramework.document_model(this.raw); }
     domainModel() { return apiFramework.domain_model(this.raw); }
+    text(): string { return apiFramework.raw(this.raw) }
 
     /**
      * Serialises the model as RAML/YAML document for the provided document level
