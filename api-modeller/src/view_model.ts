@@ -69,7 +69,6 @@ export class ViewModel {
                         await this.documentModel.update(this.model.location(), this.editor.getModel().getValue());
                         this.resetUnits();
                         this.resetReferences();
-                        this.resetDocuments();
                         this.resetDiagram();
                     }
                 }, this.RELOAD_PERIOD);
@@ -307,11 +306,20 @@ export class ViewModel {
         const ref = this.selectedReference();
         const units = {};
         if (ref != null) {
+            const oldDomains = (this.domainUnits() || {});
+            const oldDomainsMap = {};
+            for (let kind in oldDomains) {
+                (oldDomains[kind] || []).forEach(unit => oldDomainsMap[unit.id] = unit);
+            }
             const domains = this.referenceToDomainUnits[ref.id] || [];
             domains.forEach(domain => {
                 if (domain.root != null) {
                     const acc = units[domain.root.kind] || [];
-                    acc.push(domain.root);
+                    const unit = domain.root;
+                    if (oldDomainsMap[unit.id]) {
+                        unit["expanded"] = oldDomainsMap[unit.id]["expanded"];
+                    }
+                    acc.push(unit);
                     units[domain.root.kind] = acc;
                 }
             });
@@ -458,21 +466,40 @@ export class ViewModel {
                 if (err == null) {
                     console.log("Got the new units");
                     // reseting data
-                    this.referenceToDomainUnits = {};
+                    let unitsMap = {};
+                    this.documentUnits().forEach(unit => {
+                        unitsMap[unit.id] = unit;
+                    });
+                    this.fragmentUnits().forEach(unit => {
+                        unitsMap[unit.id] = unit;
+                    });
+                    this.moduleUnits().forEach(unit => {
+                        unitsMap[unit.id] = unit;
+                    });
+
                     this.documentUnits.removeAll();
                     // Indexing document and domain units
                     units.documents.forEach(doc => {
                         this.indexDomainUnits(doc);
+                        if (unitsMap[doc.id] != null) {
+                            doc["expanded"] = unitsMap[doc.id]["expanded"];
+                        }
                         this.documentUnits.push(doc)
                     });
                     this.fragmentUnits.removeAll();
                     units.fragments.forEach(fragment => {
                         this.indexDomainUnits(fragment);
+                        if (unitsMap[fragment.id] != null) {
+                            fragment["expanded"] = unitsMap[fragment.id]["expanded"];
+                        }
                         this.fragmentUnits.push(fragment)
                     });
                     this.moduleUnits.removeAll();
                     units.modules.forEach(module => {
                         this.indexDomainUnits(module);
+                        if (unitsMap[module.id] != null) {
+                            module["expanded"] = unitsMap[module.id]["expanded"];
+                        }
                         this.moduleUnits.push(module)
                     });
                 } else {
@@ -491,12 +518,28 @@ export class ViewModel {
         console.log("INDEXING DOMAIN UNITS FOR " + elm.kind);
         const units: DomainModel[] = [];
         const reference = elm.id;
+
+        // mapping all units to set the expanded state in the
+        // new units
+        this.referenceToDomainUnits = this.referenceToDomainUnits || {};
+        const oldUnitsList: DomainModel[] = this.referenceToDomainUnits[reference] || [] as DomainModel[];
+        const oldUnits: {[id:string]:DomainModel} = oldUnitsList.reduce((acc, unit) => {
+            if (unit.root) {
+                acc[unit.root.id] = unit;
+            }
+            return acc;
+        }, {} as {[id:string]:DomainModel});
+
         this.referenceToDomainUnits[reference] = units;
 
         if (elm.kind === "Document") {
             const document = (elm as Document);
             if (document && document.encodes) {
-                units.push(document.encodes.domain)
+                const unit = document.encodes.domain;
+                if (unit.root &&  oldUnits[unit.root.id] != null) {
+                    unit['expanded'] = oldUnits[unit.root.id]['expanded'];
+                }
+                units.push(unit)
             }
             document.declares.forEach(dec => {
                 units.push(dec.domain);
@@ -504,12 +547,20 @@ export class ViewModel {
         } else if (elm.kind === "Fragment") {
             const document = (elm as Fragment);
             if (document && document.encodes) {
-                units.push(document.encodes.domain);
+                const unit = document.encodes.domain;
+                if (unit.root &&  oldUnits[unit.root.id] != null) {
+                    unit['expanded'] = oldUnits[unit.root.id]['expanded'];
+                }
+                units.push(unit);
             }
         } else if (elm.kind === "Module") {
             const document = (elm as Module);
             document.declares.forEach(dec => {
-                units.push(dec.domain);
+                const unit = dec.domain;
+                if (unit.root &&  oldUnits[unit.root.id] != null) {
+                    unit['expanded'] = oldUnits[unit.root.id]['expanded'];
+                }
+                units.push(unit);
             })
         }
 
