@@ -2,32 +2,48 @@ var fs = require('fs');
 var p = require('path');
 var yaml = require('./js-yaml/index.js');
 var path = require("path");
+var rest = require("rest");
 
 global.FRAGMENTS_CACHE = {};
 global.PENDING_LIBRARIES = [];
 
 var ensureFileUri = function (uri) {
     if (uri.indexOf("://") === -1) {
-        return "file://" + uri;
-    } else {
-        return uri;
+        uri = "file://" + uri;
     }
-}
+    return uri;
+};
 
-function Fragment(location, type, data) {
-    this["@location"] = ensureFileUri(location);
-    this["@fragment"] = type;
-    this["@data"] = data;
-}
+var isLocalFile = function (location) {
+    return (location.startsWith("file://") || location.indexOf("://") === -1);
+};
+
+var inCache = function (location, cacheDirs) {
+    for (var domain in cacheDirs || {}) {
+        if (location.startsWith(domain)) {
+            return location.replace(domain, cacheDirs[domain]);
+        }
+    }
+};
 
 var resolveFile = function (location, cb) {
-    fs.readFile(location.replace("file://", ""), function (err, data) {
-        if (err) {
+    if (isLocalFile(location)) {
+        fs.readFile(location.replace("file://", ""), function (err, data) {
+            if (err) {
+                cb(err);
+            } else {
+                cb(null, data.toString());
+            }
+        });
+    } else if (inCache(location, global.PARSING_OPTIONS.cacheDirs || {})) {
+        resolveFile(inCache(location, global.PARSING_OPTIONS.cacheDirs || {}), cb);
+    } else {
+        rest(location).then(function (response) {
+            cb(null, response.entity);
+        }).catch(function (err) {
             cb(err);
-        } else {
-            cb(null, data.toString());
-        }
-    });
+        });
+    }
 };
 
 var resolvePath = function (location, path) {
@@ -98,7 +114,7 @@ var loadLibraries = function (loaded, cb, pending) {
             cb(null, loaded);
         } else {
             var next = pending.shift();
-            parseYamlFile(next.location, function (err, loadedFragment) {
+            parseYamlFile(next.location, global.PARSING_OPTIONS, function (err, loadedFragment) {
                 if (err) {
                     cb(err, loaded);
                 } else {
@@ -156,7 +172,6 @@ var FragmentType = new yaml.Type("!include", {
 
         var location = fragment.location;
 
-        // return new Fragment(location, fragmentInfo, parsed);
         return {
             "@location": ensureFileUri(location),
             "@fragment": fragmentInfo,
@@ -167,7 +182,8 @@ var FragmentType = new yaml.Type("!include", {
 
 var FRAGMENT_SCHEMA = yaml.Schema.create([FragmentType]);
 
-var parseYamlFile = function (location, cb) {
+var parseYamlFile = function (location, options, cb) {
+    global.PARSING_OPTIONS = options || {};
     cacheFragments({ "location": location }, function (err, data) {
         try {
             var loaded = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });
@@ -186,7 +202,8 @@ var parseYamlFile = function (location, cb) {
     });
 };
 
-var parseYamlString = function (location, data, cb) {
+var parseYamlString = function (location, data, options, cb) {
+    global.PARSING_OPTIONS = options || {};
     cacheFragments({ "location": location, "data": data }, function (err, data) {
         try {
             var loaded = yaml.load(FRAGMENTS_CACHE[location].data, { schema: FRAGMENT_SCHEMA });

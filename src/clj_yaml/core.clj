@@ -1,10 +1,9 @@
 (ns clj-yaml.core
-  (:require [clojure.string :as string])
+  (:require [clojure.string :as string]
+            [clojure.java.io :as io])
   (:import (org.yaml.snakeyaml Yaml DumperOptions DumperOptions$FlowStyle)
            (org.yaml.snakeyaml.reader StreamReader)
            [java.io File]))
-
-(def ^{:dynamic true} *keywordize* true)
 
 (def flow-styles
   {:auto DumperOptions$FlowStyle/AUTO
@@ -55,74 +54,125 @@
       tag-name
       (str (.getNodeId n)))))
 
-(defmulti node->ast (fn [node file] (node->ast-dispatch-fn node)))
+(defmulti node->ast (fn [node file options] (node->ast-dispatch-fn node)))
 
-(defmethod node->ast "mapping" [node file]
+(defmethod node->ast "mapping" [node file options]
   (let [location (node-location node)
         values (.getValue node)
         parsed (->> values
                     (mapv (fn [tuple-value]
-                            (let [key (node->ast (.getKeyNode tuple-value) file)
-                                  value (node->ast (.getValueNode tuple-value) file)]
-                              [(if *keywordize* (keyword key) key) value])))
+                            (let [key (node->ast (.getKeyNode tuple-value) file options)
+                                  value (node->ast (.getValueNode tuple-value) file options)]
+                              [(if (:keywordize options) (keyword key) key) value])))
                     (into {}))]
     (with-meta parsed location)))
 
-(defmethod node->ast "scalar" [node _]
+(defmethod node->ast "scalar" [node _ _]
   (.getValue node))
 
 
-(defmethod node->ast "sequence" [node file]
-  (mapv node->ast (.getValue node) file))
+(defmethod node->ast "sequence" [node file options]
+  (mapv node->ast (.getValue node) file options))
 
 
 (declare parse-file)
 
-(defn fragment-info [file]
-  (with-open [rdr (clojure.java.io/reader file)]
+(defn cache-resolved-uri [uri options]
+  (let [cache (get options "cacheDirs" {})
+        found-cache (->> cache
+                         (filter (fn [[cached-uri cachedir]]
+                                   (string/starts-with? uri cached-uri)))
+                         first)]
+    (if (some? found-cache)
+      (let [[cached-uri cache-dir] found-cache]
+        (string/replace uri cached-uri cache-dir))
+      uri)))
+
+(defn local-uri? [uri]
+  (or (string/starts-with? uri "file://")
+      (nil? (string/index-of uri "://"))))
+
+(defn uri->reader [uri options]
+  (let [cache-resolved (cache-resolved-uri uri options)]
+    (if (local-uri? cache-resolved)
+      (java.io.FileReader. (io/as-file cache-resolved))
+      (java.io.StringReader. (slurp (io/as-url cache-resolved))))))
+
+(defn fragment-info [file options]
+  (with-open [rdr (java.io.BufferedReader. (uri->reader file options))]
     (let [first-line (first (line-seq rdr))]
       (if (string/starts-with? first-line "#%RAML")
         first-line
         nil))))
 
-(defmethod node->ast "!include" [node file]
+(defn parent-path [path]
+  (let [current-file (java.io.File. path)]
+    (.getAbsolutePath (.getParentFile current-file))))
+
+(defn parent-url [uri]
+  (let [uri (java.net.URI. uri)]
+    (-> (if (string/ends-with? (.getPath uri) "/")
+          (.resolve uri "..")
+          (.resolve uri "."))
+        str
+        (string/replace #"/$" ""))))
+
+(defn resolve-path [file next-file]
+  (str (if (local-uri? file)
+         (parent-path file)
+         (parent-url file))
+       File/separator
+       next-file))
+
+(defmethod node->ast "!include" [node file options]
   (let [next-file (.getValue node)]
     (if (string/starts-with? next-file File/separator)
-      (parse-file next-file)
-      (let [current-file (java.io.File. file)
-            parent (.getAbsolutePath (.getParentFile current-file))
-            location (str parent File/separator next-file)
-            fragment (fragment-info location)]
+      (parse-file next-file options)
+      (let [location (resolve-path file next-file)
+            fragment (fragment-info location options)]
         {(keyword "@fragment") fragment
          (keyword "@location") location
-         (keyword "@data") (parse-file location)
-         (keyword "@raw") (slurp current-file)}))))
+         (keyword "@data") (parse-file location options)
+         (keyword "@raw") (slurp (uri->reader location options))}))))
 
-(defn parse-string-ast [s base-file]
-  (let [node (.compose (make-yaml-loader) (java.io.StringReader. s))]
-    (node->ast node base-file)))
+(defn parse-string-ast
+  ([s base-file options]
+   (let [node (.compose (make-yaml-loader) (java.io.StringReader. s))]
+     (node->ast node base-file options))))
 
 ;; top level parsing/generation functions
 
 (defn generate-string [data & opts]
   (.dump (apply make-yaml-dumper opts) data))
 
+(defn wrap-parsing-result
+  ([location parsed options raw]
+   (let [fragment (fragment-info location options)]
+     {(keyword "@fragment") fragment
+      (keyword "@location") location
+      (keyword "@data") parsed
+      (keyword "@raw") raw}))
+  ([location parsed options]
+   (wrap-parsing-result location parsed options (slurp (uri->reader location options)))))
+
 (defn parse-string
-  ([string base-file keywordize]
-   (binding [*keywordize* keywordize]
-     (parse-string-ast string base-file)))
+  ([string base-file options]
+   (wrap-parsing-result base-file
+                        (parse-string-ast string base-file options)
+                        options
+                        string))
   ([string base-file]
-   (parse-string string base-file true)))
+   (parse-string string base-file {:keywordize true})))
 
-(defn parse-file-ast [uri]
-  (let [file (java.io.File. uri)
-        node (.compose (make-yaml-loader) (java.io.FileReader. file))]
-    (node->ast node uri)))
-
+(defn parse-file-ast
+  ([uri options]
+   (let [node (.compose (make-yaml-loader) (uri->reader uri options))]
+     (node->ast node uri options))))
 
 (defn parse-file
-  ([uri keywordize]
-   (binding [*keywordize* keywordize]
-     (parse-file-ast uri)))
+  ([uri options]
+   (wrap-parsing-result uri
+                        (parse-file-ast uri options)
+                        options))
   ([uri]
-   (parse-file uri true)))
+   (parse-file uri {:keywordize true})))

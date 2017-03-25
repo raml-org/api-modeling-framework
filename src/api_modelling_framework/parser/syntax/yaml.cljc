@@ -28,14 +28,14 @@
       path
       (str base path))))
 
-(defn resolve-libraries [location parsed]
+(defn resolve-libraries [location parsed options]
   (go (let [uses (:uses parsed {})
             uses (loop [acc []
                         libraries uses]
                    (if (empty? libraries)
                      acc
                      (let [[alias path] (first libraries)
-                           library-content (<! (parse-file (resolve-path location path)))]
+                           library-content (<! (parse-file (resolve-path location path) options))]
                        (recur (concat acc [[alias library-content]])
                               (rest libraries)))))
             uses (into {} uses)]
@@ -61,46 +61,40 @@
     (coll? node) (mapv add-location-meta node)
     :else        node))
 
-#?(:cljs (defn parse-file [uri]
-           (let [ch (chan)]
-             (.parseYamlFile yaml uri (fn [e result]
-                                        (go (try (if e
-                                                   (>! ch (ex-info (str e) e))
-                                                   (>! ch (->> result js->clj keywordize-keys add-location-meta)))
-                                                 (catch #?(:cljs js/Error :clj Exception) ex ex)))))
-             ch))
-   :clj (defn parse-file [uri]
-          (go (try (let [header (with-open [rdr (clojure.java.io/reader uri)] (.readLine rdr))
-                         header (if (string/starts-with? (or header "") "#%RAML")
-                                  header
-                                  nil)
-                         file (java.io.File. uri)
-                         parsed (yaml/parse-file uri true)]
-                     (-> {}
-                         (assoc (keyword "@data") (<! (resolve-libraries (.getAbsolutePath file) parsed)))
-                         (assoc (keyword "@location") (.getAbsolutePath file))
-                         (assoc (keyword "@fragment") header)
-                         (assoc (keyword "@raw") (slurp file))))
-                   (catch #?(:cljs js/Error :clj Exception) ex ex)))))
+#?(:cljs (defn parse-file
+           ([uri options]
+            (let [ch (chan)]
+              (.parseYamlFile yaml uri (clj->js options) (fn [e result]
+                                                           (go (try (if e
+                                                                      (>! ch (ex-info (str e) e))
+                                                                      (>! ch (->> result js->clj keywordize-keys add-location-meta)))
+                                                                    (catch #?(:cljs js/Error :clj Exception) ex ex)))))
+              ch))
+           ([uri] (parse-file uri {})))
+   :clj (defn parse-file
+          ([uri options]
+           (go (try (let [parsed (yaml/parse-file uri (assoc options :keywordize true))
+                          data (get parsed (keyword "@data"))
+                          data (<! (resolve-libraries uri data options))]
+                      (assoc parsed (keyword "@data") data))
+                    (catch #?(:cljs js/Error :clj Exception) ex ex))))
+          ([uri] (parse-file uri {}))))
 
-#?(:cljs (defn parse-string [uri string]
-           (let [ch (chan)]
-             (.parseYamlString yaml uri string (fn [e result]
-                                                 (go (try (if e
-                                                            (>! ch (ex-info (str e) e))
-                                                            (>! ch (->> result js->clj keywordize-keys add-location-meta)))
-                                                          (catch #?(:cljs js/Error :clj Exception) ex ex)))))
-             ch))
-   :clj (defn parse-string [uri string]
-          (go (try (let [header (first (string/split-lines string))
-                         file (java.io.File. uri)
-                         header (if (string/starts-with? (or header "") "#%RAML")
-                                  header
-                                  nil)
-                         parsed (yaml/parse-string string uri true)]
-                     (-> {}
-                         (assoc (keyword "@data") (<! (resolve-libraries (.getAbsolutePath file) parsed)))
-                         (assoc (keyword "@location") (.getAbsolutePath file))
-                         (assoc (keyword "@fragment") header)
-                         (assoc (keyword "@raw") string)))
-                   (catch #?(:cljs js/Error :clj Exception) ex ex)))))
+#?(:cljs (defn parse-string
+           ([uri string options]
+            (let [ch (chan)]
+              (.parseYamlString yaml uri string (clj->js options) (fn [e result]
+                                                                    (go (try (if e
+                                                                               (>! ch (ex-info (str e) e))
+                                                                               (>! ch (->> result js->clj keywordize-keys add-location-meta)))
+                                                                             (catch #?(:cljs js/Error :clj Exception) ex ex)))))
+              ch))
+           ([uri string] (parse-string uri string {})))
+   :clj (defn parse-string
+          ([uri string options]
+           (go (try (let [parsed (yaml/parse-string string uri (assoc options :keywordize true))
+                          data (get parsed (keyword "@data"))
+                          data (<! (resolve-libraries uri data options))]
+                      (assoc parsed (keyword "@data") data))
+                    (catch #?(:cljs js/Error :clj Exception) ex ex))))
+          ([uri string] (parse-string uri string {}))))

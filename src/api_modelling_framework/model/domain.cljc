@@ -1,6 +1,11 @@
 (ns api-modelling-framework.model.domain
   (:require [api-modelling-framework.model.document :as document]))
 
+(defprotocol DomainElement
+  (fragment-node [this] "The kind of node this domain element is wrapping")
+  (properties [this] "A map of properties that can be used to build a concrete domain component")
+  (to-domain-node [this] "Transforms this partially parsed domain element into a concrete domain component"))
+
 (defprotocol CommonAPIProperties
   (host [this] "Optional common host for all nodes in the API")
   (scheme [this] "Optional collection of schemes used by default in all the API endpoints")
@@ -49,11 +54,6 @@
                       (some? (version this))))
   (extends [this] (or extends []))
   (additional-properties [this] (or additional-properties [])))
-
-(defprotocol DomainElement
-  (fragment-node [this] "The kind of node this domain element is wrapping")
-  (properties [this] "A map of properties that can be used to build a concrete domain component")
-  (to-domain-node [this] "Transforms this partially parsed domain element into a concrete domain component"))
 
 (defprotocol DomainPropertySchema
   (domain [this] "Elements in the domain of the property")
