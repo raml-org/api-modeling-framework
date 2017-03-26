@@ -1,6 +1,7 @@
 (ns api-modelling-framework.parser.domain.raml-types-shapes
   (:require [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.utils :as utils]
             [clojure.string :as string]
@@ -113,20 +114,6 @@
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "XMLSchema")]
    (v/shapes-ns "schemaRaw") [{"@value" text}]})
 
-(defn check-reference
-  "Checks if a provided string points to one of the types defined at the APIDocumentation level"
-  [type-string {:keys [references parsed-location]}]
-
-  (if-let [type-reference (get references (keyword type-string))]
-    (let [remote-id (-> type-reference domain/shape (get "@id"))
-          label (or (-> type-reference :name)
-                    (-> type-reference domain/shape :name)
-                    (str "#" (last (string/split remote-id #"#"))))]
-      {"@id" (str parsed-location "/ref-shape")
-       v/sorg:name [{"@value" (str "#" label)}]
-       "@type" [(v/shapes-ns "Shape")]
-       (v/shapes-ns "inherits") [remote-id]})
-    nil))
 
 (defn check-multiple-inheritance
   "Computes multiple-inheritance references"
@@ -152,6 +139,25 @@
     {"@id" (str parsed-location "/include-shape")
      "@type" [(v/shapes-ns "Shape")]
      (v/shapes-ns "inherits") [location]}))
+
+(defn check-reference
+  "Checks if a provided string points to one of the types defined at the APIDocumentation level"
+  [type-string {:keys [references parsed-location] :as context}]
+
+  (if-let [type-reference (get references (keyword type-string))]
+    (if (satisfies? document/Includes type-reference)
+      {"@id" (str parsed-location "/include-shape")
+       "@type" [(v/shapes-ns "Shape")]
+       (v/shapes-ns "inherits") [(document/target type-reference)]}
+      (let [remote-id (-> type-reference domain/shape (get "@id"))
+            label (or (-> type-reference :name)
+                      (-> type-reference domain/shape :name)
+                      (str "#" (last (string/split remote-id #"#"))))]
+        {"@id" (str parsed-location "/ref-shape")
+         v/sorg:name [{"@value" (str "#" label)}]
+         "@type" [(v/shapes-ns "Shape")]
+         (v/shapes-ns "inherits") [remote-id]}))
+    nil))
 
 (defn parse-type [node {:keys [parsed-location default-type] :as context}]
   (cond
