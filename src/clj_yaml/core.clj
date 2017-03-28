@@ -92,6 +92,10 @@
   (or (string/starts-with? uri "file://")
       (nil? (string/index-of uri "://"))))
 
+(defn external-uri? [uri]
+  (or (string/starts-with? uri "http://")
+      (string/starts-with? uri "https://")))
+
 (defn uri->reader [uri options]
   (let [cache-resolved (cache-resolved-uri uri options)]
     (if (local-uri? cache-resolved)
@@ -126,7 +130,8 @@
 
 (defmethod node->ast "!include" [node file options]
   (let [next-file (.getValue node)]
-    (if (string/starts-with? next-file File/separator)
+    (if (or (external-uri? next-file)
+            (string/starts-with? next-file File/separator))
       (parse-file next-file options)
       (let [location (resolve-path file next-file)
             fragment (fragment-info location options)]
