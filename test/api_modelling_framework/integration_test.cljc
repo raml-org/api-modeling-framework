@@ -340,6 +340,24 @@
 (deftest integration-test-update-raml
   (async done
          (go (let [parser (core/->RAMLParser)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/world-music-api/wip.raml")))
+                   raw (core/raw model)
+                   updated-raw (string/replace raw "(WIP)" "")
+                   _ (is (not (error? model)))
+                   updated (<! (cb->chan (partial core/update-reference-model model
+                                                  (core/location model)
+                                                  "raml"
+                                                  updated-raw)))]
+               (is (= "World Music API"
+                      (-> updated
+                          core/document-model
+                          document/encodes
+                          document/name)))
+               (done)))))
+
+(deftest integration-test-cache-dirs
+  (async done
+         (go (let [parser (core/->RAMLParser)
                    generator (core/->OpenAPIGenerator)
                    model (<! (cb->chan (partial core/parse-file parser "resources/world-music-api/wip.raml")))
                    raw (core/raw model)
@@ -354,6 +372,49 @@
                           core/document-model
                           document/encodes
                           document/name)))
+               (done)))))
+
+(deftest integration-test-jsonld-generator-parser
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->RAMLGenerator)
+                   jsonld-generator (core/->APIModelGenerator)
+                   jsonld-parser (core/->APIModelParser)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/ramlapitest1/api.raml")))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/api.raml"
+                                                        output-model
+                                                        {})))
+                   read-model (<! (cb->chan (partial core/parse-string jsonld-parser "resources/api.raml" output-jsonld)))
+                   output-yaml(<! (cb->chan (partial core/generate-string generator "resources/api.raml"
+                                                     (core/document-model read-model)
+                                                     {})))
+                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-yaml)))]
+               (is (some? (-> yaml-data (get (keyword "(declares)")) :User)))
+               (is (string/starts-with? (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "!include"))
+               (done)))))
+
+(deftest integration-test-jsonld-generator-parser-source-maps
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->RAMLGenerator)
+                   jsonld-generator (core/->APIModelGenerator)
+                   jsonld-parser (core/->APIModelParser)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/ramlapitest1/api.raml")))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/api.raml"
+                                                        output-model
+                                                        {:source-maps? true})))
+                   read-model (<! (cb->chan (partial core/parse-string jsonld-parser "resources/api.raml" output-jsonld)))
+                   output-yaml(<! (cb->chan (partial core/generate-string generator "resources/api.raml"
+                                                     (core/document-model read-model)
+                                                     {})))
+                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-yaml)))]
+               (is (some? (-> yaml-data :types :User)))
+               ;; @todo this should be a reference to the type
+               (is (string/starts-with? (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "!include"))
                (done)))))
 
 (comment
@@ -564,4 +625,23 @@
                                                               (println "I'M BACK")
                                                               (println raml-string)
                                                               (is true)
-                                                              (done)))))))))))
+                                                              (done))))))))))
+
+  (deftest integration-test-raml->open-api
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->OpenAPIGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "/Users/antoniogarrote/Development/tmp/ramlapitest1/api.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   open-api-string (<! (cb->chan (partial core/generate-string generator "/Users/antoniogarrote/Development/tmp/ramlapitest1/api.json"
+                                                      output-model
+                                                      {})))
+                   _ (is (not (error? open-api-string)))
+                   output (platform/decode-json open-api-string)]
+               (println output)
+               (done)))))
+
+
+  )

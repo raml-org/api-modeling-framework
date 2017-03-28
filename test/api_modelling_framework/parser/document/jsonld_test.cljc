@@ -14,7 +14,8 @@
   (let [location "http://test.com/location.json"
         doc (document/map->ParsedDocument {:location location
                                            :encodes nil
-                                           :declares nil
+                                           :declares []
+                                           :references []
                                            :document-type "open-api"
                                            :id "http://test.com/location.json"})
         generated (generator/to-jsonld doc true)

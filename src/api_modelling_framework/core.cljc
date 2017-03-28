@@ -8,6 +8,7 @@
                     [api-modelling-framework.parser.syntax.json :as json-parser]
                     [api-modelling-framework.parser.document.raml :as raml-document-parser]
                     [api-modelling-framework.parser.document.openapi :as openapi-document-parser]
+                    [api-modelling-framework.parser.document.jsonld :as jsonld-document-parser]
                     [api-modelling-framework.generators.syntax.yaml :as yaml-generator]
                     [api-modelling-framework.generators.syntax.json :as json-generator]
                     [api-modelling-framework.generators.document.raml :as raml-document-generator]
@@ -15,7 +16,7 @@
                     [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
                     [clojure.string :as string]
                     [api-modelling-framework.platform :as platform]
-                    [clojure.walk :refer [keywordize-keys]]
+                    [clojure.walk :refer [keywordize-keys stringify-keys]]
                     [taoensso.timbre :as timbre :refer [debug]]))
   #?(:cljs (:require [cljs.core.async :refer [<! >! chan] :as async]
                      [api-modelling-framework.model.syntax :as syntax]
@@ -25,13 +26,14 @@
                      [api-modelling-framework.parser.syntax.json :as json-parser]
                      [api-modelling-framework.parser.document.raml :as raml-document-parser]
                      [api-modelling-framework.parser.document.openapi :as openapi-document-parser]
+                     [api-modelling-framework.parser.document.jsonld :as jsonld-document-parser]
                      [api-modelling-framework.generators.syntax.yaml :as yaml-generator]
                      [api-modelling-framework.generators.syntax.json :as json-generator]
                      [api-modelling-framework.generators.document.raml :as raml-document-generator]
                      [api-modelling-framework.generators.document.openapi :as openapi-document-generator]
                      [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
                      [api-modelling-framework.platform :as platform]
-                     [clojure.walk :refer [keywordize-keys]]
+                     [clojure.walk :refer [keywordize-keys stringify-keys]]
                      [clojure.string :as string]
                      [taoensso.timbre :as timbre :refer-macros [debug]])))
 
@@ -66,9 +68,13 @@
   (^:export raw [this] "Returns the raw text for the model"))
 
 (defprotocol Parser
-  (^:export parse-file [this uri cb]
+  (^:export parse-file
+   [this uri cb]
+   [this uri options cb]
    "Parses a local or remote stand-alone document file and builds a model")
-  (^:export parse-string [this uri string cb]
+  (^:export parse-string
+   [this uri string cb]
+   [this uri string options cb]
    "Parses a raw string with document URI identifier and builds a model"))
 
 (defprotocol Generator
@@ -79,15 +85,17 @@
 
 (defrecord RAMLParser []
   Parser
-  (parse-file [this uri cb]
-    (go (let [res (<! (yaml-parser/parse-file uri))]
+  (parse-file [this uri cb] (parse-file this uri {} cb))
+  (parse-file [this uri options cb]
+    (go (let [res (<! (yaml-parser/parse-file uri options))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
             (try (cb nil (to-model (raml-document-parser/parse-ast res {})))
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil)))))))
-  (parse-string [this uri string cb]
-    (go (let [res (<! (yaml-parser/parse-string uri string))]
+  (parse-string [this uri string cb] (parse-string this uri string {} cb))
+  (parse-string [this uri string options cb]
+    (go (let [res (<! (yaml-parser/parse-string uri string options))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
             (try (cb nil (to-model (raml-document-parser/parse-ast res {})))
@@ -96,14 +104,16 @@
 
 (defrecord OpenAPIParser []
   Parser
-  (parse-file [this uri cb]
+  (parse-file [this uri cb] (parse-file this uri {} cb))
+  (parse-file [this uri options cb]
     (go (let [res (<! (json-parser/parse-file uri))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
             (try (cb nil (to-model (openapi-document-parser/parse-ast res {})))
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil)))))))
-  (parse-string [this uri string cb]
+  (parse-string [this uri string cb] (parse-string this uri string {} cb))
+  (parse-string [this uri string options cb]
     (go (let [res (<! (json-parser/parse-string uri string))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
@@ -111,24 +121,45 @@
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 
+(defrecord APIModelParser []
+  Parser
+  (parse-file [this uri cb] (parse-file this uri {} cb))
+  (parse-file [this uri options cb]
+    (debug "Parsing APIModel file")
+    (go (let [res (<! (json-parser/parse-file uri false))]
+          (if (platform/error? res)
+            (cb (platform/<-clj res) nil)
+            (try (cb nil (to-model (jsonld-document-parser/from-jsonld (stringify-keys (get res "@data")))))
+                 (catch #?(:clj Exception :cljs js/Error) ex
+                   (cb (platform/<-clj ex) nil)))))))
+  (parse-string [this uri string cb] (parse-string this uri string {} cb))
+  (parse-string [this uri string options cb]
+    (debug "Parsing APIModel string")
+    (go (let [res (<! (json-parser/parse-string uri string false))]
+          (if (platform/error? res)
+            (cb (platform/<-clj res) nil)
+            (try (cb nil (to-model (jsonld-document-parser/from-jsonld (get res "@data"))))
+                 (catch #?(:clj Exception :cljs js/Error) ex
+                   (cb (platform/<-clj ex) nil))))))))
+
 (defrecord APIModelGenerator []
   Generator
   (generate-string [this uri model options cb]
-    (debug "Generating OpenAPI string")
+    (debug "Generating APIModel string")
     (go (try (let [options (keywordize-keys options)
                    res (-> model
                            (pre-process-model)
-                           (jsonld-document-generator/to-jsonld (get options :source-maps? false))
+                           (jsonld-document-generator/to-jsonld (or (get options :source-maps?) (get options "source-maps?") false))
                            (json-generator/generate-string options))]
                (cb nil (platform/<-clj res)))
              (catch #?(:clj Exception :cljs js/Error) ex
                (cb (platform/<-clj ex) nil)))))
   (generate-file [this uri model options cb]
-    (debug "Generating OpenAPI file")
+    (debug "Generating APIModel file")
     (go (let [options (keywordize-keys options)
               res (-> model
                       (pre-process-model)
-                      (jsonld-document-generator/to-jsonld (get options :source-maps? false))
+                      (jsonld-document-generator/to-jsonld (or (get options :source-maps?) (get options "source-maps?") false))
                       (json-generator/generate-string options))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
@@ -216,8 +247,8 @@
            (parsing-channel [syntax-type location text]
              (let [ch (chan)]
                (condp = syntax-type
-                 "raml" (parse-string (RAMLParser.) location text (fn [e r] (go (>! ch r))))
-                 "open-api" (parse-string (OpenAPIParser.) location text (fn [e r] (go (>! ch r)))))
+                 "raml" (parse-string (RAMLParser.) location text {} (fn [e r] (go (>! ch r))))
+                 "open-api" (parse-string (OpenAPIParser.) location text {} (fn [e r] (go (>! ch r)))))
                ch))]
 
      (let [domain-cache (atom nil)]

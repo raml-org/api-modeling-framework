@@ -1,8 +1,10 @@
 (ns api-modelling-framework.parser.document.jsonld
   (:require [api-modelling-framework.model.vocabulary :as v]
+            [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.utils :as utils]
             [api-modelling-framework.parser.domain.jsonld :as domain-parser]
+            [api-modelling-framework.parser.document.common :refer [get-one]]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
@@ -13,6 +15,7 @@
     (nil? model)                                  nil
     (utils/has-class? model v/document:Document)  v/document:Document
     (utils/has-class? model v/document:Fragment)  v/document:Fragment
+    (and (coll? model) (= 1 (count model)))       (from-jsonld-dispatch-fn (first model))
     :else                                      :unknown))
 
 
@@ -21,9 +24,9 @@
 
 (defmethod from-jsonld v/document:Document [m]
   (debug "Parsing " v/document:Document)
-  (let [encodes (from-jsonld (get m v/document:encodes))
-        declares (from-jsonld (get m v/document:declares))
-        references (from-jsonld (get m v/document:references))
+  (let [encodes (domain-parser/from-jsonld (get-one m v/document:encodes))
+        declares (map domain-parser/from-jsonld (get m v/document:declares []))
+        references (mapv from-jsonld (get m v/document:references []))
         location (get m "@id")
         source-map (first (map domain-parser/from-jsonld (get m v/document:source [])))
         document-type-tag (utils/find-tag source-map document/document-type-tag)
@@ -56,11 +59,8 @@
 
 (defmethod from-jsonld :unknown [m]
   (debug "Parsing " :unknown)
-  (reify document/Node
-    (document/id [this] (get m "@id"))
-    (document/name [this] "unknown node")
-    (document/description [this] (str m))
-    (document/valid? [this] true)))
+  (prn m)
+  (domain-parser/from-jsonld m))
 
 (defmethod from-jsonld nil [_]
   (debug "Parsing " nil)

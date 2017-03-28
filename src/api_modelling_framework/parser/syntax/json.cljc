@@ -199,41 +199,47 @@
            (catch #?(:clj Exception :cljs js/Error) ex
              ex))))
 
-(defn parse-file [location]
-  (go (try
-        (let [id (->id location)
-              data (<! (platform/read-location id))
-              parsed (platform/decode-json data)
-              [processed-acc processed] (find-references id parsed)]
-          (loop [processed processed
-                 processed-acc @processed-acc]
-            (if (empty? processed-acc)
-              (clojure.walk/keywordize-keys {"@location" id
-                                             "@fragment" "root"
-                                             "@data" processed
-                                             "@raw" data})
-              (let [references-map (<! (resolve-references processed-acc))
-                    processed (fill-references id processed references-map)
-                    [processed-acc processed] (find-references id processed)]
-                ;; we recur until we have resolved all references
-                (recur processed @processed-acc)))))
-        (catch #?(:cljs js/Error :clj Exception) ex ex))))
+(defn parse-file
+  ([location keywordize]
+   (go (try
+         (let [post-process (if keywordize clojure.walk/keywordize-keys identity)
+               id (->id location)
+               data (<! (platform/read-location id))
+               parsed (platform/decode-json data)
+               [processed-acc processed] (find-references id parsed)]
+           (loop [processed processed
+                  processed-acc @processed-acc]
+             (if (empty? processed-acc)
+               (post-process {"@location" id
+                              "@fragment" "root"
+                              "@data" processed
+                              "@raw" data})
+               (let [references-map (<! (resolve-references processed-acc))
+                     processed (fill-references id processed references-map)
+                     [processed-acc processed] (find-references id processed)]
+                 ;; we recur until we have resolved all references
+                 (recur processed @processed-acc)))))
+         (catch #?(:cljs js/Error :clj Exception) ex ex))))
+  ([location] (parse-file location true)))
 
-(defn parse-string [location data]
-  (go (try
-        (let [id (->id location)
-              parsed (platform/decode-json data)
-              [processed-acc processed] (find-references id parsed)]
-          (loop [processed processed
-                 processed-acc @processed-acc]
-            (if (empty? processed-acc)
-              (clojure.walk/keywordize-keys {"@location" id
-                                             "@fragment" "root"
-                                             "@data" processed
-                                             "@raw" data})
-              (let [references-map (<! (resolve-references processed-acc))
-                    processed (fill-references id processed references-map)
-                    [processed-acc processed] (find-references id processed)]
-                ;; we recur until we have resolved all references
-                (recur processed @processed-acc)))))
-        (catch #?(:cljs js/Error :clj Exception) ex ex))))
+(defn parse-string
+  ([location data keywordize]
+   (go (try
+         (let [id (->id location)
+               post-process (if keywordize clojure.walk/keywordize-keys identity)
+               parsed (platform/decode-json data)
+               [processed-acc processed] (find-references id parsed)]
+           (loop [processed processed
+                  processed-acc @processed-acc]
+             (if (empty? processed-acc)
+               (post-process {"@location" id
+                              "@fragment" "root"
+                              "@data" processed
+                              "@raw" data})
+               (let [references-map (<! (resolve-references processed-acc))
+                     processed (fill-references id processed references-map)
+                     [processed-acc processed] (find-references id processed)]
+                 ;; we recur until we have resolved all references
+                 (recur processed @processed-acc)))))
+         (catch #?(:cljs js/Error :clj Exception) ex ex))))
+  ([location data] (parse-string location data true)))

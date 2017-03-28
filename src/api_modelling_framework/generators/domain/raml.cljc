@@ -169,7 +169,7 @@
   (->> references
        (filter (fn [ref] (and (not (common/trait-reference? ref))
                              (not (common/type-reference? ref)))))
-       (map (fn [ref] [(:id ref) (to-raml! ref ctx)]))
+       (map (fn [ref] [(or (:name ref) (:id ref)) (to-raml! ref ctx)]))
        (into {})))
 
 (defmethod to-raml domain/APIDocumentation [model ctx]

@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.293"]
                  [io.swagger/swagger-parser "1.0.21"]
-                 [org.clojure/core.async "0.2.395"]
+                 [org.clojure/core.async "0.3.442"]
                  [cheshire "5.6.3"]
                  [com.cemerick/url "0.1.1"]
                  [com.taoensso/timbre "4.8.0"]

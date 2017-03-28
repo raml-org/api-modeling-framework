@@ -1,0 +1,12 @@
+#%RAML 1.0
+title: TEST RAML API 1
+# this is the version!
+version: v1
+baseUri: http://api1.com/
+types:
+  User: !include types/user.raml
+/users:
+  get:
+    responses:
+      200:
+        body: User
