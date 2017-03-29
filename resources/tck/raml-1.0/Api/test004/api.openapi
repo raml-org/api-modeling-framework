@@ -1,0 +1,13 @@
+{
+  "host": "api.example.com",
+  "info": {
+    "title": "test",
+    "version": ""
+  },
+  "paths": {},
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0"
+}

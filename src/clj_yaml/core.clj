@@ -72,7 +72,7 @@
 
 
 (defmethod node->ast "sequence" [node file options]
-  (mapv node->ast (.getValue node) file options))
+  (mapv #(node->ast % file options) (.getValue node)))
 
 
 (declare parse-file)
