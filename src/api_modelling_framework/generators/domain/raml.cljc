@@ -97,11 +97,11 @@
       (to-raml x ctx))))
 
 (defn model->base-uri [model]
-  (let [scheme (or (domain/scheme model) [])
+  (let [;;scheme (or (domain/scheme model) [])
         host (domain/host model)
         base-path (domain/base-path model)]
     (if (some? host)
-      (str (or (first scheme) "http") "://" host base-path)
+      (str host base-path)
       nil)))
 
 (defn model->protocols [model]

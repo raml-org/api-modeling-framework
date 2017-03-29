@@ -203,3 +203,6 @@
   (if (some? (get n p))
     n
     (assoc n p default-value)))
+
+(defn ensure-not-blank [x]
+  (if (and (string? x) (= x "")) nil x))

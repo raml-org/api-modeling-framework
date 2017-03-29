@@ -170,18 +170,21 @@
 
 (defn base-uri->host [base-uri]
   (when (some? base-uri)
-    (let [{:keys [host]} (url/url base-uri)]
+    (let [base-uri (if (string/index-of base-uri "://") base-uri (str "http://" base-uri))
+          {:keys [host]} (url/url base-uri)]
       host)))
 
 (defn base-uri->basepath [base-uri]
   (when (some? base-uri)
-    (let [{:keys [path]} (url/url base-uri)]
+    (let [base-uri (if (string/index-of base-uri "://") base-uri (str "http://" base-uri))
+          {:keys [path]} (url/url base-uri)]
       path)))
 
 (defn root->scheme [{:keys [protocols baseUri]}]
   (cond
     (some? protocols)                  (->> [protocols] flatten (mapv string/lower-case))
     (and (some? baseUri)
+         (string/index-of baseUri "://")
          (some? (:protocol
                  (url/url baseUri)))) [(:protocol (url/url baseUri))]
     :else                              nil))
@@ -347,7 +350,6 @@
                                                           (:id parsed-domain-element)))))
        flatten))
 
-
 (defmethod parse-ast :root [node {:keys [location parsed-location is-fragment references] :as context :or {references {}}}]
   (debug "Parsing RAML root")
   (let [parsed-location (utils/path-join parsed-location "/api-documentation")
@@ -376,9 +378,9 @@
                     :name (extract-scalar (:title node))
                     :parameters base-uri-parameters
                     :description (extract-scalar (:description node))
-                    :host (base-uri->host (extract-scalar (:baseUri node)))
-                    :scheme (root->scheme node)
-                    :base-path (base-uri->basepath (extract-scalar (:baseUri node)))
+                    :host (utils/ensure-not-blank (base-uri->host (extract-scalar (:baseUri node))))
+                    :scheme (utils/ensure-not-blank (root->scheme node))
+                    :base-path (utils/ensure-not-blank (base-uri->basepath (extract-scalar (:baseUri node))))
                     :accepts (filterv some? (flatten [(extract-scalar (:mediaType node))]))
                     :content-type (filterv some? (flatten [(:mediaType node)]))
                     :version (extract-scalar (:version node))

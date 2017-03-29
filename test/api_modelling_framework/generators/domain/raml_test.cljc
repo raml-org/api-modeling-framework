@@ -22,14 +22,14 @@
     (is (= {:title "name"
             :description "description"
             :version "1.0"
-            :baseUri "http://test.com/path"
+            :baseUri "test.com/path"
             :protocols ["http" "https"]
             :mediaType ["appliaton/json" "application/json"]}
            (generator/to-raml api-documentation {})))))
 
 
 (deftest to-raml-EndPoint
-  (let [input {:baseUri "http://test.com"
+  (let [input {:baseUri "test.com"
                :protocols "http"
                :version "1.0"
                (keyword "/users") {:displayName "Users"
@@ -113,7 +113,7 @@
 (deftest to-raml-traits
   (let [location "file://path/to/resource.raml#"
         input {:title "Github API"
-               :baseUri "http://api.github.com"
+               :baseUri "api.github.com"
                :protocols "http"
                :version "v3"
                :traits {:paged

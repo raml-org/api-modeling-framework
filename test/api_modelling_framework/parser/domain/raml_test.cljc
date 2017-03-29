@@ -19,7 +19,7 @@
 
 (deftest parse-ast-root
   (let [node {:title "GithHub API"
-              :baseUri "https://api.github.com"
+              :baseUri "api.github.com"
               :baseUriParameters {:bucketName
                                   {:description "The name of the bucket"}}
               :version "v3"
@@ -33,7 +33,7 @@
     (is (satisfies? domain/APIDocumentation parsed))
     (is (= "api.github.com" (domain/host parsed)))
     (is (= ["http" "https"] (domain/scheme parsed)))
-    (is (= "" (domain/base-path parsed)))
+    (is (nil? (domain/base-path parsed)))
     (is (= ["application/json" "application/xml"] (domain/content-type parsed)))
     (is (= ["application/json" "application/xml"] (domain/accepts parsed)))
     (is (= 1 (count (domain/endpoints parsed))))
@@ -48,7 +48,6 @@
     (is (= 1 (count (domain/parameters parsed))))
     (is (= "bucketName" (->> parsed domain/parameters first document/name)))
     (is (-> parsed domain/parameters first domain/shape some?))))
-
 
 (deftest parse-ast-traits
   (let [node {:title "Github API"

@@ -45,7 +45,7 @@
     (is (= document/node-parsed-tag (document/tag-id (first (document/tags source)))))))
 
 (deftest from-jsonld-EndPoint
-  (let [input {:baseUri "http://test.com"
+  (let [input {:baseUri "test.com"
                :protocols "http"
                :version "1.0"
                (keyword "/users") {:displayName "Users"
@@ -205,7 +205,7 @@
 (deftest traits-test
   (let [location "file://path/to/resource.raml#"
         input {:title "Github API"
-               :baseUri "http://api.github.com"
+               :baseUri "api.github.com"
                :protocols "http"
                :version "v3"
                :traits {:paged

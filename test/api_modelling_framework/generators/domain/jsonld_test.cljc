@@ -61,7 +61,7 @@
 
 
 (deftest from-raml-traits-test
-  (let [input {:baseUri "http://test.com"
+  (let [input {:baseUri "test.com"
                :protocols "http"
                :version "1.0"
                :traits {:secure {:queryParameters {:access_token {:type "string"}}}}

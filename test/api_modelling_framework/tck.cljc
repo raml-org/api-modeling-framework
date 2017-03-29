@@ -26,9 +26,13 @@
      :cljs (.existsSync fs f)))
 
 (def raml-10-tests "resources/tck/raml-1.0")
-(def tck-test-cases {:raml-01 {:api {:test0001 {:raml (str raml-10-tests "/Api/test0001/api.raml")
-                                                :openapi  (str raml-10-tests "/Api/test0001/api.openapi")
-                                                :jsonld (str raml-10-tests "/Api/test0001/api.jsonld")}
+(def tck-test-cases {:raml-01 {:api { :test0001 {:raml (str raml-10-tests "/Api/test001/api.raml")
+                                                :openapi  (str raml-10-tests "/Api/test001/api.openapi")
+                                                :jsonld (str raml-10-tests "/Api/test001/api.jsonld")},
+
+                                     :test003 {:raml (str raml-10-tests "/Api/test003/api.raml")
+                                               :openapi  (str raml-10-tests "/Api/test003/api.openapi")
+                                               :jsonld (str raml-10-tests "/Api/test003/api.jsonld")}
                                 }}})
 (def tools {:raml {:parser (core/->RAMLParser)
                    :generator (core/->RAMLGenerator)}

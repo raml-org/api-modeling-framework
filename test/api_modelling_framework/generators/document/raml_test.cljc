@@ -11,7 +11,7 @@
         input {(keyword "@location") location
                (keyword "@fragment") "#%RAML 1.0"
                (keyword "@data") {:title "Github API"
-                                  :baseUri "http://api.github.com"
+                                  :baseUri "api.github.com"
                                   :protocols "http"
                                   :version "v3"
                                   :baseUriParameters {:bucketName
