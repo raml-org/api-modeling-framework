@@ -303,8 +303,8 @@
                                         :fragment-node :parsed-api-documentation
                                         :properties {:id parsed-location
                                                      :fragment-node :parsed-api-documentation
-                                                     :properties properties}})
-      (domain/map->ParsedAPIDocumentation properties))))
+                                                     :properties (utils/clean-nils properties)}})
+      (domain/map->ParsedAPIDocumentation (utils/clean-nils properties)))))
 
 (defmethod parse-ast :info [node {:keys [location parsed-location is-fragment]}]
   (debug "Parsing info")

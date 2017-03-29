@@ -12,7 +12,8 @@
                    (name x))
     :else (str x)))
 
-(defn trace [x] (prn (keys x)) x)
+(defn trace-keys [x] (prn (keys x)) x)
+(defn trace [x] (prn x) x)
 
 (def key-orders {"swagger" 0
                  "host" 1
@@ -195,3 +196,10 @@
                                      (into {}))
     (coll? data)                (mapv (fn [v] (jsonld->annotation v)) data)
     :else                       data))
+
+(defn ensure
+  "Makes sure that at least a default value is present in the passed node"
+  [n p default-value]
+  (if (some? (get n p))
+    n
+    (assoc n p default-value)))

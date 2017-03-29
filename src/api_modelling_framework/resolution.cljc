@@ -408,4 +408,4 @@
 
 (defmethod resolve :Type [m ctx]
   (debug "Resolving type " (get m "@id"))
-  (utils/trace (resolve-type m ctx)))
+  (resolve-type m ctx))

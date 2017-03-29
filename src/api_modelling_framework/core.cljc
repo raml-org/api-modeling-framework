@@ -165,6 +165,11 @@
             (cb (platform/<-clj res) nil)
             (cb nil (platform/<-clj res)))))))
 
+(defn to-raml-fragment-header [fragment]
+  (cond (string? fragment) fragment
+        (= fragment :fragment) "#% RAML 1.0"
+        :else                  "#% RAML 1.0"))
+
 (defrecord RAMLGenerator []
   Generator
   (generate-string [this uri model options cb]
@@ -173,9 +178,9 @@
                                                    {:location uri}))
                    res (-> model
                            (pre-process-model)
-                           (raml-document-generator/to-raml options)
-                           (syntax/<-data))
-                   res (yaml-generator/generate-string res options)]
+                           (raml-document-generator/to-raml options))
+                   res (yaml-generator/generate-string (syntax/<-data res)
+                                                       (assoc options :header (to-raml-fragment-header (syntax/<-fragment res))))]
               (cb nil (platform/<-clj res)))
             (catch #?(:clj Exception :cljs js/Error) ex
               (cb (platform/<-clj ex) nil)))))
@@ -185,9 +190,8 @@
                                               {:location uri}))
               res (<! (-> model
                           (pre-process-model)
-                          (raml-document-generator/to-raml options)
-                          (syntax/<-data)
-                          (yaml-generator/generate-file uri options)))]
+                          (raml-document-generator/to-raml options)))
+              res (yaml-generator/generate-file (syntax/<-data res) uri (assoc options :header (to-raml-fragment-header (syntax/<-fragment res))))]
          (if (platform/error? res)
            (cb (platform/<-clj res) nil)
            (cb nil (platform/<-clj res)))))))

@@ -1,0 +1,12 @@
+{
+    "@id": "resources/tck/raml-1.0/Api/test0001/api.raml",
+    "@type": ["http://raml.org/vocabularies/document#Document",
+              "http://raml.org/vocabularies/document#Fragment",
+              "http://raml.org/vocabularies/document#Module",
+              "http://raml.org/vocabularies/document#Unit"],
+    "http://raml.org/vocabularies/document#encodes":
+    [{"@id": "resources/tck/raml-1.0/Api/test0001/api.raml#/api-documentation",
+      "@type": ["http://raml.org/vocabularies/http#APIDocumentation",
+                "http://raml.org/vocabularies/document#DomainElement"],
+      "http://schema.org/name": [{"@value": "test"}]}]
+}

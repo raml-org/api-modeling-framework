@@ -31,6 +31,7 @@
              :description "description"
              :version "1.0"
              :termsOfService "terms"}
+            :paths {}
             :consumes "application/json"}
            (generator/to-openapi api-documentation {})))))
 

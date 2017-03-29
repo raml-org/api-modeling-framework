@@ -59,7 +59,6 @@
 
 (defmethod from-jsonld :unknown [m]
   (debug "Parsing " :unknown)
-  (prn m)
   (domain-parser/from-jsonld m))
 
 (defmethod from-jsonld nil [_]

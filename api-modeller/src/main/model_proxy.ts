@@ -3,6 +3,7 @@ import * as jsonld from "jsonld";
 import {JsonLd} from "jsonld";
 import {stringify} from "querystring";
 import {UnitModel} from "./units_model";
+import {LexicalInfo} from "./model_utils";
 require("api_modelling_framework");
 
 const apiFramework = global["api_modelling_framework"].core;
@@ -186,5 +187,23 @@ export class ModelProxy {
         } else {
             return undefined;
         }
+    }
+
+    elementLexicalInfo(id: string): LexicalInfo {
+        console.log("*** Looking for lexical information about " + id);
+        const res = apiFramework.lexical_info_for_unit(this.raw, id);
+        console.log("FOUND:")
+        console.log(JSON.stringify(res, null, 2));
+        console.log("IN JS FORMAT:")
+        console.log(JSON.stringify(from_clj(res), null, 2));
+
+        return new LexicalInfo(
+            parseInt(res["start-line"]),
+            parseInt(res["start-column"]),
+            parseInt(res["start-index"]),
+            parseInt(res["end-line"]),
+            parseInt(res["end-column"]),
+            parseInt(res["end-index"])
+        );
     }
 }

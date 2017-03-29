@@ -99,15 +99,13 @@
 
 (defmethod to-openapi domain/APIDocumentation [model ctx]
   (debug "Generating Swagger")
+  (debug "Generating Info")
   (let [info (-> {:title (document/name model)
                   :description (document/description model)
                   :version (domain/version model)
                   :termsOfService (domain/terms-of-service model)}
-                 utils/clean-nils)
-        info (if (= {} info)
-               nil
-               (do (debug "Generating Info")
-                   info))
+                 utils/clean-nils
+                 (utils/ensure :version ""))
         paths (->> (domain/endpoints model)
                    (map (fn [endpoint]
                           [(keyword (domain/path endpoint))
@@ -129,7 +127,8 @@
          :x-traits (common/model->traits (assoc ctx :abstract true) to-openapi!)
          :x-annotationTypes (:annotations ctx)
          :paths paths}
-        utils/clean-nils)))
+        utils/clean-nils
+        (utils/ensure :paths {}))))
 
 
 (defmethod to-openapi domain/EndPoint [model ctx]

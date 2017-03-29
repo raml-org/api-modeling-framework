@@ -70,7 +70,11 @@
      (generate-ast data {:location location}))))
 
 (defn generate-string
-  ([ast context] (generate-yaml-string (generate-ast ast context)))
+  ([ast context]
+   (let [text (generate-yaml-string (generate-ast ast context))]
+     (if (some? (:header context))
+       (str (:header context) "\n" text)
+       text)))
   ([ast] (generate-yaml-string (generate-ast ast))))
 
 (defn generate-file

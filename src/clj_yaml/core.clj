@@ -109,6 +109,12 @@
         first-line
         nil))))
 
+(defn fragment-info-string [s]
+  (let [first-line (first (line-seq (java.io.BufferedReader. (java.io.StringReader. s))))]
+    (if (string/starts-with? first-line "#%RAML")
+      first-line
+      nil)))
+
 (defn parent-path [path]
   (let [current-file (java.io.File. path)]
     (.getAbsolutePath (.getParentFile current-file))))
@@ -152,7 +158,7 @@
 
 (defn wrap-parsing-result
   ([location parsed options raw]
-   (let [fragment (fragment-info location options)]
+   (let [fragment (fragment-info-string raw)]
      {(keyword "@fragment") fragment
       (keyword "@location") location
       (keyword "@data") parsed

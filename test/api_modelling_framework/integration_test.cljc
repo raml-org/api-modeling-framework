@@ -9,26 +9,13 @@
             [api-modelling-framework.platform :as platform]
             [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.utils-test :refer [cb->chan error?]]
             [clojure.string :as string]
             #?(:cljs [cljs.core.async :refer [<! >! chan]])
             #?(:clj [api-modelling-framework.platform :refer [async]])
             #?(:clj [clojure.core.async :refer [go <! >! chan]])
             #?(:clj [clojure.test :refer [deftest is]])))
 
-(defn cb->chan [f]
-  (let [c (chan)]
-    (f (fn [e o]
-         (go (if (some? e)
-               (>! c {:error e})
-               (>! c o)))))
-    c))
-
-(defn error? [x]
-  (if (and (map? x)
-           (some? (:error x)))
-    (do (prn (:error x))
-        true)
-    false))
 
 (deftest integration-test-raml->open-api
   (async done
@@ -79,8 +66,8 @@
                    output-model (core/document-model model)
                    _ (is (not (error? output-model)))
                    output-string (<! (cb->chan (partial core/generate-string generator "resources/world-music-api/wip.raml"
-                                                      output-model
-                                                      {})))
+                                                        output-model
+                                                        {})))
                    _ (is (not (error? output-string)))
                    output (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string)))]
 
@@ -131,7 +118,6 @@
                               (map :responses)
                               (map :200)
                               (map :body))]
-               (prn output)
                (doseq [type types]
                  (is (or (= (:type type) "array")
                          (= (:type type) "object")))
@@ -307,7 +293,6 @@
                            :encodes
                            :lexical)))
                (is (some? (:raw output-document-model)))
-               (prn (keys output-document-model))
                (<! (test-raml-document-level generator-raml output-document-model))
                (<! (test-raml-domain-level generator-raml output-model))
                (<! (test-openapi-document-level generator-openapi output-document-model))
