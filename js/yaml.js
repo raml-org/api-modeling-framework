@@ -14,13 +14,17 @@ var ensureFileUri = function (uri) {
     return uri;
 };
 
+var startsWith = function (s, p) {
+    return s.indexOf(p) === 0;
+};
+
 var isLocalFile = function (location) {
-    return (location.startsWith("file://") || location.indexOf("://") === -1);
+    return (startsWith(location, "file://") || location.indexOf("://") === -1);
 };
 
 var inCache = function (location, cacheDirs) {
     for (var domain in cacheDirs || {}) {
-        if (location.startsWith(domain)) {
+        if (startsWith(location, domain)) {
             return location.replace(domain, cacheDirs[domain]);
         }
     }

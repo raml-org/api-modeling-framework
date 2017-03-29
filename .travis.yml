@@ -1,5 +1,8 @@
 language: clojure
 
+node_js:
+  - "7"
+
 install:
   - lein npm install
 
