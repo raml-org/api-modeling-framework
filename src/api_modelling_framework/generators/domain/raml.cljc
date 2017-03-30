@@ -219,10 +219,14 @@
 (defn clean-default-object-body
   "Sometimes the type of the body is just a description, with this check we avoid generating a default body without associated properties"
   [response-body]
-  (if (and (= "object" (:type response-body))
-           (nil? (:properties response-body)))
-    (dissoc response-body :type)
-    response-body))
+  (let [res (if (and (= "object" (:type response-body))
+                     (nil? (:properties response-body)))
+              (dissoc response-body :type)
+              response-body)]
+    (if (= {} res)
+      ;; this is due to the particular behaviour of the clj-yaml and js-yaml
+      #?(:clj "" :cljs nil)
+      res)))
 
 (defn project-bodies [bodies context]
   (if (= 1 (count bodies))

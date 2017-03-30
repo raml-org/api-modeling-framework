@@ -44,7 +44,10 @@
                                            :test002 {:raml (str raml-10-tests "/Resources/test002/api.raml")
                                                      :openapi (str raml-10-tests "/Resources/test002/api.openapi")
                                                      :jsonld (str raml-10-tests "/Resources/test002/api.jsonld")}
-                                           }}})
+                                           }
+                               :responses {:test002 {:raml (str raml-10-tests "/Responses/test002/api.raml")
+                                                     :openapi (str raml-10-tests "/Responses/test002/api.openapi")
+                                                     :jsonld (str raml-10-tests "/Responses/test002/api.jsonld")}}}})
 (def tools {:raml {:parser (core/->RAMLParser)
                    :generator (core/->RAMLGenerator)}
             :openapi {:parser (core/->OpenAPIParser)
