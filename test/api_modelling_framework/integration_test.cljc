@@ -166,7 +166,7 @@
                                           first
                                           domain/media-type
                                           utils/safe-str)))
-               (is (= "/declares/types/RamlDataType/type/shape"
+               (is (= "/declares/types/RamlDataType/shape"
                       (let [type (->>
                                   (domain/supported-operations api-resource)
                                   last

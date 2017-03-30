@@ -499,15 +499,12 @@
     (->> bodies
          (filter some?)
          (mapv (fn [{:keys [media-type body-id location schema] :as data}]
-                 (let [media-type-node-sources (if (some? media-type)
-                                                 (generate-parse-node-sources location body-id)
-                                                 [])
-                       node-parsed-source-map (generate-parse-node-sources location body-id)]
+                 (let [node-parsed-source-map (generate-parse-node-sources location body-id)]
                    (->>
                      (domain/map->ParsedPayload (utils/clean-nils {:id body-id
                                                                    :media-type media-type
                                                                    :schema schema
-                                                                   :sources (concat node-parsed-source-map media-type-node-sources)}))
+                                                                   :sources node-parsed-source-map}))
                      (with-annotations node context)
                      (with-location-meta-from node))))))))
 
@@ -520,14 +517,18 @@
         query-string []
         headers (parse-parameters "header" "headers" (:headers node) context)
         payloads (parse-http-payloads (utils/path-join request-id "payload") node context)]
-    (->>
-      (domain/map->ParsedRequest {:id request-id
-                                  :sources node-parsed-source-map
-                                  :parameters (concat query-parameters query-string)
-                                  :headers headers
-                                  :payloads payloads})
-      (with-annotations node context)
-      (with-location-meta-from node))))
+    (if (empty? (concat headers payloads query-string query-parameters))
+      ;; nothing to generated
+      nil
+      ;; we have something to generate
+      (->>
+       (domain/map->ParsedRequest {:id request-id
+                                   :sources node-parsed-source-map
+                                   :parameters (concat query-parameters query-string)
+                                   :headers headers
+                                   :payloads payloads})
+       (with-annotations node context)
+       (with-location-meta-from node)))))
 
 (defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method references] :as context}]
   (debug "Parsing method " method)
@@ -618,13 +619,15 @@
                   (string? node))
                {:type node}
                node)
-        type-id (utils/path-join parsed-location "/type")
         shape-context (-> context
-                          (assoc :parsed-location type-id)
+                          (assoc :parsed-location parsed-location)
                           (assoc :parse-ast parse-ast))
         shape (if (shapes/inline-json-schema? node)
                 (json-schema-shapes/parse-type (keywordize-keys (platform/decode-json node)) shape-context)
-                (shapes/parse-type node shape-context))]
+                (shapes/parse-type node shape-context))
+        type-id (str (get shape "@id") "/wrapper")]
+    ;; ParsedType nodes just wrap the JSON-LD description for the shape.
+    ;; They should not generate stand-alone nodes in the JSON-LD domain model, the node IS the shape
     (->> (if is-fragment
            (domain/map->ParsedDomainElement {:id type-id
                                              :fragment-node :parsed-type

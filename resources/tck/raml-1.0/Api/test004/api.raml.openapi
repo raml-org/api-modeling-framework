@@ -1,7 +1,0 @@
-#%RAML 1.0
-title: test
-version: ''
-baseUri: api.example.com
-protocols:
-  - http
-  - https

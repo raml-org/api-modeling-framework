@@ -22,7 +22,8 @@
     (utils/has-class? model v/hydra:Operation)                v/hydra:Operation
     (utils/has-class? model v/http:Response)                  v/http:Response
     (utils/has-class? model v/http:Request)                   v/http:Request
-    (utils/has-class? model v/http:Schema)                    v/http:Schema
+    (utils/has-class? model v/sh:Shape)                       v/sh:Shape
+    (utils/has-class? model (v/shapes-ns "Shape"))            v/sh:Shape
     (utils/has-class? model v/http:Payload)                   v/http:Payload
     (utils/has-class? model v/http:Parameter)                 v/http:Parameter
     (utils/has-class? model v/document:IncludeRelationship)   v/document:IncludeRelationship
@@ -141,16 +142,13 @@
                                 :media-type (utils/find-value m v/http:media-type)
                                 :schema (from-jsonld (first (get m v/http:schema)))})))
 
-(defmethod from-jsonld v/http:Schema [m]
-  (debug "Parsing " v/http:Schema " " (get m "@id"))
+(defmethod from-jsonld v/sh:Shape [m]
+  (debug "Parsing " v/sh:Shape " " (get m "@id"))
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
-    (domain/map->ParsedType {:id (get m "@id")
-                             :sources parsed-sources
-                             :name (utils/find-value m v/sorg:name)
-                             :description (utils/find-value m v/sorg:description)
+    (domain/map->ParsedType {:id (str (get m "@id") "/wrapper")
                              ;; shapes are expressed already in JSON-LD, they are passed as it
-                             :shape (utils/extract-jsonld m v/http:shape)})))
+                             :shape m})))
 
 (defmethod from-jsonld v/http:Parameter [m]
   (debug "Parsing " v/http:Parameter " " (get m "@id"))
@@ -163,7 +161,7 @@
                                   ;; shapes are expressed already in JSON-LD, they are passed as it
                                   :required (utils/find-value m v/hydra:required)
                                   :parameter-kind (utils/find-value m v/http:param-binding)
-                                  :shape (utils/extract-jsonld m v/http:shape)})))
+                                  :shape (utils/extract-jsonld m v/http:schema)})))
 
 (defmethod from-jsonld v/http:Request [m]
   (debug "Parsing " v/http:Request " " (get m "@id"))

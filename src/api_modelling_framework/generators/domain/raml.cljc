@@ -100,9 +100,10 @@
   (let [;;scheme (or (domain/scheme model) [])
         host (domain/host model)
         base-path (domain/base-path model)]
-    (if (some? host)
-      (str host base-path)
-      nil)))
+    (cond
+      (some? host)      (str host base-path)
+      (some? base-path) base-path
+      :else             nil)))
 
 (defn model->protocols [model]
   (let [schemes (domain/scheme model)]
@@ -213,24 +214,34 @@
         (merge-children-resources children-resources ctx)
         (utils/clean-nils))))
 
+(defn clean-default-object-body
+  "Sometimes the type of the body is just a description, with this check we avoid generating a default body without associated properties"
+  [response-body]
+  (if (and (= "object" (:type response-body))
+           (nil? (:properties response-body)))
+    (dissoc response-body :type)
+    response-body))
+
 (defn project-bodies [bodies context]
   (if (= 1 (count bodies))
     ;; just one body, either it has a content type and become a  map or we plug it directly
     (let [body (first bodies)
-          schema(to-raml! (domain/schema body) context)]
+          schema (to-raml! (domain/schema body) context)]
       (if-let [content-type (domain/media-type body)]
         (let [media-type (utils/safe-str content-type)]
           ;; */* is the default media type generated automatialy when parsing OpenAPI documents
           ;; If it's the only one we find when generating RAML we can ignore it
           ;; and link the schema directly
           (if (not= media-type "*/*")
-            {media-type schema}
-            schema))
-        schema))
+            {media-type (clean-default-object-body schema)}
+            (clean-default-object-body schema)))
+        (clean-default-object-body schema)))
     ;; If there are more than one, it must have a content-type
     (reduce (fn [acc body]
               (let [schema (to-raml! (domain/schema body) context)]
-                (assoc acc (-> body domain/media-type utils/safe-str) schema)))
+                (assoc acc
+                       (-> body domain/media-type utils/safe-str)
+                       (clean-default-object-body schema))))
             {}
             bodies)))
 
@@ -247,8 +258,7 @@
 
 (defmethod to-raml domain/Operation [model context]
   (debug "Generating operation " (document/id model))
-  (let [request (to-raml! (domain/request model) context)
-        bodies ()]
+  (let [request (to-raml! (domain/request model) context)]
     (-> {:displayName (document/name model)
          :description (document/description model)
          :protocols (domain/scheme model)

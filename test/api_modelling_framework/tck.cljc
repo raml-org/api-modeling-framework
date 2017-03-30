@@ -26,9 +26,9 @@
      :cljs (.existsSync fs f)))
 
 (def raml-10-tests "resources/tck/raml-1.0")
-(def tck-test-cases {:raml-01 {:api {:test0001 {:raml (str raml-10-tests "/Api/test001/api.raml")
-                                                :openapi  (str raml-10-tests "/Api/test001/api.openapi")
-                                                :jsonld (str raml-10-tests "/Api/test001/api.jsonld")},
+(def tck-test-cases {:raml-01 {:api {:test001 {:raml (str raml-10-tests "/Api/test001/api.raml")
+                                               :openapi  (str raml-10-tests "/Api/test001/api.openapi")
+                                               :jsonld (str raml-10-tests "/Api/test001/api.jsonld")},
 
                                      :test003 {:raml (str raml-10-tests "/Api/test003/api.raml")
                                                :openapi  (str raml-10-tests "/Api/test003/api.openapi")
@@ -37,7 +37,11 @@
                                      :test004 {:raml (str raml-10-tests "/Api/test004/api.raml")
                                                :openapi  (str raml-10-tests "/Api/test004/api.openapi")
                                                :jsonld (str raml-10-tests "/Api/test004/api.jsonld")}
-                                }}})
+                                     },
+                               :resources {:test001 {:raml (str raml-10-tests "/Resources/test001/api.raml")
+                                                     :openapi (str raml-10-tests "/Resources/test001/api.openapi")
+                                                     :jsonld (str raml-10-tests "/Resources/test001/api.jsonld")}
+                                           }}})
 (def tools {:raml {:parser (core/->RAMLParser)
                    :generator (core/->RAMLGenerator)}
             :openapi {:parser (core/->OpenAPIParser)
@@ -60,16 +64,25 @@
   (is (not (error? x)))
   x)
 
+;; only for data diffs on error
+(defn clean-noise [x]
+  (cond
+    (map? x)  (->> (dissoc x "@type")
+                   (mapv (fn [[k v]] [(if (string/index-of k "#") (last (string/split k #"#"))  k)
+                                     (clean-noise v)]))
+                   (into {}))
+    (coll? x) (mapv clean-noise x)
+    :else     x))
 
 (defn same-structure? [a b]
   #?(:clj (when (not= a b)
             (println "ERROR IN STRUCTURAL COMPARISON")
             (println "\nA:")
-            (clojure.pprint/pprint a)
+            (clojure.pprint/pprint (clean-noise a))
             (println "\nB:")
-            (clojure.pprint/pprint b)
+            (clojure.pprint/pprint (clean-noise b))
             (println "\nDIFF:\n")
-            (clojure.pprint/pprint (data/diff a b))))
+            (clojure.pprint/pprint (data/diff (clean-noise a) (clean-noise b)))))
   (= a b))
 
 (defn clean-ids [x]
@@ -79,6 +92,7 @@
                    (into {}))
     (coll? x) (mapv clean-ids x)
     :else     x))
+
 
 (defn fragment? [x]
   (and (map? x)
@@ -167,10 +181,16 @@
           (is (same-structure? (ensure-not-nil (clean-ids (<! (to-data-structure to generated))))
                                (ensure-not-nil (clean-ids target))))))))
 
+(defn focus [test tests]
+  (if (nil? test)
+    tests
+    (->> tests
+         (filter (fn [[name files]] (= test name ))))))
+
 (deftest tck-tests
   (async done
          (go
-           (doseq [[test-name files] (enumerate-tests)]
+           (doseq [[test-name files] (focus nil (enumerate-tests))]
              (println "- Testing " test-name)
              (<! (check-syntax :raml files))
              (<! (check-syntax :openapi files))

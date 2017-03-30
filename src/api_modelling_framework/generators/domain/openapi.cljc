@@ -152,15 +152,17 @@
                    (let [body (<-domain (domain/schema payload) ctx)
                          schema (to-openapi! body ctx)
                          parsed-body (-> {:name (if (and  (some? body)
-                                                          (some? (document/name body)))
-                                                  (document/name body)
-                                                  "body")
+                                                          (some? (document/name payload)))
+                                                  (document/name payload)
+                                                  "")
                                           :description (document/description payload)
-                                          :x-media-type (domain/media-type payload)
+                                          :x-media-type (if (not= "*/*" (domain/media-type payload))
+                                                          (domain/media-type payload)
+                                                          nil)
                                           :schema schema}
                                          utils/clean-nils)]
                      (if (or (= {} parsed-body)
-                             (= {:name "body", :x-media-type "*/*"} parsed-body))
+                             (= {:name ""} parsed-body))
                        nil
                        (assoc parsed-body :in "body")))))))))
 
@@ -189,7 +191,7 @@
         x-requests (->> bodies
                         (filter (fn [body] (not= body main-body)))
                         (mapv (fn [body]
-                                {:x-media-type (:x-media-type body)
+                                {:x-media-type (if (not= "*/*") (:x-media-type body) nil)
                                  :parameters [(dissoc body :x-media-type)]})))
 
         ;; we process the responses
@@ -198,7 +200,7 @@
                        (into {}))
         responses (if (and (or (nil? responses) (= {} responses))
                            (not (:abstract ctx)))
-                    {:default {:description ""}}
+                    {:default {:x-generated true :description ""}}
                     responses)]
     (-> {:operationId (document/name model)
          :description (document/description model)
@@ -229,14 +231,14 @@
 
     (-> {:description (or (document/description model) "")
          :schema (:schema main-body)
-         :x-media-type (:x-media-type main-body)
+         :x-media-type (if (not= "*/*" (:x-media-type main-body)) (:x-media-type main-body) nil)
          :x-responses x-responses}
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Parameter [model ctx]
   (debug "Generating parameter " (document/name model))
   (let [base {:description (document/description model)
-              :name (or (document/name model) "unnamed")
+              :name (or (document/name model) "")
               :required (domain/required model)
               :in (domain/parameter-kind model)}
         type-info (merge (keywordize-keys (shapes-parser/parse-shape (domain/shape model) ctx)))]

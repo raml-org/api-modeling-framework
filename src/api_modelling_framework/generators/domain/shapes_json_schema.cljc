@@ -38,6 +38,16 @@
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
 
+(defn parse-generic-keywords [shape raml-type]
+  (->> shape
+       (map (fn [[p _]]
+              (condp = p
+                (v/hydra-ns "title")       #(assoc % :displayName (utils/extract-jsonld-literal shape (v/hydra-ns "title")))
+                (v/hydra-ns "description") #(assoc % :description (utils/extract-jsonld-literal shape (v/hydra-ns "description")))
+                identity)))
+       (reduce (fn [acc p] (p acc)) raml-type)
+       (utils/clean-nils)))
+
 (defn parse-constraints [raml-type shape]
   (->> shape
        (map (fn [[p v]]
@@ -47,7 +57,9 @@
                 (v/sh-ns "pattern")         #(assoc % :pattern   (get (first v) "@value"))
                 (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems (get (first v) "@value"))
                 identity)))
-       (reduce (fn [acc p] (p acc)) raml-type)))
+       (reduce (fn [acc p] (p acc)) raml-type)
+       (parse-generic-keywords shape)
+       (utils/clean-nils)))
 
 (defmethod parse-shape (v/sh-ns "Shape") [shape context]
   (let [additionalProperties (utils/extract-jsonld-literal shape (v/sh-ns "closed") #(not %))

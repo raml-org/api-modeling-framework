@@ -182,7 +182,6 @@
                                   :in "query"
                                   :type "string"}
                                  {:name "the-body"
-                                  :x-media-type "*/*"
                                   :in "body"
                                   :schema {:type "string"}}]}
               :post {:operationId "post"

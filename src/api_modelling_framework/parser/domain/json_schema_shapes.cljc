@@ -7,6 +7,14 @@
 
 (declare parse-type)
 
+(defn parse-generic-keywords [node shape]
+  (->> node
+       (map (fn [[p v]]
+              (condp = p
+                :title #(assoc % (v/hydra-ns "title") [{"@value" v}])
+                :description #(assoc % (v/hydra-ns "description") [{"@value" v}])
+                identity)))
+       (reduce (fn [acc p] (p acc)) shape)))
 (defn parse-type-constraints [node shape]
   (->> node
        (map (fn [[p v]]
@@ -18,16 +26,8 @@
                 :multipleOf #(assoc % (v/shapes-ns "multipleOf") [{"@value" v}])
                 :minimum    #(assoc % (v/sh-ns "minExclusive") [{"@value" v}])
                 identity)))
-       (reduce (fn [acc p] (p acc)) shape)))
-
-(defn parse-generic-keywords [node shape]
-  (->> node
-       (map (fn [[p v]]
-              (condp p =
-                :title #(assoc % (v/hydra-ns "title") [{"@value" v}])
-                :description #(assoc % (v/hydra-ns "description") [{"@value" v}])
-                identity)))
-       (reduce (fn [acc p] (p acc)) node)))
+       (reduce (fn [acc p] (p acc)) shape)
+       (parse-generic-keywords node)))
 
 (defn parse-shape [node {:keys [parsed-location] :as context}]
   (let [parsed-location (str parsed-location "/shape")

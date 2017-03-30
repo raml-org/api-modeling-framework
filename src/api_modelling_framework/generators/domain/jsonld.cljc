@@ -145,7 +145,7 @@
       (with-node-properties m context)
       (utils/assoc-value m v/hydra:required domain/required)
       (utils/assoc-value m v/http:param-binding domain/parameter-kind)
-      (utils/assoc-object m v/http:shape domain/shape identity)
+      (utils/assoc-object m v/http:schema domain/shape identity)
       utils/clean-nils))
 
 (defmethod to-jsonld :Payload [m context]
@@ -159,11 +159,7 @@
 
 (defmethod to-jsonld :Type [m context]
   (debug "Generating Type " (document/id m))
-  (-> {"@type" [v/http:Schema
-                v/document:DomainElement]}
-      (with-node-properties m context)
-      (utils/assoc-object m v/http:shape domain/shape identity)
-      utils/clean-nils))
+  (domain/shape m))
 
 ;; Abstract domain elements are slightly different, we add the properties from
 ;; Domain element, like the fragment node name, and then we merge the set of properties

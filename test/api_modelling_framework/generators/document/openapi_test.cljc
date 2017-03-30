@@ -40,7 +40,6 @@
                                                                                                      :type "string"}
                                                                                                     {:name "the-body"
                                                                                                      :in "body"
-                                                                                                     :x-media-type "*/*"
                                                                                                      :schema {:type "string"}}]}}}}}}
         parsed (parser/parse-ast input {})
         generated (generator/to-openapi parsed {})]
@@ -64,8 +63,7 @@
                                   :produces "application/ld+json"
                                   :paths {(keyword "/files") {:get {:operationId "get"
                                                                     :responses {"default" {:description "the reponse"
-                                                                                           :schema {(keyword "$ref") "#/definitions/File"}
-                                                                                           :x-media-type "*/*"}}}}}}}
+                                                                                           :schema {(keyword "$ref") "#/definitions/File"}}}}}}}}
         parsed (parser/parse-ast input {})
         generated (generator/to-openapi parsed {})]
     (is (= input  generated))))

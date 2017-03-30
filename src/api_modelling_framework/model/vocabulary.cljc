@@ -84,12 +84,11 @@
 (def hydra:statusCode (hydra-ns "statusCode"))
 (def http:payload (http-ns "payload"))
 
-(def http:Schema (http-ns "Schema"))
+(def http:Payload (http-ns "Payload"))
 (def http:media-type (http-ns "mediaType"))
 (def http:schema (http-ns "schema"))
 
-(def http:Payload (http-ns "Payload"))
-(def http:shape (http-ns "shape"))
+(def sh:Shape (sh-ns "Shape"))
 
 (def http:Request (http-ns "Request"))
 (def http:parameter (http-ns "parameter"))

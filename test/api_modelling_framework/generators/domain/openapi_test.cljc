@@ -114,7 +114,7 @@
                     :schema {:type "string"}
                     :x-media-type "application/json"
                     :x-responses
-                    [{:name "body",
+                    [{:name "",
                       :x-media-type "text/plain",
                       :schema {:type "string"},
                       :in "body"}]}
@@ -122,6 +122,7 @@
                           :schema {:type "string"}}}}
         parsed (raml-parser/parse-ast node parsing-context)
         generated (generator/to-openapi parsed {})]
+
     (is (= expected
            generated))))
 
@@ -144,7 +145,6 @@
                                   :in "query"
                                   :type "string"}
                                  {:name "the-body"
-                                  :x-media-type "*/*"
                                   :in "body"
                                   :schema {:type "string"}}]}
               :post {:operationId "post"
@@ -191,7 +191,6 @@
                                                                      :type "string"}
                                                                     {:name "the-body"
                                                                      :in "body"
-                                                                     :x-media-type "*/*"
                                                                      :schema {:type "string"}}]}}}}
         traits (openapi-parser/process-traits input {:location "file://location/#"
                                                      :fragments []
