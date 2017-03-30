@@ -99,7 +99,9 @@
                                      range (utils/extract-jsonld property (v/shapes-ns "range") #(parse-shape % context))
                                      range (if (string? range) {:type range} range)
                                      raml-type (-> range
-                                                   (assoc :required required)
+                                                   (assoc :required (if (string/ends-with? label "?")
+                                                                      (if required required nil)
+                                                                      (if (= required false) required nil)))
                                                    utils/clean-nils)]
                                  [label raml-type])))
                         (into {}))]

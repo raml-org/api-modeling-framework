@@ -66,6 +66,7 @@
                                  :description (utils/find-value m v/sorg:description)
                                  :path (utils/find-value m v/http:path)
                                  :extends extensions
+                                 :parameters (map from-jsonld (-> m (get v/http:parameter [])))
                                  :supported-operations (map from-jsonld (-> m (get v/hydra:supportedOperation [])))})))
 
 (defmethod from-jsonld v/document:SourceMap [m]

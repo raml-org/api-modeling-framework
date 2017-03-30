@@ -41,6 +41,9 @@
                                :resources {:test001 {:raml (str raml-10-tests "/Resources/test001/api.raml")
                                                      :openapi (str raml-10-tests "/Resources/test001/api.openapi")
                                                      :jsonld (str raml-10-tests "/Resources/test001/api.jsonld")}
+                                           :test002 {:raml (str raml-10-tests "/Resources/test002/api.raml")
+                                                     :openapi (str raml-10-tests "/Resources/test002/api.openapi")
+                                                     :jsonld (str raml-10-tests "/Resources/test002/api.jsonld")}
                                            }}})
 (def tools {:raml {:parser (core/->RAMLParser)
                    :generator (core/->RAMLGenerator)}
@@ -77,9 +80,9 @@
 (defn same-structure? [a b]
   #?(:clj (when (not= a b)
             (println "ERROR IN STRUCTURAL COMPARISON")
-            (println "\nA:")
+            (println "\nGENERATED:")
             (clojure.pprint/pprint (clean-noise a))
-            (println "\nB:")
+            (println "\nTARGET:")
             (clojure.pprint/pprint (clean-noise b))
             (println "\nDIFF:\n")
             (clojure.pprint/pprint (data/diff (clean-noise a) (clean-noise b)))))
@@ -182,7 +185,7 @@
                                (ensure-not-nil (clean-ids target))))))))
 
 (defn focus [test tests]
-  (if (nil? test)
+  (if (= test :all)
     tests
     (->> tests
          (filter (fn [[name files]] (= test name ))))))
@@ -190,7 +193,7 @@
 (deftest tck-tests
   (async done
          (go
-           (doseq [[test-name files] (focus nil (enumerate-tests))]
+           (doseq [[test-name files] (focus :all (enumerate-tests))]
              (println "- Testing " test-name)
              (<! (check-syntax :raml files))
              (<! (check-syntax :openapi files))

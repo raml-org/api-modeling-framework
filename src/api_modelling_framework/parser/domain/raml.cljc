@@ -139,34 +139,36 @@
     [(document/->DocumentSourceMap (utils/path-join parsed-location "/source-map") location [node-parsed-tag] [])]))
 
 (defn parse-parameters [type location-segment parameters {:keys [location parsed-location is-fragment] :as context}]
+  ;; parameters are 'properties' nodes, that's the reason they can be required, etc.
   (if (nil? parameters) []
       (->> parameters
-           (mapv (fn [[header-name header-value]]
+           (mapv (fn [[property-name property-value]]
 
-                   (let [header-value (if (string? header-value) {:type header-value} header-value)
-                         header-type (get header-value :type "string")
-                         header-value (assoc header-value :type header-type)
-                         parsed-location (utils/path-join location location-segment (url/url-encode (utils/safe-str header-name)))
-                         location (utils/path-join location  location-segment (url/url-encode (utils/safe-str header-name)))
+                   (let [property-value (if (string? property-value) {:type property-value} property-value)
+                         property-type (get property-value :type "string")
+                         property-value (assoc property-value :type property-type)
+                         parsed-location (utils/path-join location location-segment (url/url-encode (utils/safe-str property-name)))
+                         location (utils/path-join location  location-segment (url/url-encode (utils/safe-str property-name)))
                          node-parsed-source-map (generate-parse-node-sources location parsed-location)
-                         required (extract-scalar (:required header-value))
-                         header-shape (shapes/parse-type header-value (-> context
+                         required (shapes/required-property? property-name property-value)
+                         property-name (shapes/final-property-name property-name property-value)
+                         property-shape (shapes/parse-type property-value (-> context
                                                                           (assoc :location location)
                                                                           (assoc :parsed-location parsed-location)
                                                                           (assoc :parse-ast parse-ast)))
                          properties {:id parsed-location
-                                     :name (utils/safe-str header-name)
+                                     :name (utils/safe-str property-name)
                                      :sources node-parsed-source-map
                                      :required required
                                      :parameter-kind type
-                                     :shape header-shape}]
-                     (with-annotations header-value context
+                                     :shape property-shape}]
+                     (with-annotations property-value context
                        (->> (if is-fragment
                               (domain/map->ParsedDomainElement {:id parsed-location
                                                                 :fragment-node :parsed-parameter
                                                                 :properties properties})
                               (domain/map->ParsedParameter properties))
-                            (with-location-meta-from header-value)))))))))
+                            (with-location-meta-from property-value)))))))))
 
 (defn base-uri->host [base-uri]
   (when (some? base-uri)
@@ -442,6 +444,10 @@
                                              location
                                              parent-id
                                              nested-resources)
+        uri-parameters (parse-parameters "path" "pathParameters"
+                                         ;; path parameters are mandatory
+                                         (:uriParameters node {})
+                                         context)
         operations (->> node
                         keys
                         (mapv (fn [op] (if-let [operation (#{:get :post :patch :put :delete :head :options} op)]
@@ -460,7 +466,8 @@
                                       :name (extract-scalar (:displayName node))
                                       :description (extract-scalar (:description node))
                                       :supported-operations operations
-                                      :extends traits})]
+                                      :extends traits
+                                      :parameters uri-parameters})]
     (concat (if is-fragment
               [(->>
                  (domain/map->ParsedDomainElement {:id resource-id
@@ -501,10 +508,10 @@
          (mapv (fn [{:keys [media-type body-id location schema] :as data}]
                  (let [node-parsed-source-map (generate-parse-node-sources location body-id)]
                    (->>
-                     (domain/map->ParsedPayload (utils/clean-nils {:id body-id
-                                                                   :media-type media-type
-                                                                   :schema schema
-                                                                   :sources node-parsed-source-map}))
+                    (domain/map->ParsedPayload (utils/clean-nils {:id body-id
+                                                                  :media-type media-type
+                                                                  :schema schema
+                                                                  :sources node-parsed-source-map}))
                      (with-annotations node context)
                      (with-location-meta-from node))))))))
 
@@ -582,9 +589,9 @@
         description (extract-scalar (:description node))
         payloads (parse-http-payloads response-id node next-context)
         properties {:id response-id
+                    :description description
                     :sources sources
                     :status-code status-code
-                    :description description
                     :name (utils/safe-str status-code)
                     :payloads payloads}]
     (->>
@@ -602,13 +609,23 @@
        (mapv (fn [[media-type body]]
                (let [location (utils/path-join location (url/url-encode media-type))
                      parsed-location (utils/path-join parsed-location (url/url-encode media-type))]
-                 {:media-type media-type
-                  :body-id parsed-location
-                  :location location
-                  :schema (parse-ast body (-> context
-                                              (assoc :location location)
-                                              (assoc :parsed-location parsed-location)
-                                              (assoc :type-hint :type)))})))))
+                 (cond
+                   ;; something like
+                   ;; body:
+                   ;;  application/xml
+                   (or (nil? body)
+                       (= {} body))  {:media-type media-type
+                                      :body-id parsed-location
+                                      :location location}
+
+                   ;; default body with a raml type for the media type
+                   :else             {:media-type media-type
+                                      :body-id parsed-location
+                                      :location location
+                                      :schema (parse-ast body (-> context
+                                                                  (assoc :location location)
+                                                                  (assoc :parsed-location parsed-location)
+                                                                  (assoc :type-hint :type)))}))))))
 
 (defmethod parse-ast :type [node {:keys [location parsed-location is-fragment references] :as context}]
   (debug "Parsing type")

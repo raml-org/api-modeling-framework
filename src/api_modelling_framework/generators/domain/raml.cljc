@@ -143,7 +143,8 @@
                         ;;parsed-type (if (= "string" (:type parsed-type))
                         ;;              (dissoc parsed-type :type)
                         ;;              parsed-type)
-                        parsed-type (if (some? (domain/required parameter))
+                        parsed-type (if (and (some? (domain/required parameter))
+                                             (= false (domain/required parameter)))
                                       (assoc parsed-type :required (domain/required parameter))
                                       parsed-type)]
                     [(keyword (document/name parameter))
@@ -209,6 +210,7 @@
                         (into {}))]
     (-> {:displayName (document/name model)
          :is (common/find-traits model ctx)
+         :uriParameters (unparse-parameters (domain/parameters model) ctx)
          :description (document/description model)}
         (merge operations)
         (merge-children-resources children-resources ctx)
@@ -228,7 +230,12 @@
     (let [body (first bodies)
           schema (to-raml! (domain/schema body) context)]
       (if-let [content-type (domain/media-type body)]
-        (let [media-type (utils/safe-str content-type)]
+        (let [media-type (utils/safe-str content-type)
+              schema (if (nil? schema)
+                       ;; this might just be empty
+                       {}
+                       ;; it's a proper schema
+                       schema)]
           ;; */* is the default media type generated automatialy when parsing OpenAPI documents
           ;; If it's the only one we find when generating RAML we can ignore it
           ;; and link the schema directly
@@ -238,7 +245,12 @@
         (clean-default-object-body schema)))
     ;; If there are more than one, it must have a content-type
     (reduce (fn [acc body]
-              (let [schema (to-raml! (domain/schema body) context)]
+              (let [schema (to-raml! (domain/schema body) context)
+                    schema (if (nil? schema)
+                             ;; this might just be empty
+                             {}
+                             ;; it's a proper schema
+                             schema)]
                 (assoc acc
                        (-> body domain/media-type utils/safe-str)
                        (clean-default-object-body schema))))
@@ -279,8 +291,7 @@
 (defmethod to-raml :Request [model context]
   (debug "Generating request " (document/name model))
   (let [bodies (project-bodies (domain/payloads model) context)]
-    (utils/clean-nils {:description (document/description model)
-                       :queryParameters (unparse-query-parameters model context)
+    (utils/clean-nils {:queryParameters (unparse-query-parameters model context)
                        :body bodies
                        :headers (unparse-parameters (domain/headers model) context)})))
 

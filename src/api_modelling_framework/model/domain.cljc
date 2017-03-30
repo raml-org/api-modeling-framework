@@ -115,7 +115,9 @@
   document/Node
   (id [this] id)
   (name [this] name)
-  (description [this] description)
+  (description [this]
+    ;; This should not be supported
+    description)
   (sources [this] sources)
   (valid? [this] true)
   (extends [this] (or extends []))
@@ -221,7 +223,9 @@
   document/Node
   (id [this] id)
   (name [this] name)
-  (description [this] description)
+  (description [this]
+    ;; This should not be supported
+    description)
   (sources [this] sources)
   (valid? [this] true)
   (extends [this] (or extends []))

@@ -98,6 +98,7 @@
        (utils/assoc-value m v/http:path domain/path)
        (utils/assoc-objects m v/hydra:supportedOperation domain/supported-operations (fn [x] (to-jsonld x context)))
        (utils/assoc-objects m v/document:extends document/extends (fn [x] (to-jsonld x context)))
+       (utils/assoc-objects m v/http:parameter domain/parameters (fn [x] (to-jsonld x context)))
        utils/clean-nils))
 
 (defmethod to-jsonld :Operation [m context]

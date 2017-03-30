@@ -113,7 +113,7 @@
                    {:description "200 response"
                     :schema {:type "string"}
                     :x-media-type "application/json"
-                    :x-responses
+                    :x-response-payloads
                     [{:name "",
                       :x-media-type "text/plain",
                       :schema {:type "string"},

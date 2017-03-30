@@ -134,18 +134,22 @@
 (defmethod to-openapi domain/EndPoint [model ctx]
   (debug "Generating resource " (document/id model))
   (let [operations (domain/supported-operations model)
+        parameters (unparse-params model ctx)
         end-point (->> operations
                        (map (fn [op] [(keyword (domain/method op)) (to-openapi! op ctx)]))
                        (into {}))]
     (-> end-point
         (assoc :x-is (common/find-traits model ctx))
+        (assoc :parameters parameters)
         (utils/clean-nils))))
 
-(defn unparse-bodies [request ctx]
+(defn unparse-bodies
+  "Payloads == Bodies of the Request"
+  [request ctx]
   (if (or (nil? request)
           (nil? (domain/payloads request))
           (empty? (domain/payloads request)))
-    nil
+    []
     (let [payloads (domain/payloads request)]
       (->> payloads
            (mapv (fn [payload]
@@ -155,7 +159,6 @@
                                                           (some? (document/name payload)))
                                                   (document/name payload)
                                                   "")
-                                          :description (document/description payload)
                                           :x-media-type (if (not= "*/*" (domain/media-type payload))
                                                           (domain/media-type payload)
                                                           nil)
@@ -164,7 +167,8 @@
                      (if (or (= {} parsed-body)
                              (= {:name ""} parsed-body))
                        nil
-                       (assoc parsed-body :in "body")))))))))
+                       (assoc parsed-body :in "body")))))
+           (filter some?)))))
 
 (defmethod to-openapi domain/Operation [model ctx]
   (debug "Generating operation " (document/id model))
@@ -172,6 +176,9 @@
                   (map #(document/value %)))
         produces (domain/content-type model)
         traits  (common/find-traits model ctx)
+
+        ;;;;;;;;;;;;;;;;
+        ;; request
         request (domain/request model)
         headers (if (some? request)
                   (map #(to-openapi! % ctx) (domain/headers request))
@@ -179,7 +186,6 @@
         parameters (if (some? request)
                      (unparse-params request ctx)
                      [])
-
         ;; we split the main request from the extra requests
         bodies (if (some? request)
                  (unparse-bodies request ctx)
@@ -188,11 +194,12 @@
                        (->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
                        (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)]
                       first)
-        x-requests (->> bodies
+        x-payloads (->> bodies
                         (filter (fn [body] (not= body main-body)))
                         (mapv (fn [body]
                                 {:x-media-type (if (not= "*/*") (:x-media-type body) nil)
                                  :parameters [(dissoc body :x-media-type)]})))
+        ;;;;;;;;;;;;;;;;
 
         ;; we process the responses
         responses (->> (domain/responses model)
@@ -208,7 +215,7 @@
          :x-is traits
          :schemes (domain/scheme model)
          :parameters (filter some? (concat headers parameters [main-body]))
-         :x-requests x-requests
+         :x-request-payloads x-payloads
          :consumes (domain/accepts model)
          :produces produces
          :responses responses}
@@ -221,18 +228,16 @@
                        (->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
                        (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)]
                       first)
-        x-responses (->> bodies
-                         (filter (fn [body] (not= body main-body)))
-                         (mapv (fn [body]
-                                 body
-                                 ;;{:x-media-type (:x-media-type body)
-                                 ;; :schema (:schema body)}
-                                 )))]
+        x-payloads (->> bodies
+                        (filter (fn [body] (not= body main-body))))]
 
-    (-> {:description (or (document/description model) "")
-         :schema (:schema main-body)
+    (-> {;; description for responses is mandatory in openapi
+         :description (if (nil? (document/description model))
+                        ""
+                        (document/description model))
+         :schema (:schema (dissoc main-body :description))
          :x-media-type (if (not= "*/*" (:x-media-type main-body)) (:x-media-type main-body) nil)
-         :x-responses x-responses}
+         :x-response-payloads x-payloads}
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Parameter [model ctx]

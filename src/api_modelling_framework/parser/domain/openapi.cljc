@@ -381,9 +381,14 @@
                                                                    (assoc :parsed-location parsed-location)))
                                         nil)))
                         (filterv some?))
+        parameters (parse-params (:parameters node) (-> context
+                                                        (assoc :is-fragment false)
+                                                        (assoc :location (str location "/parameters"))
+                                                        (assoc :parsed-location (str parsed-location "/parameters"))))
         properties {:path path
                     :sources (concat (generate-parsed-node-sources "path-item" location parsed-location) (or paths-sources []))
                     :id parsed-location
+                    :parameters parameters
                     :supported-operations operations
                     :extends traits}]
     (if is-fragment
@@ -427,6 +432,7 @@
                                                         (assoc :is-fragment false)
                                                         (assoc :location (str location "/parameters"))
                                                         (assoc :parsed-location (str parsed-location "/parameters"))))
+        x-request-description (if (not= "" (:x-request-description node)) (:x-request-description node) nil)
         headers (->> parameters (filterv #(= "header" (:parameter-kind %))))
         parameters (->> parameters (filterv #(not= "header" (:parameter-kind %))))
         body (parse-body (:parameters node) (-> context
@@ -439,10 +445,13 @@
                                               :media-type (:media-type body)
                                               :name (-> body :body :name)
                                               :description (-> body :body :description)
-                                              :schema (:body body)})
+                                              :schema (-> (:body body)
+                                                          (assoc :name nil)
+                                                          (assoc :description nil)
+                                                          (assoc :media-type nil))})
                   nil)
         ;; we support multiple request per operation, OpenAPI only supports 1 we need the additional x-requests
-        x-payloads (->> (get node :x-requests [])
+        x-payloads (->> (get node :x-request-payloads [])
                         (mapv (fn [i request]
                                 (let [parsed-request (parse-request request (-> context
                                                                                 (assoc :location (utils/path-join location (str "x-request-" i)))
@@ -456,6 +465,7 @@
     (if (empty? (concat headers parameters payload))
       nil
       (domain/map->ParsedRequest {:id request-id
+                                  :description x-request-description
                                   :sources (generate-parsed-node-sources "request" location request-id)
                                   :headers headers
                                   :parameters parameters
@@ -521,11 +531,12 @@
                                              (assoc :parsed-location response-id)
                                              (assoc :type-hint :type)))
           x-media-type (:x-media-type node)
+
           payload (domain/map->ParsedPayload {:id (utils/path-join parsed-location "main-payload")
                                               :media-type (if (some? x-media-type) x-media-type "*/*")
                                               :schema body})
           ;; we support multiple request per operation, OpenAPI only supports 1 we need the additional x-requests
-          x-payloads (->> (get node :x-responses [])
+          x-payloads (->> (get node :x-response-payloads [])
                           (mapv (fn [i request]
                                   (let [parsed-request (parse-request request (-> context
                                                                                   (assoc :location (utils/path-join location (str "x-response-" i)))
@@ -535,10 +546,10 @@
                           flatten
                           (filter some?))
           properties {:id response-id
+                      :description (utils/ensure-not-blank (:description node))
                       :sources node-parsed-source-map
                       :status-code (if is-status (name response-key) nil)
                       :name response-key
-                      :description (if (not= "" (:description node)) (:description node) nil)
                       :payloads (concat [payload] x-payloads)}]
       (if is-fragment
         (domain/map->ParsedDomainElement {:id response-id

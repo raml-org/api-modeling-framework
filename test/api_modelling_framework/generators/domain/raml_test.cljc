@@ -93,8 +93,7 @@
                :protocols ["http"]
                :headers {:Zencoder-Api-Key {:type "integer"}}
                :body {:type "string"}
-               :queryParameters {:page {:type "integer"
-                                        :required true}
+               :queryParameters {:page {:type "integer"}
                                  :per_page {:type "integer"}}
                :responses {"200" {:description "200 response"
                                 :body {"application/json" {:type "string"}

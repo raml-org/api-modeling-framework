@@ -37,20 +37,26 @@
          (parse-generic-keywords node))
     shape))
 
+(defn required-property? [property-name v]
+  (if (some? (:required v))
+    (:required v)
+    (if (string/ends-with? property-name "?")
+      false
+      true)))
+
+(defn final-property-name [property-name v]
+  (if (some? (:required v))
+    (utils/safe-str property-name)
+    (string/replace (utils/safe-str property-name) #"\?$" "")))
+
 (defn parse-shape [node {:keys [parsed-location] :as context}]
   (let [parsed-location (str parsed-location "/shape")
         properties (->> (:properties node [])
                         (map (fn [[k v]]
                                (let [parsed-location (str parsed-location "/shape")
                                      property-name (utils/safe-str k)
-                                     required (if (some? (:required v))
-                                                (:required v)
-                                                (if (string/ends-with? property-name "?")
-                                                  true
-                                                  nil))
-                                     property-name (if (some? (:required v))
-                                                     property-name
-                                                     (string/replace property-name #"\?$" ""))]
+                                     required (required-property? property-name v)
+                                     property-name (final-property-name property-name v)]
                                  (->> {"@type" [(v/sh-ns "PropertyConstraint")]
                                        "@id" parsed-location
                                        (v/shapes-ns "propertyLabel") [{"@value" property-name}]
@@ -99,13 +105,11 @@
 
 (defn parse-scalar [parsed-location scalar-type]
   {"@id" (str parsed-location "/scalar-shape")
-   v/sorg:name [{"@value" "XML-Schema Type"}]
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "Scalar")]
    (v/sh-ns "dataType") [{"@id" scalar-type}]})
 
 (defn parse-json-node [parsed-location text]
   {"@id" (str parsed-location "/json-schema-shape")
-   v/sorg:name [{"@value" "JSON-Schema Type"}]
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "JSONSchema")]
    (v/shapes-ns "schemaRaw") [{"@value" text}]})
 

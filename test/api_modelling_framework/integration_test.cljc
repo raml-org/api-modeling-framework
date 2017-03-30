@@ -245,7 +245,7 @@
                                   (get "get")
                                   (get "responses")
                                   (get "200")
-                                  (get "x-responses")
+                                  (get "x-response-payloads")
                                   first
                                   (get "schema")
                                   (get "$ref"))]
@@ -263,7 +263,7 @@
                 (get "get")
                 (get "responses")
                 (get "200")
-                (get "x-responses")
+                (get "x-response-payloads")
                 first
                 (get "schema")
                 (get "value")
