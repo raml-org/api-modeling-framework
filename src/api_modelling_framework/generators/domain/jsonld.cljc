@@ -160,7 +160,10 @@
 
 (defmethod to-jsonld :Type [m context]
   (debug "Generating Type " (document/id m))
-  (domain/shape m))
+  (let [shape (domain/shape m)]
+    (if (nil?  (get shape v/sorg:name))
+      (utils/assoc-value shape m v/sorg:name document/name)
+      shape)))
 
 ;; Abstract domain elements are slightly different, we add the properties from
 ;; Domain element, like the fragment node name, and then we merge the set of properties

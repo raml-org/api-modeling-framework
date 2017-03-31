@@ -13,11 +13,12 @@
         is-type-tag (-> ref
                         (document/find-tag document/is-type-tag)
                         first)
-        type-name (if (some? is-type-tag)
-                    (-> is-type-tag
-                        (document/value)
-                        keyword)
-                    (-> ref document/id (string/split #"/") last))
+        type-name (cond
+                    (some? is-type-tag)         (-> is-type-tag
+                                                    (document/value)
+                                                    keyword)
+                    (some? (document/name ref)) (document/name ref)
+                    :else                       (-> ref document/id (string/split #"/") last))
         type-name (utils/safe-str type-name)]
     (if (:from-library ref)
       {:$ref (document/id ref)}
@@ -42,8 +43,8 @@
   (->> shape
        (map (fn [[p _]]
               (condp = p
-                (v/hydra-ns "title")       #(assoc % :displayName (utils/extract-jsonld-literal shape (v/hydra-ns "title")))
-                (v/hydra-ns "description") #(assoc % :description (utils/extract-jsonld-literal shape (v/hydra-ns "description")))
+                v/sorg:name        #(assoc % :displayName (utils/extract-jsonld-literal shape v/sorg:name))
+                v/sorg:description #(assoc % :description (utils/extract-jsonld-literal shape v/sorg:description))
                 identity)))
        (reduce (fn [acc p] (p acc)) raml-type)
        (utils/clean-nils)))

@@ -1,6 +1,9 @@
 (ns api-modelling-framework.parser.domain.json-schema-shapes
   (:require [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.utils :as utils]
+            [api-modelling-framework.model.domain :as domain]
+            [api-modelling-framework.model.document :as document]
+            [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
@@ -11,8 +14,8 @@
   (->> node
        (map (fn [[p v]]
               (condp = p
-                :title #(assoc % (v/hydra-ns "title") [{"@value" v}])
-                :description #(assoc % (v/hydra-ns "description") [{"@value" v}])
+                :title       #(assoc % v/sorg:name [{"@value" v}])
+                :description #(assoc % v/sorg:description [{"@value" v}])
                 identity)))
        (reduce (fn [acc p] (p acc)) shape)))
 (defn parse-type-constraints [node shape]
@@ -70,38 +73,61 @@
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "Scalar")]
    (v/sh-ns "dataType") [{"@id" scalar-type}]})
 
+(defn check-reference
+  "Checks if a provided string points to one of the types defined at the APIDocumentation level"
+  [type-string {:keys [references parsed-location] :as context}]
+
+  (if-let [type-reference (or (get references (keyword type-string)) (get references type-string))]
+    (if (satisfies? document/Includes type-reference)
+      {"@id" (str parsed-location "/include-shape")
+       "@type" [(v/shapes-ns "Shape")]
+       (v/shapes-ns "inherits") [(document/target type-reference)]}
+      (let [remote-id (-> type-reference domain/shape (get "@id"))
+            label (or (-> type-reference :name)
+                      (-> type-reference domain/shape :name)
+                      (str "#" (last (string/split remote-id #"#"))))]
+        {"@id" (str parsed-location "/ref-shape")
+         v/sorg:name [{"@value" label}]
+         "@type" [(v/shapes-ns "Shape")]
+         (v/shapes-ns "inherits") [remote-id]}))
+    nil))
+
 
 (defn parse-type [node {:keys [parsed-location] :as context}]
-  (let [type-string (if (string? node) node (:type node))
-        shape (condp = type-string
-                "string"  (condp = (:x-rdf-type node)
-                            "xsd:time" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "time")))
+  (let [type-string (if (string? node) node (:type node))]
+    (cond
+      (some? (:$ref node))  (check-reference (:$ref node) context)
 
-                            "xsd:dateTime" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "dateTime")))
+      (string? type-string) (condp = type-string
+                              "string"  (condp = (:x-rdf-type node)
+                                          "xsd:time" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "time")))
 
-                            "shapes:datetime-only" (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "datetime-only")))
+                                          "xsd:dateTime" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "dateTime")))
 
-                            "xsd:date" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "date")))
+                                          "shapes:datetime-only" (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "datetime-only")))
 
-                            "shapes:any" (parse-type-constraints node  (parse-scalar parsed-location (v/shapes-ns "any")))
+                                          "xsd:date" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "date")))
 
-                            nil (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "string"))))
+                                          "shapes:any" (parse-type-constraints node  (parse-scalar parsed-location (v/shapes-ns "any")))
 
-                "float"   (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float")))
-                "integer" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "integer")))
-                "number"  (condp = (:x-rdf-type node)
+                                          nil (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "string"))))
 
-                            "xsd:float" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float")))
+                              "float"   (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float")))
+                              "integer" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "integer")))
+                              "number"  (condp = (:x-rdf-type node)
 
-                            "xsd:integer" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "integer")))
+                                          "xsd:float" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float")))
 
-                            nil (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float"))))
+                                          "xsd:integer" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "integer")))
 
-                "boolean"                       (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "boolean")))
-                "null"                          (parse-type-constraints node  (parse-scalar parsed-location (v/shapes-ns "null")))
-                "object"                        (parse-shape node context)
-                "array"                         (parse-array node context)
-                (if (some? (get node :properties))
-                  (parse-shape node context)
-                  nil))]
-    shape))
+                                          nil (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float"))))
+
+                              "boolean"                       (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "boolean")))
+                              "null"                          (parse-type-constraints node  (parse-scalar parsed-location (v/shapes-ns "null")))
+                              "object"                        (parse-shape node context)
+                              "array"                         (parse-array node context)
+                              (if (some? (get node :properties))
+                                (parse-shape node context)
+                                nil))
+
+      :else                 nil)))

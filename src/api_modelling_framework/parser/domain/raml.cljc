@@ -315,10 +315,11 @@
                  {}))))
 
 (defn process-types [node {:keys [location parsed-location alias-chain] :as context}]
-  (debug "Processing " (count (:types node [])) " types")
-  (let [parsed-location (utils/path-join parsed-location "/types")
+  (let [types (or (:types node) (:schemas node) {})
+        parsed-location (utils/path-join parsed-location "/types")
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
-    (->> (:types node {})
+    (debug "Processing " (count types) " types")
+    (->> types
          (reduce (fn [acc [type-name type-node]]
                    (debug (str "Processing type " type-name))
                    (let [type-name  (url/url-encode (utils/safe-str type-name))
@@ -330,6 +331,7 @@
                                                                 (assoc :is-fragment false)
                                                                 (assoc :type-hint :type)))
                          sources (or (-> type-fragment :sources) [])
+                         ;; we annotate the parsed type with the is-type source map so we can distinguish it from other declarations
                          sources (concat sources (common/generate-is-type-sources type-name
                                                                                   (utils/path-join location type-name)
                                                                                   (utils/path-join parsed-location type-name)))

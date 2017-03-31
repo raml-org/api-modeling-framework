@@ -65,14 +65,15 @@
   (->> references
        (filter (fn [ref] (nil? (:from-library ref))))
        (filter (fn [reference]
-                 (let [is-type-tag (-> reference
-                                       (document/find-tag document/is-type-tag)
-                                       first)]
+                 (let [is-type-tag (or (first (document/find-tag reference document/is-type-tag))
+                                       (if (satisfies? domain/Type reference) reference nil))]
                    (some? is-type-tag))))
        (map (fn [reference]
-              (let [type-name (type-reference-name reference)
-                    generated (domain-generator reference (assoc ctx :from-library (:from-library reference)))]
-                [(keyword type-name) generated])))
+              (let [generated (domain-generator reference (assoc ctx :from-library (:from-library reference)))]
+                (if (satisfies? domain/Type reference)
+                  [(keyword (document/name reference)) generated]
+                  (let [type-name (type-reference-name reference)]
+                    [(keyword type-name) generated])))))
        (into {})
        (utils/clean-nils)))
 

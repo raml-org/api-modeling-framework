@@ -148,6 +148,7 @@
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedType {:id (str (get m "@id") "/wrapper")
+                             :name (utils/find-value m v/sorg:name)
                              ;; shapes are expressed already in JSON-LD, they are passed as it
                              :shape m})))
 

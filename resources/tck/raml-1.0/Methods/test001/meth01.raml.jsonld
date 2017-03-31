@@ -1,0 +1,17 @@
+#%RAML 1.0
+title: test
+types:
+  TestSchema:
+    displayName: TestSchema
+    type: object
+    properties:
+      type:
+        type: string
+        required: false
+/test:
+  post:
+    responses:
+      201:
+        body:
+          application/json:
+            TestSchema

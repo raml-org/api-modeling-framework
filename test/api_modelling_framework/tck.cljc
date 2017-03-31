@@ -48,9 +48,15 @@
                                :responses {:test002 {:raml (str raml-10-tests "/Responses/test002/api.raml")
                                                      :openapi (str raml-10-tests "/Responses/test002/api.openapi")
                                                      :jsonld (str raml-10-tests "/Responses/test002/api.jsonld")}
+
                                            :test003 {:raml (str raml-10-tests "/Responses/test003/api.raml")
                                                      :openapi (str raml-10-tests "/Responses/test003/api.openapi")
-                                                     :jsonld (str raml-10-tests "/Responses/test003/api.jsonld")}}}})
+                                                     :jsonld (str raml-10-tests "/Responses/test003/api.jsonld")}}
+
+                               :methods {:test001 {:raml (str raml-10-tests "/Methods/test001/meth01.raml")
+                                                   :openapi (str raml-10-tests "/Methods/test001/meth01.openapi")
+                                                   :jsonld (str raml-10-tests "/Methods/test001/meth01.jsonld")
+                                                   }}}})
 (def tools {:raml {:parser (core/->RAMLParser)
                    :generator (core/->RAMLGenerator)}
             :openapi {:parser (core/->OpenAPIParser)
@@ -69,6 +75,12 @@
        (apply concat)
        (into {})))
 
+(defn equivalences [x]
+  (condp = (utils/safe-str x)
+    "schemas" "types"
+    "schema"  "type"
+    x))
+
 (defn -success-> [x]
   (is (not (error? x)))
   x)
@@ -77,8 +89,10 @@
 (defn clean-noise [x]
   (cond
     (map? x)  (->> (dissoc x "@type")
-                   (mapv (fn [[k v]] [(if (string/index-of k "#") (last (string/split k #"#"))  k)
-                                     (clean-noise v)]))
+                   (mapv (fn [[k v]]
+                           (let [k (utils/safe-str k)]
+                             [(equivalences (if (string/index-of k "#") (last (string/split k #"#"))  k))
+                              (clean-noise v)])))
                    (into {}))
     ;; order is not important for comparisons
     (coll? x) (into #{} (mapv clean-noise x))
@@ -98,9 +112,12 @@
 (defn clean-ids [x]
   (cond
     (map? x)  (->> (dissoc x "@id")
-                   (mapv (fn [[k v]] [k (clean-ids v)]))
+                   (mapv (fn [[k v]] [(equivalences k) (clean-ids v)]))
                    (into {}))
     (coll? x) (into #{} (mapv clean-ids x))
+    (string? x) (if (string/index-of x "#")
+                  (str "#" (last (string/split x #"\#")))
+                  x)
     :else     x))
 
 
@@ -160,7 +177,7 @@
                                                     (core/document-model parsed-model)
                                                     {:source-maps? false})))
             _ (is (not (error? parsed-model)))
-            doc-a (<! (to-data-structure type (-success-> (<! (platform/read-location (get files type))))))
+            doc-a (<! (to-data-structure type (-success-> (<! (platform/read-location (target-file files type type))))))
             doc-b (<! (to-data-structure type (-success-> (<! (cb->chan (partial core/generate-string generator
                                                                                  (get files type)
                                                                                  (core/document-model parsed-model)
@@ -171,7 +188,9 @@
                              (ensure-not-nil (clean-ids doc-b)))))))
 
 (defn check-conversions [files]
-  (go (doseq [[from to] conversions]
+  (go (doseq [[from to] ;[[:jsonld :raml]]
+              conversions
+              ]
         (println "COMPARING " from " -> " to)
         (let [source (get files from)
               target (get files to)
@@ -200,7 +219,7 @@
 (deftest tck-tests
   (async done
          (go
-           (doseq [[test-name files] (focus :all (enumerate-tests))]
+           (doseq [[test-name files] (focus [:methods :test001] (enumerate-tests))]
              (println "- Testing " test-name)
              (<! (check-syntax :raml files))
              (<! (check-syntax :openapi files))

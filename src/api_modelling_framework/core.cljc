@@ -181,7 +181,7 @@
                            (raml-document-generator/to-raml options))
                    res (yaml-generator/generate-string (syntax/<-data res)
                                                        (assoc options :header (to-raml-fragment-header (syntax/<-fragment res))))]
-              (cb nil (platform/<-clj res)))
+               (cb nil (platform/<-clj res)))
             (catch #?(:clj Exception :cljs js/Error) ex
               (cb (platform/<-clj ex) nil)))))
   (generate-file [this uri model options cb]

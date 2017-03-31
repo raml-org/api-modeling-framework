@@ -1,0 +1,145 @@
+{
+    "@id": "file://./resources/tck/raml-1.0/Methods/test001/meth01.openapi",
+    "@type": [
+        "http://raml.org/vocabularies/document#Document",
+        "http://raml.org/vocabularies/document#Fragment",
+        "http://raml.org/vocabularies/document#Module",
+        "http://raml.org/vocabularies/document#Unit"
+    ],
+    "http://raml.org/vocabularies/document#declares": [
+        {
+            "@id": "#/definitions/TestSchema/shape",
+            "@type": [
+                "http://www.w3.org/ns/shacl#Shape"
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "TestSchema"
+                }
+            ],
+            "http://www.w3.org/ns/shacl#property": [
+                {
+                    "@id": "#/definitions/TestSchema/shape/property/:type",
+                    "@type": [
+                        "sh:PropertyConstraint"
+                    ],
+                    "http://raml.org/vocabularies/shapes#propertyLabel": [
+                        {
+                            "@value": "type"
+                        }
+                    ],
+                    "http://raml.org/vocabularies/shapes#range": [
+                        {
+                            "@id": "#/definitions/TestSchema/shape/property/:type/shape",
+                            "@type": [
+                                "http://www.w3.org/ns/shacl#Shape",
+                                "http://raml.org/vocabularies/shapes#Scalar"
+                            ],
+                            "http://www.w3.org/ns/shacl#dataType": [
+                                {
+                                    "@id": "http://www.w3.org/2001/XMLSchema#string"
+                                }
+                            ]
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#minCount": [
+                        {
+                            "@value": 0
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "http://raml.org/vocabularies/document#encodes": [
+        {
+            "@id": "/api-documentation",
+            "@type": [
+                "http://raml.org/vocabularies/http#APIDocumentation",
+                "http://raml.org/vocabularies/document#DomainElement"
+            ],
+            "http://raml.org/vocabularies/http#endpoint": [
+                {
+                    "@id": "/api-documentation/end-points/0/%2Ftest",
+                    "@type": [
+                        "http://raml.org/vocabularies/http#EndPoint",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                    ],
+                    "http://raml.org/vocabularies/http#path": [
+                        {
+                            "@value": "/test"
+                        }
+                    ],
+                    "http://www.w3.org/ns/hydra/core#supportedOperation": [
+                        {
+                            "@id": "file://./resources/tck/raml-1.0/Methods/test001/meth01.openapi#/paths/%2Ftest/%2Ftest/post/post",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "post"
+                                }
+                            ],
+                            "http://www.w3.org/ns/hydra/core#returns": [
+                                {
+                                    "@id": "file://./resources/tck/raml-1.0/Methods/test001/meth01.openapi#/paths/%2Ftest/%2Ftest/post/post/responses/201",
+                                    "@type": [
+                                        "http://raml.org/vocabularies/http#Response",
+                                        "http://raml.org/vocabularies/document#DomainElement"
+                                    ],
+                                    "http://raml.org/vocabularies/http#payload": [
+                                        {
+                                            "@id": "file://./resources/tck/raml-1.0/Methods/test001/meth01.openapi#/paths/%2Ftest/%2Ftest/post/post/responses/main-payload",
+                                            "@type": [
+                                                "http://raml.org/vocabularies/http#Payload",
+                                                "http://raml.org/vocabularies/document#DomainElement"
+                                            ],
+                                            "http://raml.org/vocabularies/http#mediaType": [
+                                                {
+                                                    "@value": "application/json"
+                                                }
+                                            ],
+                                            "http://raml.org/vocabularies/http#schema": [
+                                                {
+                                                    "@id": "file://./resources/tck/raml-1.0/Methods/test001/meth01.openapi#/paths/%2Ftest/%2Ftest/post/post/responses/201/ref-shape",
+                                                    "@type": [
+                                                        "http://raml.org/vocabularies/shapes#Shape"
+                                                    ],
+                                                    "http://raml.org/vocabularies/shapes#inherits": [
+                                                        "#/definitions/TestSchema/shape"
+                                                    ],
+                                                    "http://schema.org/name": [
+                                                        {
+                                                            "@value": "TestSchema"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "http://schema.org/name": [
+                                        {
+                                            "@value": "201"
+                                        }
+                                    ],
+                                    "http://www.w3.org/ns/hydra/core#statusCode": [
+                                        {
+                                            "@value": "201"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "test"
+                }
+            ]
+        }
+    ]
+}

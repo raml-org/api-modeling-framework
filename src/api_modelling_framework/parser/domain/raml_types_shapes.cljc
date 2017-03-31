@@ -18,8 +18,8 @@
   (->> node
        (map (fn [[p v]]
               (condp = p
-                :displayName #(assoc % (v/hydra-ns "title") [{"@value" v}])
-                :description #(assoc % (v/hydra-ns "description") [{"@value" v}])
+                :displayName #(assoc % v/sorg:name [{"@value" v}])
+                :description #(assoc % v/sorg:description [{"@value" v}])
                 identity)))
        (reduce (fn [acc p] (p acc)) shape)))
 

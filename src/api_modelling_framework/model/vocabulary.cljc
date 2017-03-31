@@ -73,7 +73,6 @@
 (def hydra:supportedOperation (hydra-ns "supportedOperation"))
 (def http:path (http-ns "path"))
 
-
 (def hydra:Operation (hydra-ns "Operation"))
 (def hydra:method (hydra-ns "method"))
 (def hydra:returns (hydra-ns "returns"))

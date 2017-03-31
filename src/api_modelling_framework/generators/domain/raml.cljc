@@ -170,7 +170,8 @@
 (defn model->generic-declarations [{:keys [references] :as ctx}]
   (->> references
        (filter (fn [ref] (and (not (common/trait-reference? ref))
-                             (not (common/type-reference? ref)))))
+                             (not (common/type-reference? ref))
+                             (not (satisfies? domain/Type ref)))))
        (map (fn [ref] [(or (:name ref) (:id ref)) (to-raml! ref ctx)]))
        (into {})))
 

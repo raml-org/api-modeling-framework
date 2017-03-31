@@ -87,9 +87,9 @@
 (defn parse-ast-dispatch-function [node context]
   (cond
     (some? (syntax/<-location node))         :fragment
+    (some? (:type-hint context))             (:type-hint context)
     (some? (get node :$ref))                 :local-ref
     (nil? node)                              :undefined
-    (some? (:type-hint context))             (:type-hint context)
     :else                                    (guess-type node)))
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
@@ -198,6 +198,7 @@
                        sources (or (-> type-fragment :sources) [])
                        sources (concat sources (common/generate-is-type-sources type-name type-id type-id))
                        parsed-type (-> type-fragment
+                                       (assoc :name (utils/safe-str type-name))
                                        (assoc :sources sources)
                                        (assoc :id type-id))]
                    (assoc acc alias parsed-type)))

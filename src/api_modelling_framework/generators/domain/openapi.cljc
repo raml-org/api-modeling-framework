@@ -110,7 +110,9 @@
                    (map (fn [endpoint]
                           [(keyword (domain/path endpoint))
                            (to-openapi! endpoint ctx)]))
-                   (into {}))]
+                   (into {}))
+        traits (common/model->traits (assoc ctx :abstract true) to-openapi!)
+        types (common/model->types (assoc ctx :resolve-types true) to-openapi!)]
     (-> {:swagger "2.0"
          :host (domain/host model)
          :schemes (domain/scheme model)
@@ -122,9 +124,9 @@
          :consumes (if (= 1 (count (domain/accepts model)))
                      (first (domain/accepts model))
                      (domain/accepts model))
-         :definitions (common/model->types (assoc ctx :resolve-types true) to-openapi!)
+         :definitions types
          :x-baseUriParameters (unparse-params model ctx)
-         :x-traits (common/model->traits (assoc ctx :abstract true) to-openapi!)
+         :x-traits traits
          :x-annotationTypes (:annotations ctx)
          :paths paths}
         utils/clean-nils
@@ -297,4 +299,9 @@
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")
+  nil)
+
+
+(defmethod to-openapi api_modelling_framework.model.domain.ParsedDomainElement [model ctx]
+  (println "hey!")
   nil)

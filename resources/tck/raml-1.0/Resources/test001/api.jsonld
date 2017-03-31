@@ -67,7 +67,7 @@
                                                     "@type": [
                                                         "http://www.w3.org/ns/shacl#Shape"
                                                     ],
-                                                    "http://www.w3.org/ns/hydra/core#description": [
+                                                    "http://schema.org/description": [
                                                         {
                                                             "@value": "some very useful resource"
                                                         }
@@ -134,7 +134,7 @@
                                                     "@type": [
                                                         "http://www.w3.org/ns/shacl#Shape"
                                                     ],
-                                                    "http://www.w3.org/ns/hydra/core#description": [
+                                                    "http://schema.org/description": [
                                                         {
                                                             "@value": "another very useful resource"
                                                         }
