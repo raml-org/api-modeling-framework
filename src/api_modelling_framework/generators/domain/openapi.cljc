@@ -190,15 +190,16 @@
         bodies (if (some? request)
                  (unparse-bodies request ctx)
                  [])
-        main-body (-> [(first bodies)
-                       (->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
-                       (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)]
-                      first)
+        main-body (->> [(->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
+                        (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)
+                        (first bodies)]
+                       (filter some?)
+                       first)
         x-payloads (->> bodies
                         (filter (fn [body] (not= body main-body)))
                         (mapv (fn [body]
-                                {:x-media-type (if (not= "*/*") (:x-media-type body) nil)
-                                 :parameters [(dissoc body :x-media-type)]})))
+                                (utils/clean-nils {:x-media-type (if (not= "*/*") (:x-media-type body) nil)
+                                                   :schema (:schema body)}))))
         ;;;;;;;;;;;;;;;;
 
         ;; we process the responses
@@ -223,19 +224,28 @@
 
 (defmethod to-openapi domain/Response [model ctx]
   (debug "Generating response " (document/name model))
-  (let [bodies (unparse-bodies model ctx)
-        main-body (-> [(first bodies)
-                       (->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
-                       (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)]
+  (let [;; unparse-bodies generates body params, we need to adapt the result
+        ;; picking the components we need for the main payload in the response
+        ;; and the different x-response-payloads
+        bodies (unparse-bodies model ctx)
+
+        main-body (->> [(->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
+                        (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)
+                        (first bodies)]
+                       (filter some?)
                       first)
+        main-payload (:schema main-body)
         x-payloads (->> bodies
-                        (filter (fn [body] (not= body main-body))))]
+                        (filter (fn [body] (not= body main-body)))
+                        (map (fn [{:keys [x-media-type schema]}]
+                               (utils/clean-nils {:x-media-type x-media-type
+                                                  :schema schema}))))]
 
     (-> {;; description for responses is mandatory in openapi
          :description (if (nil? (document/description model))
                         ""
                         (document/description model))
-         :schema (:schema (dissoc main-body :description))
+         :schema main-payload
          :x-media-type (if (not= "*/*" (:x-media-type main-body)) (:x-media-type main-body) nil)
          :x-response-payloads x-payloads}
         utils/clean-nils)))

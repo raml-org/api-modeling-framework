@@ -509,7 +509,9 @@
                  (let [node-parsed-source-map (generate-parse-node-sources location body-id)]
                    (->>
                     (domain/map->ParsedPayload (utils/clean-nils {:id body-id
-                                                                  :media-type media-type
+                                                                  :media-type (-> media-type
+                                                                                  utils/safe-str
+                                                                                  utils/ensure-not-blank)
                                                                   :schema schema
                                                                   :sources node-parsed-source-map}))
                      (with-annotations node context)
@@ -607,19 +609,23 @@
   (debug "Parsing body media-type")
   (->> node
        (mapv (fn [[media-type body]]
-               (let [location (utils/path-join location (url/url-encode media-type))
-                     parsed-location (utils/path-join parsed-location (url/url-encode media-type))]
+               (let [location (utils/path-join location (url/url-encode (utils/safe-str media-type)))
+                     parsed-location (utils/path-join parsed-location (url/url-encode (utils/safe-str media-type)))]
                  (cond
                    ;; something like
                    ;; body:
                    ;;  application/xml
                    (or (nil? body)
-                       (= {} body))  {:media-type media-type
+                       (= {} body))  {:media-type (-> media-type
+                                                      utils/safe-str
+                                                      utils/ensure-not-blank)
                                       :body-id parsed-location
                                       :location location}
 
                    ;; default body with a raml type for the media type
-                   :else             {:media-type media-type
+                   :else             {:media-type (-> media-type
+                                                      utils/safe-str
+                                                      utils/ensure-not-blank)
                                       :body-id parsed-location
                                       :location location
                                       :schema (parse-ast body (-> context

@@ -452,13 +452,17 @@
                   nil)
         ;; we support multiple request per operation, OpenAPI only supports 1 we need the additional x-requests
         x-payloads (->> (get node :x-request-payloads [])
-                        (mapv (fn [i request]
-                                (let [parsed-request (parse-request request (-> context
-                                                                                (assoc :location (utils/path-join location (str "x-request-" i)))
-                                                                                (assoc :parsed-location (utils/path-join parsed-location (str "x-request-" i)))))]
-                                  (domain/payloads parse-request)))
-                              (range 0 (count (get node :x-requests []))))
-                        flatten
+                        (mapv (fn [i {:keys [schema x-media-type]}]
+                                (let [x-payload-id (utils/path-join parsed-location (str "x-request-payload" i))
+                                      location (utils/path-join location (str "x-request-payloads[" i "]"))
+                                      properties {:id x-payload-id
+                                                  :media-type x-media-type
+                                                  :schema (parse-ast schema (-> context
+                                                                                (assoc :location location)
+                                                                                (assoc :parsed-location parsed-location)
+                                                                                (assoc :type-hint :type)))}]
+                                  (domain/map->ParsedPayload (utils/clean-nils properties))))
+                              (range 0 (count (get node :x-request-payloads []))))
                         (filter some?))
         payloads (filter some? (concat [payload] x-payloads))
         request-id (str parsed-location "/request")]
@@ -535,15 +539,19 @@
           payload (domain/map->ParsedPayload {:id (utils/path-join parsed-location "main-payload")
                                               :media-type (if (some? x-media-type) x-media-type "*/*")
                                               :schema body})
-          ;; we support multiple request per operation, OpenAPI only supports 1 we need the additional x-requests
+          ;; we support multiple payloads per response, OpenAPI only supports 1, we need the additional x-response-payloads
           x-payloads (->> (get node :x-response-payloads [])
-                          (mapv (fn [i request]
-                                  (let [parsed-request (parse-request request (-> context
-                                                                                  (assoc :location (utils/path-join location (str "x-response-" i)))
-                                                                                  (assoc :parsed-location (utils/path-join parsed-location (str "x-response-" i)))))]
-                                    (domain/payloads parse-request)))
-                                (range 0 (count (get node :x-requests []))))
-                          flatten
+                          (mapv (fn [i {:keys [schema x-media-type]}]
+                                  (let [x-payload-id (utils/path-join parsed-location (str "x-response-payload" i))
+                                        location (utils/path-join location (str "x-response-payloads[" i "]"))
+                                        properties {:id x-payload-id
+                                                    :media-type x-media-type
+                                                    :schema (parse-ast schema (-> context
+                                                                                  (assoc :location location)
+                                                                                  (assoc :parsed-location parsed-location)
+                                                                                  (assoc :type-hint :type)))}]
+                                    (domain/map->ParsedPayload (utils/clean-nils properties))))
+                                (range 0 (count (get node :x-response-payloads []))))
                           (filter some?))
           properties {:id response-id
                       :description (utils/ensure-not-blank (:description node))
@@ -580,7 +588,7 @@
    updating the list of references.
    - See parse-ast :fragment and parse-ast :local-ref for more info"
   [fragment-location encoded-element parsed-fragment {:keys [location parsed-location is-fragment fragments type-hint document-parser]
-                                                                                  :or {fragments (atom {})}}]
+                                                      :or {fragments (atom {})}}]
   (let [encoded-element-sources (-> encoded-element :properties :sources)
         clean-encoded-element (condp = type-hint
                                 ;; this information is sensitive to the context, can never be in the fragment
@@ -602,19 +610,19 @@
                          (if (some? (get acc fragment-location))
                            acc
                            (assoc acc fragment-location (assoc parsed-fragment :encodes clean-encoded-element))))))
-      (condp = type-hint
-        :operation (domain/map->ParsedOperation {:id parsed-location
-                                                 :method (utils/safe-str (-> encoded-element :properties :method))
-                                                 :sources encoded-element-sources
-                                                 :extends extends})
-        :path-item (domain/map->ParsedEndPoint {:id parsed-location
-                                                :path (-> encoded-element :properties :path)
-                                                :extends extends
-                                                :sources encoded-element-sources})
-        (let [properties {:id parsed-location
-                          :label "$ref"
-                          :target fragment-location}]
-          (document/map->ParsedIncludes properties)))))
+    (condp = type-hint
+      :operation (domain/map->ParsedOperation {:id parsed-location
+                                               :method (utils/safe-str (-> encoded-element :properties :method))
+                                               :sources encoded-element-sources
+                                               :extends extends})
+      :path-item (domain/map->ParsedEndPoint {:id parsed-location
+                                              :path (-> encoded-element :properties :path)
+                                              :extends extends
+                                              :sources encoded-element-sources})
+      (let [properties {:id parsed-location
+                        :label "$ref"
+                        :target fragment-location}]
+        (document/map->ParsedIncludes properties)))))
 
 (defmethod parse-ast :fragment [node {:keys [document-parser] :as context}]
   (let [fragment-location (syntax/<-location node)
