@@ -1,4 +1,4 @@
-(defproject api-modelling-framework "0.1.0-SNAPSHOT"
+(defproject api-modelling-framework "0.1.1-SNAPSHOT"
   :description "Parsing tools for API specs"
   :url "https://github.com/mulesoft-labs/api-modelling-framework"
   :license {:name "Eclipse Public License"
