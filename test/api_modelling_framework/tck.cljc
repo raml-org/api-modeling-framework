@@ -47,7 +47,10 @@
                                            }
                                :responses {:test002 {:raml (str raml-10-tests "/Responses/test002/api.raml")
                                                      :openapi (str raml-10-tests "/Responses/test002/api.openapi")
-                                                     :jsonld (str raml-10-tests "/Responses/test002/api.jsonld")}}}})
+                                                     :jsonld (str raml-10-tests "/Responses/test002/api.jsonld")}
+                                           :test003 {:raml (str raml-10-tests "/Responses/test003/api.raml")
+                                                     :openapi (str raml-10-tests "/Responses/test003/api.openapi")
+                                                     :jsonld (str raml-10-tests "/Responses/test003/api.jsonld")}}}})
 (def tools {:raml {:parser (core/->RAMLParser)
                    :generator (core/->RAMLGenerator)}
             :openapi {:parser (core/->OpenAPIParser)
@@ -77,7 +80,8 @@
                    (mapv (fn [[k v]] [(if (string/index-of k "#") (last (string/split k #"#"))  k)
                                      (clean-noise v)]))
                    (into {}))
-    (coll? x) (mapv clean-noise x)
+    ;; order is not important for comparisons
+    (coll? x) (into #{} (mapv clean-noise x))
     :else     x))
 
 (defn same-structure? [a b]
@@ -96,7 +100,7 @@
     (map? x)  (->> (dissoc x "@id")
                    (mapv (fn [[k v]] [k (clean-ids v)]))
                    (into {}))
-    (coll? x) (mapv clean-ids x)
+    (coll? x) (into #{} (mapv clean-ids x))
     :else     x))
 
 
