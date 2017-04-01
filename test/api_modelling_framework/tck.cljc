@@ -62,6 +62,10 @@
                                                    :openapi (str raml-10-tests "/Methods/test002/meth02.openapi")
                                                    :jsonld (str raml-10-tests "/Methods/test002/meth02.jsonld")}
 
+                                         :test003 {:raml (str raml-10-tests "/Methods/test003/meth03.raml")
+                                                   :openapi (str raml-10-tests "/Methods/test003/meth03.openapi")
+                                                   :jsonld (str raml-10-tests "/Methods/test003/meth03.jsonld")}
+
                                          }}})
 
 (def tools {:raml {:parser (core/->RAMLParser)
@@ -184,15 +188,15 @@
                                                     (core/document-model parsed-model)
                                                     {:source-maps? false})))
             _ (is (not (error? parsed-model)))
-            doc-a (<! (to-data-structure type (-success-> (<! (platform/read-location (target-file files type type))))))
-            doc-b (<! (to-data-structure type (-success-> (<! (cb->chan (partial core/generate-string generator
-                                                                                 (get files type)
-                                                                                 (core/document-model parsed-model)
-                                                                                 {}))))))]
+            doc-target (<! (to-data-structure type (-success-> (<! (platform/read-location (target-file files type type))))))
+            doc-generated (<! (to-data-structure type (-success-> (<! (cb->chan (partial core/generate-string generator
+                                                                                         (get files type)
+                                                                                         (core/document-model parsed-model)
+                                                                                         {}))))))]
         (is (same-structure? (ensure-not-nil (clean-ids (platform/decode-json generated-jsonld)))
                              (ensure-not-nil (clean-ids target))))
-        (is (same-structure? (ensure-not-nil (clean-ids doc-a))
-                             (ensure-not-nil (clean-ids doc-b)))))))
+        (is (same-structure? (ensure-not-nil (clean-ids doc-generated))
+                             (ensure-not-nil (clean-ids doc-target)))))))
 
 (defn check-conversions [files]
   (go (doseq [[from to] ;[[:jsonld :raml]]

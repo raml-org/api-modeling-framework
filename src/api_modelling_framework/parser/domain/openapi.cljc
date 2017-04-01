@@ -375,7 +375,9 @@
   (let [location (str location "/" (url/url-encode path))
         parsed-location (str parsed-location "/" (url/url-encode path))
         traits (parse-traits parsed-location node references (assoc context :parsed-location parsed-location))
+        extended-operations (->> node keys (filter (fn [x] (string/starts-with? (utils/safe-str x) "x-method-"))))
         operations (->> [:get :put :post :delete :options :head :patch]
+                        (concat extended-operations)
                         (mapv (fn [op] (if-let [method-node (get node op)]
                                         (parse-ast method-node (-> context
                                                                    (assoc :type-hint :operation)
@@ -488,9 +490,19 @@
                                   :parameters parameters
                                   :payloads payloads}))))
 
+(defn method-name
+  "Apparently, according to Methods/ meth03.raml example in the TCK, 'set' method must be supported. Let's add a mechanism to support custom method names"
+  [x]
+  (let [x (utils/safe-str x)]
+    (if (string/starts-with? x "x-method-")
+      (last (string/split x #"x-method-"))
+      x)))
+
+
 (defmethod parse-ast :operation [node {:keys [location parsed-location is-fragment method references] :as context}]
   (debug "Parsing method " method)
-  (let [location (str location "/" method)
+  (let [method (method-name method)
+        location (str location "/" method)
         parsed-location (str location "/" method)
         next-context (-> context
                          (assoc :is-fragment false)

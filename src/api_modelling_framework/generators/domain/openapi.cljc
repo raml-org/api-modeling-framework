@@ -132,13 +132,19 @@
         utils/clean-nils
         (utils/ensure :paths {}))))
 
+(defn method-name
+  "Apparently, according to Methods/ meth03.raml example in the TCK, 'set' method must be supported. Let's add a mechanism to support custom method names"
+  [x]
+  (if (some? (get #{:get :post :patch :put :delete :head :options} (keyword x)))
+    (keyword x)
+    (keyword (str "x-method-" (utils/safe-str x)))))
 
 (defmethod to-openapi domain/EndPoint [model ctx]
   (debug "Generating resource " (document/id model))
   (let [operations (domain/supported-operations model)
         parameters (unparse-params model ctx)
         end-point (->> operations
-                       (map (fn [op] [(keyword (domain/method op)) (to-openapi! op ctx)]))
+                       (map (fn [op] [(method-name (domain/method op)) (to-openapi! op ctx)]))
                        (into {}))]
     (-> end-point
         (assoc :x-is (common/find-traits model ctx))

@@ -207,7 +207,14 @@
   (debug "Generating resource " (document/id model))
   (let [children-resources (find-children-resources (document/id model) all-resources)
         operations (->> (or (domain/supported-operations model) [])
-                        (map (fn [op] [(keyword (domain/method op)) (to-raml! op ctx)]))
+                        (map (fn [op]
+                               (let [v (to-raml! op ctx)]
+                                 [(keyword (domain/method op))
+                                  (if (= v {})
+                                    ;; we need this reader macro because of different behaviour
+                                    ;; between the JS and JAVA YAML generators with nil nodes
+                                    #?(:clj "" :cljs nil)
+                                    v)])))
                         (into {}))]
     (-> {:displayName (document/name model)
          :is (common/find-traits model ctx)

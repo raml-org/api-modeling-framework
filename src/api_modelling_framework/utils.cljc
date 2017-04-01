@@ -99,11 +99,11 @@
                         v)]
                 (cond
                   (#{:get :post :put :patch
-                     :head :options :delete} k) [k v]
-                  (nil? v)                      nil
-                  (and (coll? v) (empty? v))    nil
-                  (and (map? v) (= v {}))       nil
-                  :else                         [k v]))))
+                     :head :options :delete :set} k) [k v]
+                  (nil? v)                           nil
+                  (and (coll? v) (empty? v))         nil
+                  (and (map? v) (= v {}))            nil
+                  :else                              [k v]))))
        (filter some?)
        (into {})))
 

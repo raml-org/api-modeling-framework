@@ -454,7 +454,7 @@
                                          context)
         operations (->> node
                         keys
-                        (mapv (fn [op] (if-let [operation (#{:get :post :patch :put :delete :head :options} op)]
+                        (mapv (fn [op] (if-let [operation (#{:set :get :post :patch :put :delete :head :options} op)]
                                         (assoc (parse-ast (get node operation {})
                                                           (-> context
                                                               (assoc :method (utils/safe-str op))
