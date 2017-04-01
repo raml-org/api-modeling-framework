@@ -19,7 +19,7 @@
          (nil? (syntax/<-fragment node)))       (do
                                                   (throw
                                                    (new #?(:clj Exception :cljs js/Error)
-                                                          (str "Unsupported RAML parsing unit, missing @location or @fragment information"))))
+                                                        (str "Unsupported RAML parsing unit, missing @location or @fragment information"))))
 
     :else                                               nil))
 
@@ -163,82 +163,50 @@
                                       :document-type "#%RAML 1.0 Library"}))
         (assoc :raw (get node (keyword "@raw"))))))
 
+(defn parse-fragment
+  ([node context fragment-type]
+   (let [context (or context {})
+         location (syntax/<-location node)
+         context (assoc context :base-uri location)
+         _ (debug "Parsing " fragment-type " Fragment at " location)
+         fragments (or (:fragments context) (atom {}))
+         ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored
+         ;; in the model, we will just keep a reference to the library through the uses tags
+         {:keys [libraries library-declarations]} (process-library node {:location (str location "#")
+                                                                         :fragments fragments
+                                                                         :document-parser parse-ast
+                                                                         :parsed-location (str location "#/libraries")})
+         ;; @todo is this illegal?
+         references (or (:references context) {})
+         fragment-data (syntax/<-data node)
+         usage(:usage fragment-data)
 
-(defmethod parse-ast "#%RAML 1.0 Trait" [node context]
-  (let [context (or context {})
-        location (syntax/<-location node)
-        context (assoc context :base-uri location)
-        _ (debug "Parsing RAML Trait Fragment at " location)
-        fragments (or (:fragments context) (atom {}))
-        ;; @todo is this illegal?
-        references (or (:references context) {})
-        trait-data (syntax/<-data node)
-        usage (:usage trait-data)
-        encoded (domain-parser/parse-ast (syntax/<-data node) (merge
-                                                               context
-                                                               {:location (str location "#")
-                                                                :fragments fragments
-                                                                :references references
-                                                                :parsed-location (str location "#")
-                                                                :document-parser parse-ast
-                                                                :is-fragment true}))]
-    (-> (document/map->ParsedFragment {:id location
-                                       :description usage
-                                       :location location
-                                       :encodes encoded
-                                       :references (vals @fragments)
-                                       :document-type "#%RAML 1.0 Trait"})
-        (assoc :raw (get node (keyword "@raw"))))))
+         encoded (domain-parser/parse-ast fragment-data (merge
+                                                         context
+                                                         {:location (str location "#")
+                                                          :fragments fragments
+                                                          :references (merge references library-declarations)
+                                                          :parsed-location (str location "#")
+                                                          :document-parser parse-ast
+                                                          :is-fragment true}))]
+     (-> (document/map->ParsedFragment {:id location
+                                        :description usage
+                                        :location location
+                                        :encodes encoded
+                                        :references (concat (vals @fragments)
+                                                            (flatten (vals libraries)))
+                                        :document-type fragment-type})
+         (assoc :raw (get node (keyword "@raw"))))))
+  ([node context] (parse-fragment node context "#%RAML 1.0 Fragment")))
 
 (defmethod parse-ast "#%RAML 1.0 DataType" [node context]
-  (let [context (or context {})
-        location (syntax/<-location node)
-        context (assoc context :base-uri location)
-        _ (debug "Parsing RAML DataType Fragment at " location)
-        fragments (or (:fragments context) (atom {}))
-        ;; @todo is this illegal?
-        references (or (:references context) {})
-        type-data (syntax/<-data node)
-        usage (:usage type-data)
-        encoded (domain-parser/parse-ast (syntax/<-data node) (merge
-                                                               context
-                                                               {:location (str location "#")
-                                                                :fragments fragments
-                                                                :references references
-                                                                :parsed-location (str location "#")
-                                                                :document-parser parse-ast
-                                                                :is-fragment true}))]
-    (-> (document/map->ParsedFragment {:id location
-                                       :description usage
-                                       :location location
-                                       :encodes encoded
-                                       :references (vals @fragments)
-                                       :document-type "#%RAML 1.0 DataType"})
-        (assoc :raw (get node (keyword "@raw"))))))
+  (parse-fragment node context "#%RAML 1.0 DataType"))
 
-(defn parse-fragment [node context]
-  (let [context (or context {})
-        location (syntax/<-location node)
-        fragments (or (:fragments context) (atom {}))
-        ;; @todo is this illegal?
-        references (or (:references context) {})
-        encoded (domain-parser/parse-ast (syntax/<-data node) (merge
-                                                               context
-                                                               {:location (str location "#")
-                                                                :fragments fragments
-                                                                :references references
-                                                                :parsed-location (str location "#")
-                                                                :document-parser parse-ast
-                                                                :is-fragment true}))]
-    (-> (document/map->ParsedFragment {:id location
-                                       :location location
-                                       :encodes encoded
-                                       :references (vals @fragments)
-                                       :document-type "#%RAML 1.0 Fragment"})
-        (assoc :raw (get node (keyword "@raw"))))))
-
-(defmethod parse-ast :fragment [node context]
-  (parse-fragment node context))
+(defmethod parse-ast "#%RAML 1.0 Trait" [node context]
+  (parse-fragment node context "#%RAML 1.0 Trait"))
 
 (defmethod parse-ast "#%RAML 1.0 Fragment" [node context]
+  (parse-fragment node context))
+
+(defmethod parse-ast :fragment [node context]
   (parse-fragment node context))
