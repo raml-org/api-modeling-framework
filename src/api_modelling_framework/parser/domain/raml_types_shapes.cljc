@@ -53,7 +53,7 @@
   (let [parsed-location (str parsed-location "/shape")
         properties (->> (:properties node [])
                         (map (fn [[k v]]
-                               (let [parsed-location (str parsed-location "/shape")
+                               (let [parsed-location (utils/path-join parsed-location "/shape")
                                      property-name (utils/safe-str k)
                                      required (required-property? property-name v)
                                      property-name (final-property-name property-name v)]
@@ -156,9 +156,9 @@
       (let [remote-id (-> type-reference domain/shape (get "@id"))
             label (or (-> type-reference :name)
                       (-> type-reference domain/shape :name)
-                      (str "#" (last (string/split remote-id #"#"))))]
+                      (last (string/split remote-id #"#")))]
         {"@id" (str parsed-location "/ref-shape")
-         v/sorg:name [{"@value" (str "#" label)}]
+         v/sorg:name [{"@value" label}]
          "@type" [(v/shapes-ns "Shape")]
          (v/shapes-ns "inherits") [remote-id]}))
     nil))

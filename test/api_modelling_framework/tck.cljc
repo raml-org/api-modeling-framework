@@ -41,6 +41,7 @@
                                :resources {:test001 {:raml (str raml-10-tests "/Resources/test001/api.raml")
                                                      :openapi (str raml-10-tests "/Resources/test001/api.openapi")
                                                      :jsonld (str raml-10-tests "/Resources/test001/api.jsonld")}
+
                                            :test002 {:raml (str raml-10-tests "/Resources/test002/api.raml")
                                                      :openapi (str raml-10-tests "/Resources/test002/api.openapi")
                                                      :jsonld (str raml-10-tests "/Resources/test002/api.jsonld")}
@@ -55,8 +56,14 @@
 
                                :methods {:test001 {:raml (str raml-10-tests "/Methods/test001/meth01.raml")
                                                    :openapi (str raml-10-tests "/Methods/test001/meth01.openapi")
-                                                   :jsonld (str raml-10-tests "/Methods/test001/meth01.jsonld")
-                                                   }}}})
+                                                   :jsonld (str raml-10-tests "/Methods/test001/meth01.jsonld")}
+
+                                         :test002 {:raml (str raml-10-tests "/Methods/test002/meth02.raml")
+                                                   :openapi (str raml-10-tests "/Methods/test002/meth02.openapi")
+                                                   :jsonld (str raml-10-tests "/Methods/test002/meth02.jsonld")}
+
+                                         }}})
+
 (def tools {:raml {:parser (core/->RAMLParser)
                    :generator (core/->RAMLGenerator)}
             :openapi {:parser (core/->OpenAPIParser)
@@ -191,7 +198,7 @@
   (go (doseq [[from to] ;[[:jsonld :raml]]
               conversions
               ]
-        (println "COMPARING " from " -> " to)
+        (println "\n\nCOMPARING " from " -> " to "\n\n")
         (let [source (get files from)
               target (get files to)
               target (->> (target-file files to from)
@@ -219,7 +226,7 @@
 (deftest tck-tests
   (async done
          (go
-           (doseq [[test-name files] (focus [:methods :test001] (enumerate-tests))]
+           (doseq [[test-name files] (focus :all (enumerate-tests))]
              (println "- Testing " test-name)
              (<! (check-syntax :raml files))
              (<! (check-syntax :openapi files))

@@ -91,13 +91,13 @@
                                                                    :references library-declarations
                                                                    :document-parser parse-ast
                                                                    :annotations annotations
-                                                                   :parsed-location (str location "#/declares")})
+                                                                   :parsed-location location})
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
                                                                  :fragments fragments
                                                                  :references library-declarations
                                                                  :annotations annotations
                                                                  :document-parser parse-ast
-                                                                 :parsed-location (str location "#/declares")})
+                                                                 :parsed-location location})
         declarations (merge traits types)
         encoded (domain-parser/parse-ast (syntax/<-data node) {:location (str location "#")
                                                                :fragments fragments
@@ -142,14 +142,14 @@
                                                                    :alias-chain alias-chain
                                                                    :document-parser parse-ast
                                                                    :annotations annotations
-                                                                   :parsed-location (str location "#/declares")})
+                                                                   :parsed-location location})
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
                                                                  :fragments fragments
                                                                  :alias-chain alias-chain
                                                                  :references library-declarations
                                                                  :annotations annotations
                                                                  :document-parser parse-ast
-                                                                 :parsed-location (str location "#/declares")})
+                                                                 :parsed-location location})
         declarations (merge traits types)
         usage (:usage (syntax/<-data node))]
     (-> (document/map->ParsedModule (utils/clean-nils

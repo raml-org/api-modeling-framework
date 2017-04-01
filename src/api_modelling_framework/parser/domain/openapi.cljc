@@ -183,15 +183,17 @@
                      (assoc acc (keyword trait-name) parsed-trait)))
                  {}))))
 
-(defn process-types [node {:keys [location parsed-location alias-chain] :as context}]
+(defn process-types [node {:keys [location alias-chain] :as context}]
   (debug "Processing " (count (:definitions node [])) " types")
   (->> (:definitions node {})
        (reduce (fn [acc [type-name type-node]]
                  (debug (str "Processing type " type-name))
-                 (let [type-id (str "#/definitions/" (url/url-encode (utils/safe-str type-name)))
-                       alias (str "#/definitions/" (url/url-encode (utils/safe-str type-name)))
+                 (let [type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))
                        type-fragment (parse-ast type-node (-> context
-                                                              (assoc :location type-id)
+                                                              ;; the physical location matches the structure of the OpennAPI document
+                                                              (assoc :location (utils/path-join location "#/definitions/" type-node))
+                                                              ;; the logical location is the actual URI of the type, we use common notation
+                                                              ;; encapsulated in the common/type-reference function
                                                               (assoc :parsed-location type-id)
                                                               (assoc :is-fragment false)
                                                               (assoc :type-hint :type)))
@@ -201,7 +203,7 @@
                                        (assoc :name (utils/safe-str type-name))
                                        (assoc :sources sources)
                                        (assoc :id type-id))]
-                   (assoc acc alias parsed-type)))
+                   (assoc acc type-id parsed-type)))
                {})))
 
 (defn generate-parsed-node-sources [node-name location parsed-location]
@@ -428,6 +430,14 @@
                         (domain/map->ParsedType properties))}))
        first))
 
+(defn filter-empty-payloads [payloads]
+  (->> payloads
+       (filter (fn [payload]
+                 (or (and (some? (domain/schema payload))
+                          (some? (-> payload domain/schema domain/shape)))
+                     (and (not= "*/*" (domain/media-type payload))
+                          (some? (domain/media-type payload))))))))
+
 (defn parse-request [node {:keys [location parsed-location] :as context}]
   (let [parameters (parse-params (:parameters node) (-> context
                                                         (assoc :is-fragment false)
@@ -465,7 +475,9 @@
                                   (domain/map->ParsedPayload (utils/clean-nils properties))))
                               (range 0 (count (get node :x-request-payloads []))))
                         (filter some?))
-        payloads (filter some? (concat [payload] x-payloads))
+        payloads (->> (concat [payload] x-payloads)
+                      (filter some?)
+                      (filter-empty-payloads))
         request-id (str parsed-location "/request")]
     (if (empty? (concat headers parameters payload))
       nil
@@ -554,12 +566,14 @@
                                     (domain/map->ParsedPayload (utils/clean-nils properties))))
                                 (range 0 (count (get node :x-response-payloads []))))
                           (filter some?))
+
+          payloads (filter-empty-payloads (concat [payload] x-payloads))
           properties {:id response-id
                       :description (utils/ensure-not-blank (:description node))
                       :sources node-parsed-source-map
                       :status-code (if is-status (name response-key) nil)
                       :name response-key
-                      :payloads (concat [payload] x-payloads)}]
+                      :payloads payloads}]
       (if is-fragment
         (domain/map->ParsedDomainElement {:id response-id
                                           :fragment-node :parsed-response

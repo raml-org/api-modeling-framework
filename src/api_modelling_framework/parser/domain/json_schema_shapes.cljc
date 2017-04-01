@@ -37,12 +37,12 @@
         required-set (set (:required node []))
         properties (->> (:properties node [])
                         (map (fn [[k v]]
-                               (let [parsed-location (str parsed-location "/property/" k)]
+                               (let [parsed-location (str parsed-location "/property/" (utils/safe-str k))]
                                  (->> {"@type" ["sh:PropertyConstraint"]
                                        "@id" parsed-location
-                                       (v/shapes-ns "propertyLabel") [{"@value" (name k)}]
+                                       (v/shapes-ns "propertyLabel") [{"@value" (utils/safe-str k)}]
                                        ;; mandatory prop?
-                                       (v/sh-ns "minCount") [(if (required-set (name k)) {"@value" 1} {"@value" 0})]
+                                       (v/sh-ns "minCount") [(if (required-set (utils/safe-str k)) {"@value" 1} {"@value" 0})]
                                        ;; range of the prop
                                        (v/shapes-ns "range") [(parse-type v (assoc context :parsed-location parsed-location))]}
                                       (parse-type-constraints v))))))

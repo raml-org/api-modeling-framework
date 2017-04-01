@@ -2,13 +2,12 @@
     "swagger": "2.0",
     "definitions": {
         "TestSchema": {
-            "type": "object",
-            "title": "TestSchema",
             "properties": {
                 "type": {
                     "type": "string"
                 }
-            }
+            },
+            "type": "object"
         }
     },
     "info": {
@@ -18,13 +17,19 @@
     "paths": {
         "/test": {
             "post": {
-                "responses": {
-                    "201": {
-                        "description": "",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "",
                         "schema": {
                             "$ref": "#/definitions/TestSchema"
                         },
                         "x-media-type": "application/json"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
                     }
                 }
             }

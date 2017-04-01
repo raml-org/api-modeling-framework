@@ -265,6 +265,11 @@
 (defn group-responses [responses context]
   (->> responses
        (map (fn [response] [(document/name response) (to-raml! response context)]))
+       (map (fn [[k v]] [k (if (= v {})
+                            ;; we need this reader macro because of different behaviour
+                            ;; between the JS and JAVA YAML generators with nil nodes
+                            #?(:clj "" :cljs nil)
+                            v)]))
        (into {})))
 
 (defn unparse-query-parameters [request context]

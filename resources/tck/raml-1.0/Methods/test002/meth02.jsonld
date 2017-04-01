@@ -1,5 +1,5 @@
 {
-    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml",
+    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml",
     "@type": [
         "http://raml.org/vocabularies/document#Document",
         "http://raml.org/vocabularies/document#Fragment",
@@ -8,7 +8,7 @@
     ],
     "http://raml.org/vocabularies/document#declares": [
         {
-            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/definitions/TestSchema/shape",
+            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/definitions/TestSchema/shape",
             "@type": [
                 "http://www.w3.org/ns/shacl#Shape"
             ],
@@ -19,7 +19,7 @@
             ],
             "http://www.w3.org/ns/shacl#property": [
                 {
-                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/definitions/TestSchema/shape/property/type",
+                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/definitions/TestSchema/shape/property/:type",
                     "@type": [
                         "sh:PropertyConstraint"
                     ],
@@ -30,7 +30,7 @@
                     ],
                     "http://raml.org/vocabularies/shapes#range": [
                         {
-                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/definitions/TestSchema/shape/property/type/shape",
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/definitions/TestSchema/shape/property/:type/shape",
                             "@type": [
                                 "http://www.w3.org/ns/shacl#Shape",
                                 "http://raml.org/vocabularies/shapes#Scalar"
@@ -53,14 +53,14 @@
     ],
     "http://raml.org/vocabularies/document#encodes": [
         {
-            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/api-documentation",
+            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/api-documentation",
             "@type": [
                 "http://raml.org/vocabularies/http#APIDocumentation",
                 "http://raml.org/vocabularies/document#DomainElement"
             ],
             "http://raml.org/vocabularies/http#endpoint": [
                 {
-                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/api-documentation/end-points/0",
+                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/api-documentation/end-points/0",
                     "@type": [
                         "http://raml.org/vocabularies/http#EndPoint",
                         "http://raml.org/vocabularies/document#DomainElement"
@@ -72,26 +72,21 @@
                     ],
                     "http://www.w3.org/ns/hydra/core#supportedOperation": [
                         {
-                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/api-documentation/end-points/0/post",
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/api-documentation/end-points/0/post",
                             "@type": [
                                 "http://www.w3.org/ns/hydra/core#Operation",
                                 "http://raml.org/vocabularies/document#DomainElement"
                             ],
-                            "http://www.w3.org/ns/hydra/core#method": [
+                            "http://www.w3.org/ns/hydra/core#expects": [
                                 {
-                                    "@value": "post"
-                                }
-                            ],
-                            "http://www.w3.org/ns/hydra/core#returns": [
-                                {
-                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/api-documentation/end-points/0/post/201",
+                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/api-documentation/end-points/0/post/request",
                                     "@type": [
-                                        "http://raml.org/vocabularies/http#Response",
+                                        "http://raml.org/vocabularies/http#Request",
                                         "http://raml.org/vocabularies/document#DomainElement"
                                     ],
                                     "http://raml.org/vocabularies/http#payload": [
                                         {
-                                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/api-documentation/end-points/0/post/201/application%2Fjson",
+                                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/api-documentation/end-points/0/post/application%2Fjson",
                                             "@type": [
                                                 "http://raml.org/vocabularies/http#Payload",
                                                 "http://raml.org/vocabularies/document#DomainElement"
@@ -103,12 +98,12 @@
                                             ],
                                             "http://raml.org/vocabularies/http#schema": [
                                                 {
-                                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/api-documentation/end-points/0/post/201/application%2Fjson/ref-shape",
+                                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/api-documentation/end-points/0/post/application%2Fjson/ref-shape",
                                                     "@type": [
                                                         "http://raml.org/vocabularies/shapes#Shape"
                                                     ],
                                                     "http://raml.org/vocabularies/shapes#inherits": [
-                                                        "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/definitions/TestSchema/shape"
+                                                        "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/definitions/TestSchema/shape"
                                                     ],
                                                     "http://schema.org/name": [
                                                         {
@@ -118,6 +113,20 @@
                                                 }
                                             ]
                                         }
+                                    ]
+                                }
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "post"
+                                }
+                            ],
+                            "http://www.w3.org/ns/hydra/core#returns": [
+                                {
+                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/api-documentation/end-points/0/post/201",
+                                    "@type": [
+                                        "http://raml.org/vocabularies/http#Response",
+                                        "http://raml.org/vocabularies/document#DomainElement"
                                     ],
                                     "http://schema.org/name": [
                                         {

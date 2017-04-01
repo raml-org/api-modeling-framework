@@ -43,7 +43,7 @@
   (->> shape
        (map (fn [[p _]]
               (condp = p
-                v/sorg:name        #(assoc % :displayName (utils/extract-jsonld-literal shape v/sorg:name))
+                v/sorg:name        #(assoc % :title (utils/extract-jsonld-literal shape v/sorg:name))
                 v/sorg:description #(assoc % :description (utils/extract-jsonld-literal shape v/sorg:description))
                 identity)))
        (reduce (fn [acc p] (p acc)) raml-type)

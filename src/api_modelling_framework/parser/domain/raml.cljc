@@ -316,25 +316,27 @@
 
 (defn process-types [node {:keys [location parsed-location alias-chain] :as context}]
   (let [types (or (:types node) (:schemas node) {})
-        parsed-location (utils/path-join parsed-location "/types")
+        path-label (if (some? (:types node)) "types" "schemas")
+        location (utils/path-join parsed-location "/" path-label)
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
     (debug "Processing " (count types) " types")
     (->> types
          (reduce (fn [acc [type-name type-node]]
                    (debug (str "Processing type " type-name))
                    (let [type-name  (url/url-encode (utils/safe-str type-name))
+                         type-id (common/type-reference location type-name)
                          references (get nested-context :references {})
                          type-fragment (parse-ast type-node (-> nested-context
                                                                 (assoc :references (merge references acc))
                                                                 (assoc :location location)
-                                                                (assoc :parsed-location (utils/path-join parsed-location type-name))
+                                                                (assoc :parsed-location type-id)
                                                                 (assoc :is-fragment false)
                                                                 (assoc :type-hint :type)))
                          sources (or (-> type-fragment :sources) [])
                          ;; we annotate the parsed type with the is-type source map so we can distinguish it from other declarations
                          sources (concat sources (common/generate-is-type-sources type-name
                                                                                   (utils/path-join location type-name)
-                                                                                  (utils/path-join parsed-location type-name)))
+                                                                                  type-id))
                          parsed-type (assoc type-fragment :sources sources)
                          parsed-type (if (nil? (:name parsed-type))
                                        (assoc parsed-type :name type-name)
