@@ -72,8 +72,23 @@
                          (reduce (fn [acc fragment]
                                    (assoc acc (document/location fragment) fragment))
                                  {})))
+        uses (->> (common/model->uses model)
+                  (mapv (fn [[alias location]]
+                          [alias (get fragments location)]))
+                  (into {}))
+        library-declares (->> uses
+                              (mapv (fn [[alias fragment]]
+                                      (mapv #(update-alias % alias) (document/declares fragment))))
+                              flatten
+                              (mapv (fn [declaration] (assoc declaration :from-library true))))
+        uses (->> uses
+                  (mapv (fn [[alias fragment]]
+                          [(keyword alias) (to-raml fragment ctx)]))
+                  (into {}))
+        uses (if (> (count uses) 0) uses nil)
         context (-> ctx
                     (assoc :fragments fragments)
+                    (assoc :references library-declares)
                     (assoc :expanded-fragments (or (:expanded-fragments ctx)
                                                    (atom {})))
                     (assoc :type-hint :method)
@@ -102,7 +117,8 @@
                                            data
                                            (utils/clean-nils
                                             (merge data
-                                                   {:usage (document/description model)})))
+                                                   {:usage (document/description model)
+                                                    :uses uses})))
                        (keyword "@fragment") fragment-type})))
 
 (defmethod to-raml :library [model ctx]

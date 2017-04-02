@@ -49,16 +49,21 @@
         uses-tags (process-uses-tags node context)
         annotations (atom {})
         ;; we parse traits and types and add the information into the context
-        traits(domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
-                                                                  :fragments fragments
-                                                                  :annotations annotations
-                                                                  :document-parser parse-ast})
+        traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
+                                                                   :base-uri location
+                                                                   :fragments fragments
+                                                                   :annotations annotations
+                                                                   :document-parser parse-ast})
+
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :base-uri location
                                                                  :fragments fragments
                                                                  :annotations annotations
                                                                  :document-parser parse-ast})
         declarations (merge traits types)
+
         encoded (domain-parser/parse-ast (syntax/<-data node) {:location (str location "#")
+                                                               :base-uri location
                                                                :fragments fragments
                                                                :annotations annotations
                                                                :references declarations
@@ -67,6 +72,7 @@
     (-> (document/map->ParsedDocument (merge context
                                              {:id location
                                               :location location
+                                              :base-uri location
                                               :encodes encoded
                                               :declares (concat (vals declarations) (vals @annotations))
                                               :references (vals @fragments)
@@ -84,6 +90,7 @@
         annotations (atom {})
         encoded (domain-parser/parse-ast (syntax/<-data node) (merge context
                                                                      {:location (str location "#")
+                                                                      :base-uri location
                                                                       :fragments fragments
                                                                       :annotations annotations
                                                                       :references references
@@ -91,6 +98,7 @@
                                                                       :is-fragment true}))]
     (-> (document/map->ParsedFragment {:id location
                                        :location location
+                                       :base-uri location
                                        :encodes encoded
                                        :references (vals @fragments)
                                        :document-type "OpenApi Fragment"})
@@ -105,16 +113,19 @@
         uses-tags (process-uses-tags node context)
         ;; we parse traits and types and add the information into the context
         traits(domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
+                                                                  :base-uri location
                                                                   :fragments fragments
                                                                   :annotations annotations
                                                                   :document-parser parse-ast})
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :base-uri location
                                                                  :fragments fragments
                                                                  :annotations annotations
                                                                  :document-parser parse-ast})
         declarations (merge traits types)]
     (-> (document/map->ParsedModule (merge context
                                            {:id location
+                                            :base-uri location
                                             :location location
                                             :declares (concat (vals declarations) (vals @annotations))
                                             :references (vals @fragments)

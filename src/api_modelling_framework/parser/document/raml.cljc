@@ -46,6 +46,9 @@
                                                                         :else nil)]
                                                 (if (some? declaration-alias)
                                                   [(keyword (utils/alias-chain (str (utils/safe-str alias) "." (utils/safe-str declaration-alias)) context))
+                                                   ;; we provide the full URI for the dependency
+                                                   ;; we cannot use just the hash reference as in other
+                                                   ;; declarations, because we need to resolve it remotely
                                                    declare]
                                                   nil))))
                                        (filter some?)
@@ -176,6 +179,9 @@
                                                                          :fragments fragments
                                                                          :document-parser parse-ast
                                                                          :parsed-location (str location "#/libraries")})
+         uses-tags (process-uses-tags node context)
+         document-tags (document/generate-document-sources location fragment-type)
+
          ;; @todo is this illegal?
          references (or (:references context) {})
          fragment-data (syntax/<-data node)
@@ -195,6 +201,7 @@
                                         :encodes encoded
                                         :references (concat (vals @fragments)
                                                             (flatten (vals libraries)))
+                                        :sources (concat uses-tags document-tags)
                                         :document-type fragment-type})
          (assoc :raw (get node (keyword "@raw"))))))
   ([node context] (parse-fragment node context "#%RAML 1.0 Fragment")))

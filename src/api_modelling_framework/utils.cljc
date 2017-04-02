@@ -169,8 +169,9 @@
                  base)
           next (if (= (first (into [] next)) \/)
                  next
-                 (str "/" next))]
-      (apply path-join (concat [(str base next)] (rest parts))))
+                 (str "/" next))
+          joined (apply path-join (concat [(str base next)] (rest parts)))]
+      (string/replace joined  "##" "#"))
     base))
 
 (defn last-component [s]

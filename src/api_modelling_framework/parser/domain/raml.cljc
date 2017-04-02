@@ -46,9 +46,10 @@
    :title #{:root}
    :traits #{:root}
    :type #{:resource :type}
+   :properties #{:type}
    :types #{:root}
    :uriParameters #{:resource}
-   :uses #{:root :method :resource}
+   :uses #{:root :method :resource :type}
    :version #{:root}
    })
 

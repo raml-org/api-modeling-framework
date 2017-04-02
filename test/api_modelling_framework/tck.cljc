@@ -66,7 +66,10 @@
                                                    :openapi (str raml-10-tests "/Methods/test003/meth03.openapi")
                                                    :jsonld (str raml-10-tests "/Methods/test003/meth03.jsonld")}
 
-                                         }}})
+                                         }
+                               ;; :fragments {:test001 {:raml (str raml-10-tests "/Fragments/test001/fragment.raml")}}
+                               }})
+
 
 (def tools {:raml {:parser (core/->RAMLParser)
                    :generator (core/->RAMLGenerator)}
@@ -176,6 +179,7 @@
   (go (let [parser (-> tools type :parser)
             generator (-> tools type :generator)
             jsonld-generator (-> tools :jsonld :generator)
+            _ (prn files)
             target (->> (target-file files type)
                         (platform/read-location)
                         <!

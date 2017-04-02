@@ -73,11 +73,28 @@
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "Scalar")]
    (v/sh-ns "dataType") [{"@id" scalar-type}]})
 
+(defn find-reference
+  "References can be local or remote, we check all possibilities"
+  [references type-string context]
+  (let [file-reference (utils/path-join (:base-uri context) (utils/safe-str type-string))
+        file-reference-keyword (keyword file-reference)
+        type-string-keyword (keyword type-string)
+        found (->> [type-string type-string-keyword file-reference file-reference-keyword]
+                   (map #(get references %))
+                   (filter some?)
+                   first)]
+    (if (some? found)
+      found
+      (->> references
+           (filter (fn [[k _]] (string/ends-with? (utils/safe-str k) (utils/safe-str type-string))))
+           (map (fn [[_ v]] v))
+           first))))
+
 (defn check-reference
   "Checks if a provided string points to one of the types defined at the APIDocumentation level"
   [type-string {:keys [references parsed-location] :as context}]
 
-  (if-let [type-reference (or (get references (keyword type-string)) (get references type-string))]
+  (if-let [type-reference (find-reference references type-string context)]
     (if (satisfies? document/Includes type-reference)
       {"@id" (str parsed-location "/include-shape")
        "@type" [(v/shapes-ns "Shape")]

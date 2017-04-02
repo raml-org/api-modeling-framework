@@ -24,7 +24,8 @@
   (let [last-component (-> location (string/split #"/") last)
         base (string/replace location last-component "")]
     (if (or (= (string/index-of path "/") 0)
-            (some? (string/index-of path "://")))
+            (some? (string/index-of path "://"))
+            (string/index-of path base 0))
       path
       (str base path))))
 

@@ -55,7 +55,8 @@
   (->> {"@id" (document/id m)
         "@type" [v/document:Fragment
                  v/document:Unit]
-        v/document:encodes [(domain-generator/to-jsonld (document/encodes m) {:source-maps? source-maps?})]}
+        v/document:encodes [(domain-generator/to-jsonld (document/encodes m) {:source-maps? source-maps?})]
+        v/document:references (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/references m))}
        (with-source-maps source-maps? m)
        (utils/clean-nils)))
 

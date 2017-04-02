@@ -189,9 +189,10 @@
        (reduce (fn [acc [type-name type-node]]
                  (debug (str "Processing type " type-name))
                  (let [type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))
+                       type-alias (keyword (str "#" (last (string/split type-id #"#"))))
                        type-fragment (parse-ast type-node (-> context
                                                               ;; the physical location matches the structure of the OpennAPI document
-                                                              (assoc :location (utils/path-join location "#/definitions/" type-node))
+                                                              (assoc :location (utils/path-join location "/definitions/" type-name))
                                                               ;; the logical location is the actual URI of the type, we use common notation
                                                               ;; encapsulated in the common/type-reference function
                                                               (assoc :parsed-location type-id)

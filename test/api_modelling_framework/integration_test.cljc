@@ -402,6 +402,32 @@
                (is (string/starts-with? (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "!include"))
                (done)))))
 
+(deftest integration-test-raml-fragment-libraries
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->RAMLGenerator)
+                   jsonld-generator (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/tck/raml-1.0/Fragments/test001/fragment.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-yaml(<! (cb->chan (partial core/generate-string generator "resources/api.raml"
+                                                     output-model
+                                                     {})))
+                   _ (println output-yaml)
+                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/tck/raml-1.0/Fragments/test001/fragment.raml" output-yaml)))
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/api.raml"
+                                                        output-model
+                                                        {:source-maps? false})))
+                   output (platform/decode-json output-jsonld)]
+               (is (= 2 (-> yaml-data
+                            :properties
+                            count)))
+               (is (some? (-> yaml-data :uses :lib)))
+               ;;(clojure.pprint/pprint yaml-data)
+               ;;(clojure.pprint/pprint output)
+               (done)))))
+
 (comment
 
   (deftest integration-test-mobile-api
