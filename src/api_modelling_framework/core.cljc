@@ -6,11 +6,13 @@
                     [api-modelling-framework.resolution :as resolution]
                     [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
                     [api-modelling-framework.parser.syntax.json :as json-parser]
+                    [api-modelling-framework.parser.syntax.jsonld :as jsonld-parser]
                     [api-modelling-framework.parser.document.raml :as raml-document-parser]
                     [api-modelling-framework.parser.document.openapi :as openapi-document-parser]
                     [api-modelling-framework.parser.document.jsonld :as jsonld-document-parser]
                     [api-modelling-framework.generators.syntax.yaml :as yaml-generator]
                     [api-modelling-framework.generators.syntax.json :as json-generator]
+                    [api-modelling-framework.generators.syntax.jsonld :as jsonld-generator]
                     [api-modelling-framework.generators.document.raml :as raml-document-generator]
                     [api-modelling-framework.generators.document.openapi :as openapi-document-generator]
                     [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
@@ -24,11 +26,13 @@
                      [api-modelling-framework.resolution :as resolution]
                      [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
                      [api-modelling-framework.parser.syntax.json :as json-parser]
+                     [api-modelling-framework.parser.syntax.jsonld :as jsonld-parser]
                      [api-modelling-framework.parser.document.raml :as raml-document-parser]
                      [api-modelling-framework.parser.document.openapi :as openapi-document-parser]
                      [api-modelling-framework.parser.document.jsonld :as jsonld-document-parser]
                      [api-modelling-framework.generators.syntax.yaml :as yaml-generator]
                      [api-modelling-framework.generators.syntax.json :as json-generator]
+                     [api-modelling-framework.generators.syntax.jsonld :as jsonld-generator]
                      [api-modelling-framework.generators.document.raml :as raml-document-generator]
                      [api-modelling-framework.generators.document.openapi :as openapi-document-generator]
                      [api-modelling-framework.generators.document.jsonld :as jsonld-document-generator]
@@ -126,7 +130,7 @@
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
     (debug "Parsing APIModel file")
-    (go (let [res (<! (json-parser/parse-file uri false))]
+    (go (let [res (<! (jsonld-parser/parse-file uri))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
             (try (cb nil (to-model (jsonld-document-parser/from-jsonld (stringify-keys (get res "@data")))))
@@ -135,7 +139,7 @@
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
     (debug "Parsing APIModel string")
-    (go (let [res (<! (json-parser/parse-string uri string false))]
+    (go (let [res (<! (jsonld-parser/parse-string uri string))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
             (try (cb nil (to-model (jsonld-document-parser/from-jsonld (get res "@data"))))
@@ -149,8 +153,8 @@
     (go (try (let [options (keywordize-keys options)
                    res (-> model
                            (pre-process-model)
-                           (jsonld-document-generator/to-jsonld (or (get options :source-maps?) (get options "source-maps?") false))
-                           (json-generator/generate-string options))]
+                           (jsonld-document-generator/to-jsonld (get options :source-maps? (get options "source-maps?" false)))
+                           (jsonld-generator/generate-string (get options :full-graph? (get options "full-graph?" true))))]
                (cb nil (platform/<-clj res)))
              (catch #?(:clj Exception :cljs js/Error) ex
                (cb (platform/<-clj ex) nil)))))
@@ -159,8 +163,8 @@
     (go (let [options (keywordize-keys options)
               res (-> model
                       (pre-process-model)
-                      (jsonld-document-generator/to-jsonld (or (get options :source-maps?) (get options "source-maps?") false))
-                      (json-generator/generate-string options))]
+                      (jsonld-document-generator/to-jsonld (get options :source-maps? (get options "source-maps?" false)))
+                      (jsonld-generator/generate-string (get options :full-graph? (get options "full-graph?" true))))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
             (cb nil (platform/<-clj res)))))))
