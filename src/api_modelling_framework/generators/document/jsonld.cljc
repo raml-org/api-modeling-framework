@@ -8,12 +8,6 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
-(defn ensure-domain-fragment [x]
-  (try
-    (domain/to-domain-node x)
-    (catch #?(:clj Exception :cljs js/Error) e
-      x)))
-
 (defn to-jsonld-dispatch-fn [model source-maps?]
   (cond
     (nil? model)                                 model
@@ -44,9 +38,9 @@
                  v/document:Fragment
                  v/document:Module
                  v/document:Unit]
-        v/document:declares (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/declares m))
+        v/document:declares (mapv #(to-jsonld % source-maps?) (document/declares m))
         v/document:encodes [(domain-generator/to-jsonld (document/encodes m) {:source-maps? source-maps?})]
-        v/document:references (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/references m))}
+        v/document:references (mapv #(to-jsonld % source-maps?) (document/references m))}
        (with-source-maps source-maps? m)
        (utils/clean-nils)))
 
@@ -56,7 +50,7 @@
         "@type" [v/document:Fragment
                  v/document:Unit]
         v/document:encodes [(domain-generator/to-jsonld (document/encodes m) {:source-maps? source-maps?})]
-        v/document:references (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/references m))}
+        v/document:references (mapv #(to-jsonld % source-maps?) (document/references m))}
        (with-source-maps source-maps? m)
        (utils/clean-nils)))
 
@@ -65,8 +59,8 @@
   (->> {"@id" (document/id m)
         "@type" [v/document:Module
                  v/document:Unit]
-        v/document:declares (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/declares m))
-        v/document:references (mapv #(to-jsonld (ensure-domain-fragment %) source-maps?) (document/references m))}
+        v/document:declares (mapv #(to-jsonld % source-maps?) (document/declares m))
+        v/document:references (mapv #(to-jsonld % source-maps?) (document/references m))}
        (with-source-maps source-maps? m)
        (utils/clean-nils)))
 

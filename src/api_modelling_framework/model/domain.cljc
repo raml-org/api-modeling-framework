@@ -230,27 +230,3 @@
   (valid? [this] true)
   (extends [this] (or extends []))
   (additional-properties [this] (or additional-properties [])))
-
-(defrecord  ParsedDomainElement [id fragment-node properties extends additional-properties]
-  document/Node
-  (id [this] id)
-  (name [this] "Domain element [" fragment-node "]")
-  (description [this] (str "Partially parsed node with properties of type  " fragment-node))
-  (sources [this] (:sources properties))
-  (valid? [this] true)
-  (extends [this] (or extends []))
-  (additional-properties [this] (or additional-properties []))
-  DomainElement
-  (fragment-node [this] fragment-node)
-  (properties [this] properties)
-  (to-domain-node [this]
-    (condp = fragment-node
-      :parsed-api-documentation (map->ParsedAPIDocumentation properties)
-      :parsed-parameter         (map->ParsedParameter properties)
-      :parsed-request           (map->ParsedRequest properties)
-      :parsed-operation         (map->ParsedOperation properties)
-      :parsed-type              (map->ParsedType properties)
-      :trait                    (map->ParsedOperation properties)
-      :parsed-end-point         (map->ParsedEndPoint properties)
-      :parsed-includes          (document/map->ParsedIncludes properties)
-      (throw (new #?(:clj Exception :cljs js/Error) (str "Unknown fragment " fragment-node))))))

@@ -171,15 +171,13 @@
                                                                   (assoc :references (merge references acc))
                                                                   (assoc :location location)
                                                                   (assoc :parsed-location parsed-location)
-                                                                  (assoc :is-fragment true)
                                                                   (assoc :type-hint :operation)))
                          trait-fragment (assoc trait-fragment :id (str parsed-location "/" fragment-name))
-                         trait-fragment (assoc-in trait-fragment [:properties :id] (str parsed-location "/" fragment-name))
-                         sources (or (-> trait-fragment :properties :sources) [])
+                         sources (or (-> trait-fragment :sources) [])
                          sources (concat sources (generate-is-trait-sources fragment-name
                                                                             (str location "/" fragment-name)
                                                                             (str parsed-location "/" fragment-name)))
-                         parsed-trait (assoc-in trait-fragment [:properties :sources] sources)]
+                         parsed-trait (assoc trait-fragment :sources sources)]
                      (assoc acc (keyword trait-name) parsed-trait)))
                  {}))))
 
@@ -259,12 +257,7 @@
                                                 (assoc :location location)
                                                 (assoc :parsed-location parsed-location)))}))
              (range 0 (count parameters)))
-       (mapv (fn [properties]
-               (if is-fragment
-                 (domain/map->ParsedDomainElement {:id parsed-location
-                                                   :fragment-node :parsed-parameter
-                                                   :properties properties})
-                 (domain/map->ParsedParameter properties))))))
+       (mapv (fn [properties] (domain/map->ParsedParameter properties)))))
 
 (defmethod parse-ast :swagger [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing swagger")
@@ -294,36 +287,25 @@
                     :license nil
                     :endpoints endpoints}
         node-info-properties (if (some? (:info node))
-                               (domain/properties (parse-ast (:info node) (-> context
-                                                                              (assoc :type-hint :info)
-                                                                              (assoc :is-fragment true)
-                                                                              (assoc :parsed-location parsed-location)
-                                                                              (assoc :location location))))
+                               (parse-ast (:info node) (-> context
+                                                           (assoc :type-hint :info)
+                                                           (assoc :is-fragment true)
+                                                           (assoc :parsed-location parsed-location)
+                                                           (assoc :location location)))
                                {})
-        sources (concat (get node-info-properties :sources []) sources)
-        properties (merge properties (dissoc node-info-properties :fragment-node))
+        properties (merge (utils/clean-nils properties) (utils/clean-nils node-info-properties))
         properties (assoc properties :sources sources)]
-    (if is-fragment
-      (domain/map->ParsedDomainElement {:id parsed-location
-                                        :fragment-node :parsed-api-documentation
-                                        :properties {:id parsed-location
-                                                     :fragment-node :parsed-api-documentation
-                                                     :properties (utils/clean-nils properties)}})
-      (domain/map->ParsedAPIDocumentation (utils/clean-nils properties)))))
+    (domain/map->ParsedAPIDocumentation (utils/clean-nils properties))))
 
 (defmethod parse-ast :info [node {:keys [location parsed-location is-fragment]}]
   (debug "Parsing info")
   (let [location (str location "info")]
-    (if (not is-fragment)
-      (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot parsed domain element from info node at " location)))
-      (domain/map->ParsedDomainElement {:id parsed-location
-                                        :fragment-node :parsed-api-documentation
-                                        :properties {:name (:title node)
-                                                     :fragment-node :info
-                                                     :description (:description node)
-                                                     :version (if (not= "" (:version node)) (:version node) nil)
-                                                     :sources (generate-parsed-node-sources "info" location parsed-location)
-                                                     :terms-of-service (:termsOfService node)}}))))
+    (domain/map->ParsedAPIDocumentation {:name (:title node)
+                                         :fragment-node :info
+                                         :description (:description node)
+                                         :version (if (not= "" (:version node)) (:version node) nil)
+                                         :sources (generate-parsed-node-sources "info" location parsed-location)
+                                         :terms-of-service (:termsOfService node)})))
 
 (defmethod parse-ast :paths [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing paths")
@@ -397,11 +379,7 @@
                     :parameters parameters
                     :supported-operations operations
                     :extends traits}]
-    (if is-fragment
-      (domain/map->ParsedDomainElement {:id parsed-location
-                                        :fragment-node :parsed-end-point
-                                        :properties properties})
-      (domain/map->ParsedEndPoint properties))))
+    (domain/map->ParsedEndPoint properties)))
 
 (defn parse-body [parameters {:keys [location parsed-location is-fragment] :as context}]
   (->> (or parameters [])
@@ -426,11 +404,7 @@
              (range 0 (count parameters)))
        (mapv (fn [[media-type properties]]
                {:media-type media-type
-                :body (if is-fragment
-                        (domain/map->ParsedDomainElement {:id parsed-location
-                                                          :fragment-node :parsed-type
-                                                          :properties properties})
-                        (domain/map->ParsedType properties))}))
+                :body (domain/map->ParsedType properties)}))
        first))
 
 (defn filter-empty-payloads [payloads]
@@ -527,11 +501,7 @@
                                                                 (assoc :location location)
                                                                 (assoc :parsed-location parsed-location)
                                                                 (assoc :is-fragment false)))}]
-    (if is-fragment
-      (domain/map->ParsedDomainElement {:id parsed-location
-                                        :fragment-node :parsed-operation
-                                        :properties properties})
-      (domain/map->ParsedOperation properties))))
+    (domain/map->ParsedOperation properties)))
 
 (defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment x-response-bodies-with-media-types] :as context}]
   (debug "Parsing responses")
@@ -587,11 +557,7 @@
                       :status-code (if is-status (name response-key) nil)
                       :name response-key
                       :payloads payloads}]
-      (if is-fragment
-        (domain/map->ParsedDomainElement {:id response-id
-                                          :fragment-node :parsed-response
-                                          :properties properties})
-        (domain/map->ParsedResponse properties)))))
+      (domain/map->ParsedResponse properties))))
 
 
 
@@ -601,31 +567,29 @@
         type-id (str (get shape "@id") "/wrapper")]
     ;; ParsedType nodes just wrap the JSON-LD description for the shape.
     ;; They should not generate stand-alone nodes in the JSON-LD domain model, the node IS the shape
-    (if is-fragment
-      {:id type-id
-       :shape shape}
-      (domain/map->ParsedType {:id type-id
-                               :shape shape}))))
+    (domain/map->ParsedType {:id type-id
+                             :shape shape})))
 
 (defn parse-included-fragment
   "Generates a Includes element from an $ref occurrence in the AST. The $ref tag might point to a local or remote reference.
    If it points to the remote reference, the encoded element in the remote fragment and the remote fragment need to be passed as
-   arguments, the function will update  the list of fragments with the parsed one and will generate the right include or an abstrace
+   arguments, the function will update  the list of fragments with the parsed one and will generate the right include or an abstract
    element extending the reference depending on the type of included node.
    In the case of a local reference, no parsed fragment must be passed and only the right output node will be generated without
    updating the list of references.
    - See parse-ast :fragment and parse-ast :local-ref for more info"
   [fragment-location encoded-element parsed-fragment {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                                       :or {fragments (atom {})}}]
-  (let [encoded-element-sources (-> encoded-element :properties :sources)
+  (let [encoded-element-sources (-> encoded-element :sources)
         clean-encoded-element (condp = type-hint
                                 ;; this information is sensitive to the context, can never be in the fragment
+                                ;; but we will add it to the abstract element we will generate below
                                 :operation (-> encoded-element
-                                               (assoc-in [:properties :method] nil)
-                                               (assoc-in [:properties :sources] nil))
+                                               (assoc :method nil)
+                                               (assoc :sources nil))
                                 :path-item (-> encoded-element
-                                               (assoc [:properties:path] nil)
-                                               (assoc [:properties:path :sources] nil))
+                                               (assoc :path nil)
+                                               (assoc-in :sources nil))
                                 encoded-element)
         parsed-location (str parsed-location "/includes")
         extends [(document/map->ParsedExtends {:id parsed-location
@@ -638,13 +602,15 @@
                          (if (some? (get acc fragment-location))
                            acc
                            (assoc acc fragment-location (assoc parsed-fragment :encodes clean-encoded-element))))))
+    ;; this is the abstract element that will hold the reference to the extended element.
+    ;; We include here the local information we have extracted from the extended element (source and path/method)
     (condp = type-hint
       :operation (domain/map->ParsedOperation {:id parsed-location
-                                               :method (utils/safe-str (-> encoded-element :properties :method))
+                                               :method (utils/safe-str (-> encoded-element :method))
                                                :sources encoded-element-sources
                                                :extends extends})
       :path-item (domain/map->ParsedEndPoint {:id parsed-location
-                                              :path (-> encoded-element :properties :path)
+                                              :path (-> encoded-element :path)
                                               :extends extends
                                               :sources encoded-element-sources})
       (let [properties {:id parsed-location

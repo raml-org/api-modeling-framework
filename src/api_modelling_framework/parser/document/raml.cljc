@@ -194,7 +194,7 @@
                                                           :references (merge references library-declarations)
                                                           :parsed-location (str location "#")
                                                           :document-parser parse-ast
-                                                          :is-fragment true}))]
+                                                          :is-fragment false}))]
      (-> (document/map->ParsedFragment {:id location
                                         :description usage
                                         :location location

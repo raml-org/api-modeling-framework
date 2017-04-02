@@ -95,7 +95,7 @@
                                                                       :annotations annotations
                                                                       :references references
                                                                       :document-parser parse-ast
-                                                                      :is-fragment true}))]
+                                                                      :is-fragment false}))]
     (-> (document/map->ParsedFragment {:id location
                                        :location location
                                        :base-uri location

@@ -85,6 +85,7 @@
             fragment))))
     nil))
 
+
 (defn ensure-applied-fragment [x {:keys [fragments] :as ctx}]
   (if-let [fragment (extended-included-fragment x fragments)]
     (resolve (merge-declaration (assoc x :extends nil) fragment) ctx)
@@ -198,7 +199,7 @@
 
 (defmethod resolve domain/DomainElement [model ctx]
   (debug "Resolving DomainElement " (document/id model))
-  (resolve (domain/to-domain-node (ensure-applied-fragment model ctx)) ctx))
+  (resolve (ensure-applied-fragment model ctx) ctx))
 
 (defmethod resolve domain/APIDocumentation [model ctx]
   (debug "Resolving APIDocumentation " (document/id model))

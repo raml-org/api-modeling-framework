@@ -205,20 +205,6 @@
                                   :label (utils/find-value m v/document:label)
                                   :name (utils/find-value m v/sorg:name)})))
 
-;; Abstract domain elements are slightly different, we have one property coming
-;; from the abstract domain element and the remaining properties come from the
-;; encoded element, we need to transform those properties in the JSON-LD object
-;; into the properties attribute of the domain model
-(defmethod from-jsonld v/document:AbstractDomainElement [m]
-  (debug "Parsing " v/document:AbstractDomainElement " " (get m "@id"))
-  (let [domain-element-types (flatten [(get m "@type" [])])
-        domain-element-types (filterv #(not= % v/document:AbstractDomainElement) domain-element-types)
-        parsed-encoded (from-jsonld (assoc m "@type" domain-element-types))
-        properties (->> parsed-encoded (into {}))]
-    (domain/map->ParsedDomainElement {:id (get m "@id")
-                                      :properties properties
-                                      :fragment-node (keyword (utils/find-value m v/document:fragment-node))})))
-
 (defmethod from-jsonld v/document:DomainPropertySchema [m]
   (debug "Parsing " v/document:DomainPropertySchema  " " (get m "@id"))
   (let [sources (get m v/document:source)

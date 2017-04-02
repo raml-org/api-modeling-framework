@@ -71,9 +71,10 @@
                     (assoc :document-location (document/location model))
                     (assoc :expanded-fragments (or (:expanded-fragments ctx)
                                                    (atom {})))
-                    (assoc :document-generator to-openapi))]
+                    (assoc :document-generator to-openapi))
+        fragment (domain-generator/to-openapi (document/encodes model) context)]
     {syntax/at-location (document/location model)
-     syntax/at-data (domain-generator/to-openapi (domain/to-domain-node (document/encodes model)) context)}))
+     syntax/at-data fragment}))
 
 (defmethod to-openapi :unknown [model ctx]
   (debug "Unknown document fragment trying domain model generator")

@@ -47,7 +47,7 @@
                                    (document/value)
                                    keyword)
                     method (if (some? reference)
-                             (domain/to-domain-node reference)
+                             reference
                              (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
                     generated (domain-generator method ctx)]
                 [trait-name generated])))
@@ -96,3 +96,14 @@
        (filter (fn [type]
                  (= (get (domain/shape type) "@id") shape-type)))
        first))
+
+(defn merge-fragment [base-element fragment {:keys [document-generator] :as ctx}]
+  (let [encoded-fragment (document/encodes fragment)
+        encoded-fragment (reduce (fn [acc k]
+                                   (let [v (get base-element k)]
+                                     (if (nil? v) acc (assoc acc k v))))
+                                 encoded-fragment
+                                 (keys base-element))
+        encoded-fragment (assoc encoded-fragment :extends [])
+        fragment (assoc fragment :encodes encoded-fragment)]
+    (document-generator fragment ctx)))

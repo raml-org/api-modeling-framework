@@ -66,35 +66,25 @@
       (some? included-tag))
     false))
 
-(defn to-raml! [x {:keys [fragments expanded-fragments document-generator] :as ctx}]
-  (if (includes? x) ;; is this node merging something?
-    (let [fragment-target (document/target (first (document/extends x)))
-          fragment (get fragments fragment-target)]
-      (if (nil? fragment)
-        (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
-        ;; we first check in the expansion cache
-        (if-let [expanded-fragment (get expanded-fragments fragment-target)]
-          expanded-fragment
-          ;; not in the cache we compute the value
-          (let [encoded-fragment (document/encodes fragment)
-                encoded-fragment-properties (:properties encoded-fragment)
-                encoded-fragment-properties (reduce (fn [acc k]
-                                                      (let [v (get x k)]
-                                                        (if (nil? v) acc (assoc acc k v))))
-                                                    encoded-fragment-properties
-                                                    (keys x))
-                encoded-fragment-properties (assoc encoded-fragment-properties :extends [])
-                encoded-fragment (assoc encoded-fragment :properties encoded-fragment-properties)
-                encoded-fragment (assoc encoded-fragment :extends [])
-                fragment (assoc fragment :encodes encoded-fragment)
-                expanded-fragment (document-generator fragment ctx)]
-            ;; before returning the expanded fragment, we saved it in the cache
-            (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
-            (with-annotations encoded-fragment ctx
-              expanded-fragment)))))
+(defn to-raml! [base-element {:keys [fragments expanded-fragments document-generator] :as ctx}]
+  (if (includes? base-element) ;; is this node merging something?
+    (let [fragment-target (document/target (first (document/extends base-element)))
+          fragment (get fragments fragment-target)
+          expanded-fragment (if (nil? fragment)
+                              (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " fragment-target " for generation")))
+                              ;; we first check in the expansion cache
+                              (if-let [expanded-fragment (get expanded-fragments fragment-target)]
+                                expanded-fragment
+                                ;; not in the cache we compute the value
+                                (let [expanded-fragment (common/merge-fragment base-element fragment ctx)]
+                                  ;; before returning the expanded fragment, we saved it in the cache
+                                  (swap! expanded-fragments (fn [acc] (assoc acc fragment-target expanded-fragment)))
+                                  expanded-fragment)))]
+      (with-annotations (document/encodes fragment) ctx
+        expanded-fragment))
     ;; Nothing to merge
-    (with-annotations x ctx
-      (to-raml x ctx))))
+    (with-annotations base-element ctx
+      (to-raml base-element ctx))))
 
 (defn model->base-uri [model]
   (let [;;scheme (or (domain/scheme model) [])

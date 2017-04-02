@@ -176,7 +176,7 @@
                                       (with-node-properties m context)
                                       (utils/assoc-value m v/document:fragment-node domain/fragment-node)
                                       utils/clean-nils)
-        encoded-element (to-jsonld (domain/to-domain-node m) context)
+        encoded-element (to-jsonld m context)
         encoded-element-types (flatten [(get encoded-element "@type" [])])
         encoded-element (assoc encoded-element "@type" (distinct (concat domain-element-types encoded-element-types)))]
     (merge domain-element-properties encoded-element)))
