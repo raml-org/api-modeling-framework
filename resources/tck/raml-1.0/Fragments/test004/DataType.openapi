@@ -1,0 +1,15 @@
+{
+    "type": "object",
+    "properties": {
+        "first": {
+            "type": "string"
+        },
+        "second": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "first",
+        "second"
+    ]
+}

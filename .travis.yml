@@ -22,4 +22,5 @@ script:
   - lein test api-modelling-framework.generators.document.raml-test
   - lein test api-modelling-framework.generators.document.openapi-test
   - lein test api-modelling-framework.integration-test
-  - lein doo node test once
+  - lein test api-modelling-framework.tck
+#  - lein doo node test once

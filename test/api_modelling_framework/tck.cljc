@@ -70,7 +70,12 @@
                                          }
                                :fragments {:test001 {:raml (str raml-10-tests "/Fragments/test001/fragment.raml")
                                                      :openapi (str raml-10-tests "/Fragments/test001/fragment.openapi")
-                                                     :jsonld (str raml-10-tests "/Fragments/test001/fragment.jsonld")}}
+                                                     :jsonld (str raml-10-tests "/Fragments/test001/fragment.jsonld")},
+
+                                           :test004 {:raml (str raml-10-tests "/Fragments/test004/DataType.raml")
+                                                     :openapi (str raml-10-tests "/Fragments/test004/DataType.openapi")
+                                                     :jsonld (str raml-10-tests "/Fragments/test004/DataType.jsonld")}
+                                           }
                                }})
 
 
