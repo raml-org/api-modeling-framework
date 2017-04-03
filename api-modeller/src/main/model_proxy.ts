@@ -192,10 +192,6 @@ export class ModelProxy {
     elementLexicalInfo(id: string): LexicalInfo {
         console.log("*** Looking for lexical information about " + id);
         const res = apiFramework.lexical_info_for_unit(this.raw, id);
-        console.log("FOUND:")
-        console.log(JSON.stringify(res, null, 2));
-        console.log("IN JS FORMAT:")
-        console.log(JSON.stringify(from_clj(res), null, 2));
 
         return new LexicalInfo(
             parseInt(res["start-line"]),

@@ -176,7 +176,6 @@ export class ViewModel {
 
 
     public expandDomainUnit(unit: DomainElement) {
-        debugger;
         unit["expanded"] = !unit["expanded"];
         if (unit["expanded"]) {
             const units = this.allUnits();
