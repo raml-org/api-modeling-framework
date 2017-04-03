@@ -206,11 +206,19 @@
          (assoc :raw (get node (keyword "@raw"))))))
   ([node context] (parse-fragment node context "#%RAML 1.0 Fragment")))
 
+(defn make-abstract [domain type]
+  (let [encoded (document/encodes domain)
+        encoded (condp = type
+                  :trait  (-> encoded
+                              (assoc :method nil))
+                 encoded)]
+    (assoc domain :encodes encoded)))
+
 (defmethod parse-ast "#%RAML 1.0 DataType" [node context]
   (parse-fragment node context "#%RAML 1.0 DataType"))
 
 (defmethod parse-ast "#%RAML 1.0 Trait" [node context]
-  (parse-fragment node context "#%RAML 1.0 Trait"))
+  (make-abstract (parse-fragment node context "#%RAML 1.0 Trait") :trait))
 
 (defmethod parse-ast "#%RAML 1.0 Fragment" [node context]
   (parse-fragment node context))

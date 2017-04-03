@@ -44,8 +44,6 @@
 
                      (satisfies? domain/EndPoint model)          domain/EndPoint
 
-                     (satisfies? domain/DomainElement model)     domain/DomainElement
-
                      (satisfies? domain/Operation model)         domain/Operation
 
                      (and (satisfies? domain/PayloadHolder model)
@@ -196,10 +194,6 @@
                                                               (assoc :fragments fragments)
                                                               (assoc :types (compute-types fragments []))))))))
 
-
-(defmethod resolve domain/DomainElement [model ctx]
-  (debug "Resolving DomainElement " (document/id model))
-  (resolve (ensure-applied-fragment model ctx) ctx))
 
 (defmethod resolve domain/APIDocumentation [model ctx]
   (debug "Resolving APIDocumentation " (document/id model))

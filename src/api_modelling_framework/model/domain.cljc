@@ -2,9 +2,7 @@
   (:require [api-modelling-framework.model.document :as document]))
 
 (defprotocol DomainElement
-  (fragment-node [this] "The kind of node this domain element is wrapping")
-  (properties [this] "A map of properties that can be used to build a concrete domain component")
-  (to-domain-node [this] "Transforms this partially parsed domain element into a concrete domain component"))
+  (abstract [this] "The node is partial description of the element"))
 
 (defprotocol CommonAPIProperties
   (host [this] "Optional common host for all nodes in the API")
@@ -26,9 +24,11 @@
   (base-path [this] "Optional base path for all API endpoints")
   (endpoints [this] "List of endpoints in the API"))
 
-(defrecord ParsedAPIDocumentation [id sources name description extends parameters additional-properties
+(defrecord ParsedAPIDocumentation [id abstract sources name description extends parameters additional-properties
                                    host scheme base-path accepts content-type headers
                                    provider terms-of-service version license endpoints]
+  DomainElement
+  (abstract [this] abstract)
   CommonAPIProperties
   (host [this] host)
   (scheme [this] scheme)
@@ -91,7 +91,9 @@
   (supported-operations [this] "HTTP operations supported by this end-point")
   (path [this] "(partial) IRI template where the operations are bound to"))
 
-(defrecord ParsedEndPoint [id sources name description extends additional-properties path supported-operations parameters]
+(defrecord ParsedEndPoint [id abstract sources name description extends additional-properties path supported-operations parameters]
+  DomainElement
+  (abstract [this] abstract)
   EndPoint
   (supported-operations [this] supported-operations)
   (path [this] path)
@@ -110,8 +112,10 @@
   (schema [this] "Schema for the payload")
   (media-type [this] "Media type associated to this payload"))
 
-(defrecord ParsedPayload [id sources name description extends additional-properties
+(defrecord ParsedPayload [id abstract sources name description extends additional-properties
                           schema media-type]
+  DomainElement
+  (abstract [this] abstract)
   document/Node
   (id [this] id)
   (name [this] name)
@@ -134,9 +138,11 @@
   (request [this] "HTTP request information")
   (responses [this] "HTTP responses"))
 
-(defrecord ParsedOperation [id sources name description extends additional-properties
+(defrecord ParsedOperation [id abstract sources name description extends additional-properties
                             method host scheme accepts content-type
                             responses request]
+  DomainElement
+  (abstract [this] abstract)
   Operation
   (method [this] method)
   (request [this] request)
@@ -158,8 +164,10 @@
   (status-code [this] "Status code for the response"))
 
 
-(defrecord ParsedResponse [id sources name description extends additional-properties
+(defrecord ParsedResponse [id abstract sources name description extends additional-properties
                            status-code headers payloads]
+  DomainElement
+  (abstract [this] abstract)
   Response
   (status-code [this] status-code)
   PayloadHolder
@@ -180,7 +188,9 @@
   (shape [this] "Constraints for the data type"))
 
 
-(defrecord ParsedType [id sources name extends description shape additional-properties]
+(defrecord ParsedType [id abstract sources name extends description shape additional-properties]
+  DomainElement
+  (abstract [this] abstract)
   Type
   (shape [this] shape)
   document/Node
@@ -197,8 +207,10 @@
   (parameter-kind [this] "What kind of parameter is this")
   (required [this] "Is this parameter required"))
 
-(defrecord ParsedParameter [id sources name description extends additional-properties
+(defrecord ParsedParameter [id abstract sources name description extends additional-properties
                             parameter-kind shape required]
+  DomainElement
+  (abstract [this] abstract)
   Parameter
   (parameter-kind [this] parameter-kind)
   (required [this] required)
@@ -213,7 +225,9 @@
   (extends [this] (or extends []))
   (additional-properties [this] (or additional-properties [])))
 
-(defrecord ParsedRequest [id sources name description extends additional-properties parameters accepts headers payloads]
+(defrecord ParsedRequest [id abstract sources name description extends additional-properties parameters accepts headers payloads]
+  DomainElement
+  (abstract [this] abstract)
   HeadersHolder
   (headers [this] (or headers []))
   ParametersHolder

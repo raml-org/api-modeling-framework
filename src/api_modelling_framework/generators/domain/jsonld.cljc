@@ -16,8 +16,6 @@
 
     (satisfies? domain/DomainProperty model)        :DomainProperty
 
-    (satisfies? domain/DomainElement model)         :DomainElement
-
     (satisfies? document/Extends model)             :Extends
 
     (satisfies? document/Includes model)            :Includes
@@ -164,22 +162,6 @@
     (if (nil?  (get shape v/sorg:name))
       (utils/assoc-value shape m v/sorg:name document/name)
       shape)))
-
-;; Abstract domain elements are slightly different, we add the properties from
-;; Domain element, like the fragment node name, and then we merge the set of properties
-;; coming from the encoded element, that can be incomplete
-(defmethod to-jsonld :DomainElement [m context]
-  (debug "Generating DomainElement " (document/id m))
-  (let [domain-element-types  [v/document:DomainElement
-                               v/document:AbstractDomainElement]
-        domain-element-properties (-> {}
-                                      (with-node-properties m context)
-                                      (utils/assoc-value m v/document:fragment-node domain/fragment-node)
-                                      utils/clean-nils)
-        encoded-element (to-jsonld m context)
-        encoded-element-types (flatten [(get encoded-element "@type" [])])
-        encoded-element (assoc encoded-element "@type" (distinct (concat domain-element-types encoded-element-types)))]
-    (merge domain-element-properties encoded-element)))
 
 (defmethod to-jsonld :Extends [m context]
   (debug "Generating Extends " (document/id m))
