@@ -1,0 +1,14 @@
+#%RAML 1.0
+title: World Music API
+description: This is an example of a music API.
+version: v1
+baseUri:
+  value: http://{environment}.musicapi.com/{version}
+
+/api:
+  get:
+    responses:
+        200:
+          body:
+            application/xml:
+              type: !include schemas/songs.xsd

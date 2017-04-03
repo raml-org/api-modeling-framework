@@ -254,6 +254,7 @@
                                                 (dissoc :description)
                                                 (dissoc :in))
                                             (-> context
+                                                (assoc :parse-ast parse-ast)
                                                 (assoc :location location)
                                                 (assoc :parsed-location parsed-location)))}))
              (range 0 (count parameters)))
@@ -400,6 +401,7 @@
                                                  (assoc :is-fragment false)
                                                  (assoc :type-hint :type)
                                                  (assoc :location location)
+                                                 (assoc :parse-ast parse-ast)
                                                  (assoc :parsed-location parsed-location)))}]))
              (range 0 (count parameters)))
        (mapv (fn [[media-type properties]]
@@ -563,7 +565,9 @@
 
 (defmethod parse-ast :type [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing type")
-  (let [shape (shapes/parse-type node (assoc context :parsed-location parsed-location))
+  (let [shape (shapes/parse-type node (-> context
+                                          (assoc :parsed-location parsed-location)
+                                          (assoc :parse-ast parse-ast)))
         type-id (str (get shape "@id") "/wrapper")]
     ;; ParsedType nodes just wrap the JSON-LD description for the shape.
     ;; They should not generate stand-alone nodes in the JSON-LD domain model, the node IS the shape

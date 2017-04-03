@@ -5,6 +5,7 @@
             [api-modelling-framework.generators.domain.raml :as domain-generator]
             [api-modelling-framework.utils :as utils]
             [api-modelling-framework.generators.domain.common :as common]
+            [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
@@ -23,12 +24,6 @@
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
 
-(defn update-alias [declare alias]
-  (let [is-type-tag (-> declare (document/find-tag document/is-type-tag) first)
-        is-trait-tag (-> declare (document/find-tag document/is-trait-tag) first)
-        old-tag (or is-type-tag is-trait-tag)
-        new-tag (assoc old-tag :value (str (utils/safe-str alias) "." (utils/safe-str (document/value old-tag))))]
-    (document/replace-tag declare old-tag new-tag)))
 
 (defmethod to-raml :document [model ctx]
   (debug "Generating Document at " (document/location model))
@@ -40,10 +35,11 @@
                   (mapv (fn [[alias location]]
                           [alias (get fragments location)]))
                   (into {}))
+        uses (common/process-anonymous-libraries uses model)
         declares (document/declares model)
         library-declares (->> uses
                               (mapv (fn [[alias fragment]]
-                                      (mapv #(update-alias % alias) (document/declares fragment))))
+                                      (mapv #(common/update-alias % alias) (document/declares fragment))))
                               flatten
                               (mapv (fn [declaration] (assoc declaration :from-library true))))
         annotations (common/model->annotationTypes declares ctx domain-generator/to-raml!)
@@ -63,7 +59,6 @@
      (keyword "@data") encoded
      (keyword "@fragment") "#%RAML 1.0"}))
 
-
 (defmethod to-raml :fragment [model ctx]
   (debug "Generating Fragment at " (document/location model))
   (let [fragments (if (:fragments ctx)
@@ -76,9 +71,10 @@
                   (mapv (fn [[alias location]]
                           [alias (get fragments location)]))
                   (into {}))
+        uses (common/process-anonymous-libraries uses model)
         library-declares (->> uses
                               (mapv (fn [[alias fragment]]
-                                      (mapv #(update-alias % alias) (document/declares fragment))))
+                                      (mapv #(common/update-alias % alias) (document/declares fragment))))
                               flatten
                               (mapv (fn [declaration] (assoc declaration :from-library true))))
         uses (->> uses

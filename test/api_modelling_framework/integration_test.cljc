@@ -65,6 +65,7 @@
                    _ (is (not (error? model)))
                    output-model (core/document-model model)
                    _ (is (not (error? output-model)))
+                   _ (println "GENERATING RAL!!!!!")
                    output-string (<! (cb->chan (partial core/generate-string generator "resources/world-music-api/wip.raml"
                                                         output-model
                                                         {})))
@@ -72,12 +73,12 @@
                    output (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string)))]
 
                (is (= [:Album :Track] (-> output :types keys)))
-               (is (= "SongsLib.Song" (-> output :types :Track :properties :song :type)))
+               (is (= "SongsLib.Song" (-> output :types :Track :properties :song)))
                (is (some? (-> output :uses :SongsLib)))
                (is (some? (-> output :traits :secured)))
                (is (= ["secured"] (-> output (get (keyword "/albums")) :is)))
                (is (= "Album" (-> output (get (keyword "/albums")) :get :responses :200 :body :items)))
-               (is (= {:behaviour {:properties {:name {:type "string"}}, :type "object"}, :test {:type "string"}}
+               (is (= {:behaviour {:properties {:name "string"}}, :test {:type "string"}}
                       (:annotationTypes output)))
                (is (= "albumsTest" (-> output (get (keyword "/albums")) :post (get (keyword "(test)")))))
                (is (= "safe" (-> output (get (keyword "/albums")) :get :responses :200 (get (keyword "(behaviour)")) :name)))
@@ -120,7 +121,7 @@
                               (map :body))]
                (doseq [type types]
                  (is (or (= (:type type) "array")
-                         (= (:type type) "object")))
+                         (some? (:properties type))))
                  (if (= "array" (:type type))
                    (is (> (count (:items type)) 0))
                    (is (> (count (:properties type)) 0))))
@@ -166,7 +167,7 @@
                                           first
                                           domain/media-type
                                           utils/safe-str)))
-               (is (= "/definitions/RamlDataType/shape"
+               (is (= "/definitions/RamlDataType"
                       (let [type (->>
                                   (domain/supported-operations api-resource)
                                   last
@@ -175,7 +176,10 @@
                                   first
                                   (domain/schema)
                                   (domain/shape))]
-                        (last (string/split (first (get type (v/shapes-ns "inherits"))) #"#")))))
+                        (last (string/split
+                               ;; id of the inherited type
+                               (get (first (get type (v/shapes-ns "inherits"))) "@id")
+                               #"#")))))
                (is (= "application/xml"
                       (->> song-resource
                            (domain/supported-operations)
@@ -249,6 +253,7 @@
                                   first
                                   (get "schema")
                                   (get "$ref"))]
+
         (is (string? fragment-location))
         (is (string/ends-with? fragment-location ".xsd")))))
 
@@ -282,7 +287,8 @@
                    output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/world-music-api/wip.raml"
                                                         output-model
                                                         {})))
-                   _ (is (not (error? output-jsonld)))]
+                   _ (is (not (error? output-jsonld)))
+                   ]
                (is (= {:start-line 1,
                        :start-column 0,
                        :start-index 11,
@@ -631,10 +637,6 @@
                                                             output-model
                                                             {}
                                                             (fn [error raml-string]
-                                                              (println "BACK!")
-                                                              (prn error)
-                                                              (println "I'M BACK")
-                                                              (println raml-string)
                                                               (is true)
                                                               (done))))))))))
 

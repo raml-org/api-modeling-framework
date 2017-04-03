@@ -64,7 +64,7 @@
   (let [input {:baseUri "test.com"
                :protocols "http"
                :version "1.0"
-               :traits {:secure {:queryParameters {:access_token {:type "string"}}}}
+               :traits {:secure {:queryParameters {:access_token "string"}}}
                (keyword "/users") {:displayName "Users"
                                    (keyword "/items") {:displayName "items"
                                                        :is ["secure"]}}}

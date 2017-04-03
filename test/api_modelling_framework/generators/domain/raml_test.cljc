@@ -75,10 +75,10 @@
                :description "get description"
                :protocols ["http"]
                :responses {"200" {:description "200 response"
-                                  :body {"application/json" {:type "any"}
-                                         "text/plain"       {:type "any"}}}
+                                  :body {"application/json" "any"
+                                         "text/plain"       "any"}}
                            "400" {:description "400 response"
-                                  :body {:type "any"}}}}
+                                  :body "any"}}}
         parsed (raml-parser/parse-ast input {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
                                              :location "file://path/to/resource.raml#/users"
                                              :path "/users"
@@ -91,15 +91,15 @@
   (let [input {:displayName "get method"
                :description "get description"
                :protocols ["http"]
-               :headers {:Zencoder-Api-Key {:type "integer"}}
-               :body {:type "string"}
-               :queryParameters {:page {:type "integer"}
-                                 :per_page {:type "integer"}}
+               :headers {:Zencoder-Api-Key "integer"}
+               :body "string"
+               :queryParameters {:page "integer"
+                                 :per_page "integer"}
                :responses {"200" {:description "200 response"
-                                :body {"application/json" {:type "string"}
-                                       "text/plain"       {:type "string"}}}
+                                  :body {"application/json" "string"
+                                         "text/plain"       "string"}}
                            "400" {:description "400 response"
-                                :body {:type "string"}}}}
+                                  :body "string"}}}
         parsed (raml-parser/parse-ast input {:parsed-location "file://path/to/resource.raml#/api-documentation/resources/0"
                                              :location "file://path/to/resource.raml#/users"
                                              :path "/users"
@@ -117,7 +117,7 @@
                :version "v3"
                :traits {:paged
                         {:queryParameters
-                         {:start {:type "number"}}}}
+                         {:start "number"}}}
                (keyword "/users") {:displayName "Users"
                                    :get {:description "get description"
                                          :is ["paged"]
@@ -136,8 +136,7 @@
 
 (deftest to-raml-body
   (let [location "file://path/to/file.raml#"
-        input {:post {:body {"application/json" {:type "object"
-                                                 :properties {:name {:type "string"}}}}}}
+        input {:post {:body {"application/json" {:properties {:name "string"}}}}}
         parsed (raml-parser/parse-ast input {:location location
                                              :parsed-location location})
         generated (generator/to-raml (first parsed) {})]
@@ -145,8 +144,7 @@
 
 (deftest to-raml-body-2
   (let [location "file://path/to/file.raml#"
-        input {:post {:body {:type "object"
-                             :properties {:name {:type "string"}}}}}
+        input {:post {:body {:properties {:name "string"}}}}
         parsed (raml-parser/parse-ast input {:location location
                                              :parsed-location location})
         generated (generator/to-raml (first parsed) {})]
@@ -154,10 +152,8 @@
 
 (deftest to-raml-body-3
   (let [location "file://path/to/file.raml#"
-        input {:post {:body {"application/json" {:type "object"
-                                                 :properties {:name {:type "string"}}}
-                             "application/json-ld" {:type "object"
-                                                    :properties {:name2 {:type "string"}}}}}}
+        input {:post {:body {"application/json" {:properties {:name "string"}}
+                             "application/json-ld" {:properties {:name2 "string"}}}}}
         parsed (raml-parser/parse-ast input {:location location
                                              :parsed-location location})
         generated (generator/to-raml (first parsed) {})]

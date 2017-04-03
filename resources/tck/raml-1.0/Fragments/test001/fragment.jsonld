@@ -1,0 +1,88 @@
+{
+    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Fragments/test001/fragment.jsonld",
+    "@type": [
+        "http://raml.org/vocabularies/document#Fragment",
+        "http://raml.org/vocabularies/document#Unit"
+    ],
+    "http://raml.org/vocabularies/document#encodes": [
+        {
+            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Fragments/test001/fragment.raml#/shape",
+            "@type": [
+                "http://www.w3.org/ns/shacl#Shape"
+            ],
+            "http://www.w3.org/ns/shacl#property": [
+                {
+                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Fragments/test001/fragment.raml#/shape",
+                    "@type": [
+                        "http://www.w3.org/ns/shacl#PropertyConstraint"
+                    ],
+                    "http://raml.org/vocabularies/shapes#propertyLabel": [
+                        {
+                            "@value": "prop1"
+                        }
+                    ],
+                    "http://raml.org/vocabularies/shapes#range": [
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Fragments/test001/fragment.raml#/shape/scalar-shape",
+                            "@type": [
+                                "http://www.w3.org/ns/shacl#Shape",
+                                "http://raml.org/vocabularies/shapes#Scalar"
+                            ],
+                            "http://www.w3.org/ns/shacl#dataType": [
+                                {
+                                    "@id": "http://www.w3.org/2001/XMLSchema#float"
+                                }
+                            ]
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#minCount": [
+                        {
+                            "@value": 1
+                        }
+                    ]
+                },
+                {
+                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Fragments/test001/fragment.raml#/shape",
+                    "@type": [
+                        "http://www.w3.org/ns/shacl#PropertyConstraint"
+                    ],
+                    "http://raml.org/vocabularies/shapes#propertyLabel": [
+                        {
+                            "@value": "prop2"
+                        }
+                    ],
+                    "http://raml.org/vocabularies/shapes#range": [
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Fragments/test001/fragment.raml#/shape/ref-shape",
+                            "@type": [
+                                "http://raml.org/vocabularies/shapes#Shape"
+                            ],
+                            "http://raml.org/vocabularies/shapes#inherits": [
+                                {"@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Fragments/test001/lib/lib.raml/types#/definitions/ObjectType"}
+                            ],
+                            "http://schema.org/name": [
+                                {
+                                    "@value": "ObjectType"
+                                }
+                            ]
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#minCount": [
+                        {
+                            "@value": 1
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "http://raml.org/vocabularies/document#references": [
+        {
+            "@id": "resources/tck/raml-1.0/Fragments/test001/lib/lib.jsonld",
+            "@type": [
+                "http://raml.org/vocabularies/document#Module",
+                "http://raml.org/vocabularies/document#Unit"
+            ]
+        }
+    ]
+}

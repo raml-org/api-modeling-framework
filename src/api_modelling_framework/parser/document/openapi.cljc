@@ -15,12 +15,13 @@
          (some? (syntax/<-fragment node))
          (some? (syntax/<-data node))
          (= "Swagger Library"
-            (->> node syntax/<-data :swagger))) :library
+            (->> node syntax/<-data :swagger)))     :library
 
     (and (some? (syntax/<-location node))
-         (some? (syntax/<-fragment node)))      :root
+         (some? (syntax/<-fragment node))
+         (some? (->> node syntax/<-data :swagger))) :root
 
-    (some? (syntax/<-location node))            :fragment
+    (some? (syntax/<-location node))                :fragment
 
     (and (nil? (syntax/<-location node))
          (nil? (syntax/<-fragment node)))       (throw
@@ -31,22 +32,26 @@
 
 (defmulti parse-ast (fn [type node] (parse-ast-dispatch-function type node)))
 
-
-(defn process-uses-tags [node {:keys [location parsed-location]}]
-  (let [uses (:x-uses (syntax/<-data node) {})]
+(defn process-uses-tags [node {:keys [location parsed-location] :as context}]
+  (let [uses (:x-uses (syntax/<-data node) [])]
     (let [source-map-id (str parsed-location "/source-map/uses")
+          libraries (->> uses
+                         (reduce (fn [acc library]
+                                   (let [library (parse-ast library context)]
+                                     (conj acc library)))
+                                 []))
           tags (->> uses
                     (mapv (fn [library]
-                            (let [library-location (syntax/<-location library)
+                            (let [library-location (or (syntax/<-location library) library)
                                   library-alias (-> library-location (string/split #"/") last)]
                               (document/->UsesLibraryTag source-map-id library-alias library-location)))))]
-      [(document/->DocumentSourceMap source-map-id location tags [])])))
+      [libraries [(document/->DocumentSourceMap source-map-id location tags [])]])))
 
 (defmethod parse-ast :root [node context]
   (let [location (syntax/<-location node)
         _ (debug "Parsing OpenAPI Document at " location)
         fragments (or (:fragments context) (atom {}))
-        uses-tags (process-uses-tags node context)
+        [libraries uses-tags] (process-uses-tags node context)
         annotations (atom {})
         ;; we parse traits and types and add the information into the context
         traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
@@ -75,7 +80,7 @@
                                               :base-uri location
                                               :encodes encoded
                                               :declares (concat (vals declarations) (vals @annotations))
-                                              :references (vals @fragments)
+                                              :references (concat (vals @fragments) libraries)
                                               :sources uses-tags
                                               :document-type "OpenAPI"}))
         (assoc :raw (get node (keyword "@raw"))))))
@@ -85,7 +90,12 @@
         location (syntax/<-location node)
         _ (debug "Parsing OpenAPI Fragment at " location)
         fragments (or (:fragments context) (atom {}))
-        ;; @todo is this illegal?
+        [libraries uses-tags] (process-uses-tags node context)
+        libraries-declarations (->> libraries
+                                    (map (fn [lib] (document/declares lib)))
+                                    flatten
+                                    (map (fn [dec] [(document/id dec) dec]))
+                                    (into {}))
         references (or (:references context) {})
         annotations (atom {})
         encoded (domain-parser/parse-ast (syntax/<-data node) (merge context
@@ -93,14 +103,15 @@
                                                                       :base-uri location
                                                                       :fragments fragments
                                                                       :annotations annotations
-                                                                      :references references
+                                                                      :references (merge references libraries-declarations)
                                                                       :document-parser parse-ast
                                                                       :is-fragment false}))]
     (-> (document/map->ParsedFragment {:id location
                                        :location location
                                        :base-uri location
                                        :encodes encoded
-                                       :references (vals @fragments)
+                                       :references (concat (vals @fragments) libraries)
+                                       :sources uses-tags
                                        :document-type "OpenApi Fragment"})
         (assoc :raw (get node (keyword "@raw"))))))
 

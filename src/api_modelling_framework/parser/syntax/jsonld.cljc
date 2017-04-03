@@ -25,21 +25,19 @@
 
 (defn find-references
   ([json]
-   (->> (get json v/document:references [])
-        (map #(get % "@id")))))
+   (get json v/document:references [])))
 
 (defn fill-references
   ([json acc]
-   (let [references (-> json
-                        (get json v/document:references [])
-                        (map (fn [ref] (let [id (get acc "@id")]
-                                        (if (some? id)
-                                          (get acc id ref)
-                                          ref))))
-                        (filter #(some? (get % "@id"))))]
+   (let [references (->> (get json v/document:references [])
+                         (map (fn [ref] (let [id (get ref "@id")]
+                                         (if (some? id)
+                                           (get acc id ref)
+                                           ref))))
+                         (filter #(some? (get % "@id"))))]
      (if (> (count references) 0)
-       (dissoc acc v/document:references)
-       (assoc acc v/document:references references)))))
+       (assoc json v/document:references references)
+       (dissoc json v/document:references)))))
 
 (defn link? [ref]
   (let [keys (keys ref)]
@@ -53,10 +51,10 @@
                acc
                (let [ref (first refs)
                      resolved (if (link? ref)
-                                (<! (parse-file ref))
+                                (<! (parse-file (get ref "@id")))
                                 ref)]
                  (recur (rest refs)
-                        (assoc acc ref resolved)))))
+                        (assoc acc (get ref "@id") resolved)))))
            (catch #?(:clj Exception :cljs js/Error) ex
              ex))))
 
@@ -66,7 +64,7 @@
          (let [id (->id location)
                data (<! (platform/read-location id))
                parsed (platform/decode-json data)
-               references (find-references id parsed)
+               references (find-references parsed)
                references-map (<! (resolve-references references))]
            (fill-references parsed references-map))
          (catch #?(:cljs js/Error :clj Exception) ex ex)))))
@@ -76,7 +74,7 @@
    (go (try
          (let [id (->id location)
                parsed (platform/decode-json data)
-               references (find-references id parsed)
+               references (find-references parsed)
                references-map (<! (resolve-references references))]
            (fill-references parsed references-map))
          (catch #?(:cljs js/Error :clj Exception) ex ex)))))

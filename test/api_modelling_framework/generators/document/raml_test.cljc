@@ -19,7 +19,7 @@
                                                        :type "string"}}
                                   :traits {:paged
                                            {:queryParameters
-                                            {:start {:type "number"}}}}
+                                            {:start "number"}}}
                                   (keyword "/users") {:displayName "Users"
                                                       :post {:description "post description"
                                                              :is ["paged"]
@@ -41,10 +41,9 @@
         input {(keyword "@location") location
                (keyword "@fragment") "#%RAML 1.0 Library"
                (keyword "@data") {:usage "Use to define some basic file-related constructs."
-                                  :types {:File {:type "object"
-                                                 :properties {:name {:type "string"}
-                                                              :length {:type "integer"}}}}
-                                  :traits {:drm {:headers {:drm-key {:type "string"}}}}}}
+                                  :types {:File {:properties {:name "string"
+                                                              :length "integer"}}}
+                                  :traits {:drm {:headers {:drm-key "string"}}}}}
         parsed (parser/parse-ast input {})
         generated (generator/to-raml parsed {})]
     (is (= generated input))))
@@ -54,10 +53,9 @@
         input-library {(keyword "@location") location
                        (keyword "@fragment") "#%RAML 1.0 Library"
                        (keyword "@data") {:usage "Use to define some basic file-related constructs."
-                                          :types {:File {:type "object"
-                                                         :properties {:name {:type "string"}
-                                                                      :length {:type "integer"}}}}
-                                          :traits {:drm {:headers {:drm-key {:type "string"}}}}}}
+                                          :types {:File {:properties {:name "string"
+                                                                      :length "integer"}}}
+                                          :traits {:drm {:headers {:drm-key "string"}}}}}
         input {(keyword "@location") "file://path/to/api.raml"
                (keyword "@fragment") "#%RAML 1.0"
                (keyword "@data") {:uses {:lib input-library}

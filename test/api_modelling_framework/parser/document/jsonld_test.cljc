@@ -29,6 +29,7 @@
         doc (document/map->ParsedFragment {:location location
                                            :encodes nil
                                            :document-type "open-api"
+                                           :references []
                                            :id "http://test.com/location.json"})
         generated (generator/to-jsonld doc true)
         parsed (parser/from-jsonld generated)]

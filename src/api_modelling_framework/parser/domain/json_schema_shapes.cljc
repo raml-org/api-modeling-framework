@@ -3,6 +3,7 @@
             [api-modelling-framework.utils :as utils]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.model.document :as document]
+            [api-modelling-framework.model.syntax :as syntax]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
@@ -33,12 +34,11 @@
        (parse-generic-keywords node)))
 
 (defn parse-shape [node {:keys [parsed-location] :as context}]
-  (let [parsed-location (str parsed-location "/shape")
-        required-set (set (:required node []))
+  (let [required-set (set (:required node []))
         properties (->> (:properties node [])
                         (map (fn [[k v]]
                                (let [parsed-location (str parsed-location "/property/" (utils/safe-str k))]
-                                 (->> {"@type" ["sh:PropertyConstraint"]
+                                 (->> {"@type" [(v/sh-ns "PropertyConstraint")]
                                        "@id" parsed-location
                                        (v/shapes-ns "propertyLabel") [{"@value" (utils/safe-str k)}]
                                        ;; mandatory prop?
@@ -57,8 +57,7 @@
          (parse-type-constraints node))))
 
 (defn parse-array [node {:keys [parsed-location] :as context}]
-  (let [parsed-location (str parsed-location "/shape")
-        required-set (set (:required node []))
+  (let [required-set (set (:required node []))
         items (->> [(:items node {})]
                    flatten
                    (map (fn [shape] (parse-type shape (assoc context :parsed-location parsed-location)))))]
@@ -69,9 +68,28 @@
          (parse-type-constraints node))))
 
 (defn parse-scalar [parsed-location scalar-type]
-  {"@id" (str parsed-location "/shape")
+  {"@id" parsed-location
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "Scalar")]
    (v/sh-ns "dataType") [{"@id" scalar-type}]})
+
+(defn label [type-reference remote-id]
+  (if (some? type-reference)
+    (or (-> type-reference :name)
+        (-> type-reference domain/shape :name)
+        (str "#" (last (string/split remote-id #"#"))))
+    nil))
+
+(defn check-inclusion [node {:keys [parse-ast parsed-location] :as context}]
+  (let [parsed (parse-ast node context)
+        location (syntax/<-location node)
+        reference (-> context (get :references {}) (get location))
+        label (label reference location)
+        shape {"@id" parsed-location
+               "@type" [(v/shapes-ns "Shape")]
+               (v/shapes-ns "inherits") [{"@id" location}]}]
+    (if (and (some? reference) (some? label))
+      (assoc shape v/sorg:name [{"@value" label}])
+      shape)))
 
 (defn find-reference
   "References can be local or remote, we check all possibilities"
@@ -96,23 +114,23 @@
 
   (if-let [type-reference (find-reference references type-string context)]
     (if (satisfies? document/Includes type-reference)
-      {"@id" (str parsed-location "/include-shape")
+      {"@id" parsed-location
        "@type" [(v/shapes-ns "Shape")]
-       (v/shapes-ns "inherits") [(document/target type-reference)]}
+       (v/shapes-ns "inherits") [{"@id" (document/target type-reference)}]}
       (let [remote-id (-> type-reference domain/shape (get "@id"))
-            label (or (-> type-reference :name)
-                      (-> type-reference domain/shape :name)
-                      (str "#" (last (string/split remote-id #"#"))))]
-        {"@id" (str parsed-location "/ref-shape")
+            label (label type-reference remote-id)]
+        {"@id" parsed-location
          v/sorg:name [{"@value" label}]
          "@type" [(v/shapes-ns "Shape")]
-         (v/shapes-ns "inherits") [remote-id]}))
+         (v/shapes-ns "inherits") [{"@id" remote-id}]}))
     nil))
 
 
 (defn parse-type [node {:keys [parsed-location] :as context}]
   (let [type-string (if (string? node) node (:type node))]
     (cond
+      (some? (syntax/<-data node)) (check-inclusion node context)
+
       (some? (:$ref node))  (check-reference (:$ref node) context)
 
       (string? type-string) (condp = type-string

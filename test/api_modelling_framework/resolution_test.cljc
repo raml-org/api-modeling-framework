@@ -49,7 +49,7 @@
     (is (= ["200" "400"] (-> generated-raml (get (keyword "/users")) :get :responses keys)))
     (is (= ["http"] (-> generated-raml (get (keyword "/users")) :post :protocols)))
     (is (= ["201" "400"] (-> generated-raml (get (keyword "/users")) :post :responses keys)))
-    (is (= {:type "number"} (-> generated-raml (get (keyword "/users")) :post :queryParameters :start)))
+    (is (= "number" (-> generated-raml (get (keyword "/users")) :post :queryParameters :start)))
 
     ;; testing generted jsonld
     (is (= (sort [:get :post]) (sort (-> generated-openapi :paths (get (keyword "/users")) keys))))

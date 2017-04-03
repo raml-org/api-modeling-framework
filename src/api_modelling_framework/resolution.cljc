@@ -380,17 +380,39 @@
                                                          (mapv #(resolve-type % ctx)
                                                                property-range))))))))
 
+(defn process-arrray-type [type ctx]
+  (assoc type (v/shapes-ns "item") (mapv #(resolve-type % ctx)
+                                         (get type (v/shapes-ns "item")))))
+
 ;;(some? (type-reference? type ctx))  (resolve-type (type-reference? type ctx) ctx)
+
+(defn maybe-ref? [type]
+  (let [inherits (get type (v/shapes-ns "inherits") [])
+        properties (get type (v/sh-ns "property") [])]
+    (and (= 1 (count inherits))
+         (= 0 (count properties)))))
+
+(defn extract-ref [type]
+  (let [name (first (get type v/sorg:name []))
+        inherited (first (get type (v/shapes-ns "inherits") []))
+        name (if (nil? name) (get inherited v/sorg:name) [name])]
+    (assoc inherited v/sorg:name name)))
 
 (defn check-inheritance [type ctx]
   (let [super-types (get type (v/shapes-ns "inherits"))]
     (if (some? super-types)
-      (assoc type (v/shapes-ns "inherits") (mapv (fn [super-type]
-                                                   (cond
-                                                     (map? super-type)                 (resolve-type super-type ctx)
-                                                     (type-reference? super-type ctx)  (resolve-type (type-reference? super-type ctx) ctx)
-                                                     :else super-type))
-                                                 super-types))
+      (let [inherited (assoc type (v/shapes-ns "inherits") (mapv (fn [super-type]
+                                                                   (cond
+                                                                     (and (map? super-type)
+                                                                          (get super-type "@id")
+                                                                          (type-reference? (get super-type "@id") ctx))  (resolve-type (type-reference? (get super-type "@id") ctx) ctx)
+                                                                     (map? super-type)                                   (resolve-type super-type ctx)
+                                                                     (type-reference? super-type ctx)                    (resolve-type (type-reference? super-type ctx) ctx)
+                                                                     :else super-type))
+                                                                 super-types))]
+        (if (maybe-ref? inherited)
+          (extract-ref inherited)
+          inherited))
       type)))
 
 (defn resolve-type [type ctx]
@@ -399,13 +421,18 @@
 
                         (scalar-type? type) type
 
-                        (array-type? type)  (assoc type (v/shapes-ns "item") (mapv #(resolve-type % ctx)
-                                                                                   (get type (v/shapes-ns "item"))))
+                        (array-type? type)  (process-arrray-type type ctx)
 
                         (object-type? type) (process-object-type type ctx)
 
-                        :else type)]
-    (check-inheritance resolved-type ctx)))
+                        :else type)
+        final (check-inheritance resolved-type ctx)]
+    ;;q(println "\n\nRESOLVING: ")
+    ;;q(clojure.pprint/pprint type)
+    ;;q(println "RESOLVED")
+    ;;q(clojure.pprint/pprint final)
+    ;;q(println "\n\n")
+    final))
 
 (defmethod resolve :Type [m ctx]
   (debug "Resolving type " (get m "@id"))

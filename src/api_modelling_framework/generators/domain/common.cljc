@@ -77,9 +77,27 @@
        (into {})
        (utils/clean-nils)))
 
+(defn remove-extension [lib]
+  (if (string/index-of lib ".")
+    (-> lib (string/split #"\.") first)
+    lib))
+
+(defn anon-lib-alias [lib counter]
+  (try
+    (let [alias (-> lib
+                    document/id
+                    (string/split #"/")
+                    last
+                    remove-extension)]
+      (if (nil? alias)
+        (str "lib" (swap! counter inc))
+        alias))
+    (catch #?(:cljs js/Error :clj Exception) ex
+      (str "lib" (swap! counter inc)))))
+
 (defn model->uses [node]
   (->> (document/find-tag node document/uses-library-tag)
-       (map (fn [tag] [(document/name tag) (document/value tag)]))
+       (map (fn [tag] [(remove-extension (document/name tag)) (document/value tag)]))
        (into {})))
 
 
@@ -107,3 +125,70 @@
         encoded-fragment (assoc encoded-fragment :extends [])
         fragment (assoc fragment :encodes encoded-fragment)]
     (document-generator fragment ctx)))
+
+(defn unique-alises [uses counter aliases-pairs]
+  (let [aliases (atom (->> uses keys (reduce (fn [acc e] (assoc acc e true)) {})))]
+    (->> aliases-pairs
+         (map (fn [[alias lib]]
+                (if (nil? (get @aliases alias))
+                  (do (swap! aliases (fn [old-value] (assoc old-value alias true)))
+                      [alias lib])
+                  (let [alias (str alias "_" (swap! counter inc))]
+                    (swap! aliases (fn [old-value] (assoc old-value alias true)))
+                    [alias lib])))))))
+
+(defn process-anonymous-libraries
+  "Some libraries will not have a source map, in this case we find them in the list of references and we generated an identifier"
+  [uses model]
+  (let [uses-map (->> uses (map (fn [[alias lib]] [(document/id lib) true])) (into {}))
+        refs (document/references model)
+        all-libraries (->> refs (filter (fn [ref] (satisfies? document/Module ref))))
+        anonymous-libraries (->> all-libraries (filter (fn [lib] (nil? (get uses-map (document/id lib))))))
+        counter (atom 0)
+        uses-anonymous-libraries (->> anonymous-libraries
+                                      (map (fn [lib] [(anon-lib-alias lib counter) lib]))
+                                      (unique-alises uses counter)
+                                      (into {}))]
+    (merge uses uses-anonymous-libraries)))
+
+(defn process-anonymous-libraries-list
+  "Some libraries will not have a source map, in this case we find them in the list of references and we generated an identifier"
+  [uses model]
+  (let [uses-map (->> uses (map (fn [lib] [(document/id lib) true])) (into {}))
+        refs (document/references model)
+        all-libraries (->> refs (filter (fn [ref] (satisfies? document/Module ref))))
+        anonymous-libraries (->> all-libraries (filter (fn [lib] (nil? (get uses-map (document/id lib))))))]
+    (concat uses anonymous-libraries)))
+
+(defn default-label [declaration]
+  (cond
+    (or (nil? declaration)
+        (not (satisfies? document/Node declaration)))  (str (gensym "label"))
+    (some? (document/name declaration)) (document/name declaration)
+    :else  (let [id (or (document/id declaration) (str gensym "label"))
+                 path (last (string/split id #"/"))
+                 label (remove-extension path)]
+             label)))
+
+(defn maybe-value [tag]
+  (if (some? tag)
+    (utils/safe-str (document/value tag))
+    nil))
+
+(defn update-alias [declare alias]
+  (let [is-type-tag (-> declare (document/find-tag document/is-type-tag) first)
+        is-trait-tag (-> declare (document/find-tag document/is-trait-tag) first)]
+    (if (or is-trait-tag is-type-tag)
+      (let [label (or (maybe-value is-type-tag)
+                      (maybe-value is-trait-tag))
+            old-tag (or is-type-tag is-trait-tag (document/map->IsTypeTag {:id (document/id declare) :value label}))
+            new-tag (assoc old-tag :value (str (utils/safe-str alias) "." label))]
+        (document/replace-tag declare old-tag new-tag))
+      (let [label (default-label declare)
+            is-type-tag (document/map->IsTypeTag {:id (document/id declare) :value (str (utils/safe-str alias) "." label)})
+            sources (or (document/sources declare) [])
+            source-map (document/->DocumentSourceMap (str (document/id declare) "/source-map")
+                                                     (document/id declare)
+                                                     [is-type-tag]
+                                                     [])]
+        (assoc declare :sources (concat sources [source-map]))))))

@@ -21,7 +21,7 @@
                 {
                     "@id": "#/definitions/TestSchema/shape/property/:type",
                     "@type": [
-                        "sh:PropertyConstraint"
+                        "http://www.w3.org/ns/shacl#PropertyConstraint"
                     ],
                     "http://raml.org/vocabularies/shapes#propertyLabel": [
                         {
@@ -108,7 +108,7 @@
                                                         "http://raml.org/vocabularies/shapes#Shape"
                                                     ],
                                                     "http://raml.org/vocabularies/shapes#inherits": [
-                                                        "#/definitions/TestSchema/shape"
+                                                        {"@id": "#/definitions/TestSchema/shape"}
                                                     ],
                                                     "http://schema.org/name": [
                                                         {

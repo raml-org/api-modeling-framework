@@ -193,13 +193,13 @@
 
 
 (deftest parser-ast-type-scalars
-  (let [int-type {:type "integer"}
+  (let [int-type "integer"
         int-type-with-comment  {:type "integer"
                                 :displayName "AnInteger"
                                 :description "This is an integer"}
-        string-type {:type "string"}
-        time-only-type {:type "time-only"}
-        date-only-type {:type "date-only"}]
+        string-type "string"
+        time-only-type "time-only"
+        date-only-type "date-only"]
     (doseq [raml-type [int-type int-type-with-comment string-type time-only-type date-only-type]]
       (let [shape (raml-parser/parse-ast raml-type {:type-hint :type
                                                     :parsed-location "/response"
@@ -209,17 +209,17 @@
 
 (deftest parser-ast-type-arrays
   (let [int-type {:type "array"
-                  :items {:type "integer"}}
+                  :items "integer"}
         string-type {:type "array"
-                     :items {:type "string"}}
+                     :items "string"}
         time-only-type {:type "array"
-                        :items {:type "time-only"}}
+                        :items "time-only"}
         date-only-type {:type "array"
-                        :items {:type "date-only"}}
+                        :items "date-only"}
         tuple-type      {:type "array"
                          :items {:type "union"
-                                 :of [{:type "date-only"}
-                                      {:type "string"}]}
+                                 :of ["date-only"
+                                      "string"]}
                          (keyword "(is-tuple)") true}]
     (doseq [raml-type [int-type string-type time-only-type date-only-type tuple-type]]
       (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
@@ -230,15 +230,13 @@
 
 (deftest parser-ast-type-objects
   (let [int-type {:type "array"
-                  :items {:type "integer"}}
+                  :items "integer"}
         string-type {:type "array"
-                     :items {:type "string"}}
-        object-type-1 {:type "object"
-                       :properties {:a int-type
+                     :items "string"}
+        object-type-1 {:properties {:a int-type
                                     :b string-type}
                        :additionalProperties false}
-        object-type-2 {:type "object"
-                       :properties {:a int-type
+        object-type-2 {:properties {:a int-type
                                     :b string-type}}]
     (doseq [raml-type [object-type-1 object-type-2]]
       (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"

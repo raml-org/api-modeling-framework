@@ -10,6 +10,7 @@
             [api-modelling-framework.parser.syntax.yaml :as yaml-parser]
             [api-modelling-framework.utils :as utils]
             [api-modelling-framework.utils-test :refer [cb->chan error?]]
+            #?(:clj [com.georgejahad.difform :as difform])
             [clojure.string :as string]
             #?(:cljs [cljs.nodejs :as nodejs])
             #?(:cljs [cljs.core.async :refer [<! >! chan]])
@@ -67,7 +68,9 @@
                                                    :jsonld (str raml-10-tests "/Methods/test003/meth03.jsonld")}
 
                                          }
-                               ;; :fragments {:test001 {:raml (str raml-10-tests "/Fragments/test001/fragment.raml")}}
+                               :fragments {:test001 {:raml (str raml-10-tests "/Fragments/test001/fragment.raml")
+                                                     :openapi (str raml-10-tests "/Fragments/test001/fragment.openapi")
+                                                     :jsonld (str raml-10-tests "/Fragments/test001/fragment.jsonld")}}
                                }})
 
 
@@ -116,16 +119,29 @@
   #?(:clj (when (not= a b)
             (println "ERROR IN STRUCTURAL COMPARISON")
             (println "\nGENERATED:")
+            ;;(clojure.pprint/pprint a)
             (clojure.pprint/pprint (clean-noise a))
             (println "\nTARGET:")
+            ;;(clojure.pprint/pprint b)
             (clojure.pprint/pprint (clean-noise b))
             (println "\nDIFF:\n")
-            (clojure.pprint/pprint (data/diff (clean-noise a) (clean-noise b)))))
+            (clojure.pprint/pprint (data/diff (clean-noise a) (clean-noise b)))
+            ;;(difform/difform a b)
+            ))
   (= a b))
+
+(defn clean-libraries [x]
+  (if (some? (get x "x-uses"))
+    (update x "x-uses" (fn [libraries]
+                         (->> libraries
+                              (map #(string/join "/" (take-last 2 (string/split % #"/")) ))
+                              (map #(string/replace % #"\..*" "")))))
+    x))
 
 (defn clean-ids [x]
   (cond
     (map? x)  (->> (dissoc x "@id")
+                   (clean-libraries)
                    (mapv (fn [[k v]] [(equivalences k) (clean-ids v)]))
                    (into {}))
     (coll? x) (into #{} (mapv clean-ids x))
@@ -146,6 +162,7 @@
      (map? x))     (->> (syntax/<-data x)
                         (mapv (fn [[k v]] [k (clean-fragments v)]))
                         (into {}))
+
     (map? x)       (->> x
                         (mapv (fn [[k v]] [k (clean-fragments v)]))
                         (into {}))
@@ -157,9 +174,11 @@
   (is (not (nil? x)))
   x)
 
-(defn to-data-structure [type s]
+(defn to-data-structure [uri type s]
   (go (condp = type
-        :raml      (->> (yaml-parser/parse-string "data.raml" s)
+        :raml      (->> (yaml-parser/parse-string uri (->  s
+                                                           (string/replace ".openapi" ".raml")
+                                                           (string/replace ".jsonld" ".raml")))
                         <!
                         -success->
                         clean-fragments)
@@ -179,7 +198,6 @@
   (go (let [parser (-> tools type :parser)
             generator (-> tools type :generator)
             jsonld-generator (-> tools :jsonld :generator)
-            _ (prn files)
             target (->> (target-file files type)
                         (platform/read-location)
                         <!
@@ -190,20 +208,31 @@
             generated-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator
                                                     (get files :jsonld)
                                                     (core/document-model parsed-model)
-                                                    {:source-maps? false})))
+                                                    {:source-maps? false
+                                                     :full-graph? false})))
             _ (is (not (error? parsed-model)))
-            doc-target (<! (to-data-structure type (-success-> (<! (platform/read-location (target-file files type type))))))
-            doc-generated (<! (to-data-structure type (-success-> (<! (cb->chan (partial core/generate-string generator
-                                                                                         (get files type)
-                                                                                         (core/document-model parsed-model)
-                                                                                         {}))))))]
+
+            ;; target data structure
+            target-file-name (target-file files type type)
+            raw-target-data (-success-> (<! (platform/read-location target-file-name)))
+            doc-target (<! (to-data-structure target-file-name type raw-target-data))
+
+            ;; generated data structure
+            generated-file-name (get files type)
+            raw-generated-data (-success-> (<! (cb->chan (partial core/generate-string generator
+                                                                  generated-file-name
+                                                                  (core/document-model parsed-model)
+                                                                  {:source-maps? false
+                                                                   :full-graph? false}))))
+            doc-generated (<! (to-data-structure generated-file-name  type raw-generated-data))]
+
         (is (same-structure? (ensure-not-nil (clean-ids (platform/decode-json generated-jsonld)))
                              (ensure-not-nil (clean-ids target))))
         (is (same-structure? (ensure-not-nil (clean-ids doc-generated))
                              (ensure-not-nil (clean-ids doc-target)))))))
 
 (defn check-conversions [files]
-  (go (doseq [[from to] ;[[:jsonld :raml]]
+  (go (doseq [[from to] ; [[:jsonld :openapi]]
               conversions
               ]
         (println "\n\nCOMPARING " from " -> " to "\n\n")
@@ -213,16 +242,18 @@
                           (platform/read-location)
                           <!
                           -success->
-                          (to-data-structure to)
+                          (to-data-structure (target-file files to from) to)
                           <!)
               parser (-> tools from :parser)
               generator (-> tools to :generator)
-              parsed-model (<! (cb->chan (partial core/parse-file parser source {:source-maps? true})))
+              parsed-model (<! (cb->chan (partial core/parse-file parser source {:source-maps? true
+                                                                                 :full-graph? true})))
               generated (<! (cb->chan (partial core/generate-string generator
                                                target
                                                (core/document-model parsed-model)
-                                               {:source-maps? false})))]
-          (is (same-structure? (ensure-not-nil (clean-ids (<! (to-data-structure to generated))))
+                                               {:source-maps? false
+                                                :full-graph? false})))]
+          (is (same-structure? (ensure-not-nil (clean-ids (<! (to-data-structure (target-file files to from) to generated))))
                                (ensure-not-nil (clean-ids target))))))))
 
 (defn focus [test tests]
@@ -230,7 +261,7 @@
     tests
     (->> tests
          (filter (fn [[name files]] (= test name ))))))
-;;[:fragments :test001]
+;;
 (deftest tck-tests
   (async done
          (go

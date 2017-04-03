@@ -9,6 +9,16 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
+(defn simplify [type]
+  (cond
+    (and (map? type)
+         (some? (:properties type))) (dissoc type :type)
+
+    (and (map? type)
+         (= [:type] (keys type)))    (:type type)
+
+    :else                            type))
+
 (defn ref-shape [shape ctx]
   (let [ref (common/ref-shape? shape ctx)
         is-type-tag (-> ref
@@ -41,8 +51,7 @@
                 v/sorg:name        #(assoc % :displayName (utils/extract-jsonld-literal shape v/sorg:name))
                 v/sorg:description #(assoc % :description (utils/extract-jsonld-literal shape v/sorg:description))
                 identity)))
-       (reduce (fn [acc p] (p acc)) raml-type)
-       (utils/clean-nils)))
+       (reduce (fn [acc p] (p acc)) raml-type)))
 
 (defn parse-constraints [raml-type shape]
   (->> shape
@@ -75,7 +84,8 @@
                     (v/xsd-ns "date")             {:type "date-only"}
                     (v/shapes-ns "any")           {:type "any"}
                     (throw (new #?(:clj Exception :cljs js/Error) (str "Unknown scalar data type " sh-type))))]
-    (parse-constraints raml-type shape)))
+    (-> (parse-constraints raml-type shape)
+        simplify)))
 
 
 (defmethod parse-shape (v/shapes-ns "Array") [shape context]
@@ -104,13 +114,14 @@
                                                                       (if required required nil)
                                                                       (if (= required false) required nil)))
                                                    utils/clean-nils)]
-                                 [label raml-type])))
+                                 [label (simplify raml-type)])))
                         (into {}))]
     (-> {:type "object"
          :properties properties
          :additionalProperties additionalProperties}
         utils/clean-nils
-        (parse-constraints shape))))
+        (parse-constraints shape)
+        simplify)))
 
 (defmethod parse-shape (v/shapes-ns "JSONSchema") [shape context]
   (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
@@ -132,10 +143,11 @@
 (defmethod parse-shape :inheritance [shape context]
   (let [types (->> (get shape (v/shapes-ns "inherits"))
                    (mapv (fn [type]
-                           (cond
-                             (common/ref-shape? type context)    (ref-shape type context)
-                             (include-shape? type context)       (include-shape type context)
-                             :else                               (parse-shape type context)))))]
+                           (let [type-id (get type "@id")]
+                             (cond
+                               (common/ref-shape? type-id context)    (ref-shape type-id context)
+                               (include-shape? type-id context)       (include-shape type-id context)
+                               :else                               (parse-shape type context))))))]
     (if (= 1 (count types))
       (first types)
       {:type types})))

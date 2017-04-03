@@ -21,7 +21,7 @@
                     :else                       (-> ref document/id (string/split #"/") last))
         type-name (utils/safe-str type-name)]
     (if (:from-library ref)
-      {:$ref (document/id ref)}
+      {:$ref shape}
       (if (string/starts-with? type-name "#")
         {:$ref type-name}
         {:$ref (str "#/definitions/" type-name)}))))
@@ -135,10 +135,11 @@
 (defmethod parse-shape :inheritance [shape context]
   (let [types (->> (get shape (v/shapes-ns "inherits"))
                    (mapv (fn [type]
-                           (cond
-                             (common/ref-shape? type context) (ref-shape type context)
-                             (include-shape? type context)    (include-shape type context)
-                             :else                            (parse-shape type context)))))]
+                           (let [type-id (get type "@id")]
+                             (cond
+                               (common/ref-shape? type-id context) (ref-shape type-id context)
+                               (include-shape? type-id context)    (include-shape type-id context)
+                               :else                               (parse-shape type context))))))]
     (if (= 1 (count types))
       (first types)
       {:x-merge types})))

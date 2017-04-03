@@ -21,7 +21,7 @@
                 {
                     "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/definitions/TestSchema/shape/property/type",
                     "@type": [
-                        "sh:PropertyConstraint"
+                        "http://www.w3.org/ns/shacl#PropertyConstraint"
                     ],
                     "http://raml.org/vocabularies/shapes#propertyLabel": [
                         {
@@ -108,7 +108,7 @@
                                                         "http://raml.org/vocabularies/shapes#Shape"
                                                     ],
                                                     "http://raml.org/vocabularies/shapes#inherits": [
-                                                        "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/definitions/TestSchema/shape"
+                                                        {"@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test001/meth01.raml#/definitions/TestSchema/shape"}
                                                     ],
                                                     "http://schema.org/name": [
                                                         {

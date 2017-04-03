@@ -307,9 +307,14 @@
   (cond
     (and (not (:resolve-types context))
          (common/type-reference? model)) (common/type-reference-name model)
-    :else                                (keywordize-keys
-                                          (shapes-parser/parse-shape
-                                           (domain/shape model) (assoc context :to-raml to-raml)))))
+    :else                                (let [out-type (keywordize-keys
+                                                         (shapes-parser/parse-shape
+                                                          (domain/shape model) (assoc context :to-raml to-raml)))]
+                                           (cond
+                                             (map? out-type)  (if (= [:type] (keys out-type)) ;; If only type, we don't need the extra inheritance
+                                                                (:type out-type)
+                                                                out-type)
+                                             :else out-type))))
 
 
 (defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments references document-generator type-hint]
@@ -343,6 +348,7 @@
 (defmethod to-raml domain/DomainPropertySchema [model ctx]
   (debug "Generating DomainPropertySchema")
   (let [range (to-raml! (domain/range model) ctx)
+        range (if (string? range) {:type range} range)
         name  (document/name model)
         domain (domain/domain model)
         description (document/description model)]

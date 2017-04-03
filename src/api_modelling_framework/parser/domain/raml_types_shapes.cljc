@@ -50,11 +50,10 @@
     (string/replace (utils/safe-str property-name) #"\?$" "")))
 
 (defn parse-shape [node {:keys [parsed-location] :as context}]
-  (let [parsed-location (str parsed-location "/shape")
-        properties (->> (:properties node [])
+  (let [properties (->> (:properties node [])
                         (map (fn [[k v]]
-                               (let [parsed-location (utils/path-join parsed-location "/shape")
-                                     property-name (utils/safe-str k)
+                               (let [property-name (utils/safe-str k)
+                                     parsed-location (utils/path-join parsed-location (str "/property/" property-name))
                                      required (required-property? property-name v)
                                      property-name (final-property-name property-name v)]
                                  (->> {"@type" [(v/sh-ns "PropertyConstraint")]
@@ -80,8 +79,7 @@
             )))
 
 (defn parse-array [node {:keys [parsed-location] :as context}]
-  (let [parsed-location (str parsed-location "/array-shape")
-        required-set (set (:required node []))
+  (let [required-set (set (:required node []))
         is-tuple (some? (get node (keyword "(is-tuple)")))
         item-types (if is-tuple
                      (-> node :items :of)
@@ -104,17 +102,17 @@
          (parse-type-constraints node))))
 
 (defn parse-scalar [parsed-location scalar-type]
-  {"@id" (str parsed-location "/scalar-shape")
+  {"@id" parsed-location
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "Scalar")]
    (v/sh-ns "dataType") [{"@id" scalar-type}]})
 
 (defn parse-json-node [parsed-location text]
-  {"@id" (str parsed-location "/json-schema-shape")
+  {"@id" parsed-location
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "JSONSchema")]
    (v/shapes-ns "schemaRaw") [{"@value" text}]})
 
 (defn parse-xml-node [parsed-location text]
-  {"@id" (str parsed-location "/xml-schema-shape")
+  {"@id" parsed-location
    "@type" [(v/sh-ns "Shape") (v/shapes-ns "XMLSchema")]
    (v/shapes-ns "schemaRaw") [{"@value" text}]})
 
@@ -123,14 +121,13 @@
   "Computes multiple-inheritance references"
   [types {:keys [parsed-location default-type] :as context}]
   (let [types (mapv #(parse-type % context) types)]
-    {"@id" (str parsed-location "/ref-shape")
+    {"@id" parsed-location
      "@type" [(v/shapes-ns "Shape")]
      (v/shapes-ns "inherits") types}))
 
 (defn check-inheritance
   [node {:keys [location parsed-location] :as context}]
-  (let [parsed-location (utils/path-join parsed-location "type")
-        location (utils/path-join location "type")]
+  (let [location (utils/path-join location "type")]
     {"@id"  parsed-location
      "@type" [(v/shapes-ns "Shape")]
      (v/shapes-ns "inherits") [(parse-type (:type node) (-> context
@@ -140,9 +137,9 @@
 (defn check-inclusion [node {:keys [parse-ast parsed-location] :as context}]
   (let [parsed (parse-ast node context)
         location (syntax/<-location node)]
-    {"@id" (str parsed-location "/include-shape")
+    {"@id" parsed-location
      "@type" [(v/shapes-ns "Shape")]
-     (v/shapes-ns "inherits") [location]}))
+     (v/shapes-ns "inherits") [{"@id" location}]}))
 
 (defn check-reference
   "Checks if a provided string points to one of the types defined at the APIDocumentation level"
@@ -150,17 +147,17 @@
 
   (if-let [type-reference (get references (keyword type-string))]
     (if (satisfies? document/Includes type-reference)
-      {"@id" (str parsed-location "/include-shape")
+      {"@id" parsed-location
        "@type" [(v/shapes-ns "Shape")]
-       (v/shapes-ns "inherits") [(document/target type-reference)]}
+       (v/shapes-ns "inherits") [{"@id" (document/target type-reference)}]}
       (let [remote-id (-> type-reference domain/shape (get "@id"))
             label (or (-> type-reference :name)
                       (-> type-reference domain/shape :name)
                       (last (string/split remote-id #"#")))]
-        {"@id" (str parsed-location "/ref-shape")
+        {"@id" parsed-location
          v/sorg:name [{"@value" label}]
          "@type" [(v/shapes-ns "Shape")]
-         (v/shapes-ns "inherits") [remote-id]}))
+         (v/shapes-ns "inherits") [{"@id" remote-id}]}))
     nil))
 
 (defn parse-type [node {:keys [parsed-location default-type] :as context}]

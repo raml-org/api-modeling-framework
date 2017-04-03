@@ -99,7 +99,7 @@
 (defn uri->reader [uri options]
   (let [cache-resolved (cache-resolved-uri uri options)]
     (if (local-uri? cache-resolved)
-      (java.io.FileReader. (io/as-file cache-resolved))
+      (java.io.FileReader. (io/as-file (string/replace cache-resolved "file://" "")))
       (java.io.StringReader. (slurp (io/as-url cache-resolved))))))
 
 (defn fragment-info [file options]

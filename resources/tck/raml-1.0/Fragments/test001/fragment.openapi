@@ -1,0 +1,14 @@
+{
+    "x-uses": ["lib/lib.openapi"],
+    "properties": {
+        "prop1": {
+            "type": "number"
+        },
+        "prop2": {"$ref": "lib/lib.openapi#/definitions/ObjectType"}
+    },
+    "required": [
+        "prop1",
+        "prop2"
+    ],
+    "type": "object"
+}

@@ -133,7 +133,7 @@
     (go (let [res (<! (jsonld-parser/parse-file uri))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
-            (try (cb nil (to-model (jsonld-document-parser/from-jsonld (stringify-keys (get res "@data")))))
+            (try (cb nil (to-model (jsonld-document-parser/from-jsonld res)))
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil)))))))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
@@ -142,7 +142,7 @@
     (go (let [res (<! (jsonld-parser/parse-string uri string))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
-            (try (cb nil (to-model (jsonld-document-parser/from-jsonld (get res "@data"))))
+            (try (cb nil (to-model (jsonld-document-parser/from-jsonld res)))
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 

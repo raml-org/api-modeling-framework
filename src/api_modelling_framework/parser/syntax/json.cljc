@@ -10,6 +10,12 @@
                      [cljs.core.async :refer [<! >! chan] :as async]
                      [api-modelling-framework.platform :as platform])))
 
+(defn extract-fragment [data]
+  (condp = (get data "swagger" (get data :swagger))
+    "2.0"             "Swagger"
+    "Swagger Library" "Swagger Library"
+    "Swagger Fragment"))
+
 (defn ->int [s]
   #?(:cljs (js/parseInt s)
      :clj  (Integer/parseInt s)))
@@ -131,15 +137,22 @@
                                              (loop [pairs json
                                                     acc {}]
                                                (if (empty? pairs)
-                                                 acc
+                                                 (do
+                                                   ;; let's see if libraries haven't been processed yet
+                                                   ;; If they have been processed, we will have a map instead of a string
+                                                   (when (library-reference? json)
+                                                     (let [library-ids (->> (flatten [(get json "x-uses" [])])
+                                                                            (filter #(and (some? %) (string? %))))]
+                                                       (swap! pending #(concat % (mapv (fn [library-path]
+                                                                                         (join-path id library-path))
+                                                                                       library-ids)))))
+                                                   acc)
                                                  (let [[k v] (first pairs)
                                                        [processed-acc processed] (find-references current-id v [])]
                                                    (swap! pending #(concat % @processed-acc))
-                                                   (when (library-reference? json)
-                                                     (let [library-ids (flatten [(get json "x-uses")])]
-                                                       (swap! pending #(concat % library-ids))))
+
                                                    (recur (rest pairs)
-                                                          (assoc acc k processed))))))
+                                                         (assoc acc k processed))))))
                 (coll? json)               (->> json
                                                 (mapv #(find-references id % []))
                                                 (mapv (fn [[processed-acc processed]]
@@ -163,9 +176,10 @@
                                         (if (= k "x-uses")
                                           (recur (rest pairs)
                                                  (assoc map-acc k
-                                                        (mapv (fn [library-id] (get acc library-id)) (flatten [v]))))
+                                                        (mapv (fn [library-id] (get acc (join-path id library-id))) (flatten [v]))))
                                           (recur (rest pairs)
-                                                 (assoc map-acc k (fill-references current-id v acc))))))))
+                                                 (assoc map-acc k (fill-references current-id v acc))))
+                                        ))))
      (coll? json)                (->> json
                                       (mapv #(fill-references id % acc)))
      :else json)))
@@ -183,17 +197,25 @@
              (if (empty? refs)
                acc
                (let [ref (first refs)
+                     _ (when (nil? ref)
+                         (throw (new #?(:clj Exception :cljs js/Error) "Cannot load null reference")))
                      raw (<! (platform/read-location ref))
+                     _ (when (:error raw)
+                         (throw (new #?(:clj Exception :cljs js/Error) (:error raw))))
                      resolved (platform/decode-json raw)
                      pointed (if (string/index-of ref "#")
                                (json-pointer (str "#" (last (string/split ref #"#"))) resolved )
                                resolved)]
+                 (when (nil? pointed)
+                   (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find pointed reference " ref " inside document"))))
                  (recur (rest refs)
                         (assoc acc ref (if (absolute-uri? ref)
                                          {"@location" ref
                                           "id" ref
+                                          "@fragment" (extract-fragment pointed)
                                           "@data" pointed}
                                          {"@location" ref
+                                          "@fragment" (extract-fragment pointed)
                                           "@data" pointed
                                           "@raw" raw}))))))
            (catch #?(:clj Exception :cljs js/Error) ex
@@ -211,7 +233,7 @@
                   processed-acc @processed-acc]
              (if (empty? processed-acc)
                (post-process {"@location" id
-                              "@fragment" "root"
+                              "@fragment" (extract-fragment processed)
                               "@data" processed
                               "@raw" data})
                (let [references-map (<! (resolve-references processed-acc))
@@ -233,7 +255,7 @@
                   processed-acc @processed-acc]
              (if (empty? processed-acc)
                (post-process {"@location" id
-                              "@fragment" "root"
+                              "@fragment" (extract-fragment processed)
                               "@data" processed
                               "@raw" data})
                (let [references-map (<! (resolve-references processed-acc))

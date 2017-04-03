@@ -16,6 +16,24 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
+(def raml-types-properties-map
+  {
+   "any" #{:type}
+   "object" #{:type}
+   "array" #{:type}
+   "union" #{:type}
+   "time-only" #{:type}
+   "datetime" #{:type}
+   "datetime-only" #{:type}
+   "date-only" #{:type}
+   "number" #{:type}
+   "boolean" #{:type}
+   "string" #{:type}
+   "null" #{:type}
+   "file" #{:type}
+   "integer" #{:type}
+   })
+
 (def properties-map
   {
    :annotationTypes #{:root}
@@ -53,6 +71,7 @@
    :version #{:root}
    })
 
+
 (defn with-location-meta-from [n m]
   (if (meta n)
     (assoc m :lexical (meta n))
@@ -81,7 +100,8 @@
   "Based in the keys of the node map, we assign a type to the node, used in the dispatcher function."
   [node]
   (let [node-types (->> node
-                        (mapv (fn [[k _]] (get properties-map k (guess-type-from-predicates k))))
+                        (mapv (fn [[k _]]
+                                (get properties-map k (guess-type-from-predicates k))))
                         (filterv some?))
         node-type (first (if (empty? node-types) [] (apply set/intersection node-types)))]
     (or node-type :undefined)))
@@ -89,7 +109,8 @@
 (defn check-reference
   "Checks if a provided string points to one of the types defined at the APIDocumentation level"
   [node-str {:keys [references]}]
-  (if (some? (get references (keyword (utils/safe-str node-str))))
+  (if (or (some? (get references (keyword (utils/safe-str node-str))))
+          (some? (get raml-types-properties-map (utils/safe-str node-str))))
     :type
     :undefined))
 
@@ -180,13 +201,14 @@
       path)))
 
 (defn root->scheme [{:keys [protocols baseUri]}]
-  (cond
-    (some? protocols)                  (->> [protocols] flatten (mapv string/lower-case))
-    (and (some? baseUri)
-         (string/index-of baseUri "://")
-         (some? (:protocol
-                 (url/url baseUri)))) [(:protocol (url/url baseUri))]
-    :else                              nil))
+  (let [baseUri (extract-scalar baseUri)]
+    (cond
+      (some? protocols)                  (->> [protocols] flatten (mapv string/lower-case))
+      (and (some? baseUri)
+           (string/index-of baseUri "://")
+           (some? (:protocol
+                   (url/url baseUri)))) [(:protocol (url/url baseUri))]
+      :else                              nil)))
 
 
 (defn parse-nested-resources [extracted-resources parent-path location parsed-location context]

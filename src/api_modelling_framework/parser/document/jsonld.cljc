@@ -15,6 +15,7 @@
     (nil? model)                                  nil
     (utils/has-class? model v/document:Document)  v/document:Document
     (utils/has-class? model v/document:Fragment)  v/document:Fragment
+    (utils/has-class? model v/document:Module)    v/document:Module
     (and (coll? model) (= 1 (count model)))       (from-jsonld-dispatch-fn (first model))
     :else                                      :unknown))
 
@@ -40,7 +41,12 @@
 
 (defmethod from-jsonld v/document:Fragment [m]
   (debug "Parsing " v/document:Fragment  " " (get m "@id"))
-  (let [encodes (first (mapv domain-parser/from-jsonld (get m v/document:encodes)))
+  (let [references (mapv from-jsonld (get m v/document:references []))
+        declared-references (->> references
+                                 (map (fn [ref] (document/declares ref)))
+                                 (filter some?)
+                                 flatten)
+        encodes (first (mapv domain-parser/from-jsonld (get m v/document:encodes)))
         source-map (first (map domain-parser/from-jsonld (get m v/document:source [])))
         file-parsed-tag (when (some? source-map)
                           (->> (document/tags source-map)
@@ -54,7 +60,22 @@
     (document/map->ParsedFragment {:id location
                                    :location location
                                    :encodes encodes
+                                   :references references
                                    :document-type document-type})))
+
+(defmethod from-jsonld v/document:Module [m]
+  (debug "Parsing " v/document:Module)
+  (let [declares (map domain-parser/from-jsonld (get m v/document:declares []))
+        references (mapv from-jsonld (get m v/document:references []))
+        location (get m "@id")
+        source-map (first (map domain-parser/from-jsonld (get m v/document:source [])))
+        document-type-tag (utils/find-tag source-map document/document-type-tag)
+        document-type (if (some? document-type-tag) (document/value document-type-tag) nil)]
+    (document/map->ParsedModule {:id location
+                                 :location location
+                                 :references references
+                                 :declares declares
+                                 :document-type document-type})))
 
 
 (defmethod from-jsonld :unknown [m]

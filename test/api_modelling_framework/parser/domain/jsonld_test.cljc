@@ -129,10 +129,10 @@
                :description "get description"
                :protocols ["http"]
                :responses {"200" {:description "200 response"
-                                  :body {"application/json" {:type "any"}
-                                         "text/plain"       {:type "any"}}}
+                                  :body {"application/json" "any"
+                                         "text/plain"       "any"}}
                            "400" {:description "400 response"
-                                  :body {:type "any"}}}}
+                                  :body "any"}}}
         model-parsed (raml-parser/parse-ast input
                                             {:location "file://path/to/resource.raml#"
                                              :parsed-location "file://path/to/resource.raml#"
@@ -146,15 +146,15 @@
   (let [node {:displayName "get method"
               :description "get description"
               :protocols ["http"]
-              :headers {:Zencoder-Api-Key {:type "integer"}}
-              :body {:type "string"}
-              :queryParameters {:page {:type "integer"}
-                                :per_page {:type "integer"}}
+              :headers {:Zencoder-Api-Key "integer"}
+              :body "string"
+              :queryParameters {:page "integer"
+                                :per_page "integer"}
               :responses {"200" {:description "200 response"
-                                 :body {"application/json" {:type "string"}
-                                        "text/plain"       {:type "string"}}}
+                                 :body {"application/json" "string"
+                                        "text/plain"       "string"}}
                           "400" {:description "400 response"
-                                 :body {:type "string"}}}}
+                                 :body "string"}}}
         model-parsed (raml-parser/parse-ast node
                                             {:location "file://path/to/resource.raml#"
                                              :parsed-location "file://path/to/resource.raml#"
@@ -208,7 +208,7 @@
                :version "v3"
                :traits {:paged
                         {:queryParameters
-                         {:start {:type "number"}}}}
+                         {:start "number"}}}
                (keyword "/users") {:displayName "Users"
                                    :get {:description "get description"
                                          :is ["paged"]

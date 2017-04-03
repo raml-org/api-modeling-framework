@@ -1,0 +1,51 @@
+(defmethod to-raml :fragment [model ctx]
+  (debug "Generating Fragment at " (document/location model))
+  (let [fragments (if (:fragments ctx)
+                    (:fragments ctx)
+                    (->> (document/references model)
+                         (reduce (fn [acc fragment]
+                                   (assoc acc (document/location fragment) fragment))
+                                 {})))
+        uses (->> (common/model->uses model)
+                  (mapv (fn [[alias location]]
+                          [alias (get fragments location)]))
+                  (into {}))
+        refs (document/references model)
+        uses (common/process-anonymous-libraries uses model)
+        library-declares (->> uses
+                              (mapv (fn [[alias fragment]]
+                                      (mapv #(update-alias % alias) (document/declares fragment))))
+                              flatten
+                              (mapv (fn [declaration] (assoc declaration :from-library true))))
+        uses (->> uses
+                  (mapv (fn [[alias fragment]]
+                          [(keyword alias) (to-raml fragment ctx)]))
+                  (into {}))
+        uses (if (> (count uses) 0) uses nil)
+        context (-> ctx
+                    (assoc :fragments fragments)
+                    (assoc :references library-declares)
+                    (assoc :expanded-fragments (or (:expanded-fragments ctx)
+                                                   (atom {})))
+                    (assoc :type-hint :method)
+                    (assoc :document-generator to-raml))
+        fragment-type-tag (first (document/find-tag model document/document-type-tag))
+        fragment-type (if (some? fragment-type-tag) (document/value fragment-type-tag) nil)
+        encoded (document/encodes model)
+        data (domain-generator/to-raml encoded context)]
+    (utils/clean-nils {(keyword "@location") (document/location model)
+                       (keyword "@data") (if (string? data)
+                                           ;; this is possible because the fragment can be just
+                                           ;; a XML schema string or JSON-schema or documentation string
+                                           data
+                                           (utils/clean-nils
+                                            (merge data
+                                                   {:usage (document/description model)
+                                                    :uses uses})))
+                       (keyword "@fragment") fragment-type})))
+
+
+
+;; We had to create this temporary buffer because we couldn't find the
+;; original definition. That probably happened because you edited the
+;; code.
