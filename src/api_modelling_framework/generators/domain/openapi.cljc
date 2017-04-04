@@ -43,6 +43,31 @@
 
 (defmulti to-openapi (fn [model ctx] (to-openapi-dispatch-fn model ctx)))
 
+(defn clean-auto-generated [node]
+  node
+  (if (some? (:x-generated node))
+    nil
+    (cond
+      (map? node) (let [cleaned (->> node
+                                     (map (fn [[k v]] [k (clean-auto-generated v)]))
+                                     (into {})
+                                     utils/clean-nils)]
+                    (if (= cleaned {})
+                      nil
+                      cleaned))
+      (coll? node) (let [cleaned (->> node
+                                      (map clean-auto-generated)
+                                      (filter some?))]
+                     (if (empty? cleaned) nil cleaned))
+      :else (utils/ensure-not-blank node))))
+
+(defn check-abstract [fragment model]
+  (if (and (some? model)
+           (satisfies? domain/DomainElement model)
+           (domain/abstract model))
+    (clean-auto-generated (assoc fragment :x-abstract-node true))
+    fragment))
+
 (defn with-annotations [model ctx generated]
   (if (map? generated)
     (let [annotations (document/additional-properties model)
@@ -88,6 +113,12 @@
       (let [params (or (domain/parameters request) [])]
         (map #(to-openapi! % ctx) params))))
 
+(defn make-operation-abstract [trait-fragment]
+  (-> trait-fragment
+      clean-auto-generated
+      (assoc :x-abstract-node true)
+      (dissoc :operationId)))
+
 (defmethod to-openapi domain/APIDocumentation [model ctx]
   (debug "Generating Swagger")
   (debug "Generating Info")
@@ -102,7 +133,10 @@
                           [(keyword (domain/path endpoint))
                            (to-openapi! endpoint ctx)]))
                    (into {}))
-        traits (common/model->traits (assoc ctx :abstract true) to-openapi!)
+        traits (->> (common/model->traits (assoc ctx :abstract true) to-openapi!)
+                    (map (fn [[trait-name trait-fragment]]
+                           [trait-name (make-operation-abstract trait-fragment)]))
+                    (into {}))
         types (common/model->types (assoc ctx :resolve-types true) to-openapi!)]
     (-> {:swagger "2.0"
          :host (domain/host model)
@@ -138,7 +172,7 @@
                        (map (fn [op] [(method-name (domain/method op)) (to-openapi! op ctx)]))
                        (into {}))]
     (-> end-point
-        (assoc :x-is (common/find-traits model ctx))
+        (assoc :x-is (common/find-traits model ctx :openapi))
         (assoc :parameters parameters)
         (utils/clean-nils))))
 
@@ -174,7 +208,7 @@
   (let [tags (->> (document/find-tag model document/api-tag-tag)
                   (map #(document/value %)))
         produces (domain/content-type model)
-        traits  (common/find-traits model ctx)
+        traits  (common/find-traits model ctx :openapi)
 
         ;;;;;;;;;;;;;;;;
         ;; request
@@ -189,13 +223,16 @@
         bodies (if (some? request)
                  (unparse-bodies request ctx)
                  [])
-        main-body (->> [(->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
-                        (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)
-                        (first bodies)]
-                       (filter some?)
-                       first)
+        [selected-main-body main-body] (->> [(->> bodies (filter #(= "*/*" (get % :x-media-type))) first)
+                                             (->> bodies (filter #(= "application/json" (get % :x-media-type))) first)
+                                             (first bodies)]
+                                            (filter some?)
+                                            (map (fn [body] [body (if (nil? (:schema body))
+                                                                   (assoc body :schema {:type "object" :x-generated true})
+                                                                   body)]))
+                                            first)
         x-payloads (->> bodies
-                        (filter (fn [body] (not= body main-body)))
+                        (filter (fn [body] (not= body selected-main-body)))
                         (mapv (fn [body]
                                 (utils/clean-nils {:x-media-type (if (not= "*/*") (:x-media-type body) nil)
                                                    :schema (:schema body)}))))

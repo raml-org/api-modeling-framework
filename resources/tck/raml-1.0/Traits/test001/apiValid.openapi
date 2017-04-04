@@ -1,0 +1,144 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "API",
+        "version": ""
+    },
+    "x-traits": {
+        "Trait1": {
+            "x-abstract-node": true,
+            "responses": {
+                "200": {
+                    "schema": {
+                        "properties": {
+                            "traitProperty1": {
+                                "type": "boolean"
+                            },
+                            "traitProperty1_3": {
+                                "type": "string"
+                            },
+                            "traitProperty2": {
+                                "type": "number"
+                            }
+                        },
+                        "required": [
+                            "traitProperty1",
+                            "traitProperty2",
+                            "traitProperty1_3"
+                        ],
+                        "type": "object"
+                    },
+                    "x-media-type": "application/json"
+                }
+            }
+        },
+        "Trait2": {
+            "x-abstract-node": true,
+            "responses": {
+                "200": {
+                    "schema": {
+                        "properties": {
+                            "traitProperty1": {
+                                "type": "number"
+                            },
+                            "traitProperty2": {
+                                "type": "boolean"
+                            },
+                            "traitProperty2_3": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "traitProperty1",
+                            "traitProperty2",
+                            "traitProperty2_3"
+                        ],
+                        "type": "object"
+                    },
+                    "x-media-type": "application/json"
+                }
+            }
+        }
+    },
+    "definitions": {
+        "RTType1": {
+            "properties": {
+                "rtTypeProperty1": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "rtTypeProperty1"
+            ],
+            "type": "object"
+        },
+        "RTType2": {
+            "properties": {
+                "rtTypeProperty2": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "rtTypeProperty2"
+            ],
+            "type": "object"
+        },
+        "Type1": {
+            "properties": {
+                "typeProperty1": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "typeProperty1"
+            ],
+            "type": "object"
+        },
+        "Type2": {
+            "properties": {
+                "typeProperty2": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "typeProperty2"
+            ],
+            "type": "object"
+        }
+    },
+    "paths": {
+        "/resource": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "x-media-type": "application/json"
+                    }
+                }
+            },
+            "put": {
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "",
+                        "schema": {
+                            "type": "object",
+                            "x-generated": true
+                        },
+                        "x-media-type": "application/json"
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            },
+            "x-is": [
+                {"$ref": "#/x-traits/Trait1"},
+                {"$ref": "#/x-traits/Trait2"}
+            ]
+        }
+    }
+}

@@ -58,26 +58,6 @@
      syntax/at-data encoded
      syntax/at-fragment "OpenAPI"}))
 
-(defn clean-auto-generated [node]
-  node
-  (if (some? (:x-generated node))
-    nil
-    (cond
-      (map? node) (let [cleaned (->> node
-                                     (map (fn [[k v]] [k (clean-auto-generated v)]))
-                                     (into {})
-                                     utils/clean-nils)]
-                    (if (= cleaned {})
-                      nil
-                      cleaned))
-      (coll? node) (let [cleaned (->> node
-                                      (map clean-auto-generated)
-                                      (filter some?))]
-                     (if (empty? cleaned) nil cleaned))
-      :else node)))
-
-(clean-auto-generated nil)
-
 (defmethod to-openapi :fragment [model ctx]
   (debug "Generating Fragment at " (document/location model))
   (let [fragments (if (:fragments ctx)
@@ -106,11 +86,7 @@
                     (assoc :document-generator to-openapi))
         fragment (domain-generator/to-openapi (document/encodes model) context)
         fragment (if (> (count uses) 0) (assoc fragment :x-uses uses) fragment)
-        fragment (if (and (some? (document/encodes model))
-                          (satisfies? domain/DomainElement (document/encodes model))
-                          (domain/abstract (document/encodes model)))
-                   (clean-auto-generated (assoc fragment :x-abstract-node true))
-                   fragment)]
+        fragment (domain-generator/check-abstract fragment (document/encodes model))]
     {syntax/at-location (document/location model)
      syntax/at-data fragment}))
 
@@ -141,7 +117,7 @@
     {syntax/at-location (document/location model)
      syntax/at-data (-> {:swagger "Swagger Library"
                          :types types
-                         :traits traits
+                         :x-traits traits
                          :x-annotationTypes annotations
                          :x-uses uses}
                         (utils/clean-nils))

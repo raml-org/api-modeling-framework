@@ -80,6 +80,10 @@
                                                      :openapi (str raml-10-tests "/Fragments/test005/Trait.openapi")
                                                      :jsonld (str raml-10-tests "/Fragments/test005/Trait.jsonld")}
                                            }
+                               :traits  {:test001 {:raml (str raml-10-tests "/Traits/test001/apiValid.raml")
+                                                   :openapi (str raml-10-tests "/Traits/test001/apiValid.openapi")
+                                                   :jsonld (str raml-10-tests "/Traits/test001/apiValid.jsonld")}
+                                         }
                                }})
 
 
@@ -135,7 +139,7 @@
             (clojure.pprint/pprint (clean-noise b))
             (println "\nDIFF:\n")
             (clojure.pprint/pprint (data/diff (clean-noise a) (clean-noise b)))
-            ;;(difform/difform a b)
+            #?(:clj (difform/difform a b))
             ))
   (= a b))
 

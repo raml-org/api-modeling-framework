@@ -95,7 +95,7 @@
                                                                    :references library-declarations
                                                                    :document-parser parse-ast
                                                                    :annotations annotations
-                                                                   :parsed-location location})
+                                                                   :parsed-location (str location "#")})
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
                                                                  :fragments fragments
                                                                  :references library-declarations
@@ -146,7 +146,7 @@
                                                                    :alias-chain alias-chain
                                                                    :document-parser parse-ast
                                                                    :annotations annotations
-                                                                   :parsed-location location})
+                                                                   :parsed-location (str location "#")})
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
                                                                  :fragments fragments
                                                                  :alias-chain alias-chain

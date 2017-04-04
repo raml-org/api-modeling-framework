@@ -39,7 +39,7 @@
                               (get "$ref"))))
                (is (some? (-> output (get "x-uses") (count))))
                (is (some? (-> output (get "x-traits") (get "secured") (get "$ref"))))
-               (is (= ["secured"] (-> output (get "paths") (get "/albums") (get "x-is"))))
+               (is (= [{"$ref" "#/x-traits/secured"}] (-> output (get "paths") (get "/albums") (get "x-is"))))
                (is (= "#/definitions/Album"
                       (-> output
                           (get "paths")

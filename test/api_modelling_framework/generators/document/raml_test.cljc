@@ -43,7 +43,8 @@
                (keyword "@data") {:usage "Use to define some basic file-related constructs."
                                   :types {:File {:properties {:name "string"
                                                               :length "integer"}}}
-                                  :traits {:drm {:headers {:drm-key "string"}}}}}
+                                  :traits {:drm {:displayName "drm"
+                                                 :headers {:drm-key "string"}}}}}
         parsed (parser/parse-ast input {})
         generated (generator/to-raml parsed {})]
     (is (= generated input))))
@@ -55,7 +56,8 @@
                        (keyword "@data") {:usage "Use to define some basic file-related constructs."
                                           :types {:File {:properties {:name "string"
                                                                       :length "integer"}}}
-                                          :traits {:drm {:headers {:drm-key "string"}}}}}
+                                          :traits {:drm {:displayName "drm"
+                                                         :headers {:drm-key "string"}}}}}
         input {(keyword "@location") "file://path/to/api.raml"
                (keyword "@fragment") "#%RAML 1.0"
                (keyword "@data") {:uses {:lib input-library}

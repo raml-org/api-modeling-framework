@@ -189,7 +189,9 @@
          ;; we cannot match with the parts of the document exposed by RAML
          (keyword "(declares)") (model->generic-declarations ctx)
          :types  (common/model->types (assoc ctx :resolve-types true) to-raml!)
-         :traits (common/model->traits ctx to-raml!)}
+         ;; we mark is-trait in the context as a way of signaling the gnenerator
+         ;; for method not to display the name
+         :traits (common/model->traits (assoc ctx :is-trait true) to-raml!)}
         (merge-children-resources children-resources ctx)
         utils/clean-nils)))
 
@@ -207,7 +209,7 @@
                                     v)])))
                         (into {}))]
     (-> {:displayName (document/name model)
-         :is (common/find-traits model ctx)
+         :is (common/find-traits model ctx :raml)
          :uriParameters (unparse-parameters (domain/parameters model) ctx)
          :description (document/description model)}
         (merge operations)
@@ -278,12 +280,12 @@
 (defmethod to-raml domain/Operation [model context]
   (debug "Generating operation " (document/id model))
   (let [request (to-raml! (domain/request model) context)]
-    (-> {:displayName (document/name model)
+    (-> {:displayName (if (:is-trait context) nil (document/name model))
          :description (document/description model)
          :protocols (domain/scheme model)
          :responses (-> (domain/responses model)
                         (group-responses context))
-         :is (common/find-traits model context)}
+         :is (common/find-traits model context :raml)}
         (merge request)
         utils/clean-nils)))
 

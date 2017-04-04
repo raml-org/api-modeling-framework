@@ -311,7 +311,9 @@
 (defn process-traits [node {:keys [location parsed-location] :as context}]
   (debug "Processing " (count (:traits node [])) "traits")
   (let [location (utils/path-join location "/traits")
-        parsed-location (utils/path-join parsed-location "/traits")
+        ;; this must be 'x-traits' so the generated path matches the position
+        ;; in JSON-LD documents
+        parsed-location (utils/path-join parsed-location "/x-traits")
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
     (->> (:traits node {})
          (reduce (fn [acc [trait-name trait-node]]
@@ -319,10 +321,13 @@
                    (let [fragment-name (url/url-encode (utils/safe-str trait-name))
                          trait-fragment (parse-ast trait-node (-> nested-context
                                                                   (assoc :location location)
-                                                                  (assoc :parsed-location parsed-location)
+                                                                  (assoc :parsed-location (utils/path-join parsed-location fragment-name))
                                                                   (assoc :type-hint :method)))
-                         trait-fragment (assoc trait-fragment :method nil) ;; method must be nil, this information cannot be in the fragment
-                         trait-fragment (assoc trait-fragment :id (utils/path-join parsed-location fragment-name))
+                         trait-fragment (-> trait-fragment
+                                            (assoc :method nil) ;; method must be nil, this information cannot be in the fragment
+                                            (assoc :id (utils/path-join parsed-location fragment-name))
+                                            (assoc :abstract true)
+                                            (assoc :name fragment-name))
                          sources (or (:sources trait-fragment) [])
                          sources (concat sources (generate-is-trait-sources fragment-name
                                                                             (utils/path-join location fragment-name)

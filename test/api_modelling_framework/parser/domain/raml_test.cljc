@@ -72,7 +72,7 @@
                                             :is-fragment false})
         extensions (-> parsed domain/endpoints first domain/supported-operations first document/extends)]
     (is (= 1 (count extensions)))
-    (is (= "file://path/to/resource.raml#/declares/traits/paged"
+    (is (= "file://path/to/resource.raml#/declares/x-traits/paged"
            (document/target (first extensions))))))
 
 (deftest parse-ast-resources

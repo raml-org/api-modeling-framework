@@ -159,7 +159,7 @@
 (defn process-traits [node {:keys [location parsed-location] :as context}]
   (debug "Processing " (count (:x-traits node [])) "traits")
   (let [location (str location "/traits")
-        parsed-location (str parsed-location "/traits")
+        parsed-location (str parsed-location "/x-traits")
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
     (->> (:x-traits node {})
          (reduce (fn [acc [trait-name trait-node]]
@@ -167,12 +167,15 @@
                    (let [fragment-name (url/url-encode (utils/safe-str trait-name))
                          references (get nested-context :references {})
                          trait-fragment (parse-ast trait-node (-> nested-context
-                                                                  (assoc :method fragment-name)
                                                                   (assoc :references (merge references acc))
                                                                   (assoc :location location)
-                                                                  (assoc :parsed-location parsed-location)
+                                                                  (assoc :parsed-location (utils/path-join parsed-location fragment-name))
                                                                   (assoc :type-hint :operation)))
-                         trait-fragment (assoc trait-fragment :id (str parsed-location "/" fragment-name))
+                         trait-fragment (-> trait-fragment
+                                            (assoc :abstract true)
+                                            (assoc :method nil)
+                                            (assoc :id (str parsed-location "/" fragment-name))
+                                            (assoc :name fragment-name))
                          sources (or (-> trait-fragment :sources) [])
                          sources (concat sources (generate-is-trait-sources fragment-name
                                                                             (str location "/" fragment-name)
@@ -187,7 +190,6 @@
        (reduce (fn [acc [type-name type-node]]
                  (debug (str "Processing type " type-name))
                  (let [type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))
-                       type-alias (keyword (str "#" (last (string/split type-id #"#"))))
                        type-fragment (parse-ast type-node (-> context
                                                               ;; the physical location matches the structure of the OpennAPI document
                                                               (assoc :location (utils/path-join location "/definitions/" type-name))
@@ -329,28 +331,34 @@
         extends-trait-tag (document/->ExtendsTraitTag source-map-id trait-name)]
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [extends-trait-tag] [])]))
 
-(defn parse-traits [resource-id node references {:keys [location parsed-location]}]
-  (let [traits (filter some? (flatten [(:x-is node [])]))]
-    (->> traits
-         (mapv (fn [trait-name]
-                 [trait-name (-> references
-                                 (get (keyword trait-name)))]))
-         (mapv (fn [i [trait-name trait]]
-                 (if (some? trait)
-                   (let
-                       [extend-id (str parsed-location "/extends/" (url/url-encode trait-name))
-                        extend-location (str location "/x-is/" i)
-                        node-parsed-source-map (generate-parsed-node-sources "x-is" location extend-id)
-                        extends-trait-source-map (generate-extends-trait-sources trait-name extend-location extend-id)]
-                     (document/map->ParsedExtends {:id extend-id
-                                                   :sources (concat node-parsed-source-map
-                                                                    extends-trait-source-map)
-                                                   :target (document/id trait)
-                                                   :label "trait"
-                                                   :arguments []}))
-                   (throw (new #?(:clj Exception :cljs js/Error)
-                               (str "Cannot find trait '" trait-name "' to extend in node '" resource-id "'")))))
-               (range 0 (count traits))))))
+(defn parse-traits [resource-id node references {:keys [location parsed-location base-uri]}]
+  (let [trait-refs (->> [(:x-is node [])] flatten (filter some?) (map #(get % :$ref (syntax/<-location %))))
+        traits (->> trait-refs
+                    (mapv (fn [trait-ref]
+                            (if (= 0 (string/index-of trait-ref "#"))
+                              (str base-uri trait-ref)
+                              trait-ref)))
+                    (mapv (fn [full-trait-ref]
+                            (->> references
+                                 (filter (fn [[_ ref]] (= (document/id ref) full-trait-ref)))
+                                 (mapv (fn [[_ ref]] ref))
+                                 first)))
+                    (filter some?))]
+    (mapv (fn [i trait]
+            (let
+                [trait-name (document/name trait)
+                 extend-id (str parsed-location "/extends/" (url/url-encode trait-name))
+                 extend-location (str location "/x-is/" i)
+                 node-parsed-source-map (generate-parsed-node-sources "x-is" location extend-id)
+                 extends-trait-source-map (generate-extends-trait-sources trait-name extend-location extend-id)]
+              (document/map->ParsedExtends {:id extend-id
+                                            :sources (concat node-parsed-source-map
+                                                             extends-trait-source-map)
+                                            :target (document/id trait)
+                                            :label "trait"
+                                            :arguments []})))
+          (range 0 (count traits))
+          traits)))
 
 (defmethod parse-ast :path-item [node {:keys [location parsed-location is-fragment path paths-sources references] :as context}]
   (debug "Parsing path-item")
@@ -396,13 +404,15 @@
                    :name (if (= name "") nil name)
                    :description (:description parameter)
                    :sources node-sources
-                   :shape (shapes/parse-type (:schema parameter)
-                                             (-> context
-                                                 (assoc :is-fragment false)
-                                                 (assoc :type-hint :type)
-                                                 (assoc :location location)
-                                                 (assoc :parse-ast parse-ast)
-                                                 (assoc :parsed-location parsed-location)))}]))
+                   :shape (if (-> parameter :schema :x-generated)
+                            nil
+                            (shapes/parse-type (:schema parameter)
+                                               (-> context
+                                                   (assoc :is-fragment false)
+                                                   (assoc :type-hint :type)
+                                                   (assoc :location location)
+                                                   (assoc :parse-ast parse-ast)
+                                                   (assoc :parsed-location parsed-location))))}]))
              (range 0 (count parameters)))
        (mapv (fn [[media-type properties]]
                {:media-type media-type
@@ -498,6 +508,7 @@
                     :accepts (filter some? (flatten [(:consumes node)]))
                     :content-type (:produces node)
                     :request request
+                    :extends traits
                     :responses (parse-ast (:responses node) (-> context
                                                                 (assoc :type-hint :responses)
                                                                 (assoc :location location)

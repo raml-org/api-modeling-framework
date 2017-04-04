@@ -66,12 +66,14 @@
         annotations (atom {})
         ;; we parse traits and types and add the information into the context
         traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
+                                                                   :parsed-location (str location "#")
                                                                    :base-uri location
                                                                    :fragments fragments
                                                                    :annotations annotations
                                                                    :document-parser parse-ast})
 
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :parsed-location (str location "#")
                                                                  :base-uri location
                                                                  :fragments fragments
                                                                  :annotations annotations
@@ -136,11 +138,13 @@
         uses-tags (process-uses-tags node context)
         ;; we parse traits and types and add the information into the context
         traits(domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
+                                                                  :parsed-location (str location "#")
                                                                   :base-uri location
                                                                   :fragments fragments
                                                                   :annotations annotations
                                                                   :document-parser parse-ast})
         types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :parsed-location (str location "#")
                                                                  :base-uri location
                                                                  :fragments fragments
                                                                  :annotations annotations

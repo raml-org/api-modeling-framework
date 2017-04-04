@@ -129,7 +129,9 @@
 
 (defn assoc-object [t m target property mapping]
   (if (some? (property m))
-    (assoc t target [(mapping (property m))])
+    (if-let [value (mapping (property m))]
+      (assoc t target [value])
+      t)
     t))
 
 (defn assoc-objects [t m target property mapping]
@@ -207,3 +209,12 @@
 
 (defn ensure-not-blank [x]
   (if (and (string? x) (= x "")) nil x))
+
+
+(defn same-doc? [id1 id2]
+  (let [id1 (first (string/split id1 #"#"))
+        id2 (first (string/split id2 #"#"))]
+    (= id1 id2)))
+
+(defn hash-path [id]
+  (str "#" (-> id (string/split #"#") last)))

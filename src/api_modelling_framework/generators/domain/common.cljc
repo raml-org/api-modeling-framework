@@ -4,17 +4,27 @@
             [api-modelling-framework.utils :as utils]
             [clojure.string :as string]))
 
-(defn find-traits [model context]
+(defn find-traits [model context syntax]
   (let [extends (document/extends model)]
-    ;; @todo do I need both checks, label and is-trait-tag ??
-    (->> extends
-         (filter (fn [extend]
-                   (= "trait" (name (document/label extend)))))
-         (map (fn [trait]
-                (let [trait-tag (first (document/find-tag trait document/is-trait-tag))]
-                  (if (some? trait-tag)
-                    (document/value trait-tag)
-                    (-> (document/target trait) (string/split #"/") last))))))))
+    (condp = syntax
+      ;; @todo do I need both checks, label and is-trait-tag ??
+      :openapi (->> extends
+                    (filter (fn [extend]
+                              (= "trait" (name (document/label extend)))))
+                    (map (fn [trait]
+                           (let [trait-id (document/target trait)
+                                 trait-ref (if (utils/same-doc? (document/id model) trait-id)
+                                             (utils/hash-path trait-id)
+                                             trait-id)]
+                             {:$ref trait-ref}))))
+      :raml    (->> extends
+                    (filter (fn [extend]
+                              (= "trait" (name (document/label extend)))))
+                    (map (fn [trait]
+                           (let [trait-tag (first (document/find-tag trait document/is-trait-tag))]
+                             (if (some? trait-tag)
+                               (document/value trait-tag)
+                               (-> (document/target trait) (string/split #"/") last)))))))))
 
 (defn annotation-reference? [model]
   (-> model
@@ -23,10 +33,7 @@
       some?))
 
 (defn trait-reference? [model]
-  (-> model
-      (document/find-tag document/is-trait-tag)
-      first
-      some?))
+  (satisfies? domain/Operation model))
 
 (defn model->annotationTypes [declares context domain-generator]
   (->> declares
@@ -39,18 +46,10 @@
   (->> references
        (filter (fn [ref] (nil? (:from-library ref))))
        (filter trait-reference?)
+       (filter some?)
        (map (fn [reference]
-              (let [is-trait-tag (-> reference
-                                     (document/find-tag document/is-trait-tag)
-                                     first)
-                    trait-name (-> is-trait-tag
-                                   (document/value)
-                                   keyword)
-                    method (if (some? reference)
-                             reference
-                             (throw (new #?(:cljs js/Error :clj Exception) (str "Cannot find extended trait " trait-name))))
-                    generated (domain-generator method ctx)]
-                [trait-name generated])))
+              (let [generated (domain-generator reference (assoc ctx :from-library (:from-library reference)))]
+                [(keyword (document/name reference)) generated])))
        (into {})))
 
 (defn type-reference-name [reference]
