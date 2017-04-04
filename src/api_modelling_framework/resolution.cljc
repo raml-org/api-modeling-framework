@@ -421,11 +421,11 @@
 
                         :else type)
         final (check-inheritance resolved-type ctx)]
-    ;;q(println "\n\nRESOLVING: ")
-    ;;q(clojure.pprint/pprint type)
-    ;;q(println "RESOLVED")
-    ;;q(clojure.pprint/pprint final)
-    ;;q(println "\n\n")
+    ;;(println "\n\nRESOLVING: ")
+    ;;(clojure.pprint/pprint type)
+    ;;(println "RESOLVED")
+    ;;(clojure.pprint/pprint final)
+    ;;(println "\n\n")
     final))
 
 (defmethod resolve :Type [m ctx]

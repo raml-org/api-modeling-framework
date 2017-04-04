@@ -74,7 +74,11 @@
 
                                            :test004 {:raml (str raml-10-tests "/Fragments/test004/DataType.raml")
                                                      :openapi (str raml-10-tests "/Fragments/test004/DataType.openapi")
-                                                     :jsonld (str raml-10-tests "/Fragments/test004/DataType.jsonld")}
+                                                     :jsonld (str raml-10-tests "/Fragments/test004/DataType.jsonld")},
+
+                                           :test005 {:raml (str raml-10-tests "/Fragments/test005/Trait.raml")
+                                                     :openapi (str raml-10-tests "/Fragments/test005/Trait.openapi")
+                                                     :jsonld (str raml-10-tests "/Fragments/test005/Trait.jsonld")}
                                            }
                                }})
 
@@ -237,7 +241,7 @@
                              (ensure-not-nil (clean-ids doc-target)))))))
 
 (defn check-conversions [files]
-  (go (doseq [[from to] ; [[:jsonld :openapi]]
+  (go (doseq [[from to]  ;[[:openapi :raml]]
               conversions
               ]
         (println "\n\nCOMPARING " from " -> " to "\n\n")

@@ -2,6 +2,7 @@
   (:require [clojure.string :as string]
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
+            [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.parser.domain.raml :as domain-parser]
             [api-modelling-framework.generators.domain.common :as common]
             [api-modelling-framework.utils :as utils]
@@ -193,6 +194,11 @@
                                                           :fragments fragments
                                                           :references (merge references library-declarations)
                                                           :parsed-location (str location "#")
+                                                          :type-hint (condp = fragment-type
+                                                                       "#%RAML 1.0 Trait" :method
+                                                                       "#%RAML 1.0 DataType" :type
+                                                                       ;; the type hint might have be passed by the calling parser
+                                                                       (:type-hint context))
                                                           :document-parser parse-ast
                                                           :is-fragment false}))]
      (-> (document/map->ParsedFragment {:id location
@@ -206,22 +212,27 @@
          (assoc :raw (get node (keyword "@raw"))))))
   ([node context] (parse-fragment node context "#%RAML 1.0 Fragment")))
 
-(defn make-abstract [domain type]
+(defn make-abstract-trait [domain]
   (let [encoded (document/encodes domain)
-        encoded (condp = type
-                  :trait  (-> encoded
-                              (assoc :method nil))
-                 encoded)]
+        encoded (-> encoded
+                    (assoc :method nil)
+                    (assoc :abstract true))]
     (assoc domain :encodes encoded)))
+
+(defn check-abstract [model data]
+  (if (and (some? model)
+           (satisfies? domain/DomainElement model))
+    (assoc model :abstract (get data (keyword "(abstract)") false))
+    model))
 
 (defmethod parse-ast "#%RAML 1.0 DataType" [node context]
   (parse-fragment node context "#%RAML 1.0 DataType"))
 
 (defmethod parse-ast "#%RAML 1.0 Trait" [node context]
-  (make-abstract (parse-fragment node context "#%RAML 1.0 Trait") :trait))
+  (make-abstract-trait (parse-fragment node context "#%RAML 1.0 Trait")))
 
 (defmethod parse-ast "#%RAML 1.0 Fragment" [node context]
-  (parse-fragment node context))
+  (check-abstract (parse-fragment node context) (syntax/<-data node)))
 
 (defmethod parse-ast :fragment [node context]
-  (parse-fragment node context))
+  (check-abstract (parse-fragment node context) (syntax/<-data node)))

@@ -54,6 +54,8 @@
 (def document:fragment-node (document-ns "fragmentNode"))
 (def document:additional-properties (document-ns "additionalProperties"))
 
+(def document:abstract (document-ns "abstractDomainElement"))
+
 (def http:APIDocumentation (http-ns "APIDocumentation"))
 (def sorg:name (sorg-ns "name"))
 (def sorg:description (sorg-ns "description"))

@@ -10,6 +10,21 @@
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
+(defn guess-fragment-from-element [model]
+  (cond
+    (and (satisfies? domain/Operation model)
+         (domain/abstract model))              "#%RAML 1.0 Trait"
+    (satisfies? domain/Type model)             "#%RAML 1.0 DataType"
+    :else                                      nil))
+
+(defn is-abstract-element [model fragment]
+  (if (= fragment "#%RAML 1.0 Trait")
+    nil
+    (if (and (some? (document/encodes model))
+             (satisfies? domain/DomainElement (document/encodes model))
+             (domain/abstract (document/encodes model)))
+      true nil)))
+
 (defn to-raml-dispatch-fn [model ctx]
   (cond
     (nil? model)                                  model
@@ -53,6 +68,7 @@
                     (assoc :expanded-fragments (atom {}))
                     (assoc :document-generator to-raml)
                     (assoc :annotations annotations))
+
         encoded (domain-generator/to-raml (document/encodes model) context)
         encoded (if (> (count uses) 0) (assoc encoded :uses uses) encoded)]
     {(keyword "@location") (document/location model)
@@ -90,8 +106,11 @@
                     (assoc :type-hint :method)
                     (assoc :document-generator to-raml))
         fragment-type-tag (first (document/find-tag model document/document-type-tag))
-        fragment-type (if (some? fragment-type-tag) (document/value fragment-type-tag) nil)
+
         encoded (document/encodes model)
+        fragment-type (if (some? fragment-type-tag)
+                        (document/value fragment-type-tag)
+                        (guess-fragment-from-element encoded))
         data (domain-generator/to-raml encoded context)]
     (utils/clean-nils {(keyword "@location") (document/location model)
                        (keyword "@data") (if (string? data)
@@ -100,8 +119,9 @@
                                            data
                                            (utils/clean-nils
                                             (merge data
-                                                   {:usage (document/description model)
-                                                    :uses uses})))
+                                                   {:usage                 (document/description model)
+                                                    (keyword "(abstract)") (is-abstract-element model fragment-type)
+                                                    :uses                  uses})))
                        (keyword "@fragment") fragment-type})))
 
 (defmethod to-raml :library [model ctx]

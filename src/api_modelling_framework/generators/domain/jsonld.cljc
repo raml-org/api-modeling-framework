@@ -63,11 +63,14 @@
 (defn with-node-properties
   "Adds common node properties"
   [node m context]
-  (-> (initial-value node m context)
-      (assoc "@id" (document/id m))
-      (utils/assoc-value m v/sorg:name document/name)
-      (utils/assoc-value m v/sorg:description document/description)
-      (utils/assoc-objects m v/document:additional-properties document/additional-properties (fn [x] (to-jsonld x context)))))
+  (let [node (-> (initial-value node m context)
+                 (assoc "@id" (document/id m))
+                 (utils/assoc-value m v/sorg:name document/name)
+                 (utils/assoc-value m v/sorg:description document/description)
+                 (utils/assoc-objects m v/document:additional-properties document/additional-properties (fn [x] (to-jsonld x context))))]
+    (if (satisfies? domain/DomainElement m)
+      (utils/assoc-value node m v/document:abstract domain/abstract)
+      node)))
 
 
 (defmethod to-jsonld :APIDocumentation [m context]

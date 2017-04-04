@@ -2,12 +2,23 @@
   (:require [clojure.string :as string]
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.model.document :as document]
-            [api-modelling-framework.model.document :as document]
+            [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.parser.domain.openapi :as domain-parser]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
+
+(defn check-abstract [encoded node]
+  (let [abstract (get node :x-abstract-node nil)]
+    (if abstract
+      (-> (cond
+            (satisfies? domain/Operation encoded) (assoc encoded :method nil)
+            (satisfies? domain/EndPoint encoded)  (assoc encoded :path   nil)
+            (satisfies? domain/Response encoded)  (assoc encoded :status-code nil)
+            :else                                 encoded)
+          (assoc :abstract abstract))
+      encoded)))
 
 (defn parse-ast-dispatch-function [node context]
   (cond
@@ -105,7 +116,8 @@
                                                                       :annotations annotations
                                                                       :references (merge references libraries-declarations)
                                                                       :document-parser parse-ast
-                                                                      :is-fragment false}))]
+                                                                      :is-fragment false}))
+        encoded (check-abstract encoded (syntax/<-data node))]
     (-> (document/map->ParsedFragment {:id location
                                        :location location
                                        :base-uri location

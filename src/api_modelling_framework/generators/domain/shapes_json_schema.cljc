@@ -35,6 +35,7 @@
     (utils/has-class? shape (v/shapes-ns "Scalar"))     (v/shapes-ns "Scalar")
     (utils/has-class? shape (v/shapes-ns "Array"))      (v/shapes-ns "Array")
     (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
+    (some? (get shape "@id"))                           :inclusion
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -143,5 +144,12 @@
     (if (= 1 (count types))
       (first types)
       {:x-merge types})))
+
+(defmethod parse-shape :inclusion [shape context]
+  (let [type-id (get shape "@id")]
+    (cond
+      (common/ref-shape? type-id context) (ref-shape type-id context)
+      (include-shape? type-id context)    (include-shape type-id context)
+      :else                               (parse-shape type context))))
 
 (defmethod parse-shape nil [_ _] {})

@@ -40,6 +40,7 @@
         parameters (->> (get m v/http:parameter []) (mapv #(from-jsonld %)))]
     (domain/map->ParsedAPIDocumentation {:id (get m "@id")
                                          :sources parsed-sources
+                                         :abstract (utils/find-value m v/document:abstract)
                                          :name (utils/find-value m v/sorg:name)
                                          :description (utils/find-value m v/sorg:description)
                                          :host (utils/find-value m v/http:host)
@@ -62,6 +63,7 @@
         extensions (map from-jsonld extend-rels)]
     (domain/map->ParsedEndPoint {:id (get m "@id")
                                  :sources parsed-sources
+                                 :abstract (utils/find-value m v/document:abstract)
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
                                  :path (utils/find-value m v/http:path)
@@ -111,6 +113,7 @@
         request (first (map from-jsonld (-> m (get v/hydra:expects))))]
     (domain/map->ParsedOperation {:id (get m "@id")
                                   :sources parsed-sources
+                                  :abstract (utils/find-value m v/document:abstract)
                                   :name (utils/find-value m v/sorg:name)
                                   :description (utils/find-value m v/sorg:description)
                                   :accepts (utils/find-values m v/http:accepts)
@@ -127,6 +130,7 @@
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedResponse {:id (get m "@id")
                                  :sources parsed-sources
+                                 :abstract (utils/find-value m v/document:abstract)
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
                                  :payloads (mapv from-jsonld (-> m (get v/http:payload [])))
@@ -138,6 +142,7 @@
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedPayload {:id (get m "@id")
                                 :sources parsed-sources
+                                :abstract (utils/find-value m v/document:abstract)
                                 :name (utils/find-value m v/sorg:name)
                                 :description (utils/find-value m v/sorg:description)
                                 :media-type (utils/find-value m v/http:media-type)
@@ -148,6 +153,7 @@
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedType {:id (str (get m "@id") "/wrapper")
+                             :abstract (utils/find-value m v/document:abstract)
                              :name (utils/find-value m v/sorg:name)
                              ;; shapes are expressed already in JSON-LD, they are passed as it
                              :shape m})))
@@ -158,6 +164,7 @@
         parsed-sources (map from-jsonld sources)]
     (domain/map->ParsedParameter {:id (get m "@id")
                                   :sources parsed-sources
+                                  :abstract (utils/find-value m v/document:abstract)
                                   :name (utils/find-value m v/sorg:name)
                                   :description (utils/find-value m v/sorg:description)
                                   ;; shapes are expressed already in JSON-LD, they are passed as it
@@ -178,6 +185,7 @@
                          (map #(from-jsonld %)))]
     (domain/map->ParsedRequest {:id (get m "@id")
                                 :sources parsed-sources
+                                :abstract (utils/find-value m v/document:abstract)
                                 :name (utils/find-value m v/sorg:name)
                                 :description (utils/find-value m v/sorg:description)
                                 :headers headers
