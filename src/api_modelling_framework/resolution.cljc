@@ -13,13 +13,6 @@
        (catch #?(:clj Exception :cljs js/Error) e
          x)))
 
-;; when merging collections of these model elements
-;; group by key to do the merging instead of just
-;; computing the set
-(def coll-merging-keys {domain/EndPoint :path
-                        domain/Operation :method
-                        domain/Response :status-code
-                        domain/Payload :media-type})
 
 (declare merge-declaration*)
 
@@ -30,13 +23,21 @@
     ;; empty collection
     (nil? (first coll))                             nil
     :else ;; proper collections
-    (let [elem (first coll)
-          matching-proto-property (->> coll-merging-keys
-                                       (filter (fn [[proto property]] (satisfies? proto elem)))
-                                       first)]
-      (if (some? matching-proto-property)
-        (last matching-proto-property)
-        nil))))
+    (let [elem (first coll)]
+      ;; when merging collections of these model elements
+      ;; group by key to do the merging instead of just
+      ;; computing the set
+
+      ;; Please be careful moving this logic into a map
+      ;; of protocols -> properties
+      ;; Clojurescript satisfies? fails if the protocol
+      ;; is not directly used, and a var is tried instead
+      (cond
+        (satisfies? domain/EndPoint elem)  :path
+        (satisfies? domain/Operation elem) :method
+        (satisfies? domain/Response elem)  :status-code
+        (satisfies? domain/Payload elem)   :media-type
+        :else                               nil))))
 
 (defn group
   ([coll]
