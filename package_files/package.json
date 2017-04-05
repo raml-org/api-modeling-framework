@@ -1,5 +1,5 @@
 {
     "name":"api_modelling_framework",
     "version":"0.0.1",
-    "main":"index_package"
+    "main":"index"
 }

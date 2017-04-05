@@ -1,7 +1,8 @@
 #!/bin/bash
 
 lein npm install
-lein cljsbuild once default
+# lein cljsbuild once default
+lein cljsbuild once web
 ln -s $(pwd)/js $(pwd)/node/js
 cd api-modeller
 tsc

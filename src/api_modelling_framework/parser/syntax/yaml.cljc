@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
   #?(:cljs (:require [cljs.nodejs :as nodejs]
+                     [yaml :as yaml]
                      [clojure.walk :refer [keywordize-keys stringify-keys]]
                      [cljs.core.async :refer [<! >! chan]]
                      [clojure.string :as string]))
@@ -14,9 +15,6 @@
 
 #?(:cljs (enable-console-print!))
 #?(:cljs (def __dirname (js* "__dirname")))
-#?(:cljs (def yaml (nodejs/require (str __dirname "/../../../../js/yaml"))))
-
-
 
 (declare parse-file)
 
@@ -65,7 +63,7 @@
 #?(:cljs (defn parse-file
            ([uri options]
             (let [ch (chan)]
-              (.parseYamlFile yaml uri (clj->js options) (fn [e result]
+              (yaml/parseYamlFile uri (clj->js options) (fn [e result]
                                                            (go (try (if e
                                                                       (>! ch (ex-info (str e) e))
                                                                       (>! ch (->> result js->clj keywordize-keys add-location-meta)))
@@ -84,7 +82,7 @@
 #?(:cljs (defn parse-string
            ([uri string options]
             (let [ch (chan)]
-              (.parseYamlString yaml uri string (clj->js options) (fn [e result]
+              (yaml/parseYamlString uri string (clj->js options) (fn [e result]
                                                                     (go (try (if e
                                                                                (>! ch (ex-info (str e) e))
                                                                                (>! ch (->> result js->clj keywordize-keys add-location-meta)))
