@@ -1,8 +1,7 @@
 (ns api-modelling-framework.generators.syntax.yaml
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
-  #?(:cljs (:require [cljs.nodejs :as nodejs]
-                     [yaml :as js-yaml]
+  #?(:cljs (:require [yaml :as js-yaml]
                      [api-modelling-framework.utils :as utils]
                      [api-modelling-framework.platform :as platform]
                      [clojure.string :as string]
@@ -16,8 +15,6 @@
                     [clojure.core.async :refer [<! >! go]]
                     [clojure.walk :refer [keywordize-keys]]
                     [clojure.string :as string])))
-
-#?(:cljs (def __dirname (js* "__dirname")))
 
 (def key-orders {"title" 0
                  "description" 1

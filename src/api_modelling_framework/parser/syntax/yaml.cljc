@@ -1,8 +1,7 @@
 (ns api-modelling-framework.parser.syntax.yaml
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
-  #?(:cljs (:require [cljs.nodejs :as nodejs]
-                     [yaml :as yaml]
+  #?(:cljs (:require [yaml :as yaml]
                      [clojure.walk :refer [keywordize-keys stringify-keys]]
                      [cljs.core.async :refer [<! >! chan]]
                      [clojure.string :as string]))
@@ -14,7 +13,6 @@
 
 
 #?(:cljs (enable-console-print!))
-#?(:cljs (def __dirname (js* "__dirname")))
 
 (declare parse-file)
 

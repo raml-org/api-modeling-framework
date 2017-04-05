@@ -1,11 +1,13 @@
 (ns api-modelling-framework.platform
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.nodejs :as nodejs]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [cljs.core.async  :refer [<! >! chan]]
             [clojure.walk :refer [keywordize-keys]]))
 
-(def fs (nodejs/require "fs"))
+;;(require '[cljs.nodejs :as nodejs])
+;;(def fs (nodejs/require "fs"))
+(def fs {})
+
 (enable-console-print!)
 
 (defn error? [x]

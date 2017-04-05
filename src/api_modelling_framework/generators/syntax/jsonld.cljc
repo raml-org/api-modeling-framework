@@ -1,6 +1,5 @@
 (ns api-modelling-framework.generators.syntax.jsonld
-  #?(:cljs (:require [cljs.nodejs :as nodejs]
-                     [api-modelling-framework.platform :as platform]
+  #?(:cljs (:require [api-modelling-framework.platform :as platform]
                      [api-modelling-framework.model.vocabulary :as v]))
 
   #?(:clj (:require [api-modelling-framework.platform :as platform]

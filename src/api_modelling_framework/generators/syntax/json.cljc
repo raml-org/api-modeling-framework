@@ -1,8 +1,7 @@
 (ns api-modelling-framework.generators.syntax.json
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
-  #?(:cljs (:require [cljs.nodejs :as nodejs]
-                     [api-modelling-framework.utils :as utils]
+  #?(:cljs (:require [api-modelling-framework.utils :as utils]
                      [api-modelling-framework.platform :as platform]
                      [clojure.string :as string]
                      [api-modelling-framework.model.syntax :as syntax]
