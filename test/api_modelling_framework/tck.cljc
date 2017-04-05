@@ -82,7 +82,8 @@
                                            }
                                :traits  {:test001 {:raml (str raml-10-tests "/Traits/test001/apiValid.raml")
                                                    :openapi (str raml-10-tests "/Traits/test001/apiValid.openapi")
-                                                   :jsonld (str raml-10-tests "/Traits/test001/apiValid.jsonld")}
+                                                   :jsonld (str raml-10-tests "/Traits/test001/apiValid.jsonld")
+                                                   :resolved (str raml-10-tests "/Traits/test001/resolved.jsonld")}
                                          }
                                }})
 
@@ -213,8 +214,7 @@
             jsonld-generator (-> tools :jsonld :generator)
             target (->> (target-file files type)
                         (platform/read-location)
-                        <!
-                        -success->
+                        <! -success->
                         (platform/decode-json))
             parsed-model (<! (cb->chan (partial core/parse-file parser (get files type) {})))
             _ (is (not (error? parsed-model)))
@@ -253,8 +253,7 @@
               target (get files to)
               target (->> (target-file files to from)
                           (platform/read-location)
-                          <!
-                          -success->
+                          <! -success->
                           (to-data-structure (target-file files to from) to)
                           <!)
               parser (-> tools from :parser)
@@ -268,6 +267,24 @@
                                                 :full-graph? false})))]
           (is (same-structure? (ensure-not-nil (clean-ids (<! (to-data-structure (target-file files to from) to generated))))
                                (ensure-not-nil (clean-ids target))))))))
+
+(defn check-resolution [files]
+  (go
+    (when (some? (get files :resolved))
+      (let [source (get files :jsonld)
+            target (get files :resolved)
+            target-data (->> target
+                             (platform/read-location)
+                             <! -success->
+                             (to-data-structure target :jsonld)
+                             <!)
+            parser (-> tools :jsonld :parser)
+            generator (-> tools :jsonld :generator)
+            parsed-model (<! (cb->chan (partial core/parse-file parser source {:source-maps? false :full-graph true})))
+            domain-model (core/domain-model parsed-model)
+            generated (<! (cb->chan (partial core/generate-string generator target domain-model {:source-maps? false :full-graph false})))]
+        (is (same-structure? (ensure-not-nil (clean-ids (<! (to-data-structure target :jsonld generated))))
+                             (ensure-not-nil (clean-ids target-data))))))))
 
 (defn focus [test tests]
   (if (= test :all)
@@ -284,5 +301,6 @@
              (<! (check-syntax :openapi files))
              (<! (check-syntax :jsonld files))
              (<! (check-conversions files))
+             (<! (check-resolution files))
              )
            (done))))

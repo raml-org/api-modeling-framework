@@ -13,23 +13,84 @@
        (catch #?(:clj Exception :cljs js/Error) e
          x)))
 
-(defn merge-declaration [node declaration]
+;; when merging collections of these model elements
+;; group by key to do the merging instead of just
+;; computing the set
+(def coll-merging-keys {domain/EndPoint :path
+                        domain/Operation :method
+                        domain/Response :status-code
+                        domain/Payload :media-type})
+
+(declare merge-declaration*)
+
+(defn should-group? [coll]
   (cond
-    (nil? node) declaration
-    (nil? declaration) node
+    ;; something that is not a collection
+    (or (nil? coll) (map? coll) (not (coll? coll))) nil
+    ;; empty collection
+    (nil? (first coll))                             nil
+    :else ;; proper collections
+    (let [elem (first coll)
+          matching-proto-property (->> coll-merging-keys
+                                       (filter (fn [[proto property]] (satisfies? proto elem)))
+                                       first)]
+      (if (some? matching-proto-property)
+        (last matching-proto-property)
+        nil))))
+
+(defn group
+  ([coll]
+   (let [key-prop (should-group? coll)]
+     (group-by #(get % key-prop) coll)))
+  ([coll-nodes coll-declarations]
+   (let [group-nodes (group coll-nodes)
+         group-declaration (group coll-declarations)]
+     (merge-with concat group-nodes group-declaration))))
+
+(defn merge-group [elems]
+  (reduce (fn [acc elem]
+            (merge-declaration* acc elem))
+          (first elems)
+          (rest elems)))
+
+(defn merge-colls [node declaration]
+  (if (should-group? node)
+    ;; group and merge
+    (let [grouped (group node declaration)
+          res (->> grouped
+                   (map (fn [[_ elems]] (merge-group elems))))]
+      res)
+    ;; merge by value-set
+    (->> (concat node declaration) set (into []))))
+
+(defn ensure-abstract [declaration]
+  (cond
+    ;; traits                                    ;; we must remove the name with the label for the trait
+    (satisfies? domain/Operation declaration)    (assoc declaration :name nil)
+    :else                                        declaration))
+
+(defn merge-declaration* [node declaration]
+  (cond
+    (nil? node)                            declaration
+    (nil? declaration)                     node
     ;; Both objects have a map value, deep merge
-    (and (map? node) (map? declaration)) (reduce (fn [node property]
-                                                   (let [declaration-value (get declaration property)
-                                                         node-value (get node property)]
-                                                     (assoc node property (merge-declaration node-value declaration-value))))
-                                                 node
-                                                 (keys declaration))
+    (and (map? node) (map? declaration))   (reduce (fn [node property]
+                                                     (let [declaration (ensure-abstract declaration)
+                                                           declaration-value (get declaration property)
+                                                           node-value (get node property)]
+                                                       (assoc node property (merge-declaration* node-value declaration-value))))
+                                                   node
+                                                   (keys declaration))
     ;; Collections compact uniq
-    (and (coll? node) (coll? declaration)) (->> (concat node declaration) set (into []))
+    (and (coll? node) (coll? declaration)) (merge-colls node declaration)
     (coll? node)                           (->> (concat node [declaration]) set (into []))
     (coll? declaration)                    (->> (concat [node] declaration) set (into []))
     ;; If value defined in both objects, node value overwrites declaration value
-    :else node))
+    :else                                  node))
+
+(defn merge-declaration [node declaration]
+  (let [res (merge-declaration* node declaration)]
+    res))
 
 (defn resolve-dispatch-fn [model ctx]
   (let [dispatched (cond
@@ -228,7 +289,8 @@
         ctx (assoc ctx domain/Operation model)
         ;; we need to merge traits before resolving the resulting structure
         traits (mapv #(resolve % ctx) (document/extends model))
-        model (reduce (fn [acc trait] (merge-declaration acc trait))
+        model (reduce (fn [acc trait]
+                        (merge-declaration acc trait))
                       model traits)
         ;; reset the ctx after merging traits
         ctx (assoc ctx domain/Operation model)

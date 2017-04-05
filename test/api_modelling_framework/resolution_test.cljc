@@ -3,6 +3,7 @@
   (:require #?(:clj [clojure.test :refer :all])
             [api-modelling-framework.resolution :as resolution]
             [api-modelling-framework.model.syntax :as syntax]
+            [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.model.vocabulary :as v]
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.parser.document.raml :as raml-parser]
@@ -13,6 +14,13 @@
             [api-modelling-framework.generators.domain.openapi :as openapi-genenerator]
             ))
 
+
+(deftest should-group-test
+  (is (= :method (resolution/should-group? [(domain/map->ParsedOperation {})])))
+  (is (nil? (resolution/should-group? [(domain/map->ParsedAPIDocumentation {})])))
+  (is (nil? (resolution/should-group? [])))
+  (is (nil? (resolution/should-group? nil)))
+  (is (nil? (resolution/should-group? :blah))))
 
 (deftest generate-fragments
   (let [location "file://path/to/resource.raml"
