@@ -36,6 +36,7 @@
                                             :pretty-print true
                                             :target :nodejs}}
                        :web     {:source-paths ["src"]
+                                 :figwheel true
                                  :compiler {:output-to "node/engine/index.js"
                                             :main api-modelling-framework.core
                                             :optimizations :simple
