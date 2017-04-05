@@ -85,6 +85,11 @@
                                                    :jsonld (str raml-10-tests "/Traits/test001/apiValid.jsonld")
                                                    :resolved (str raml-10-tests "/Traits/test001/resolved.jsonld")}
                                          }
+
+                               :types {:test001 {:raml (str raml-10-tests "/Types/test001/apiValid.raml")
+                                                 :openapi (str raml-10-tests "/Types/test001/apiValid.openapi")
+                                                 :jsonld (str raml-10-tests "/Types/test001/apiValid.jsonld")}
+                                       }
                                }})
 
 
