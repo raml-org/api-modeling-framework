@@ -27,7 +27,7 @@
                                  :compiler {:main api-modelling-framework.core
                                             :output-dir "node/engine"
                                             :output-to "node/engine/index.js"
-                                            :foreign-libs [{:file "js/yaml.js"
+                                            :foreign-libs [{:file "js/js-yaml-bundle.js"
                                                             :provides ["yaml"]}]
                                             :optimizations :none,
                                             :source-map true,
@@ -39,7 +39,7 @@
                                  :compiler {:output-to "node/engine/index.js"
                                             :main api-modelling-framework.core
                                             :optimizations :simple
-                                            :foreign-libs [{:file "js/yaml.js"
+                                            :foreign-libs [{:file "js/js-yaml-bundle.js"
                                                             :provides ["yaml"]}]
                                             :pretty-print true}}
                        :test    {:source-paths ["src" "test"]

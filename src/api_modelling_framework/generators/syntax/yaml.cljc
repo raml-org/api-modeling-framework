@@ -2,6 +2,7 @@
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
   #?(:cljs (:require [cljs.nodejs :as nodejs]
+                     [yaml :as js-yaml]
                      [api-modelling-framework.utils :as utils]
                      [api-modelling-framework.platform :as platform]
                      [clojure.string :as string]
@@ -17,7 +18,6 @@
                     [clojure.string :as string])))
 
 #?(:cljs (def __dirname (js* "__dirname")))
-#?(:cljs (def js-yaml (nodejs/require (str __dirname "/../../../../js/js-yaml/index"))))
 
 (def key-orders {"title" 0
                  "description" 1
@@ -30,7 +30,7 @@
           (let [yaml (org.yaml.snakeyaml.Yaml.)]
             (.dump yaml (utils/ramlify ast))))
    :cljs (defn generate-yaml-string [ast]
-           (.dump js-yaml (clj->js (utils/ramlify ast)) (clj->js {"sortKeys" (fn [ka kb]
+           (js-yaml/dump (clj->js (utils/ramlify ast)) (clj->js {"sortKeys" (fn [ka kb]
                                                                                (cond
                                                                                  (and (string/starts-with? ka "/")
                                                                                       (string/starts-with? kb "/"))  0
