@@ -91,7 +91,11 @@
                                                  :jsonld (str raml-10-tests "/Types/test001/apiValid.jsonld")},
                                        :test003 {:raml (str raml-10-tests "/Types/test003/apiValid.raml")
                                                  :openapi (str raml-10-tests "/Types/test003/apiValid.openapi")
-                                                 :jsonld (str raml-10-tests "/Types/test003/apiValid.jsonld")}}
+                                                 :jsonld (str raml-10-tests "/Types/test003/apiValid.jsonld")},
+
+                                       :test004 {:raml (str raml-10-tests "/Types/test004/apiValid.raml")
+                                                 :openapi (str raml-10-tests "/Types/test004/apiValid.openapi")
+                                                 :jsonld (str raml-10-tests "/Types/test004/apiValid.jsonld")}}
                                }})
 
 
