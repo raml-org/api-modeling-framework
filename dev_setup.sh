@@ -5,6 +5,7 @@ rm -rf node
 lein clean
 lein cljsbuild once default
 # lein cljsbuild once web
+cp -rf ./package_files/* ./
 ln -s $(pwd)/js $(pwd)/node/js
 cd api-modeller
 tsc
