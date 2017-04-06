@@ -4,12 +4,44 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.syntax :as syntax]
             [api-modelling-framework.utils :as utils]
+            [instaparse.core :as insta]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
              [debug]]))
 
 (declare parse-type)
+
+(def raml-grammar "TYPE_EXPRESSION = TYPE_NAME | SCALAR_TYPE | <'('> <BS>  TYPE_EXPRESSION <BS> <')'> | ARRAY_TYPE | UNION_TYPE
+                   SCALAR_TYPE = 'string' | 'number' | 'integer' | 'boolean' | 'date-only' | 'time-only' | 'datetime-only' | 'datetime' | 'file' | 'nil'
+                   ARRAY_TYPE = TYPE_EXPRESSION <'[]'>
+                   TYPE_NAME = #\"(\\w[\\w\\d]+\\.)*\\w[\\w\\d]+\"
+                   UNION_TYPE = TYPE_EXPRESSION <BS> (<'|'> <BS> TYPE_EXPRESSION)+
+                   BS = #\"\\s*\"
+                   ")
+(def raml-type-grammar-analyser (insta/parser raml-grammar))
+
+(defn ast->type [ast]
+  (let [type (filterv #(not= % :TYPE_EXPRESSION) ast)]
+    (if (and (= 1 (count type))
+             (vector? (first type)))
+      (recur (first type))
+      (condp = (first type)
+        :UNION_TYPE {:type "union"
+                     :anyOf (mapv #(ast->type %) (rest type))}
+        :SCALAR_TYPE {:type (last type)}
+        :ARRAY_TYPE {:type "array"
+                     :items (ast->type (last type))}
+        :TYPE_NAME (last type)
+
+        (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot parse type expression AST " (mapv identity type))))))))
+
+(defn parse-type-expression [exp]
+  (try
+    (ast->type (raml-type-grammar-analyser exp))
+    (catch #?(:clj Exception :cljs js/Error) ex
+      ;;(println (str "Cannot parse type expression '" exp "': " ex))
+      nil)))
 
 (defn inline-json-schema? [node]
   (and (string? node) (string/starts-with? node "{")))
@@ -86,6 +118,7 @@
                                      property-shape (cond
                                                       (utils/scalar-shape? parsed-property-target) (scalar-shape->property-shape parsed-property-target)
                                                       (utils/array-shape? parsed-property-target)  (array-shape->property-shape parsed-property-target)
+                                                      (utils/nil-shape? parsed-property-target)    (utils/nil-shape->property-shape)
                                                       :else (node-shape->property-shape parsed-property-target))
                                      required (required-property? property-name v)
                                      ;; common properties
@@ -108,6 +141,13 @@
          utils/clean-nils
          (parse-type-constraints node)
          )))
+
+(defn parse-file-type [node parse-file-type]
+  (->> {"@type" [(v/shapes-ns "FileUpload")
+                 (v/sh-ns "Shape")]
+        (v/shapes-ns "fileType") (utils/map-values node :fileTypes)}
+       utils/clean-nils
+      (parse-type-constraints node)))
 
 (defn parse-array [node {:keys [parsed-location] :as context}]
   (let [required-set (set (:required node []))
@@ -177,7 +217,7 @@
   "Checks if a provided string points to one of the types defined at the APIDocumentation level"
   [type-string {:keys [references parsed-location base-uri] :as context}]
 
-  (if-let [type-reference (get references (keyword type-string))]
+  (if-let [type-reference (utils/type-reference? type-string references)]
     (let [label (or (-> type-reference :name)
                     (if (satisfies? domain/Type type-reference) (-> type-reference domain/shape :name) nil)
                     type-string)]
@@ -208,49 +248,121 @@
                                         (str base-uri type-string)
                                         type-string)}]}))
 
-(defn ensure-type-property [node]
-  (let [type (:type node (:schema node))]
-    (-> node
-        (dissoc :type)
-        (dissoc :schema)
-        (assoc :type type))))
+(defn ensure-raml-type-expression-info-added [shape with-raml-type-expression]
+  (if (some? @with-raml-type-expression)
+    ;; adding the information using a property from the raml shapes vocabulary
+    ;; we could add source maps, but this is more straight forward.
+    ;; @todo Change this into a source map?
+    (assoc shape (v/shapes-ns "ramlTypeExpression") [{"@value" @with-raml-type-expression}])
+    shape))
 
-(defn parse-type [node {:keys [parsed-location default-type] :as context}]
+(defn parse-well-known-type-string [type-ref node {:keys [parsed-location] :as context}]
   (cond
-    (some? (syntax/<-data node)) (check-inclusion node context)
+    ;; scalars
+    (= type-ref "string")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "string")))
+    (= type-ref "number")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
+    (= type-ref "integer")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "integer")))
+    (= type-ref "float")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
+    (= type-ref "boolean") (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "boolean")))
+    (= type-ref "null") (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "null")))
+    (= type-ref "time-only") (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "time")))
+    (= type-ref "datetime") (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "dateTime")))
+    (= type-ref "datetime-only") (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "datetime-only")))
+    (= type-ref "date-only") (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "date")))
+    (= type-ref "any") (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "any")))
+    ;; file type
+    (= type-ref "file") (parse-type-constraints node (parse-file-type node parse-file-type))
+    ;; nil type
+    (= type-ref "nil") (parse-type-constraints node (utils/parse-nil-value parsed-location))
+    ;; object
+    (= type-ref "object")  (parse-shape node context)
+    ;; array
+    (= type-ref "array")   (parse-array node context)
+    ;; json schema
+    (and
+     (string? type-ref)
+     (string/starts-with? type-ref "{"))  (do
+                                          (println "TYPE REF:::")
+                                          (println type-ref)
+                                          (parse-json-node parsed-location type-ref))
+    ;; xmls schema
+    (and
+     (string? type-ref)
+     (string/starts-with? type-ref "<"))  (parse-xml-node parsed-location type-ref)
 
-    (string? node)               (cond
-                                   (string/starts-with? node "{") (parse-json-node parsed-location node)
-                                   (string/starts-with? node "<") (parse-xml-node parsed-location node)
-                                   :else (parse-type {:type node} context))
-
-    (map? node)                  (let [type-ref (or (:type node) (:schema node) (or default-type "object"))]
-                                   (condp = type-ref
-                                     "string"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "string")))
-                                     "number"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
-                                     "integer"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "integer")))
-                                     "float"  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
-                                     "boolean" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "boolean")))
-                                     "null" (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "null")))
-                                     "time-only" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "time")))
-                                     "datetime" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "dateTime")))
-                                     "datetime-only" (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "datetime-only")))
-                                     "date-only" (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "date")))
-                                     "any" (parse-type-constraints node (parse-scalar parsed-location (v/shapes-ns "any")))
-                                     "object"  (parse-shape node context)
-                                     "array"   (parse-array node context)
-                                     (let [shape (cond
-                                                   (map? type-ref)               (check-inheritance node context)
-                                                   (coll? type-ref)              (check-multiple-inheritance node context)
-                                                   (string? type-ref)            (cond
-                                                                                   (string/starts-with? type-ref "{") (parse-json-node parsed-location type-ref)
-                                                                                   (string/starts-with? type-ref "<") (parse-xml-node parsed-location type-ref)
-                                                                                   :else (if (or (= [:type] (keys node))
-                                                                                                 (= [:schema] (keys node)))
-                                                                                           (check-reference type-ref context)
-                                                                                           (check-inheritance (ensure-type-property node) context)))
-                                                   :else                           nil)]
-                                       (if (some? shape)
-                                         (parse-type-constraints node shape)
-                                         nil))))
     :else nil))
+
+(defn parse-type-reference-link [type-ref with-raml-type-expression {:keys [parsed-location references] :as context}]
+  (cond
+    ;; links to refernces
+    (utils/type-link? {:type type-ref} references) (check-reference type-ref context)
+
+    (some? (syntax/<-data type-ref))               (check-inclusion type-ref context)
+
+    :else ;; type expressions
+    (let [expanded (parse-type-expression type-ref)]
+      (if (or (nil? expanded) (= expanded type-ref))
+        nil
+        (do
+          (reset! with-raml-type-expression type-ref)
+          (parse-type expanded context))))))
+
+(defn well-known-type? [type-ref]
+  (or
+    ;; scalars
+    (= type-ref "string")
+    (= type-ref "number")
+    (= type-ref "integer")
+    (= type-ref "float")
+    (= type-ref "boolean")
+    (= type-ref "null")
+    (= type-ref "time-only")
+    (= type-ref "datetime")
+    (= type-ref "datetime-only")
+    (= type-ref "date-only")
+    (= type-ref "any")
+    ;; file type
+    (= type-ref "file")
+    ;; nil
+    (= type-ref "nil")
+    ;; object
+    (= type-ref "object")
+    ;; array
+    (= type-ref "array")
+
+    ;; Careful with the next two, starts-with?
+    ;; automatically transform maps into strings!
+    ;; json schema
+    (and (string? type-ref)
+         (string/starts-with? type-ref "{"))
+    ;; xmls schema
+    (and (string? type-ref)
+         (string/starts-with? type-ref "<"))))
+
+(defn parse-type [node {:keys [parsed-location default-type references] :as context}]
+  (let
+      ;; We need to keep the information about the possible raml-type expression
+      ;; only for the type in node. we cannot pass it in the context in the recursive call,
+      ;; We will store the information as a piece of state in closure
+      [with-raml-type-expression (atom nil)]
+
+    (-> (cond
+          (nil? node)                  nil
+
+          (some? (syntax/<-data node)) (check-inclusion node context)
+
+          (string? node)               (or (parse-well-known-type-string node {:type node} context)
+                                           (parse-type-reference-link node with-raml-type-expression context))
+
+          (map? node)                  (let [type-ref (or (:type node) (:schema node) (or default-type "object"))]
+                                         (cond
+                                           ;; it is scalar, an array, regular object or JSON/XML types
+                                           (well-known-type? type-ref)  (parse-well-known-type-string type-ref node context)
+                                           ;; it is a link to something that is not a well known type: type expression, referference
+                                           (utils/link-format? node)    (parse-type-reference-link type-ref with-raml-type-expression context)
+                                           :else
+                                           ;; inheritance, we have properties in this node a
+                                           (check-inheritance (utils/ensure-type-property node) context)))
+
+          :else                        nil)
+        (ensure-raml-type-expression-info-added with-raml-type-expression))))

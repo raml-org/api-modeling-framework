@@ -24,7 +24,7 @@
     (nil? (first coll))                             nil
     :else ;; proper collections
     (let [elem (first coll)]
-      ;; when merging collections of these model elements
+      ;; when merging collections for these model elements
       ;; group by key to do the merging instead of just
       ;; computing the set
 

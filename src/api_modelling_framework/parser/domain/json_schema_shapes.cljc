@@ -67,6 +67,7 @@
                                      property-shape (cond
                                                       (utils/scalar-shape? parsed-property-target) (scalar-shape->property-shape parsed-property-target)
                                                       (utils/array-shape? parsed-property-target)  (array-shape->property-shape parsed-property-target)
+                                                      (utils/nil-shape? parsed-property-target)    (utils/nil-shape->property-shape)
                                                       :else (node-shape->property-shape parsed-property-target))
                                      ;; common properties
                                      property-shape (-> property-shape
@@ -107,6 +108,13 @@
                               nil
                               [{"@id" scalar-type}])}
       utils/clean-nils))
+
+(defn parse-file [node context]
+  (->> {"@type" [(v/shapes-ns "FileUpload")
+                 (v/sh-ns "Shape")]
+        (v/shapes-ns "fileType") (utils/map-values node :x-fileTypes (v/shapes-ns "fileType"))}
+       utils/clean-nils
+       (parse-type-constraints node)))
 
 (defn label [type-reference remote-id]
   (if (some? type-reference)
@@ -229,10 +237,12 @@
 
                                           nil (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float"))))
 
-                              "boolean"                       (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "boolean")))
-                              "null"                          (parse-type-constraints node  (parse-scalar parsed-location (v/shapes-ns "null")))
-                              "object"                        (parse-shape node context)
-                              "array"                         (parse-array node context)
+                              "file"    (parse-type-constraints node (parse-file node context))
+
+                              "boolean" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "boolean")))
+                              "null"    (utils/parse-nil-value context)
+                              "object"  (parse-shape node context)
+                              "array"   (parse-array node context)
                               (if (some? (get node :properties))
                                 (parse-shape node context)
                                 nil))

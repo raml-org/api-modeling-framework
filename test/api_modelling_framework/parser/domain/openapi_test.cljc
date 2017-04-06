@@ -170,6 +170,21 @@
                                                        :location "/response"})]
         (is (= raml-type (openapi-generator/to-openapi shape {})))))))
 
+(deftest parser-ast-nil-value
+  (let [input {:type "null"}
+        parsed (openapi-parser/parse-ast input {:parsed-location "/response"
+                                                :type-hint :type
+                                                :location "/response"})
+        generated (openapi-generator/to-openapi parsed {})]
+    (is (= input generated)))
+  (let [input {:properties {:nilValue {:type "null"}} :type "object"}
+        parsed (openapi-parser/parse-ast input {:parsed-location "/response"
+                                                :type-hint :type
+                                                :location "/response"})
+        generated (openapi-generator/to-openapi parsed {})]
+    (prn generated)
+    (is (= input generated))))
+
 
 (deftest parser-ast-refs
   (let [fragments (atom {})

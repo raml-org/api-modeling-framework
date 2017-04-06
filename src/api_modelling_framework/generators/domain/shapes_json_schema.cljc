@@ -28,13 +28,15 @@
 
 (defn parse-shape-dispatcher-fn [shape ctx]
   (cond
-    (nil? shape)            nil
-    (some? (get shape (v/shapes-ns "inherits")))        :inheritance
-    (utils/has-class? shape (v/shapes-ns "JSONSchema")) (v/shapes-ns "JSONSchema")
-    (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/shapes-ns "XMLSchema")
-    (utils/has-class? shape (v/shapes-ns "Scalar"))     (v/shapes-ns "Scalar")
-    (utils/has-class? shape (v/shapes-ns "Array"))      (v/shapes-ns "Array")
-    (utils/has-class? shape (v/sh-ns "NodeShape"))          (v/sh-ns "NodeShape")
+    (nil? shape)                                           nil
+    (some? (get shape (v/shapes-ns "inherits")))           :inheritance
+    (utils/has-class? shape (v/shapes-ns "NilValueShape")) (v/shapes-ns "NilValueShape")
+    (utils/has-class? shape (v/shapes-ns "JSONSchema"))    (v/shapes-ns "JSONSchema")
+    (utils/has-class? shape (v/shapes-ns "XMLSchema"))     (v/shapes-ns "XMLSchema")
+    (utils/has-class? shape (v/shapes-ns "Scalar"))        (v/shapes-ns "Scalar")
+    (utils/has-class? shape (v/shapes-ns "Array"))         (v/shapes-ns "Array")
+    (utils/has-class? shape (v/sh-ns "NodeShape"))         (v/sh-ns "NodeShape")
+    (utils/has-class? shape (v/shapes-ns "FileUpload"))    (v/shapes-ns "FileUpload")
 
     ;; this is not being used right now...
     (some? (get shape "@id"))                           :inclusion
@@ -75,9 +77,10 @@
                                (let [label (utils/extract-jsonld-literal property (v/shapes-ns "propertyLabel"))
                                      required (utils/extract-jsonld-literal property (v/sh-ns "minCount") #(if (= % 0) false true))
                                      range (cond
+                                             (utils/nil-range? property)     "null"
                                              (utils/scalar-range? property)  (parse-shape (utils/property-shape->scalar-shape property) context)
                                              (utils/array-range? property)   (parse-shape (utils/property-shape->array-shape property) context)
-                                             :else                     (parse-shape (utils/property-shape->node-shape property) context))
+                                             :else                           (parse-shape (utils/property-shape->node-shape property) context))
                                      range (if (string? range) {:type range} range)]
                                  (when required (swap! required-props #(concat % [label])))
                                  [label (or range {})])))
@@ -131,6 +134,18 @@
     {:type "EmbeddedXMLSchema"
      :value value}))
 
+(defmethod parse-shape (v/shapes-ns "NilValueShape") [shape context]
+  {:type "null"})
+
+(defmethod parse-shape (v/shapes-ns "FileUpload") [shape context]
+  (let [fileTypes (->> (get shape (v/shapes-ns "fileType") [])
+                       (map #(get % "@value")))
+        fileTypes (if (= 1 (count fileTypes)) (first fileTypes) fileTypes)]
+    (-> {:type "file"
+         :x-fileTypes fileTypes}
+        (utils/clean-nils)
+        (parse-constraints shape))))
+
 (defn include-shape? [type {:keys [fragments]}] (get fragments type))
 
 (defn include-shape [type {:keys [fragments document-generator] :as context}]
@@ -164,5 +179,7 @@
       (common/ref-shape? type-id context) (ref-shape type-id context)
       (include-shape? type-id context)    (include-shape type-id context)
       :else                               (parse-shape type context))))
+
+(defmethod parse-shape :raml-expression [shape _] (-> shape (get (v/shapes-ns "ramlTypeExpression")) first (get "@value")))
 
 (defmethod parse-shape nil [_ _] {})

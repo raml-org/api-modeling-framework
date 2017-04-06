@@ -244,6 +244,43 @@
                                                     :location "/response"})]
         (is (= raml-type (raml-genenerator/to-raml shape {})))))))
 
+(deftest parser-raml-type-expressions
+  (let [raml-type "string[]"
+        parsed (raml-parser/parse-ast raml-type {:parsed-location "/response"
+                                                 :type-hint :type
+                                                 :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= raml-type generated))))
+
+
+(deftest parser-raml-nil-value
+  (let [input "nil"
+        parsed (raml-parser/parse-ast input {:parsed-location "/response"
+                                                     :type-hint :type
+                                                     :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= input generated)))
+  (let [input {:properties {:nilValue "nil"}}
+        parsed (raml-parser/parse-ast input {:parsed-location "/response"
+                                             :type-hint :type
+                                             :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= input generated))))
+
+(deftest parser-raml-file-value
+  (let [input {:type "file" :fileTypes ["image/png" "*/*"] :maxLength (* 100 1024)}
+        parsed (raml-parser/parse-ast input {:parsed-location "/response"
+                                             :type-hint :type
+                                             :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= input generated)))
+  (let [input {:type "file" :fileTypes "image/png" :maxLength (* 100 1024)}
+        parsed (raml-parser/parse-ast input {:parsed-location "/response"
+                                             :type-hint :type
+                                             :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= input generated))))
+
 (deftest parse-ast-includes
   (let [fragments (atom {})
         node {:displayName "Users"

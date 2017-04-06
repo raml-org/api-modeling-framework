@@ -131,9 +131,10 @@
     t))
 
 (defn map-values [m property]
-  (if (some? (property m))
-    (map (fn [v] {"@value" (safe-value v)}) (property m))
-    []))
+  (let [values (->> [(property m)] flatten (filter some?))]
+    (if (empty? values)
+      []
+      (map (fn [v] {"@value" (safe-value v)}) values))))
 
 (defn assoc-object [t m target property mapping]
   (if (some? (property m))
@@ -230,6 +231,9 @@
 (defn scalar-shape? [shape]
   (has-class? shape (v/shapes-ns "Scalar")))
 
+(defn nil-shape? [shape]
+  (has-class? shape (v/shapes-ns "NilValueShape")))
+
 (defn array-shape? [shape]
   (has-class? shape (v/shapes-ns "Array")))
 
@@ -255,6 +259,22 @@
 (defn array-range? [property]
   (= {"@value" true} (-> property (get (v/shapes-ns "ordered") []) first)))
 
+(defn nil-range? [property]
+  (= {"@value" true} (-> property (get (v/shapes-ns "nilValue") []) first)))
+
+(defn nil-shape->property-shape []
+  {;; Object properties vs arrays, only one is allowed if it is an object
+   (v/sh-ns "maxCount")  [{"@value" 1}]
+   ;; we mark it for our own purposes, for example being able to detect
+   ;; it easily without checking in property
+   (v/shapes-ns "nilValue") [{"@value" true}]
+   ;; range of the prop, values have to be shapes:NilValue
+   (v/sh-ns "in")     [{"@list" [(v/shapes-ns "NilValue")]}]})
+
+(defn parse-nil-value [{:keys [parsed-location]}]
+  {"@id" parsed-location
+   "@type" [(v/shapes-ns "NilValueShape") (v/sh-ns "Shape")]})
+
 (defn property-shape->array-shape [property]
   (let [items (-> property
                   (get (v/sh-ns "node") [])
@@ -267,3 +287,27 @@
 
 (defn property-shape->node-shape [property]
   (-> property (get (v/sh-ns "node") []) first))
+
+(defn type-reference? [type-string references]
+  (get references (keyword type-string)))
+
+
+(defn type-link? [node references]
+  (and (or (= [:type] (keys node))
+           (= [:schema] (keys node))
+           (= [:$ref] (keys node)))
+       (some? (type-reference? (first (vals node)) references))))
+
+
+(defn link-format? [node]
+  (and (map? node)
+       (or (= [:type] (keys node))
+           (= [:schema] (keys node))
+           (= [:$ref] (keys node)))))
+
+(defn ensure-type-property [node]
+  (let [type (:type node (:schema node))]
+    (-> node
+        (dissoc :type)
+        (dissoc :schema)
+        (assoc :type type))))
