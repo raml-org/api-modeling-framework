@@ -16,8 +16,9 @@ try {
     require("source-map-support").install();
 } catch (err) {
 }
-require(path.join(__dirname, "goog", "bootstrap", "nodejs.js"));
-require(path.join(__dirname, "cljs_deps.js"));
+require(__dirname + "/js/yaml");
+require(path.join(__dirname, "node", "engine", "goog", "bootstrap", "nodejs.js"));
+require(path.join(__dirname, "node", "engine", "cljs_deps.js"));
 goog.global.CLOSURE_UNCOMPILED_DEFINES = { "cljs.core._STAR_target_STAR_": "nodejs" };
 goog.global.NODE_FS = require('fs');
 goog.require("api_modelling_framework.core");

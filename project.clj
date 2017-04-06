@@ -22,13 +22,11 @@
   :npm {:dependencies [[uri-templates "0.2.0"]
                        [rest "2.0.0"]]}
 
-  :cljsbuild {:builds {:default {:source-paths ["src"]
+  :cljsbuild {:builds {:default {:source-paths ["src", "src_node"]
                                  :figwheel true
                                  :compiler {:main api-modelling-framework.core
                                             :output-dir "node/engine"
                                             :output-to "node/engine/index.js"
-                                            :foreign-libs [{:file "js/js-yaml-bundle.js"
-                                                            :provides ["yaml"]}]
                                             :optimizations :none,
                                             :source-map true,
                                             :source-map-timestamp true,
@@ -41,10 +39,11 @@
                                             :main api-modelling-framework.core
                                             :optimizations :simple
                                             :foreign-libs [{:file "js/js-yaml-bundle.js"
-                                                            :provides ["yaml"]}]
+                                                            :provides ["api_modelling_framework.web.yaml"]}]
                                             :pretty-print true}}
                        :test    {:source-paths ["src" "test"]
                                  :compiler {:output-to "resources/public/js/main-test.js"
                                             :main api-modelling-framework.runner
                                             :pretty-print true
                                             :target :nodejs}}}})
+2

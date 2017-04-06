@@ -1,10 +1,15 @@
 (ns api-modelling-framework.parser.syntax.yaml
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
-  #?(:cljs (:require [yaml :as yaml]
-                     [clojure.walk :refer [keywordize-keys stringify-keys]]
+  #?(:cljs (:require [clojure.walk :refer [keywordize-keys stringify-keys]]
                      [cljs.core.async :refer [<! >! chan]]
-                     [clojure.string :as string]))
+                     [clojure.string :as string]
+
+                     ;; this will trigger adding the js-yaml-bundle in compilation
+                     ;; for the web version
+                     ;; it will be a noop for the node version
+
+                     [api_modelling_framework.web.yaml :as js-yaml]))
 
   #?(:clj (:require [clj-yaml.core :as yaml]
                     [clojure.core.async :refer [<! >! go]]
@@ -12,7 +17,11 @@
                     [clojure.string :as string])))
 
 
-#?(:cljs (enable-console-print!))
+
+;; This will come from the index.js in node of from the loaded
+;; code in the web version
+#?(:cljs (def yaml js/JS_YAML))
+
 
 (declare parse-file)
 
@@ -61,7 +70,7 @@
 #?(:cljs (defn parse-file
            ([uri options]
             (let [ch (chan)]
-              (yaml/parseYamlFile uri (clj->js options) (fn [e result]
+              (.parseYamlFile yaml uri (clj->js options) (fn [e result]
                                                            (go (try (if e
                                                                       (>! ch (ex-info (str e) e))
                                                                       (>! ch (->> result js->clj keywordize-keys add-location-meta)))
@@ -80,7 +89,7 @@
 #?(:cljs (defn parse-string
            ([uri string options]
             (let [ch (chan)]
-              (yaml/parseYamlString uri string (clj->js options) (fn [e result]
+              (.parseYamlString yaml uri string (clj->js options) (fn [e result]
                                                                     (go (try (if e
                                                                                (>! ch (ex-info (str e) e))
                                                                                (>! ch (->> result js->clj keywordize-keys add-location-meta)))

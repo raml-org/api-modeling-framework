@@ -4552,6 +4552,11 @@ var parseYamlString = function (location, data, options, cb) {
 module.exports.parseYamlFile = parseYamlFile;
 module.exports.parseYamlString = parseYamlString;
 module.exports.dump = yaml.dump;
+global.JS_YAML = {};
+global.JS_YAML.parseYamlFile = parseYamlFile;
+global.JS_YAML.parseYamlString = parseYamlString;
+global.JS_YAML.dump = yaml.dump;
+
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./js-yaml/index.js":4,"fs":1,"path":2,"rest":35}],35:[function(require,module,exports){
