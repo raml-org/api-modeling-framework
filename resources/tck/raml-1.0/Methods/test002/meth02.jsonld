@@ -10,6 +10,7 @@
         {
             "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/definitions/TestSchema/shape",
             "@type": [
+                "http://www.w3.org/ns/shacl#NodeShape",
                 "http://www.w3.org/ns/shacl#Shape"
             ],
             "http://schema.org/name": [
@@ -21,30 +22,32 @@
                 {
                     "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/definitions/TestSchema/shape/property/:type",
                     "@type": [
-                        "http://www.w3.org/ns/shacl#PropertyConstraint"
+                        "http://www.w3.org/ns/shacl#Shape",
+                        "http://www.w3.org/ns/shacl#PropertyShape"
                     ],
                     "http://raml.org/vocabularies/shapes#propertyLabel": [
                         {
                             "@value": "type"
                         }
                     ],
-                    "http://raml.org/vocabularies/shapes#range": [
+                    "http://www.w3.org/ns/shacl#path": [
                         {
-                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/definitions/TestSchema/shape/property/:type/shape",
-                            "@type": [
-                                "http://www.w3.org/ns/shacl#Shape",
-                                "http://raml.org/vocabularies/shapes#Scalar"
-                            ],
-                            "http://www.w3.org/ns/shacl#dataType": [
-                                {
-                                    "@id": "http://www.w3.org/2001/XMLSchema#string"
-                                }
-                            ]
+                            "@id": "http://raml.org/vocabularies/shapes#anon/type"
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#dataType": [
+                        {
+                            "@id": "http://www.w3.org/2001/XMLSchema#string"
                         }
                     ],
                     "http://www.w3.org/ns/shacl#minCount": [
                         {
                             "@value": 0
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#maxCount": [
+                        {
+                            "@value": 1
                         }
                     ]
                 }
@@ -100,6 +103,7 @@
                                                 {
                                                     "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test002/meth02.raml#/api-documentation/end-points/0/post/application%2Fjson/ref-shape",
                                                     "@type": [
+                                                        "http://www.w3.org/ns/shacl#NodeShape",
                                                         "http://raml.org/vocabularies/shapes#Shape"
                                                     ],
                                                     "http://raml.org/vocabularies/shapes#inherits": [

@@ -345,7 +345,13 @@
     (->> types
          (reduce (fn [acc [type-name type-node]]
                    (debug (str "Processing type " type-name))
-                   (let [type-name  (url/url-encode (utils/safe-str type-name))
+                   (let [type-node (if (syntax/fragment? type-node)
+                                     ;; avoiding situations where we transform this into an include
+                                     ;; and then we cannot transform this back into type because there's
+                                     ;; no way to tell it without source maps
+                                     {:type type-node}
+                                     type-node)
+                         type-name  (url/url-encode (utils/safe-str type-name))
                          type-id (common/type-reference location type-name)
                          references (get nested-context :references {})
                          type-fragment (parse-ast type-node (-> nested-context
@@ -623,6 +629,7 @@
                    ;; body:
                    ;;  application/xml
                    (or (nil? body)
+                       (= "" body)
                        (= {} body))  {:media-type (-> media-type
                                                       utils/safe-str
                                                       utils/ensure-not-blank)

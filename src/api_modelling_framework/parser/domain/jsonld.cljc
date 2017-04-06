@@ -24,6 +24,7 @@
     (utils/has-class? model v/http:Request)                   v/http:Request
     (utils/has-class? model v/sh:Shape)                       v/sh:Shape
     (utils/has-class? model (v/shapes-ns "Shape"))            v/sh:Shape
+    (utils/has-class? model (v/shapes-ns "NodeShape"))        v/sh:Shape
     (utils/has-class? model v/http:Payload)                   v/http:Payload
     (utils/has-class? model v/http:Parameter)                 v/http:Parameter
     (utils/has-class? model v/document:IncludeRelationship)   v/document:IncludeRelationship

@@ -33,16 +33,17 @@
       ;; Clojurescript satisfies? fails if the protocol
       ;; is not directly used, and a var is tried instead
       (cond
-        (satisfies? domain/EndPoint elem)  :path
-        (satisfies? domain/Operation elem) :method
-        (satisfies? domain/Response elem)  :status-code
-        (satisfies? domain/Payload elem)   :media-type
-        :else                               nil))))
+        (satisfies? domain/EndPoint elem)  #(:path %)
+        (satisfies? domain/Operation elem) #(:method %)
+        (satisfies? domain/Response elem)  #(:status-code %)
+        (satisfies? domain/Payload elem)   #(:media-type %)
+        (utils/property-shape? elem)       #(-> % (get (v/sh-ns "path") []) first (get "@id"))
+        :else                              nil))))
 
 (defn group
   ([coll]
-   (let [key-prop (should-group? coll)]
-     (group-by #(get % key-prop) coll)))
+   (let [grouping-fn (should-group? coll)]
+     (group-by grouping-fn coll)))
   ([coll-nodes coll-declarations]
    (let [group-nodes (group coll-nodes)
          group-declaration (group coll-declarations)]
@@ -432,16 +433,16 @@
 (defn process-object-type [type ctx]
   (assoc type (v/sh-ns "property") (->> (get type (v/sh-ns "property") [])
                                         (mapv (fn [property]
-                                                (let [property-range (get property (v/shapes-ns "range"))]
-                                                  (assoc property (v/shapes-ns "range")
-                                                         (mapv #(resolve-type % ctx)
-                                                               property-range))))))))
+                                                (let [property-range (get property (v/sh-ns "node"))]
+                                                  (if (some? property-range)
+                                                    (assoc property (v/sh-ns "node")
+                                                           (mapv #(resolve-type % ctx)
+                                                                 property-range))
+                                                    property)))))))
 
 (defn process-arrray-type [type ctx]
   (assoc type (v/shapes-ns "item") (mapv #(resolve-type % ctx)
                                          (get type (v/shapes-ns "item")))))
-
-;;(some? (type-reference? type ctx))  (resolve-type (type-reference? type ctx) ctx)
 
 (defn maybe-ref? [type]
   (let [inherits (get type (v/shapes-ns "inherits") [])

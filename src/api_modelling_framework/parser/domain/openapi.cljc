@@ -184,28 +184,35 @@
                      (assoc acc (keyword trait-name) parsed-trait)))
                  {}))))
 
-(defn process-types [node {:keys [location alias-chain] :as context}]
+(defn process-types [node {:keys [location alias-chain references] :as context}]
   (debug "Processing " (count (:definitions node [])) " types")
-  (->> (:definitions node {})
-       (reduce (fn [acc [type-name type-node]]
-                 (debug (str "Processing type " type-name))
-                 (let [type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))
-                       type-fragment (parse-ast type-node (-> context
-                                                              ;; the physical location matches the structure of the OpennAPI document
-                                                              (assoc :location (utils/path-join location "/definitions/" type-name))
-                                                              ;; the logical location is the actual URI of the type, we use common notation
-                                                              ;; encapsulated in the common/type-reference function
-                                                              (assoc :parsed-location type-id)
-                                                              (assoc :is-fragment false)
-                                                              (assoc :type-hint :type)))
-                       sources (or (-> type-fragment :sources) [])
-                       sources (concat sources (common/generate-is-type-sources type-name type-id type-id))
-                       parsed-type (-> type-fragment
-                                       (assoc :name (utils/safe-str type-name))
-                                       (assoc :sources sources)
-                                       (assoc :id type-id))]
-                   (assoc acc type-id parsed-type)))
-               {})))
+  (let [;; we will mark the positions of references in the types node
+        ahead-references (->> (:definitions node {})
+                              (map (fn [[type-name _]]
+                                     (let [type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))]
+                                       [type-id {:x-ahead-declaration type-id}])))
+                              (into {}))
+        context (assoc context :references (merge references ahead-references))]
+    (->> (:definitions node {})
+                        (reduce (fn [acc [type-name type-node]]
+                                  (debug (str "Processing type " type-name))
+                                  (let [type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))
+                                        type-fragment (parse-ast type-node (-> context
+                                                                               ;; the physical location matches the structure of the OpennAPI document
+                                                                               (assoc :location (utils/path-join location "/definitions/" type-name))
+                                                                               ;; the logical location is the actual URI of the type, we use common notation
+                                                                               ;; encapsulated in the common/type-reference function
+                                                                               (assoc :parsed-location type-id)
+                                                                               (assoc :is-fragment false)
+                                                                               (assoc :type-hint :type)))
+                                        sources (or (-> type-fragment :sources) [])
+                                        sources (concat sources (common/generate-is-type-sources type-name type-id type-id))
+                                        parsed-type (-> type-fragment
+                                                        (assoc :name (utils/safe-str type-name))
+                                                        (assoc :sources sources)
+                                                        (assoc :id type-id))]
+                                    (assoc acc type-id parsed-type)))
+                                {}))))
 
 (defn generate-parsed-node-sources [node-name location parsed-location]
   (let [source-map-parsed-location (str parsed-location "/source-map/" node-name)

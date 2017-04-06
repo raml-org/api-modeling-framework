@@ -12,6 +12,14 @@
                    (name x))
     :else (str x)))
 
+(defn ->bool [x]
+  (cond (nil? x)                           false
+        #?(:clj (instance? Boolean x)
+           :cljs (or (= "true" (str x))
+                     (= "false" (str x)))) (if (= "true" (str x)) true false)
+        (string? x)                        (if (= (string/lower-case x) "true") true)
+        :else                              true))
+
 (defn trace-keys [x] (prn (keys x)) x)
 (defn trace [x] (prn x) x)
 
@@ -218,3 +226,44 @@
 
 (defn hash-path [id]
   (str "#" (-> id (string/split #"#") last)))
+
+(defn scalar-shape? [shape]
+  (has-class? shape (v/shapes-ns "Scalar")))
+
+(defn array-shape? [shape]
+  (has-class? shape (v/shapes-ns "Array")))
+
+(defn node-shape? [shape]
+  (has-class? shape (v/sh-ns "NodeShape")))
+
+(defn property-shape? [shape]
+  (has-class? shape (v/sh-ns "PropertyShape")))
+
+(defn object-no-properties? [x]
+  (and (or (nil? (:type x))
+           (= "object" (:type x)))
+       (nil? (:properties x))))
+
+
+(defn scalar-range? [property]
+  (some? (get property (v/sh-ns "dataType"))))
+
+(defn property-shape->scalar-shape [property]
+  {"@type" [(v/shapes-ns "Scalar")]
+   (v/sh-ns "dataType") (get property (v/sh-ns "dataType"))})
+
+(defn array-range? [property]
+  (= {"@value" true} (-> property (get (v/shapes-ns "ordered") []) first)))
+
+(defn property-shape->array-shape [property]
+  (let [items (-> property
+                  (get (v/sh-ns "node") [])
+                  first)
+        items (if (some? (get items (v/sh-ns "or")))
+                (-> items (get (v/sh-ns "or")) (get "@list"))
+                [items])]
+    {"@type" [(v/shapes-ns "Array")]
+     (v/shapes-ns "item") items}))
+
+(defn property-shape->node-shape [property]
+  (-> property (get (v/sh-ns "node") []) first))

@@ -381,8 +381,8 @@
                                                      (core/document-model read-model)
                                                      {})))
                    yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-yaml)))]
-               (is (some? (-> yaml-data (get (keyword "(declares)")) :User)))
-               (is (string/starts-with? (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "!include"))
+               (is (some? (-> yaml-data :types :User)))
+               (is (= (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "User"))
                (done)))))
 
 (deftest integration-test-jsonld-generator-parser-source-maps
@@ -403,8 +403,7 @@
                                                      {})))
                    yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-yaml)))]
                (is (some? (-> yaml-data :types :User)))
-               ;; @todo this should be a reference to the type
-               (is (string/starts-with? (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "!include"))
+               (is (= (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "User"))
                (done)))))
 
 (deftest integration-test-raml-fragment-libraries

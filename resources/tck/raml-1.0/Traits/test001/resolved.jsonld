@@ -1,5 +1,5 @@
 {
-    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml",
+    "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml",
     "@type": [
         "http://raml.org/vocabularies/document#Document",
         "http://raml.org/vocabularies/document#Fragment",
@@ -12,7 +12,7 @@
                 "http://raml.org/vocabularies/http#APIDocumentation",
                 "http://raml.org/vocabularies/document#DomainElement"
             ],
-            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation",
+            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation",
             "http://schema.org/name": [
                 {
                     "@value": "API"
@@ -24,7 +24,7 @@
                         "http://raml.org/vocabularies/http#EndPoint",
                         "http://raml.org/vocabularies/document#DomainElement"
                     ],
-                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0",
+                    "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0",
                     "http://raml.org/vocabularies/http#path": [
                         {
                             "@value": "/resource"
@@ -36,7 +36,7 @@
                                 "http://www.w3.org/ns/hydra/core#Operation",
                                 "http://raml.org/vocabularies/document#DomainElement"
                             ],
-                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/put",
+                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/put",
                             "http://www.w3.org/ns/hydra/core#method": [
                                 {
                                     "@value": "put"
@@ -48,7 +48,7 @@
                                         "http://raml.org/vocabularies/http#Response",
                                         "http://raml.org/vocabularies/document#DomainElement"
                                     ],
-                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200",
+                                    "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200",
                                     "http://schema.org/name": [
                                         {
                                             "@value": "200"
@@ -65,19 +65,36 @@
                                                 "http://raml.org/vocabularies/http#Payload",
                                                 "http://raml.org/vocabularies/document#DomainElement"
                                             ],
-                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson",
+                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson",
                                             "http://raml.org/vocabularies/http#schema": [
                                                 {
                                                     "@type": [
-                                                        "http://www.w3.org/ns/shacl#Shape"
+                                                        "http://www.w3.org/ns/shacl#Shape",
+                                                        "http://www.w3.org/ns/shacl#NodeShape"
                                                     ],
-                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson",
+                                                    "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson",
                                                     "http://www.w3.org/ns/shacl#property": [
                                                         {
-                                                            "@type": [
-                                                                "http://www.w3.org/ns/shacl#PropertyConstraint"
+                                                            "http://www.w3.org/ns/shacl#maxCount": [
+                                                                {
+                                                                    "@value": 1
+                                                                }
                                                             ],
-                                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1",
+                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/2001/XMLSchema#float"
+                                                                }
+                                                            ],
+                                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait2/200/application%2Fjson/property/traitProperty1",
+                                                            "@type": [
+                                                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                                                "http://www.w3.org/ns/shacl#Shape"
+                                                            ],
+                                                            "http://www.w3.org/ns/shacl#path": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/ns/shacl#traitProperty1"
+                                                                }
+                                                            ],
                                                             "http://raml.org/vocabularies/shapes#propertyLabel": [
                                                                 {
                                                                     "@value": "traitProperty1"
@@ -87,27 +104,29 @@
                                                                 {
                                                                     "@value": 1
                                                                 }
-                                                            ],
-                                                            "http://raml.org/vocabularies/shapes#range": [
-                                                                {
-                                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1",
-                                                                    "@type": [
-                                                                        "http://www.w3.org/ns/shacl#Shape",
-                                                                        "http://raml.org/vocabularies/shapes#Scalar"
-                                                                    ],
-                                                                    "http://www.w3.org/ns/shacl#dataType": [
-                                                                        {
-                                                                            "@id": "http://www.w3.org/2001/XMLSchema#boolean"
-                                                                        }
-                                                                    ]
-                                                                }
                                                             ]
                                                         },
                                                         {
-                                                            "@type": [
-                                                                "http://www.w3.org/ns/shacl#PropertyConstraint"
+                                                            "http://www.w3.org/ns/shacl#maxCount": [
+                                                                {
+                                                                    "@value": 1
+                                                                }
                                                             ],
-                                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2",
+                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/2001/XMLSchema#float"
+                                                                }
+                                                            ],
+                                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2",
+                                                            "@type": [
+                                                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                                                "http://www.w3.org/ns/shacl#Shape"
+                                                            ],
+                                                            "http://www.w3.org/ns/shacl#path": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/ns/shacl#traitProperty2"
+                                                                }
+                                                            ],
                                                             "http://raml.org/vocabularies/shapes#propertyLabel": [
                                                                 {
                                                                     "@value": "traitProperty2"
@@ -117,27 +136,29 @@
                                                                 {
                                                                     "@value": 1
                                                                 }
-                                                            ],
-                                                            "http://raml.org/vocabularies/shapes#range": [
-                                                                {
-                                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2",
-                                                                    "@type": [
-                                                                        "http://www.w3.org/ns/shacl#Shape",
-                                                                        "http://raml.org/vocabularies/shapes#Scalar"
-                                                                    ],
-                                                                    "http://www.w3.org/ns/shacl#dataType": [
-                                                                        {
-                                                                            "@id": "http://www.w3.org/2001/XMLSchema#float"
-                                                                        }
-                                                                    ]
-                                                                }
                                                             ]
                                                         },
                                                         {
-                                                            "@type": [
-                                                                "http://www.w3.org/ns/shacl#PropertyConstraint"
+                                                            "http://www.w3.org/ns/shacl#maxCount": [
+                                                                {
+                                                                    "@value": 1
+                                                                }
                                                             ],
-                                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1_3",
+                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/2001/XMLSchema#string"
+                                                                }
+                                                            ],
+                                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1_3",
+                                                            "@type": [
+                                                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                                                "http://www.w3.org/ns/shacl#Shape"
+                                                            ],
+                                                            "http://www.w3.org/ns/shacl#path": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/ns/shacl#traitProperty1_3"
+                                                                }
+                                                            ],
                                                             "http://raml.org/vocabularies/shapes#propertyLabel": [
                                                                 {
                                                                     "@value": "traitProperty1_3"
@@ -147,27 +168,29 @@
                                                                 {
                                                                     "@value": 1
                                                                 }
-                                                            ],
-                                                            "http://raml.org/vocabularies/shapes#range": [
-                                                                {
-                                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1_3",
-                                                                    "@type": [
-                                                                        "http://www.w3.org/ns/shacl#Shape",
-                                                                        "http://raml.org/vocabularies/shapes#Scalar"
-                                                                    ],
-                                                                    "http://www.w3.org/ns/shacl#dataType": [
-                                                                        {
-                                                                            "@id": "http://www.w3.org/2001/XMLSchema#string"
-                                                                        }
-                                                                    ]
-                                                                }
                                                             ]
                                                         },
                                                         {
-                                                            "@type": [
-                                                                "http://www.w3.org/ns/shacl#PropertyConstraint"
+                                                            "http://www.w3.org/ns/shacl#maxCount": [
+                                                                {
+                                                                    "@value": 1
+                                                                }
                                                             ],
-                                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2_3",
+                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/2001/XMLSchema#string"
+                                                                }
+                                                            ],
+                                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait2/200/application%2Fjson/property/traitProperty2_3",
+                                                            "@type": [
+                                                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                                                "http://www.w3.org/ns/shacl#Shape"
+                                                            ],
+                                                            "http://www.w3.org/ns/shacl#path": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/ns/shacl#traitProperty2_3"
+                                                                }
+                                                            ],
                                                             "http://raml.org/vocabularies/shapes#propertyLabel": [
                                                                 {
                                                                     "@value": "traitProperty2_3"
@@ -176,20 +199,6 @@
                                                             "http://www.w3.org/ns/shacl#minCount": [
                                                                 {
                                                                     "@value": 1
-                                                                }
-                                                            ],
-                                                            "http://raml.org/vocabularies/shapes#range": [
-                                                                {
-                                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2_3",
-                                                                    "@type": [
-                                                                        "http://www.w3.org/ns/shacl#Shape",
-                                                                        "http://raml.org/vocabularies/shapes#Scalar"
-                                                                    ],
-                                                                    "http://www.w3.org/ns/shacl#dataType": [
-                                                                        {
-                                                                            "@id": "http://www.w3.org/2001/XMLSchema#string"
-                                                                        }
-                                                                    ]
                                                                 }
                                                             ]
                                                         }
@@ -211,14 +220,14 @@
                                         "http://raml.org/vocabularies/http#Request",
                                         "http://raml.org/vocabularies/document#DomainElement"
                                     ],
-                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/put/request",
+                                    "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/put/request",
                                     "http://raml.org/vocabularies/http#payload": [
                                         {
                                             "@type": [
                                                 "http://raml.org/vocabularies/http#Payload",
                                                 "http://raml.org/vocabularies/document#DomainElement"
                                             ],
-                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/put/application%2Fjson",
+                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/put/application%2Fjson",
                                             "http://raml.org/vocabularies/http#mediaType": [
                                                 {
                                                     "@value": "application/json"
@@ -234,7 +243,7 @@
                                 "http://www.w3.org/ns/hydra/core#Operation",
                                 "http://raml.org/vocabularies/document#DomainElement"
                             ],
-                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/get",
+                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/get",
                             "http://www.w3.org/ns/hydra/core#method": [
                                 {
                                     "@value": "get"
@@ -246,7 +255,7 @@
                                         "http://raml.org/vocabularies/http#Response",
                                         "http://raml.org/vocabularies/document#DomainElement"
                                     ],
-                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200",
+                                    "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/get/200",
                                     "http://schema.org/name": [
                                         {
                                             "@value": "200"
@@ -263,19 +272,36 @@
                                                 "http://raml.org/vocabularies/http#Payload",
                                                 "http://raml.org/vocabularies/document#DomainElement"
                                             ],
-                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson",
+                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/api-documentation/end-points/0/get/200/application%2Fjson",
                                             "http://raml.org/vocabularies/http#schema": [
                                                 {
                                                     "@type": [
-                                                        "http://www.w3.org/ns/shacl#Shape"
+                                                        "http://www.w3.org/ns/shacl#Shape",
+                                                        "http://www.w3.org/ns/shacl#NodeShape"
                                                     ],
-                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson",
+                                                    "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson",
                                                     "http://www.w3.org/ns/shacl#property": [
                                                         {
-                                                            "@type": [
-                                                                "http://www.w3.org/ns/shacl#PropertyConstraint"
+                                                            "http://www.w3.org/ns/shacl#maxCount": [
+                                                                {
+                                                                    "@value": 1
+                                                                }
                                                             ],
-                                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1",
+                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/2001/XMLSchema#float"
+                                                                }
+                                                            ],
+                                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait2/200/application%2Fjson/property/traitProperty1",
+                                                            "@type": [
+                                                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                                                "http://www.w3.org/ns/shacl#Shape"
+                                                            ],
+                                                            "http://www.w3.org/ns/shacl#path": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/ns/shacl#traitProperty1"
+                                                                }
+                                                            ],
                                                             "http://raml.org/vocabularies/shapes#propertyLabel": [
                                                                 {
                                                                     "@value": "traitProperty1"
@@ -285,27 +311,29 @@
                                                                 {
                                                                     "@value": 1
                                                                 }
-                                                            ],
-                                                            "http://raml.org/vocabularies/shapes#range": [
-                                                                {
-                                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1",
-                                                                    "@type": [
-                                                                        "http://www.w3.org/ns/shacl#Shape",
-                                                                        "http://raml.org/vocabularies/shapes#Scalar"
-                                                                    ],
-                                                                    "http://www.w3.org/ns/shacl#dataType": [
-                                                                        {
-                                                                            "@id": "http://www.w3.org/2001/XMLSchema#boolean"
-                                                                        }
-                                                                    ]
-                                                                }
                                                             ]
                                                         },
                                                         {
-                                                            "@type": [
-                                                                "http://www.w3.org/ns/shacl#PropertyConstraint"
+                                                            "http://www.w3.org/ns/shacl#maxCount": [
+                                                                {
+                                                                    "@value": 1
+                                                                }
                                                             ],
-                                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2",
+                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/2001/XMLSchema#float"
+                                                                }
+                                                            ],
+                                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2",
+                                                            "@type": [
+                                                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                                                "http://www.w3.org/ns/shacl#Shape"
+                                                            ],
+                                                            "http://www.w3.org/ns/shacl#path": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/ns/shacl#traitProperty2"
+                                                                }
+                                                            ],
                                                             "http://raml.org/vocabularies/shapes#propertyLabel": [
                                                                 {
                                                                     "@value": "traitProperty2"
@@ -315,27 +343,29 @@
                                                                 {
                                                                     "@value": 1
                                                                 }
-                                                            ],
-                                                            "http://raml.org/vocabularies/shapes#range": [
-                                                                {
-                                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2",
-                                                                    "@type": [
-                                                                        "http://www.w3.org/ns/shacl#Shape",
-                                                                        "http://raml.org/vocabularies/shapes#Scalar"
-                                                                    ],
-                                                                    "http://www.w3.org/ns/shacl#dataType": [
-                                                                        {
-                                                                            "@id": "http://www.w3.org/2001/XMLSchema#float"
-                                                                        }
-                                                                    ]
-                                                                }
                                                             ]
                                                         },
                                                         {
-                                                            "@type": [
-                                                                "http://www.w3.org/ns/shacl#PropertyConstraint"
+                                                            "http://www.w3.org/ns/shacl#maxCount": [
+                                                                {
+                                                                    "@value": 1
+                                                                }
                                                             ],
-                                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1_3",
+                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/2001/XMLSchema#string"
+                                                                }
+                                                            ],
+                                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1_3",
+                                                            "@type": [
+                                                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                                                "http://www.w3.org/ns/shacl#Shape"
+                                                            ],
+                                                            "http://www.w3.org/ns/shacl#path": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/ns/shacl#traitProperty1_3"
+                                                                }
+                                                            ],
                                                             "http://raml.org/vocabularies/shapes#propertyLabel": [
                                                                 {
                                                                     "@value": "traitProperty1_3"
@@ -345,27 +375,29 @@
                                                                 {
                                                                     "@value": 1
                                                                 }
-                                                            ],
-                                                            "http://raml.org/vocabularies/shapes#range": [
-                                                                {
-                                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty1_3",
-                                                                    "@type": [
-                                                                        "http://www.w3.org/ns/shacl#Shape",
-                                                                        "http://raml.org/vocabularies/shapes#Scalar"
-                                                                    ],
-                                                                    "http://www.w3.org/ns/shacl#dataType": [
-                                                                        {
-                                                                            "@id": "http://www.w3.org/2001/XMLSchema#string"
-                                                                        }
-                                                                    ]
-                                                                }
                                                             ]
                                                         },
                                                         {
-                                                            "@type": [
-                                                                "http://www.w3.org/ns/shacl#PropertyConstraint"
+                                                            "http://www.w3.org/ns/shacl#maxCount": [
+                                                                {
+                                                                    "@value": 1
+                                                                }
                                                             ],
-                                                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2_3",
+                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/2001/XMLSchema#string"
+                                                                }
+                                                            ],
+                                                            "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait2/200/application%2Fjson/property/traitProperty2_3",
+                                                            "@type": [
+                                                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                                                "http://www.w3.org/ns/shacl#Shape"
+                                                            ],
+                                                            "http://www.w3.org/ns/shacl#path": [
+                                                                {
+                                                                    "@id": "http://www.w3.org/ns/shacl#traitProperty2_3"
+                                                                }
+                                                            ],
                                                             "http://raml.org/vocabularies/shapes#propertyLabel": [
                                                                 {
                                                                     "@value": "traitProperty2_3"
@@ -374,20 +406,6 @@
                                                             "http://www.w3.org/ns/shacl#minCount": [
                                                                 {
                                                                     "@value": 1
-                                                                }
-                                                            ],
-                                                            "http://raml.org/vocabularies/shapes#range": [
-                                                                {
-                                                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2_3",
-                                                                    "@type": [
-                                                                        "http://www.w3.org/ns/shacl#Shape",
-                                                                        "http://raml.org/vocabularies/shapes#Scalar"
-                                                                    ],
-                                                                    "http://www.w3.org/ns/shacl#dataType": [
-                                                                        {
-                                                                            "@id": "http://www.w3.org/2001/XMLSchema#string"
-                                                                        }
-                                                                    ]
                                                                 }
                                                             ]
                                                         }

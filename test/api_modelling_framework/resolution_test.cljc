@@ -16,7 +16,7 @@
 
 
 (deftest should-group-test
-  (is (= :method (resolution/should-group? [(domain/map->ParsedOperation {})])))
+  (is (= :ok ((resolution/should-group? [(domain/map->ParsedOperation {})]) {:method :ok})))
   (is (nil? (resolution/should-group? [(domain/map->ParsedAPIDocumentation {})])))
   (is (nil? (resolution/should-group? [])))
   (is (nil? (resolution/should-group? nil)))

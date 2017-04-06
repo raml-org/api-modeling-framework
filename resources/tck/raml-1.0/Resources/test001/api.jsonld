@@ -65,6 +65,7 @@
                                                 {
                                                     "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/get/200/%3Aapplication%2Fxml/type/shape",
                                                     "@type": [
+                                                        "http://www.w3.org/ns/shacl#NodeShape",
                                                         "http://www.w3.org/ns/shacl#Shape"
                                                     ],
                                                     "http://schema.org/description": [
@@ -132,6 +133,7 @@
                                                 {
                                                     "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/end-points/0/put/%3Aapplication%2Fjson/type/shape",
                                                     "@type": [
+                                                        "http://www.w3.org/ns/shacl#NodeShape",
                                                         "http://www.w3.org/ns/shacl#Shape"
                                                     ],
                                                     "http://schema.org/description": [

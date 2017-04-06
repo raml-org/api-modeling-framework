@@ -34,8 +34,11 @@
     (utils/has-class? shape (v/shapes-ns "XMLSchema"))  (v/shapes-ns "XMLSchema")
     (utils/has-class? shape (v/shapes-ns "Scalar"))     (v/shapes-ns "Scalar")
     (utils/has-class? shape (v/shapes-ns "Array"))      (v/shapes-ns "Array")
-    (utils/has-class? shape (v/sh-ns "Shape"))          (v/sh-ns "Shape")
+    (utils/has-class? shape (v/sh-ns "NodeShape"))          (v/sh-ns "NodeShape")
+
+    ;; this is not being used right now...
     (some? (get shape "@id"))                           :inclusion
+
     :else nil))
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
@@ -57,20 +60,24 @@
                 (v/sh-ns "minLength")       #(assoc % :minLength (get (first v) "@value"))
                 (v/sh-ns "maxLength")       #(assoc % :maxLength (get (first v) "@value"))
                 (v/sh-ns "pattern")         #(assoc % :pattern   (get (first v) "@value"))
+                (v/sh-ns "closed")          #(assoc % :additionalProperties (not (utils/->bool (get (first v) "@value"))))
                 (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems (get (first v) "@value"))
                 identity)))
        (reduce (fn [acc p] (p acc)) raml-type)
        (parse-generic-keywords shape)
        (utils/clean-nils)))
 
-(defmethod parse-shape (v/sh-ns "Shape") [shape context]
+(defmethod parse-shape (v/sh-ns "NodeShape") [shape context]
   (let [additionalProperties (utils/extract-jsonld-literal shape (v/sh-ns "closed") #(not %))
         required-props (atom [])
         properties (->> (get shape (v/sh-ns "property") [])
                         (map (fn [property]
                                (let [label (utils/extract-jsonld-literal property (v/shapes-ns "propertyLabel"))
                                      required (utils/extract-jsonld-literal property (v/sh-ns "minCount") #(if (= % 0) false true))
-                                     range (utils/extract-jsonld property (v/shapes-ns "range") #(parse-shape % context))
+                                     range (cond
+                                             (utils/scalar-range? property)  (parse-shape (utils/property-shape->scalar-shape property) context)
+                                             (utils/array-range? property)   (parse-shape (utils/property-shape->array-shape property) context)
+                                             :else                     (parse-shape (utils/property-shape->node-shape property) context))
                                      range (if (string? range) {:type range} range)]
                                  (when required (swap! required-props #(concat % [label])))
                                  [label (or range {})])))
@@ -133,8 +140,10 @@
         expanded)
       nil)))
 
+
 (defmethod parse-shape :inheritance [shape context]
-  (let [types (->> (get shape (v/shapes-ns "inherits"))
+  (let [base  (parse-shape (dissoc shape (v/shapes-ns "inherits")) context)
+        types (->> (get shape (v/shapes-ns "inherits"))
                    (mapv (fn [type]
                            (let [type-id (get type "@id")]
                              (cond
@@ -142,8 +151,12 @@
                                (include-shape? type-id context)    (include-shape type-id context)
                                :else                               (parse-shape type context))))))]
     (if (= 1 (count types))
-      (first types)
-      {:x-merge types})))
+      (if (utils/object-no-properties? base)
+        (first types)
+        {:x-merge {:source base
+                   :with (first types)}})
+      {:x-merge {:source base
+                 :with types}})))
 
 (defmethod parse-shape :inclusion [shape context]
   (let [type-id (get shape "@id")]

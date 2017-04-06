@@ -28,6 +28,10 @@
   ([] "http://www.w3.org/2001/XMLSchema#")
   ([s] (str (xsd-ns) s)))
 
+(defn anon-shapes-ns
+  ([] (shapes-ns "anon/"))
+  ([s] (str (sh-ns) s)))
+
 (def document:Document (document-ns "Document"))
 (def document:Fragment (document-ns "Fragment"))
 (def document:Module (document-ns "Module"))

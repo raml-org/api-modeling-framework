@@ -103,7 +103,8 @@
                                                 {
                                                     "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test002/apiValid.raml#/api-documentation/end-points/0/get/200/%3Aapplication%2Fxml/shape",
                                                     "@type": [
-                                                        "http://www.w3.org/ns/shacl#Shape"
+                                                        "http://www.w3.org/ns/shacl#Shape",
+                                                        "http://www.w3.org/ns/shacl#NodeShape"
                                                     ],
                                                     "http://schema.org/description": [
                                                         {

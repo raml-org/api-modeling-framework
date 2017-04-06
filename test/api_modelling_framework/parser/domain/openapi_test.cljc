@@ -167,7 +167,7 @@
                        :required ["a"]}]
     (doseq [raml-type [object-type-1 object-type-2]]
       (let [shape (openapi-parser/parse-ast raml-type {:parsed-location "/response"
-                                                    :location "/response"})]
+                                                       :location "/response"})]
         (is (= raml-type (openapi-generator/to-openapi shape {})))))))
 
 
