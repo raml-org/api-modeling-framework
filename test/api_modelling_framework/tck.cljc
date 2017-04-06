@@ -88,8 +88,10 @@
 
                                :types {:test001 {:raml (str raml-10-tests "/Types/test001/apiValid.raml")
                                                  :openapi (str raml-10-tests "/Types/test001/apiValid.openapi")
-                                                 :jsonld (str raml-10-tests "/Types/test001/apiValid.jsonld")}
-                                       }
+                                                 :jsonld (str raml-10-tests "/Types/test001/apiValid.jsonld")},
+                                       :test003 {:raml (str raml-10-tests "/Types/test003/apiValid.raml")
+                                                 :openapi (str raml-10-tests "/Types/test003/apiValid.openapi")
+                                                 :jsonld (str raml-10-tests "/Types/test003/apiValid.jsonld")}}
                                }})
 
 
@@ -145,7 +147,9 @@
             (clojure.pprint/pprint (clean-noise b))
             (println "\nDIFF:\n")
             (clojure.pprint/pprint (data/diff (clean-noise a) (clean-noise b)))
+            (println "--")
             #?(:clj (difform/difform a b))
+            (println "--")
             ))
   (= a b))
 
@@ -229,7 +233,6 @@
                                                     {:source-maps? false
                                                      :full-graph? false})))
             _ (is (not (error? parsed-model)))
-
             ;; target data structure
             target-file-name (target-file files type type)
             raw-target-data (-success-> (<! (platform/read-location target-file-name)))

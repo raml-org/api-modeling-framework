@@ -1,0 +1,198 @@
+{
+    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml",
+    "@type": [
+        "http://raml.org/vocabularies/document#Document",
+        "http://raml.org/vocabularies/document#Fragment",
+        "http://raml.org/vocabularies/document#Module",
+        "http://raml.org/vocabularies/document#Unit"
+    ],
+    "http://raml.org/vocabularies/document#declares": [
+        {
+            "@type": [
+                "http://www.w3.org/ns/shacl#NodeShape",
+                "http://www.w3.org/ns/shacl#Shape"
+            ],
+            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/SomeType",
+            "http://www.w3.org/ns/shacl#property": [
+                {
+                    "@type": [
+                        "http://www.w3.org/ns/shacl#PropertyShape",
+                        "http://www.w3.org/ns/shacl#Shape"
+                    ],
+                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/SomeType/property/name",
+                    "http://www.w3.org/ns/shacl#path": [
+                        {
+                            "@id": "http://raml.org/vocabularies/shapes#anon/age"
+                        }
+                    ],
+                    "http://raml.org/vocabularies/shapes#propertyLabel": [
+                        {
+                            "@value": "name"
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#minCount": [
+                        {
+                            "@value": 1
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#maxCount": [
+                        {
+                            "@value": 1
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#dataType": [
+                        {
+                            "@id": "http://www.w3.org/2001/XMLSchema#string"
+                        }
+                    ]
+                }
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "SomeType"
+                }
+            ]
+        },
+        {
+            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/AnotherType",
+            "http://www.w3.org/ns/shacl#closed": [
+                {
+                    "@value": true
+                }
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "AnotherType"
+                }
+            ],
+            "@type": [
+                "http://www.w3.org/ns/shacl#NodeShape",
+                "http://www.w3.org/ns/shacl#Shape"
+            ],
+            "http://www.w3.org/ns/shacl#property": [
+                {
+                    "@type": [
+                        "http://www.w3.org/ns/shacl#PropertyShape",
+                        "http://www.w3.org/ns/shacl#Shape"
+                    ],
+                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/AnotherType/property/age",
+                    "http://raml.org/vocabularies/shapes#propertyLabel": [
+                        {
+                            "@value": "age"
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#path": [
+                        {
+                            "@id": "http://raml.org/vocabularies/shapes#anon/age"
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#minCount": [
+                        {
+                            "@value": 1
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#maxCount": [
+                        {
+                            "@value": 1
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#dataType": [
+                        {
+                            "@id": "http://www.w3.org/2001/XMLSchema#integer"
+                        }
+                    ]
+                }
+            ],
+            "http://raml.org/vocabularies/shapes#inherits": [
+                {"@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/AnotherType/with",
+                 "@type": ["http://www.w3.org/ns/shacl#NodeShape",
+                           "http://www.w3.org/ns/shacl#Shape"],
+                 "http://schema.org/name": [
+                     {
+                         "@value": "SomeType"
+                     }
+                 ],
+                 "http://raml.org/vocabularies/shapes#inherits": [
+                     {
+                         "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/SomeType"
+                     }
+                 ]
+                }
+            ]
+        },
+        {
+            "@type": [
+                "http://www.w3.org/ns/shacl#Shape",
+                "http://www.w3.org/ns/shacl#NodeShape"
+            ],
+            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/ComplexType",
+            "http://www.w3.org/ns/shacl#property": [
+                {
+                    "@type": [
+                        "http://www.w3.org/ns/shacl#PropertyShape",
+                        "http://www.w3.org/ns/shacl#Shape"
+                    ],
+                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/ComplexType/property/someProperty",
+                    "http://raml.org/vocabularies/shapes#propertyLabel": [
+                        {
+                            "@value": "someProperty"
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#path": [
+                        {
+                            "@id": "http://raml.org/vocabularies/shapes#anon/someProperty"
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#minCount": [
+                        {
+                            "@value": 1
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#maxCount": [
+                        {
+                            "@value": 1
+                        }
+                    ],
+                    "http://www.w3.org/ns/shacl#node": [
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/ComplexType/property/someProperty",
+                            "@type": [
+                                "http://www.w3.org/ns/shacl#NodeShape",
+                                "http://www.w3.org/ns/shacl#Shape"
+                            ],
+                            "http://schema.org/name": [
+                                {
+                                    "@value": "AnotherType"
+                                }
+                            ],
+                            "http://raml.org/vocabularies/shapes#inherits": [
+                                {
+                                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/AnotherType"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "ComplexType"
+                }
+            ]
+        }
+    ],
+    "http://raml.org/vocabularies/document#encodes": [
+        {
+            "@type": [
+                "http://raml.org/vocabularies/http#APIDocumentation",
+                "http://raml.org/vocabularies/document#DomainElement"
+            ],
+            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml#/api-documentation",
+            "http://schema.org/name": [
+                {
+                    "@value": "API"
+                }
+            ]
+        }
+    ]
+}
