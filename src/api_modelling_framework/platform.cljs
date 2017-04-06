@@ -4,10 +4,6 @@
             [cljs.core.async  :refer [<! >! chan]]
             [clojure.walk :refer [keywordize-keys]]))
 
-;;(require '[cljs.nodejs :as nodejs])
-;;(def fs (nodejs/require "fs"))
-(def fs {})
-
 (enable-console-print!)
 
 (defn error? [x]
@@ -28,7 +24,7 @@
                    (string/replace location "file://" "")
                    location)
         ch (chan)]
-    (go (.readFile fs (first (string/split location #"#"))
+    (go (.readFile js/NODE_FS (first (string/split location #"#"))
                    (fn [e buffer]
                      (go (if (some? e)
                            (>! ch {:error e})
@@ -38,7 +34,7 @@
 
 (defn write-location [location data]
   (let [ch (chan)]
-    (go (.writeFile fs first (string/split location #"#")) data
+    (go (.writeFile js/NODE_FS first (string/split location #"#")) data
         (fn [e]
           (go (if (some? e))
               (>! ch {:error e})
