@@ -3,9 +3,10 @@
 lein npm install
 rm -rf node
 lein clean
-lein cljsbuild once default
-# lein cljsbuild once web
-cp -rf ./package_files/* ./
+# lein cljsbuild once default
+# cp -rf ./package_files/* ./
+lein cljsbuild once web
+cp -rf ./package_files/package.json ./
 ln -s $(pwd)/js $(pwd)/node/js
 cd api-modeller
 tsc

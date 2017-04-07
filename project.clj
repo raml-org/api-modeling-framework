@@ -35,7 +35,7 @@
                                             :target :nodejs}}
                        :web     {:source-paths ["src"]
                                  :figwheel true
-                                 :compiler {:output-to "node/engine/index_package.js"
+                                 :compiler {:output-to "index_package.js"
                                             :main api-modelling-framework.core
                                             :optimizations :simple
                                             :foreign-libs [{:file "js/js-yaml-bundle.js"
@@ -46,4 +46,3 @@
                                             :main api-modelling-framework.runner
                                             :pretty-print true
                                             :target :nodejs}}}})
-2
