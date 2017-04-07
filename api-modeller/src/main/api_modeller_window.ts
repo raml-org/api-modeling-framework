@@ -1,8 +1,7 @@
 import * as Electron from "electron";
 import * as fs from "fs";
 import {ModelProxy, ModelLevel} from "./model_proxy";
-
-const apiFramework = global["api_modelling_framework"].core;
+import * as apiFramework from "api-modelling-framework";
 
 export type ModelType = "raml" | "open-api";
 

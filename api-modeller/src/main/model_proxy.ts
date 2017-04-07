@@ -4,9 +4,7 @@ import {JsonLd} from "jsonld";
 import {stringify} from "querystring";
 import {UnitModel} from "./units_model";
 import {LexicalInfo} from "./model_utils";
-
-const apiFramework = global["api_modelling_framework"].core;
-
+import * as apiFramework from "api-modelling-framework";
 
 export type ModelLevel = "document" | "domain";
 

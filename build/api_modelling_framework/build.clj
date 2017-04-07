@@ -54,6 +54,15 @@
 (defn ln [source target]
   (sh! "ln" "-s" (str (pwd) source) (str (pwd) target)))
 
+(defn cd [to]
+  (sh! "cd" to))
+
+(defn npm-link [path from]
+  (sh! "npm" "link" (str (pwd) "/" path) :dir from))
+
+(defn gulp-serve [from]
+  (sh! "gulp" "serve" :dir from))
+
 
 ;; builds
 
@@ -85,7 +94,13 @@
   (println "generating npm package")
   (-> (npm-package)
       (json/generate-string {:pretty true})
-      (->> (spit "output/node/package.json"))))
+      (->> (spit "output/node/package.json")))
+
+  (println "linking project to api-modeller")
+  (def api-modeller (str (pwd) "/api-modeller"))
+  (npm-link "output/node" api-modeller)
+  (gulp-serve api-modeller))
+
 
 (defn build-web []
   (println "** Building Target: web\n")
@@ -95,7 +110,7 @@
 (defn -main [& args]
   (try
     (condp = (first args)
-      "web" (build "web")
+      "web" (build-web)
       "node" (build-node)
       (println "Unknown task"))
     (catch Exception ex
