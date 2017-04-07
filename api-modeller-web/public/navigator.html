@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<div id="navigator" class="imported">
+    <div class="tabs">
+        <ul>
+            <li data-bind="click: () => { navigatorSection('files') },
+                           css: {'is-active': navigatorSection() === 'files'}">
+                <a>Files</a>
+            </li>
+            <li data-bind="click: () => { navigatorSection('logic') },
+                           css: {'is-active': navigatorSection() === 'logic'}">
+                <a>Modular Units</a>
+            </li>
+            <li data-bind="click: () => { navigatorSection('domain') },
+                           css: {'is-active': navigatorSection() === 'domain'}">
+                <a>Domain</a>
+            </li>
+        </ul>
+    </div>
+    <aside data-bind="visible: navigatorSection()==='files'"
+           class="menu" id="files-navigator">
+        <p class="menu-label">FILES</p>
+        <ul class="menu-list" data-bind="foreach: references">
+            <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
+                <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 15px">
+                    <i class="fa fa-file-text-o"></i>
+                </span>
+                <a href="#" data-bind="text: $data.label,
+                                       css: {'is-active': $parent.selectedReference() && $parent.selectedReference().id === $data.id}"></a>
+            </li>
+        </ul>
+
+    </aside>
+
+    <aside  data-bind="visible: navigatorSection()==='logic'"
+            class="menu" id="modules-navigator">
+        <p class="menu-label">DOCUMENTS</p>
+        <ul class="menu-list" data-bind="foreach: documentUnits">
+            <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
+                <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 15px">
+                    <i data-bind="attr: { class: $parent.ui.iconClassForUnit($data) }"></i>
+                </span>
+                <a data-bind="text: label,
+                              css: {'is-active': $parent.selectedReference() && $parent.selectedReference().id === id}"></a>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Declares</p>
+                <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
+                    <ul data-bind="foreach: declares"
+                        class="menu-list"
+                        style="margin-left: 15px">
+                        <li>
+                            <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
+                                <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
+                            </span>
+                            <p data-bind="text: $data.label"></p>
+                        </li>
+                    </ul>
+                </span>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Encodes</p>
+                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-list" style="margin-left: 15px">
+                    <li>
+                        <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 3px">
+                            <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit(encodes) }"></i>
+                        </span>
+                        <p data-bind="text: encodes.label"></p>
+                    </li>
+                </ul>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
+                    <ul data-bind="foreach: references"
+                        class="menu-list"
+                        style="margin-left: 15px">
+                        <li>
+                            <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
+                                <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
+                            </span>
+                            <p data-bind="text: $data.label"></p>
+                        </li>
+                    </ul>
+                </span>
+            </li>
+        </ul>
+        <p class="menu-label">FRAGMENTS</p>
+        <ul class="menu-list" data-bind="foreach: fragmentUnits">
+            <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
+                <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 15px">
+                    <i data-bind="attr: { class: $parent.ui.iconClassForUnit($data) }"></i>
+                </span>
+                <a data-bind="text: label,
+                              css: {'is-active': $parent.selectedReference() && $parent.selectedReference().id === id}"></a>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Encodes</p>
+                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-list" style="margin-left: 15px">
+                    <li>
+                        <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
+                            <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data.encodes) }"></i>
+                        </span>
+                        <p data-bind="text: $data.encodes.label"></p>
+                    </li>
+                </ul>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
+                    <ul data-bind="foreach: references"
+                        class="menu-list"
+                        style="margin-left: 15px">
+                        <li>
+                            <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
+                                <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
+                            </span>
+                            <p data-bind="text: $data.label"></p>
+                        </li>
+                    </ul>
+                </span>
+            </li>
+        </ul>
+        <p class="menu-label">MODULES</p>
+        <ul class="menu-list" data-bind="foreach: moduleUnits">
+            <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 15px">
+                <i data-bind="attr: { class: $parent.ui.iconClassForUnit($data) }"></i>
+            </span>
+            <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
+                <a data-bind="text: label,
+                              css: {'is-active': $parent.selectedReference().id === id}"></a>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Declares</p>
+                <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
+                    <ul data-bind="foreach: declares"
+                        class="menu-list"
+                        style="margin-left: 15px">
+                        <li>
+                            <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
+                                <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
+                            </span>
+                            <p data-bind="text: $data.label"></p>
+                        </li>
+                    </ul>
+                </span>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
+                    <ul data-bind="foreach: references"
+                        class="menu-list"
+                        style="margin-left: 15px">
+                        <li>
+                            <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
+                                <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
+                            </span>
+                            <p data-bind="text: $data.label"></p>
+                        </li>
+                    </ul>
+                </span>
+            </li>
+        </ul>
+    </aside>
+
+    <aside data-bind="visible: navigatorSection()==='domain'"
+           class="menu" id="domain-navigator">
+        <p class="menu-label">API Documentation</p>
+        <ul class="menu-list" data-bind="foreach: domainUnits()['APIDocumentation']">
+            <li>
+                <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                    <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                </span>
+                <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                       css: {'is-active': viewModel.focusedId() === $data.id || $data.id.indexOf(viewModel.focusedId()) === 0}"></a>
+                <span data-bind="if: $data.expanded && $data.endpoints && $data.endpoints.length > 0">
+                    <p class="menu-label submenu-label">Endpoints</p>
+                    <ul data-bind="foreach: $data.endpoints">
+                        <li>
+                            <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                                <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                            </span>
+                            <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                                   click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                                   css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                            <span data-bind="template: {name: 'operations-template', data: $data}"></span>
+                        </li>
+                    </ul>
+                </span>
+            </li>
+        </ul>
+        <p class="menu-label">End Points</p>
+        <ul class="menu-list" data-bind="foreach: domainUnits()['EndPoint']">
+            <li>
+                <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                    <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                </span>
+                <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                       css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                <span data-bind="template: {name: 'operations-template', data: $data}"></span>
+            </li>
+        </ul>
+        <p class="menu-label">Operations</p>
+        <ul class="menu-list" data-bind="foreach: domainUnits()['Operation']">
+            <li>
+                <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                    <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                </span>
+                <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                       css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                <span data-bind="template: {name: 'responses-template', data: $data}"></span>
+                <span data-bind="template: {name: 'requests-template', data: $data}"></span>
+            </li>
+        </ul>
+        <p class="menu-label">Responses</p>
+        <ul class="menu-list" data-bind="foreach: domainUnits()['Response']">
+            <li>
+                <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                    <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                </span>
+                <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                       css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                <span data-bind="template: {name: 'payload-template', data: $data}"></span>
+            </li>
+        </ul>
+        <p class="menu-label">Payloads</p>
+        <ul class="menu-list" data-bind="foreach: domainUnits()['Payload']">
+            <li data-bind="css: {'is-active': viewModel.focusedId() === $data.id}">
+                <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                    <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                </span>
+                <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                       click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
+            </li>
+        </ul>
+
+    </aside>
+    <!-- templates -->
+    <script type="text/html" id="schema-template">
+        <span data-bind="if: ($data.schema && $data.expanded)">
+            <p class="menu-label submenu-label imported">Schema</p>
+            <ul>
+                <li>
+                    <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data.schema) }"></i>
+                    </span>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data.schema),
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                </li>
+            </ul>
+        </span>
+    </script>
+
+    <script type="text/html" id="payload-template">
+        <span data-bind="if: ($data.payloads && $data.expanded)">
+            <p class="menu-label submenu-label imported">Payloads</p>
+            <ul data-bind="foreach: $data.payloads">
+                <li>
+                    <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                    </span>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                    <span data-bind="template: {name: 'schema-template', data: $data}"></span>
+                </li>
+            </ul>
+        </span>
+    </script>
+
+    <script type="text/html" id="responses-template">
+        <span data-bind="if: $data.expanded && $data.responses && $data.responses.length > 0">
+            <p class="menu-label submenu-label">Returns</p>
+            <ul data-bind="foreach: $data.responses">
+                <li>
+                    <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                    </span>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                    <span data-bind="template: {name: 'payload-template', data: $data}"></span>
+                </li>
+            </ul>
+        </span>
+    </script>
+
+    <script type="text/html" id="requests-template">
+        <span data-bind="if: $data.expanded && $data.requests && $data.requests.length > 0">
+            <p class="menu-label submenu-label">Expects</p>
+            <ul data-bind="foreach: $data.requests">
+                <li>
+                    <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                    </span>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                    <span data-bind="template: {name: 'payload-template', data: $data}"></span>
+                </li>
+            </ul>
+        </span>
+    </script>
+
+    <script type="text/html" id="operations-template">
+        <span data-bind="if: $data.expanded && $data.operations && $data.operations.length > 0">
+            <p class="menu-label submenu-label">Supported Operations</p>
+            <ul data-bind="foreach: $data.operations">
+                <li>
+                    <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
+                        <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
+                    </span>
+                    <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data),
+                                           click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) },
+                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                    <span data-bind="template: {name: 'requests-template', data: $data}"></span>
+                    <span data-bind="template: {name: 'responses-template', data: $data}"></span>
+                </li>
+            </ul>
+        </span>
+    </script>
+</div>

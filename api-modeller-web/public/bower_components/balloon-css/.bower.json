@@ -1,0 +1,14 @@
+{
+  "name": "balloon-css",
+  "homepage": "https://github.com/kazzkiq/balloon.css",
+  "version": "0.4.0",
+  "_release": "0.4.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.4.0",
+    "commit": "9f96e3ab1a0628705cf91a8876eb6c6f99d806a1"
+  },
+  "_source": "https://github.com/kazzkiq/balloon.css.git",
+  "_target": "^0.4.0",
+  "_originalSource": "balloon-css"
+}
