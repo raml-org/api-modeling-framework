@@ -88,7 +88,7 @@
   (^:export generate-file [this uri model options cb]
    "Serialises a model into a file located at the provided URI"))
 
-(defrecord RAMLParser []
+(defrecord ^:export RAMLParser []
   Parser
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
@@ -107,7 +107,7 @@
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 
-(defrecord OpenAPIParser []
+(defrecord ^:export OpenAPIParser []
   Parser
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
@@ -126,7 +126,7 @@
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 
-(defrecord APIModelParser []
+(defrecord ^:export APIModelParser []
   Parser
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
@@ -147,7 +147,7 @@
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 
-(defrecord APIModelGenerator []
+(defrecord ^:export APIModelGenerator []
   Generator
   (generate-string [this uri model options cb]
     (debug "Generating APIModel string")
@@ -175,7 +175,7 @@
         (= fragment :fragment) "#% RAML 1.0"
         :else                  "#% RAML 1.0"))
 
-(defrecord RAMLGenerator []
+(defrecord ^:export RAMLGenerator []
   Generator
   (generate-string [this uri model options cb]
     (debug "Generating RAML string")
@@ -202,7 +202,7 @@
            (cb nil (platform/<-clj res)))))))
 
 
-(defrecord OpenAPIGenerator []
+(defrecord ^:export OpenAPIGenerator []
   Generator
   (generate-string [this uri model options cb]
     (debug "Generating OpenAPI string")

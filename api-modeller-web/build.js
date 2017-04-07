@@ -2,7 +2,7 @@ var browserify = require('browserify');
 var tsify = require('tsify');
 var babelify = require('babelify');
 
-browserify()
+browserify({"standalone":"api_modeller"})
     .add('src/view_model.ts')
     .plugin(tsify, { target: 'es6' })
     .transform(babelify, { extensions: [ '.tsx', '.ts' ] })

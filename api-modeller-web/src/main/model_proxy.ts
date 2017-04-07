@@ -8,9 +8,9 @@ const apiFramework = window["api_modelling_framework"].core;
 
 export type ModelLevel = "document" | "domain";
 
-const ramlGenerator = new apiFramework.RAMLGenerator();
-const openAPIGenerator = new apiFramework.OpenAPIGenerator();
-const apiModelGenerator = new apiFramework.APIModelGenerator();
+const ramlGenerator = new apiFramework.__GT_RAMLGenerator();
+const openAPIGenerator = new apiFramework.__GT_OpenAPIGenerator();
+const apiModelGenerator = new apiFramework.__GT_APIModelGenerator();
 
 function from_clj(x: any) {
     return apiFramework.fromClj(x)

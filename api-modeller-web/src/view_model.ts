@@ -3,8 +3,8 @@ import {LoadModal, LoadFileEvent, ParserType} from "./view_models/load_modal";
 import { ModelProxy, ModelLevel } from "./main/model_proxy";
 import { ApiModellerWindow } from "./main/api_modeller_window";
 import { Nav } from "./view_models/nav";
-import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor;
-import createModel = monaco.editor.createModel;
+// import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor;
+// import createModel = monaco.editor.createModel;
 import {Document, Fragment, Module, DocumentId, Unit} from "./main/units_model";
 import { label } from "./utils";
 import { UI } from "./view_models/ui";
@@ -20,6 +20,10 @@ export interface ReferenceFile {
     label: string;
     type: "local" | "remote"
 }
+
+const createModel = function(text, mode) {
+  window["monaco"].createModel(text, mode);
+};
 
 export class ViewModel {
 
@@ -60,7 +64,7 @@ export class ViewModel {
 
     private apiModellerWindow = new ApiModellerWindow();
 
-    constructor(public editor: IStandaloneCodeEditor) {
+    constructor(public editor: any) {
         editor.onDidChangeModelContent((e) => {
             this.shouldReload++;
             ((number) => {
