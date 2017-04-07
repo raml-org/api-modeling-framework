@@ -68,7 +68,8 @@
   (^:export domain-model [this] "Resolves the document model generating a domain model")
   (^:export reference-model [this location] "Returns a model for a nested reference ")
   (^:export update-reference-model [this location syntax-type text cb] "Updates a model for a reference model")
-  (^:eport find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment")
+  (^:export references [this] "Returns a list of all the files referenced by this model")
+  (^:export find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment")
   (^:export raw [this] "Returns the raw text for the model"))
 
 (defprotocol Parser
@@ -306,4 +307,10 @@
                                                         :references (:references res)
                                                         :declares (:declares res)}))
                nil)))
+
+         (references [this]
+           (->> (domain-model this)
+                document/references
+                (map :location)))
+
          (raw [this] (:raw res)))))))
