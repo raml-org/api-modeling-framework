@@ -25,6 +25,9 @@
                      ;:dependencies [[leiningen-core "2.7.1"]]
                      :main api-modelling-framework.build}}
 
+  :aliases {"node" ["with-profile" "build" "run" "node"]
+            "web" ["with-profile" "build" "run" "web"]}
+
   :cljsbuild {:builds {
                        :node {:source-paths ["src", "src_node"]
                               :figwheel true
