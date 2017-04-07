@@ -24,5 +24,16 @@ api-modeller/.github/
 api-modeller/**/*.js
 api-modeller/**/*.js.map
 
+api-modeller-web/.idea
+api-modeller-web/.travis.yml
+api-modeller-web/test*.js
+api-modeller-web/test*.ts
+api-modeller-web/test*.js.map
+api-modeller-web/.eslintrc.json
+api-modeller-web/.gitattributes
+api-modeller-web/.github/
+api-modeller-web/src/**/*.js
+api-modeller-web/src/**/*.js.map
+
 index_package.js
 package.json

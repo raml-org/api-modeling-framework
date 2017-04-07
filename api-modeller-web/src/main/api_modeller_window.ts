@@ -1,20 +1,12 @@
-import {ModelProxy, ModelLevel} from "./model_proxy";
-
-const apiFramework = window["api_modelling_framework"].core;
-
+import {ModelProxy} from "./model_proxy";
 export type ModelType = "raml" | "open-api";
-
 export class ApiModellerWindow {
+
+    private apiFramework = window['api_modelling_framework'].core;
 
     static functions: string[] = [
         "checkFile", "existsFile", "parseModelFile", "generateString"
     ];
-
-    static wrap(o: Object) {
-        ApiModellerWindow.functions.forEach(f => {
-            o[f] = ApiModellerWindow.prototype[f];
-        });
-    }
 
     checkFile(cb) {
         /*
@@ -42,15 +34,16 @@ export class ApiModellerWindow {
     }
 
     parseModelFile(type: ModelType, fileLocation: string, cb) {
+
         console.log("PARSING FILE " + fileLocation + " TYPE " + type);
         let parser: any;
         if (type === "raml") {
-            parser = new apiFramework.RAMLParser();
+            parser = new this.apiFramework.RAMLParser();
         } else if(type === "open-api") {
-            parser = new apiFramework.OpenAPIParser();
+            parser = new this.apiFramework.OpenAPIParser();
         }
 
-        apiFramework.parse_file(parser, fileLocation, function(err, model) {
+        this.apiFramework.parse_file(parser, fileLocation, function(err, model) {
             if (err != null) {
                 console.log("Error parsing file");
                 console.log(err);
@@ -61,13 +54,13 @@ export class ApiModellerWindow {
         })
     }
     from_clj(x: any) {
-        return apiFramework.fromClj(x)
+        return this.apiFramework.fromClj(x)
     }
 
     to_clj(x: any) {
         console.log("********** TO CLJ");
         try {
-            return apiFramework.toClj(x)
+            return this.apiFramework.toClj(x)
         } catch (e) {
             console.log("ERROR");
             console.log(e);
