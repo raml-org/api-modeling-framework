@@ -4,7 +4,6 @@ import {JsonLd} from "jsonld";
 import {stringify} from "querystring";
 import {UnitModel} from "./units_model";
 import {LexicalInfo} from "./model_utils";
-require("api_modelling_framework");
 
 const apiFramework = global["api_modelling_framework"].core;
 const apiFrameworDocumentModel = global["api_modelling_framework"].model.document;
