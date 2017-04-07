@@ -1,11 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const joint = require("jointjs");
+import * as joint from "jointjs";
 var Rect = joint.shapes.basic.Rect;
 var Link = joint.dia.Link;
 var Graph = joint.dia.Graph;
 var Paper = joint.dia.Paper;
-const utils = require("../utils");
+import * as utils from "../utils";
 const CHAR_SIZE = 10;
 const DEFAULT_DOMAIN_COLOR = "wheat";
 const SELECTED_STROKE_COLOR = "red";
@@ -17,7 +15,7 @@ const COLORS = {
     "domain": "beige",
     "declaration": "lavenderblush"
 };
-class Diagram {
+export class Diagram {
     constructor(selectedId, level, handler) {
         this.selectedId = selectedId;
         this.level = level;
@@ -309,17 +307,17 @@ class Diagram {
         if (this.nodes[node.id] == null) {
             this.nodes[node.id] = new Rect({
                 attrs: {
+                    /*
                     rect: {
                         fill: COLORS[kind],
                         stroke: node.id === this.selectedId ? SELECTED_STROKE_COLOR : "black",
                         "stroke-width": node.id === this.selectedId ? "3" : "1"
                     },
+                    */
                     text: {
                         text: label,
                         fill: "black"
-                    },
-                    nodeId: node.id,
-                    unit: unit
+                    }
                 },
                 position: {
                     x: 0,
@@ -330,7 +328,6 @@ class Diagram {
                     height: 30
                 }
             });
-            //console.log("GENERATING NODE " + node.id + " => " + this.nodes[node.id].id);
         }
     }
     makeLink(sourceId, targetId, label) {
@@ -359,5 +356,4 @@ class Diagram {
         }
     }
 }
-exports.Diagram = Diagram;
 //# sourceMappingURL=diagram.js.map

@@ -1,11 +1,9 @@
 import {ModelType} from "./api_modeller_window";
 import * as jsonld from "jsonld";
-import {JsonLd} from "jsonld";
-import {stringify} from "querystring";
 import {UnitModel} from "./units_model";
 import {LexicalInfo} from "./model_utils";
 
-const apiFramework = global["api_modelling_framework"].core;
+const apiFramework = window["api_modelling_framework"].core;
 
 
 export type ModelLevel = "document" | "domain";
@@ -90,7 +88,7 @@ export class ModelProxy {
             });
     }
 
-    async update(location: string, text: string) {
+    update(location: string, text: string): Promise<undefined> {
         return new Promise<undefined>((resolve, reject) => {
             console.log("*** TRYING TO RUN THE UPDATE FOR " + location );
             apiFramework.update_reference_model(this.raw, this.location(), this.sourceType, text, (e, newRaw) => {

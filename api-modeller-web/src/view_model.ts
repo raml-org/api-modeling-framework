@@ -1,18 +1,16 @@
 import * as ko from "knockout";
 import {LoadModal, LoadFileEvent, ParserType} from "./view_models/load_modal";
 import { ModelProxy, ModelLevel } from "./main/model_proxy";
-import { remote } from "electron";
 import { ApiModellerWindow } from "./main/api_modeller_window";
 import { Nav } from "./view_models/nav";
 import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor;
 import createModel = monaco.editor.createModel;
 import {Document, Fragment, Module, DocumentId, Unit} from "./main/units_model";
-import * as units_model from "./main/units_model";
 import { label } from "./utils";
 import { UI } from "./view_models/ui";
 import { DomainElement, DomainModel } from "./main/domain_model";
 import {Query} from "./view_models/query";
-import {type} from "os";
+import {Diagram} from "./view_models/diagram";
 
 export type NavigatorSection = "files" | "logic" | "domain";
 export type EditorSection = "raml" | "open-api" | "api-model" | "diagram" | "query";
@@ -60,16 +58,19 @@ export class ViewModel {
     public shouldReload = 0;
     public RELOAD_PERIOD = 5000;
 
+    private apiModellerWindow = new ApiModellerWindow();
+
     constructor(public editor: IStandaloneCodeEditor) {
         editor.onDidChangeModelContent((e) => {
             this.shouldReload++;
             ((number) => {
                 setTimeout(async () => {
                     if (this.shouldReload === number && this.model && this.documentModel) {
-                        await this.documentModel.update(this.model.location(), this.editor.getModel().getValue());
-                        this.resetUnits();
-                        this.resetReferences();
-                        this.resetDiagram();
+                        await this.documentModel.update(this.model.location(), this.editor.getModel().getValue()).then(() => {
+                            this.resetUnits();
+                            this.resetReferences();
+                            this.resetDiagram();
+                        });
                     }
                 }, this.RELOAD_PERIOD);
             })(this.shouldReload);
@@ -77,7 +78,7 @@ export class ViewModel {
 
         // events we are subscribed
         this.loadModal.on(LoadModal.LOAD_FILE_EVENT, (data: LoadFileEvent) => {
-            this.apiModellerWindow().parseModelFile(data.type, data.location, (err, model) => {
+            this.apiModellerWindow.parseModelFile(data.type, data.location, (err, model) => {
                 if (err) {
                     console.log(err);
                     alert(err);
@@ -239,8 +240,6 @@ export class ViewModel {
 
 
 
-    protected apiModellerWindow(): ApiModellerWindow { return remote.getCurrentWindow() as ApiModellerWindow; }
-
     apply(location: Node) {
         window["viewModel"] = this;
         ko.applyBindings(this);
@@ -395,14 +394,14 @@ export class ViewModel {
 
     public resetDiagram() {
         try {
-            let level = "files";
+            let level: "document" | "domain" | "files" = "files";
             if (this.navigatorSection() === "domain") {
                 level = "domain";
             } else if (this.navigatorSection() === "logic") {
                 level = "document";
             }
             let oldDiagram = this.diagram;
-            this.diagram = new (require("./view_models/diagram").Diagram)(
+            this.diagram = new Diagram(
                 this.focusedId(),
                 level,
                 (id: string, unit: any) => {

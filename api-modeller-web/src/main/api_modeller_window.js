@@ -1,35 +1,34 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const Electron = require("electron");
-const fs = require("fs");
-const model_proxy_1 = require("./model_proxy");
-const apiFramework = global["api_modelling_framework"].core;
-class ApiModellerWindow extends Electron.BrowserWindow {
+import { ModelProxy } from "./model_proxy";
+const apiFramework = window["api_modelling_framework"].core;
+export class ApiModellerWindow {
     static wrap(o) {
         ApiModellerWindow.functions.forEach(f => {
             o[f] = ApiModellerWindow.prototype[f];
         });
     }
     checkFile(cb) {
+        /*
         Electron.dialog.showOpenDialog((fileNames) => {
             const fileName = (fileNames || [])[0];
             if (fileName != null) {
                 console.log(`Loading fileName ${fileName}`);
                 this.existsFile(fileName, cb);
-            }
-            else {
-                cb(null, null);
+            } else {
+                cb(null, null)
             }
         });
+        */
     }
     ;
     existsFile(fileName, cb) {
+        /*
         if (fs.existsSync(fileName)) {
             cb(null, fileName);
-        }
-        else {
+        } else {
             cb(new Error("File does not exists"), null);
         }
+        */
+        cb(null, fileName);
     }
     parseModelFile(type, fileLocation, cb) {
         console.log("PARSING FILE " + fileLocation + " TYPE " + type);
@@ -47,7 +46,7 @@ class ApiModellerWindow extends Electron.BrowserWindow {
                 cb(err, null);
             }
             else {
-                cb(null, new model_proxy_1.ModelProxy(model, type));
+                cb(null, new ModelProxy(model, type));
             }
         });
     }
@@ -69,5 +68,4 @@ class ApiModellerWindow extends Electron.BrowserWindow {
 ApiModellerWindow.functions = [
     "checkFile", "existsFile", "parseModelFile", "generateString"
 ];
-exports.ApiModellerWindow = ApiModellerWindow;
 //# sourceMappingURL=api_modeller_window.js.map

@@ -1,8 +1,7 @@
 import * as ko from "knockout";
 import {ModelLevel} from "../main/model_proxy";
-import {EventEmitter} from "events";
 
-export class Nav extends EventEmitter{
+export class Nav {
     static DOCUMENT_LEVEL_SELECTED_EVENT = "document_level_selected_event";
     public documentLevelOptions: KnockoutObservableArray<any> = ko.observableArray<any>([
         {name: "Document Model", key: "document"},
@@ -11,7 +10,6 @@ export class Nav extends EventEmitter{
     public selectedDocumentLevel: KnockoutObservable<any> = ko.observable<any>(this.documentLevelOptions[0]);
 
     constructor(level: ModelLevel) {
-        super();
         this.selectedDocumentLevel(this.documentLevelOptions.peek().filter(e => e.key === level));
         this.selectedDocumentLevel.subscribe((v) => {
             if (v != null) {
@@ -19,4 +17,15 @@ export class Nav extends EventEmitter{
             }
         });
     }
+
+    private listeners: ((evt:string, e:ModelLevel) => undefined)[] = [];
+
+    on(evt, listener) {
+        this.listeners.push(listener);
+    }
+
+    emit(evt: string, level: ModelLevel) {
+        this.listeners.forEach(l => l(evt, level));
+    }
+
 }

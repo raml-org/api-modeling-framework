@@ -1,5 +1,3 @@
-import {ModelProxy, ModelLevel} from "./model_proxy";
-
 // Namespaces
 export const HYDRA_NS: string = "http://www.w3.org/ns/hydra/core#";
 export const DOCUMENT_NS: string = "http://raml.org/vocabularies/document#";
@@ -145,7 +143,7 @@ export class DomainModel {
         this.root = this.process();
     }
 
-    public process() {
+    public process(): DomainElement {
         console.log("BUILDING DOMAIN MODEL FOR " + this.jsonld["@id"]);
         const encoded = this.jsonld;
         if (has_type(encoded, API_DOCUMENTATION)) {
@@ -178,7 +176,7 @@ export class DomainModel {
     }
 
 
-    private buildDomainElement(encoded: any) {
+    private buildDomainElement(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);
@@ -190,7 +188,7 @@ export class DomainModel {
         return element;
     }
 
-    private buildAPIDocumentation(encoded: any) {
+    private buildAPIDocumentation(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);
@@ -203,7 +201,7 @@ export class DomainModel {
         return element;
     }
 
-    private buildEndPoint(encoded: any) {
+    private buildEndPoint(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);
@@ -217,7 +215,7 @@ export class DomainModel {
         return element;
     }
 
-    private buildOperation(encoded: any) {
+    private buildOperation(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);
@@ -233,7 +231,7 @@ export class DomainModel {
     }
 
 
-    private buildResponse(encoded: any) {
+    private buildResponse(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);
@@ -247,7 +245,7 @@ export class DomainModel {
         return element;
     }
 
-    private buildRequest(encoded: any) {
+    private buildRequest(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);
@@ -259,21 +257,21 @@ export class DomainModel {
         return element;
     }
 
-    private buildPayload(encoded: any) {
+    private buildPayload(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);
         }
         console.log("* Building Payload " + encoded["@id"]);
         const mediaType = extract_value(encoded, MEDIA_TYPE);
-        const schema = this.buildSchema(extract_link(encoded, PAYLOAD_SCHEMA));
+        const schema = this.buildSchema(extract_link(encoded, PAYLOAD_SCHEMA)) as Schema | IncludeRelationship;
         const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
         const element = new Payload(encoded, encoded["@id"], label, mediaType, schema);
         this.elements[element.id] = element;
         return element;
     }
 
-    private buildSchema(encoded: any) {
+    private buildSchema(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);

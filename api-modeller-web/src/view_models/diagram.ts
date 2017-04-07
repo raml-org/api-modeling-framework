@@ -39,7 +39,7 @@ export class Diagram {
     public scaleY = 1;
     public elements: (DocumentId & Unit)[];
 
-    constructor(public selectedId: string, public level: "domain" | "document" | "files", public handler: (id: string, unit: any) => undefined) {}
+    constructor(public selectedId: string, public level: "domain" | "document" | "files", public handler: (id: string, unit: any) => void) {}
 
     process(elements: (DocumentId & Unit)[]) {
         this.nodes = {};
@@ -342,17 +342,21 @@ export class Diagram {
         if (this.nodes[node.id] == null) {
             this.nodes[node.id] = new Rect({
                 attrs: {
+                    /*
                     rect: {
                         fill: COLORS[kind],
                         stroke: node.id === this.selectedId ? SELECTED_STROKE_COLOR : "black",
                         "stroke-width": node.id === this.selectedId ? "3" : "1"
                     },
+                    */
                     text: {
                         text: label,
                         fill: "black"
-                    },
+                    }
+                    /*
                     nodeId: node.id,
                     unit: unit
+                    */
                 },
                 position: {
                     x: 0,

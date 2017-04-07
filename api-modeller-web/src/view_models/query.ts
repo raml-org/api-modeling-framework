@@ -1,4 +1,4 @@
-import {RdfValue, Store} from "rdfstore";
+import {Store} from "rdfstore";
 import * as ko from "knockout";
 import {
     HYDRA_NS, DOCUMENT_NS, HTTP_NS, SHAPES_NS, SHACL_NS, RDFS_NS, RDF_NS, XSD_NS,

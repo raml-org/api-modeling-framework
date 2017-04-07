@@ -1,17 +1,7 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const jsonld = require("jsonld");
-const units_model_1 = require("./units_model");
-const model_utils_1 = require("./model_utils");
-const apiFramework = global["api_modelling_framework"].core;
+import * as jsonld from "jsonld";
+import { UnitModel } from "./units_model";
+import { LexicalInfo } from "./model_utils";
+const apiFramework = window["api_modelling_framework"].core;
 const ramlGenerator = new apiFramework.RAMLGenerator();
 const openAPIGenerator = new apiFramework.OpenAPIGenerator();
 const apiModelGenerator = new apiFramework.APIModelGenerator();
@@ -31,7 +21,7 @@ function to_clj(x) {
 /**
  * A proxy class to interact with the clojure code containing the logic to interact with a API Model
  */
-class ModelProxy {
+export class ModelProxy {
     constructor(raw, sourceType) {
         this.raw = raw;
         this.sourceType = sourceType;
@@ -81,18 +71,16 @@ class ModelProxy {
         });
     }
     update(location, text) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                console.log("*** TRYING TO RUN THE UPDATE FOR " + location);
-                apiFramework.update_reference_model(this.raw, this.location(), this.sourceType, text, (e, newRaw) => {
-                    if (e != null) {
-                        reject(e);
-                    }
-                    else {
-                        this.raw = newRaw;
-                        resolve();
-                    }
-                });
+        return new Promise((resolve, reject) => {
+            console.log("*** TRYING TO RUN THE UPDATE FOR " + location);
+            apiFramework.update_reference_model(this.raw, this.location(), this.sourceType, text, (e, newRaw) => {
+                if (e != null) {
+                    reject(e);
+                }
+                else {
+                    this.raw = newRaw;
+                    resolve();
+                }
             });
         });
     }
@@ -146,7 +134,7 @@ class ModelProxy {
             }
         });
     }
-    units(modelLevel, cb) { new units_model_1.UnitModel(this).process(modelLevel, cb); }
+    units(modelLevel, cb) { new UnitModel(this).process(modelLevel, cb); }
     /**
      * Returns all the files referenced in a document model
      * @returns {string[]}
@@ -173,8 +161,7 @@ class ModelProxy {
     elementLexicalInfo(id) {
         console.log("*** Looking for lexical information about " + id);
         const res = apiFramework.lexical_info_for_unit(this.raw, id);
-        return new model_utils_1.LexicalInfo(parseInt(res["start-line"]), parseInt(res["start-column"]), parseInt(res["start-index"]), parseInt(res["end-line"]), parseInt(res["end-column"]), parseInt(res["end-index"]));
+        return new LexicalInfo(parseInt(res["start-line"]), parseInt(res["start-column"]), parseInt(res["start-index"]), parseInt(res["end-line"]), parseInt(res["end-column"]), parseInt(res["end-index"]));
     }
 }
-exports.ModelProxy = ModelProxy;
 //# sourceMappingURL=model_proxy.js.map

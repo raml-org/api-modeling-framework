@@ -1,22 +1,21 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
         function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
+        step((generator = generator.apply(thisArg, _arguments)).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const ko = require("knockout");
-const load_modal_1 = require("./view_models/load_modal");
-const electron_1 = require("electron");
-const nav_1 = require("./view_models/nav");
+import * as ko from "knockout";
+import { LoadModal } from "./view_models/load_modal";
+import { ApiModellerWindow } from "./main/api_modeller_window";
+import { Nav } from "./view_models/nav";
 var createModel = monaco.editor.createModel;
-const utils_1 = require("./utils");
-const ui_1 = require("./view_models/ui");
-const query_1 = require("./view_models/query");
-class ViewModel {
+import { label } from "./utils";
+import { UI } from "./view_models/ui";
+import { Query } from "./view_models/query";
+import { Diagram } from "./view_models/diagram";
+export class ViewModel {
     constructor(editor) {
         this.editor = editor;
         // The model information stored as the global information, this will be used to generate the units and
@@ -42,29 +41,31 @@ class ViewModel {
         this.focusedId = ko.observable("");
         this.selectedParserType = ko.observable(undefined);
         // Nested interfaces
-        this.ui = new ui_1.UI();
-        this.nav = new nav_1.Nav("document");
-        this.loadModal = new load_modal_1.LoadModal();
-        this.query = new query_1.Query();
+        this.ui = new UI();
+        this.nav = new Nav("document");
+        this.loadModal = new LoadModal();
+        this.query = new Query();
         // checks if we need to reparse the document
         this.shouldReload = 0;
         this.RELOAD_PERIOD = 5000;
+        this.apiModellerWindow = new ApiModellerWindow();
         editor.onDidChangeModelContent((e) => {
             this.shouldReload++;
             ((number) => {
                 setTimeout(() => __awaiter(this, void 0, void 0, function* () {
                     if (this.shouldReload === number && this.model && this.documentModel) {
-                        yield this.documentModel.update(this.model.location(), this.editor.getModel().getValue());
-                        this.resetUnits();
-                        this.resetReferences();
-                        this.resetDiagram();
+                        yield this.documentModel.update(this.model.location(), this.editor.getModel().getValue()).then(() => {
+                            this.resetUnits();
+                            this.resetReferences();
+                            this.resetDiagram();
+                        });
                     }
                 }), this.RELOAD_PERIOD);
             })(this.shouldReload);
         });
         // events we are subscribed
-        this.loadModal.on(load_modal_1.LoadModal.LOAD_FILE_EVENT, (data) => {
-            this.apiModellerWindow().parseModelFile(data.type, data.location, (err, model) => {
+        this.loadModal.on(LoadModal.LOAD_FILE_EVENT, (data) => {
+            this.apiModellerWindow.parseModelFile(data.type, data.location, (err, model) => {
                 if (err) {
                     console.log(err);
                     alert(err);
@@ -102,7 +103,7 @@ class ViewModel {
             }
             this.resetDiagram();
         });
-        this.nav.on(nav_1.Nav.DOCUMENT_LEVEL_SELECTED_EVENT, (level) => {
+        this.nav.on(Nav.DOCUMENT_LEVEL_SELECTED_EVENT, (level) => {
             this.onDocumentLevelChange(level);
         });
         this.generateSourceMaps.subscribe((generate) => {
@@ -220,7 +221,6 @@ class ViewModel {
         this.resetUnits();
         this.resetDiagram();
     }
-    apiModellerWindow() { return electron_1.remote.getCurrentWindow(); }
     apply(location) {
         window["viewModel"] = this;
         ko.applyBindings(this);
@@ -387,7 +387,7 @@ class ViewModel {
                 level = "document";
             }
             let oldDiagram = this.diagram;
-            this.diagram = new (require("./view_models/diagram").Diagram)(this.focusedId(), level, (id, unit) => {
+            this.diagram = new Diagram(this.focusedId(), level, (id, unit) => {
                 this.onSelectedDiagramId(id, unit);
             });
             this.diagram.process(this.allUnits());
@@ -400,7 +400,6 @@ class ViewModel {
             });
         }
         catch (e) {
-            // ignore
         }
     }
     // Reset the list of references for the current model
@@ -429,14 +428,14 @@ class ViewModel {
             return {
                 type: (isRemote ? "remote" : "local"),
                 id: reference,
-                label: utils_1.label(reference)
+                label: label(reference)
             };
         }
         else {
             return {
                 type: (isRemote ? "remote" : "local"),
                 id: reference,
-                label: utils_1.label(reference),
+                label: label(reference),
             };
         }
     }
@@ -560,5 +559,4 @@ class ViewModel {
         }
     }
 }
-exports.ViewModel = ViewModel;
 //# sourceMappingURL=view_model.js.map

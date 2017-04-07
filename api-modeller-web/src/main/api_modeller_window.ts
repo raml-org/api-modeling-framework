@@ -1,12 +1,10 @@
-import * as Electron from "electron";
-import * as fs from "fs";
 import {ModelProxy, ModelLevel} from "./model_proxy";
 
-const apiFramework = global["api_modelling_framework"].core;
+const apiFramework = window["api_modelling_framework"].core;
 
 export type ModelType = "raml" | "open-api";
 
-export class ApiModellerWindow extends Electron.BrowserWindow {
+export class ApiModellerWindow {
 
     static functions: string[] = [
         "checkFile", "existsFile", "parseModelFile", "generateString"
@@ -19,6 +17,7 @@ export class ApiModellerWindow extends Electron.BrowserWindow {
     }
 
     checkFile(cb) {
+        /*
         Electron.dialog.showOpenDialog((fileNames) => {
             const fileName = (fileNames || [])[0];
             if (fileName != null) {
@@ -28,14 +27,18 @@ export class ApiModellerWindow extends Electron.BrowserWindow {
                 cb(null, null)
             }
         });
+        */
     };
 
     existsFile(fileName, cb) {
+        /*
         if (fs.existsSync(fileName)) {
             cb(null, fileName);
         } else {
             cb(new Error("File does not exists"), null);
         }
+        */
+        cb(null, fileName);
     }
 
     parseModelFile(type: ModelType, fileLocation: string, cb) {

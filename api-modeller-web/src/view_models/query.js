@@ -1,15 +1,13 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const rdfstore_1 = require("rdfstore");
-const ko = require("knockout");
-const domain_model_1 = require("../main/domain_model");
+import { Store } from "rdfstore";
+import * as ko from "knockout";
+import { HYDRA_NS, DOCUMENT_NS, HTTP_NS, SHAPES_NS, SHACL_NS, RDFS_NS, RDF_NS, XSD_NS, SCHEMA_ORG_NS } from "../main/domain_model";
 class PredefinedQuery {
     constructor(name, text) {
         this.name = name;
         this.text = text;
     }
 }
-class Query {
+export class Query {
     constructor() {
         this.viewModel = window['viewModel'];
         this.text = ko.observable("SELECT * { ?s ?p ?o }");
@@ -58,22 +56,22 @@ ORDER BY DESC(?property)`),
     }
     process(jsonld, cb) {
         console.log("STORING JSONLD DOC");
-        new rdfstore_1.Store((err, store) => {
+        new Store((err, store) => {
             if (err) {
                 alert("Error creating RDF store");
             }
             else {
                 this.store = store;
                 this.store.registerDefaultProfileNamespaces();
-                this.store.registerDefaultNamespace("hydra", domain_model_1.HYDRA_NS);
-                this.store.registerDefaultNamespace("doc", domain_model_1.DOCUMENT_NS);
-                this.store.registerDefaultNamespace("http", domain_model_1.HTTP_NS);
-                this.store.registerDefaultNamespace("shapes", domain_model_1.SHAPES_NS);
-                this.store.registerDefaultNamespace("shacl", domain_model_1.SHACL_NS);
-                this.store.registerDefaultNamespace("rdf", domain_model_1.RDF_NS);
-                this.store.registerDefaultNamespace("rdfs", domain_model_1.RDFS_NS);
-                this.store.registerDefaultNamespace("xsd", domain_model_1.XSD_NS);
-                this.store.registerDefaultNamespace("schema-org", domain_model_1.SCHEMA_ORG_NS);
+                this.store.registerDefaultNamespace("hydra", HYDRA_NS);
+                this.store.registerDefaultNamespace("doc", DOCUMENT_NS);
+                this.store.registerDefaultNamespace("http", HTTP_NS);
+                this.store.registerDefaultNamespace("shapes", SHAPES_NS);
+                this.store.registerDefaultNamespace("shacl", SHACL_NS);
+                this.store.registerDefaultNamespace("rdf", RDF_NS);
+                this.store.registerDefaultNamespace("rdfs", RDFS_NS);
+                this.store.registerDefaultNamespace("xsd", XSD_NS);
+                this.store.registerDefaultNamespace("schema-org", SCHEMA_ORG_NS);
                 store.load("application/ld+json", jsonld, ((err) => {
                     if (err) {
                         cb(new Error(err), null);
@@ -108,5 +106,4 @@ ORDER BY DESC(?property)`),
         }
     }
 }
-exports.Query = Query;
 //# sourceMappingURL=query.js.map

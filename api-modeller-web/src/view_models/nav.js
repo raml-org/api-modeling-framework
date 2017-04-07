@@ -1,15 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const ko = require("knockout");
-const events_1 = require("events");
-class Nav extends events_1.EventEmitter {
+import * as ko from "knockout";
+export class Nav {
     constructor(level) {
-        super();
         this.documentLevelOptions = ko.observableArray([
             { name: "Document Model", key: "document" },
             { name: "Domain Model", key: "domain" }
         ]);
         this.selectedDocumentLevel = ko.observable(this.documentLevelOptions[0]);
+        this.listeners = [];
         this.selectedDocumentLevel(this.documentLevelOptions.peek().filter(e => e.key === level));
         this.selectedDocumentLevel.subscribe((v) => {
             if (v != null) {
@@ -17,7 +14,12 @@ class Nav extends events_1.EventEmitter {
             }
         });
     }
+    on(evt, listener) {
+        this.listeners.push(listener);
+    }
+    emit(evt, level) {
+        this.listeners.forEach(l => l(evt, level));
+    }
 }
 Nav.DOCUMENT_LEVEL_SELECTED_EVENT = "document_level_selected_event";
-exports.Nav = Nav;
 //# sourceMappingURL=nav.js.map

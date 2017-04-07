@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function label(uri) {
+export function label(uri) {
     if (uri.indexOf("#") > -1) {
         const hashPart = uri.split("#")[1];
         const base = uri.split("#")[0];
@@ -10,8 +8,7 @@ function label(uri) {
         return ("/" + uri.split("/").pop()) || uri;
     }
 }
-exports.label = label;
-function nestedLabel(parent, uri) {
+export function nestedLabel(parent, uri) {
     if (uri.indexOf(parent) > -1) {
         return uri.replace(parent, "");
     }
@@ -19,5 +16,4 @@ function nestedLabel(parent, uri) {
         return label(uri);
     }
 }
-exports.nestedLabel = nestedLabel;
 //# sourceMappingURL=utils.js.map

@@ -1,37 +1,33 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
         function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
+        step((generator = generator.apply(thisArg, _arguments)).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("../utils");
-const domain_model_1 = require("./domain_model");
-class DomainElement {
+import { label, nestedLabel } from "../utils";
+import { DomainModel } from "./domain_model";
+export class DomainElement {
     constructor(id, raw, label, elementClass, isAbstract) {
         this.id = id;
         this.label = label;
         this.elementClass = elementClass;
         this.kind = "DomainElement";
-        this.domain = new domain_model_1.DomainModel(raw);
+        this.domain = new DomainModel(raw);
     }
 }
-exports.DomainElement = DomainElement;
-class DocumentDeclaration {
+export class DocumentDeclaration {
     constructor(id, raw, label, elementClass, traitAlias) {
         this.id = id;
         this.label = label;
         this.elementClass = elementClass;
         this.traitAlias = traitAlias;
         this.kind = "DocumentDeclaration";
-        this.domain = new domain_model_1.DomainModel(raw);
+        this.domain = new DomainModel(raw);
     }
 }
-exports.DocumentDeclaration = DocumentDeclaration;
-class Document {
+export class Document {
     constructor(id, label, references, declares, encodes) {
         this.id = id;
         this.label = label;
@@ -41,8 +37,7 @@ class Document {
         this.kind = "Document";
     }
 }
-exports.Document = Document;
-class Fragment {
+export class Fragment {
     constructor(id, label, references, encodes) {
         this.id = id;
         this.label = label;
@@ -51,8 +46,7 @@ class Fragment {
         this.kind = "Fragment";
     }
 }
-exports.Fragment = Fragment;
-class Module {
+export class Module {
     constructor(id, label, references, declares) {
         this.id = id;
         this.label = label;
@@ -61,7 +55,6 @@ class Module {
         this.kind = "Module";
     }
 }
-exports.Module = Module;
 function consumePromises(ps) {
     return __awaiter(this, void 0, void 0, function* () {
         if (ps.length > 0) {
@@ -73,7 +66,7 @@ function consumePromises(ps) {
         }
     });
 }
-class UnitModel {
+export class UnitModel {
     constructor(model) {
         this.model = model;
     }
@@ -131,22 +124,22 @@ class UnitModel {
     parseDocument(doc, acc) {
         const docId = doc["@id"];
         const declares = (doc["http://raml.org/vocabularies/document#declares"] || []).map((declaration) => {
-            return new DocumentDeclaration(declaration["@id"], declaration, utils_1.nestedLabel(docId, declaration["@id"]), (declaration["@type"] || [])[0], this.extractTag("is-trait-tag", declaration));
+            return new DocumentDeclaration(declaration["@id"], declaration, nestedLabel(docId, declaration["@id"]), (declaration["@type"] || [])[0], this.extractTag("is-trait-tag", declaration));
         });
         const references = this.extractReferences(doc);
-        acc.documents.push(new Document(docId, utils_1.label(docId), references, declares, this.extractEncodedElement(doc)));
+        acc.documents.push(new Document(docId, label(docId), references, declares, this.extractEncodedElement(doc)));
     }
     parseFragment(doc, acc) {
         const references = this.extractReferences(doc);
-        acc.fragments.push(new Fragment(doc["@id"], utils_1.label(doc["@id"]), references, this.extractEncodedElement(doc)));
+        acc.fragments.push(new Fragment(doc["@id"], label(doc["@id"]), references, this.extractEncodedElement(doc)));
     }
     parseModule(doc, acc) {
         const docId = doc["@id"];
         const declares = (doc["http://raml.org/vocabularies/document#declares"] || []).map((declaration) => {
-            return new DocumentDeclaration(declaration["@id"], declaration, utils_1.nestedLabel(docId, declaration["@id"]), (declaration["@type"] || [])[0], this.extractTag("is-trait-tag", declaration));
+            return new DocumentDeclaration(declaration["@id"], declaration, nestedLabel(docId, declaration["@id"]), (declaration["@type"] || [])[0], this.extractTag("is-trait-tag", declaration));
         });
         const references = this.extractReferences(doc);
-        acc.modules.push(new Module(docId, utils_1.label(docId), references, declares));
+        acc.modules.push(new Module(docId, label(docId), references, declares));
     }
     flatten(array, mutable) {
         const toString = Object.prototype.toString;
@@ -192,7 +185,7 @@ class UnitModel {
         const encoded = (node["http://raml.org/vocabularies/document#encodes"] || [])[0];
         if (encoded != null) {
             const isAbstract = encoded["@type"].find(t => t === "http://raml.org/vocabularies/document#AbstractDomainElement");
-            return new DomainElement(encoded["@id"], encoded, utils_1.nestedLabel(node["@id"], encoded["@id"]), encoded["@type"][0], isAbstract);
+            return new DomainElement(encoded["@id"], encoded, nestedLabel(node["@id"], encoded["@id"]), encoded["@type"][0], isAbstract);
         }
         else {
             return undefined;
@@ -221,5 +214,4 @@ class UnitModel {
         });
     }
 }
-exports.UnitModel = UnitModel;
 //# sourceMappingURL=units_model.js.map

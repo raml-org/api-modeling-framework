@@ -1,8 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("../utils");
-const domain_model_1 = require("../main/domain_model");
-class UI {
+import { label } from "../utils";
+import { NS_MAPPING } from "../main/domain_model";
+export class UI {
     iconClassForUnit(unit) {
         if (unit.kind === "Document") {
             return "fa fa-file";
@@ -67,16 +65,16 @@ class UI {
         }
         else {
             if (unit.kind === "APIDocumentation") {
-                return utils_1.label(unit.id);
+                return label(unit.id);
             }
             else if (unit.kind === "EndPoint") {
-                return unit.path || unit.label || utils_1.label(unit.id);
+                return unit.path || unit.label || label(unit.id);
             }
             else if (unit.kind === "Operation") {
-                return unit.method || unit.label || utils_1.label(unit.id);
+                return unit.method || unit.label || label(unit.id);
             }
             else if (unit.kind === "Response") {
-                return unit.status || unit.label || utils_1.label(unit.id);
+                return unit.status || unit.label || label(unit.id);
             }
             else if (unit.kind === "Payload") {
                 return unit.mediaType || "*/*";
@@ -86,27 +84,27 @@ class UI {
                     return unit.label;
                 }
                 else if (unit.shape != null) {
-                    return utils_1.label(unit.shape["@id"]);
+                    return label(unit.shape["@id"]);
                 }
                 else {
-                    return utils_1.label(unit.id);
+                    return label(unit.id);
                 }
             }
             else {
-                return unit.label || utils_1.label(unit.id);
+                return unit.label || label(unit.id);
             }
         }
     }
     bindingLabel(binding) {
         if (binding) {
             if (binding.token === "uri") {
-                for (let prefix in domain_model_1.NS_MAPPING) {
+                for (let prefix in NS_MAPPING) {
                     if (binding.value.startsWith(prefix)) {
                         const rest = binding.value.replace(prefix, "");
-                        return domain_model_1.NS_MAPPING[prefix] + ":" + rest;
+                        return NS_MAPPING[prefix] + ":" + rest;
                     }
                 }
-                return utils_1.label(binding.value);
+                return label(binding.value);
             }
             else {
                 return binding.value;
@@ -117,5 +115,4 @@ class UI {
         }
     }
 }
-exports.UI = UI;
 //# sourceMappingURL=ui.js.map
