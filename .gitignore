@@ -23,3 +23,6 @@ api-modeller/.gitattributes
 api-modeller/.github/
 api-modeller/**/*.js
 api-modeller/**/*.js.map
+
+index_package.js
+package.json
