@@ -14,7 +14,16 @@
   },
   "devDependencies": {
     "babelify": "^7.3.0",
+    "browser-sync": "^2.18.8",
+    "browserify": "^14.3.0",
+    "gulp": "^3.9.1",
+    "gulp-bower": "0.0.13",
+    "gulp-sourcemaps": "^2.5.1",
+    "gulp-util": "^3.0.8",
     "tsify": "^3.0.1",
-    "typescript": "^2.2.2"
+    "typescript": "^2.2.2",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.9.0"
   }
 }

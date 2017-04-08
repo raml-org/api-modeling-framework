@@ -48,4 +48,37 @@
     </div>
     <div id="editor-container" data-bind="visible: (editorSection() !== 'diagram' && editorSection() !== 'query')"></div>
     <div id="graph-container" style="overflow: auto" data-bind="visible: editorSection() === 'diagram'"></div>
+    <div id="query"
+         class="imported box"
+         data-bind="visible: editorSection() === 'query'">
+        <p class="control">
+        <span class="select">
+            <select data-bind="options: query.predefinedQueries,
+                               optionsText: 'name',
+                               value: query.selectedPredefinedQuery,
+                               optionsCaption: 'Useful queries...'">
+            </select>
+        </span>
+        </p>
+        <p class="control">
+            <textarea class="textarea" data-bind="textInput: query.text" style="font-family: Consolas, Menlo, Monaco, monospace; height: 250px"></textarea>
+        </p>
+        <div class="control is-grouped">
+            <p class="control">
+                <button data-bind="click: query.submit.bind(query)"class="button is-primary">Submit</button>
+            </p>
+        </div>
+        <table class="table" style="text-size: 10px">
+            <thead>
+            <tr data-bind="foreach: query.variables">
+                <th data-bind="text: $data"></th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: query.bindings">
+            <tr data-bind="foreach: $root.query.variables">
+                <td data-bind="text: $root.ui.bindingLabel($parent[$data])"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </div>

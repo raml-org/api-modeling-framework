@@ -39,6 +39,7 @@ $ lein jar
 ### API Modelling Framework Clojurescript/Node library
 
 ``` shell
+$ lein npm install # this is only required on the first run
 $ lein node
 ```
 
@@ -56,6 +57,8 @@ The output JS library will be generated at `output/web`.
 ### API Modeller frontend Electron application
 
 ``` shell
+
+$ lein npm install # this is only required on the first run
 $ lein api-modeller
 ```
 
@@ -84,5 +87,6 @@ $ lein test
 ### Clojurescript/JS tests
 
 ``` shell
+$ lein npm install # this is only required on the first run
 $ lein test-js
 ```

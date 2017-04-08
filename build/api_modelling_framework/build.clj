@@ -58,14 +58,26 @@
   (sh! "cd" to))
 
 (defn npm-link [path from]
-  (sh! "npm" "link" (str (pwd) "/" path) :dir from))
+  (sh! "mkdir" "-p" (str from "/node_modules"))
+  (sh! "ln" "-s" (str (pwd) "/" path) (str from "/node_modules/api-modelling-framework")))
 
 (defn npm-install [path]
   (sh! "npm" "--prefix" path "install"))
 
-(defn gulp-serve [from]
-  (sh! "gulp" "serve" :dir from))
+(defn local-gulp [from] (str from "/node_modules/.bin/gulp"))
 
+(defn tsc [bin project]
+  (sh! bin "-p" project))
+
+(defn local-tsc [from] (str from "/node_modules/.bin/tsc"))
+
+(defn gulp-serve [from]
+  (sh! (local-gulp from) "--cwd" from "serve"))
+
+(defmacro no-error [form]
+  `(try
+     ~form
+     (catch Exception ex# nil)))
 
 ;; builds
 
@@ -79,9 +91,8 @@
   (mkdir "output")
 
   (println "* Building " target)
-  (cljsbuild target)
-  (cp "js" "output/node/js")
-
+  (cljsbuild target
+)
   (println "* Copying license")
   (cp "LICENSE" (str "output/" target "/LICENSE")))
 
@@ -90,6 +101,7 @@
 (defn build-node []
   (println "** Building Target: node\n")
   (build "node")
+  (cp "js" "output/node/js")
 
   (println "* copy package index file")
   (cp "build/package_files/index.js" "output/node/index.js")
@@ -112,8 +124,6 @@
 
 (defn run-api-modeller []
   (build-node)
-
-
   (let [api-modeller (str (pwd) "/api-modeller")]
     (println "linking project to api-modeller")
     (npm-link "output/node" api-modeller)
@@ -121,12 +131,15 @@
     (println "Installing npm dependencies")
     (npm-install api-modeller)
 
+    (println "Compiling typescript")
+    (no-error (tsc (local-tsc api-modeller) api-modeller))
     (gulp-serve api-modeller)))
 
 (defn run-api-web []
-  (build-node)
+  (build-web)
 
   (let [api-modeller-web (str (pwd) "/api-modeller-web")]
+    (cp "output/web/amf.js" (str api-modeller-web "/public/js/"))
     (npm-install api-modeller-web)
     (gulp-serve api-modeller-web)))
 
@@ -134,10 +147,10 @@
 (defn -main [& args]
   (try
     (condp = (first args)
-      "web"          (build-web)
-      "node"         (build-node)
-      "api-modeller" (run-api-modeller)
-      "api-modeller-web"      (run-api-web)
+      "web"              (build-web)
+      "node"             (build-node)
+      "api-modeller"     (run-api-modeller)
+      "api-modeller-web" (run-api-web)
       (do (println "Unknown task")
           (System/exit 2)))
     (catch Exception ex

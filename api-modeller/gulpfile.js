@@ -5,17 +5,18 @@ var electron = require('electron-connect').server.create();
 var typescript = require('gulp-tsc');
 var bower = require('gulp-bower');
 
-gulp.task('compile', function(){
-    gulp.src(['typings/index.d.ts','src/**/*.ts'])
-        .pipe(typescript({emitError: false}))
+// compile is broken before of weird dependencies problems in tsc
+gulp.task('compile', function () {
+    gulp.src(['typings/index.d.ts', 'src/**/*.ts'])
+        .pipe(typescript({ emitError: false }))
         .pipe(gulp.dest('src/'));
 });
 
-gulp.task('bower', function() {
-    return bower({cwd: "public"});
+gulp.task('bower', function () {
+    return bower({ cwd: "public" });
 });
 
-gulp.task('serve', ['compile','bower'], function () {
+gulp.task('serve', ['bower'], function () {
 
     // Start browser process
     electron.start();
