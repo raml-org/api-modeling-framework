@@ -37,7 +37,7 @@
                                  :figwheel true
                                  :compiler {:output-to "index_package.js"
                                             :main api-modelling-framework.core
-                                            :optimizations :advanced
+                                            :optimizations :none
                                             :foreign-libs [{:file "js/js-yaml-bundle.js"
                                                             :provides ["api_modelling_framework.web.yaml"]}]
                                             :pretty-print true}}

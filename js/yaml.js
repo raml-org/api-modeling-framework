@@ -236,3 +236,4 @@ global.JS_YAML = {};
 global.JS_YAML.parseYamlFile = parseYamlFile;
 global.JS_YAML.parseYamlString = parseYamlString;
 global.JS_YAML.dump = yaml.dump;
+global.JS_REST = rest;

@@ -1,0 +1,166 @@
+{
+    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml",
+    "@type": [
+        "http://raml.org/vocabularies/document#Document",
+        "http://raml.org/vocabularies/document#Fragment",
+        "http://raml.org/vocabularies/document#Module",
+        "http://raml.org/vocabularies/document#Unit"
+    ],
+    "http://raml.org/vocabularies/document#encodes": [
+        {
+            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation",
+            "@type": [
+                "http://raml.org/vocabularies/http#APIDocumentation",
+                "http://raml.org/vocabularies/document#DomainElement"
+            ],
+            "http://raml.org/vocabularies/http#basePath": [
+                {
+                    "@value": "/some/base/uri"
+                }
+            ],
+            "http://raml.org/vocabularies/http#endpoint": [
+                {
+                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0",
+                    "@type": [
+                        "http://raml.org/vocabularies/http#EndPoint",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                    ],
+                    "http://raml.org/vocabularies/http#path": [
+                        {
+                            "@value": "/someChildUri"
+                        }
+                    ],
+                    "http://www.w3.org/ns/hydra/core#supportedOperation": [
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/get",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "get"
+                                }
+                            ],
+                            "http://www.w3.org/ns/hydra/core#returns": [
+                                {
+                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/get/200",
+                                    "@type": [
+                                        "http://raml.org/vocabularies/http#Response",
+                                        "http://raml.org/vocabularies/document#DomainElement"
+                                    ],
+                                    "http://raml.org/vocabularies/http#payload": [
+                                        {
+                                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/get/200/%3Aapplication%2Fxml",
+                                            "@type": [
+                                                "http://raml.org/vocabularies/http#Payload",
+                                                "http://raml.org/vocabularies/document#DomainElement"
+                                            ],
+                                            "http://raml.org/vocabularies/http#mediaType": [
+                                                {
+                                                    "@value": "application/xml"
+                                                }
+                                            ],
+                                            "http://raml.org/vocabularies/http#schema": [
+                                                {
+                                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/get/200/%3Aapplication%2Fxml/type/shape",
+                                                    "@type": [
+                                                        "http://www.w3.org/ns/shacl#NodeShape",
+                                                        "http://www.w3.org/ns/shacl#Shape"
+                                                    ],
+                                                    "http://schema.org/description": [
+                                                        {
+                                                            "@value": "some very useful resource"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "http://schema.org/name": [
+                                        {
+                                            "@value": "200"
+                                        }
+                                    ],
+                                    "http://www.w3.org/ns/hydra/core#statusCode": [
+                                        {
+                                            "@value": "200"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/end-points/0",
+                    "@type": [
+                        "http://raml.org/vocabularies/http#EndPoint",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                    ],
+                    "http://raml.org/vocabularies/http#path": [
+                        {
+                            "@value": "/someChildUri/anotherChild"
+                        }
+                    ],
+                    "http://www.w3.org/ns/hydra/core#supportedOperation": [
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/end-points/0/put",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#expects": [
+                                {
+                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/end-points/0/put/request",
+                                    "@type": [
+                                        "http://raml.org/vocabularies/http#Request",
+                                        "http://raml.org/vocabularies/document#DomainElement"
+                                    ],
+                                    "http://raml.org/vocabularies/http#payload": [
+                                        {
+                                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/end-points/0/put/%3Aapplication%2Fjson",
+                                            "@type": [
+                                                "http://raml.org/vocabularies/http#Payload",
+                                                "http://raml.org/vocabularies/document#DomainElement"
+                                            ],
+                                            "http://raml.org/vocabularies/http#mediaType": [
+                                                {
+                                                    "@value": "application/json"
+                                                }
+                                            ],
+                                            "http://raml.org/vocabularies/http#schema": [
+                                                {
+                                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Resources/test001/apiValid.raml#/api-documentation/end-points/0/end-points/0/put/%3Aapplication%2Fjson/type/shape",
+                                                    "@type": [
+                                                        "http://www.w3.org/ns/shacl#NodeShape",
+                                                        "http://www.w3.org/ns/shacl#Shape"
+                                                    ],
+                                                    "http://schema.org/description": [
+                                                        {
+                                                            "@value": "another very useful resource"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "put"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "API"
+                }
+            ]
+        }
+    ]
+}

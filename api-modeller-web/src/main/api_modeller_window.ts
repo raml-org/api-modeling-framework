@@ -38,9 +38,9 @@ export class ApiModellerWindow {
         console.log("PARSING FILE " + fileLocation + " TYPE " + type);
         let parser: any;
         if (type === "raml") {
-            parser = new this.apiFramework.RAMLParser();
+            parser = new this.apiFramework.__GT_RAMLParser();
         } else if(type === "open-api") {
-            parser = new this.apiFramework.OpenAPIParser();
+            parser = new this.apiFramework.__GT_OpenAPIParser();
         }
 
         this.apiFramework.parse_file(parser, fileLocation, function(err, model) {

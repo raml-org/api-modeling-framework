@@ -65,8 +65,6 @@ function extract_value(node: any, property: string) {
 
 function has_type(node, type) {
     const types = node["@type"] || [];
-    console.log("CHECKING TYPES");
-    console.log(JSON.stringify(types));
     return types.find(t => t === type) != null;
 }
 

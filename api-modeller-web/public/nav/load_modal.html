@@ -8,6 +8,7 @@
         </header>
         <section class="modal-card-body">
             <form>
+
                 <label class="label">File Type</label>
                 <p class="control">
                     <span class="select">
@@ -16,19 +17,27 @@
                                            value: selectedParserType"></select>
                     </span>
                 </p>
+
                 <label class="label">File URL</label>
                 <p class="control">
                     <input id="file-to-load-input"
-                           data-bind="value: fileUrl()"
+                           data-bind="value: fileUrl"
                            class="input"
                            type="text"
                            placeholder="http://">
-                    <a class="button is-pulled-right"
-                       data-bind="click: loadLocalFile">
-                        <span class="icon is-small">
-                            <i class="fa fa-file-text-o"></i>
-                        </span>
-                    </a>
+                </p>
+
+                <label class="label">Examples</label>
+                <p class="control">
+                    <span class="select">
+                        <select data-bind="options: apiExamples,
+                                               optionsText: 'name',
+                                               optionsCaption: 'Select example...',
+                                               value: selectedApiExample">
+                            <option>Select dropdown</option>
+                            <option>With options</option>
+                        </select>
+                    </span>
                 </p>
 
             </form>

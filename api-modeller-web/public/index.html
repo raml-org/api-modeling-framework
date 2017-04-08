@@ -4,7 +4,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
 
-    <script src="js/amf.js"></script>
+    <!-- polyfills -->
+    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+
+    <script src="js/amf_dev.js"></script>
     <script src="js/api_modeller.js"></script>
 
     <!-- Loading Monaco -->
@@ -43,61 +46,64 @@
 
 <script>
     (function() {
-        document.getElementsByName("body");
-        // Imported content
-        window.reloadApp = function() {
-            var importedMap = {};
-            var pending = true;
-            while (pending === true) {
-                pending = false;
-                var links = document.querySelectorAll('link[rel="import"]');
-                for (var i = 0; i < links.length; i++) {
-                    var link = links[i];
-                    if (link.import != null && importedMap[link.href] == null) {
-                        pending = true;
-                        importedMap[link.href] = true;
-                        var content = link.import;
-                        var el = content.querySelector('.imported');
-                        link.parentNode.insertBefore(el.cloneNode(true), link);
+        window.global = window;
+        window.addEventListener('WebComponentsReady', function() {
+            document.getElementsByName("body");
+            // Imported content
+            window.reloadApp = function () {
+                var importedMap = {};
+                var pending = true;
+                while (pending === true) {
+                    pending = false;
+                    var links = document.querySelectorAll('link[rel="import"]');
+                    for (var i = 0; i < links.length; i++) {
+                        var link = links[i];
+                        if (link.import != null && importedMap[link.href] == null) {
+                            pending = true;
+                            importedMap[link.href] = true;
+                            var content = link.import;
+                            var el = content.querySelector('.imported');
+                            link.parentNode.insertBefore(el.cloneNode(true), link);
+                        }
                     }
                 }
-            }
 
-            require.config({ paths: { 'vs': 'bower_components/monaco-editor/release/min/vs' }});
-            require(['vs/editor/editor.main'], function() {
-                var resize = function() {
-                    console.log("** Resizing **");
-                    var height = document.documentElement.clientHeight;
-                    var containerDiv = document.getElementById("editor-container");
-                    var style = window.getComputedStyle(containerDiv);
-                    var hidden = style.display == "none";
-                    if (!hidden) {
-                        containerDiv.setAttribute("style", "height: " + (height - 200) + "px");
-                    }
-                };
+                require.config({paths: {'vs': 'bower_components/monaco-editor/release/min/vs'}});
+                require(['vs/editor/editor.main'], function () {
+                    var resize = function () {
+                        console.log("** Resizing **");
+                        var height = document.documentElement.clientHeight;
+                        var containerDiv = document.getElementById("editor-container");
+                        var style = window.getComputedStyle(containerDiv);
+                        var hidden = style.display == "none";
+                        if (!hidden) {
+                            containerDiv.setAttribute("style", "height: " + (height - 200) + "px");
+                        }
+                    };
 
-                window.onresize = resize;
-                window.resizeFn = resize;
-                resize();
+                    window.onresize = resize;
+                    window.resizeFn = resize;
+                    resize();
 
-                var editor = monaco.editor.create(document.getElementById("editor-container"), {
-                    automaticLayout: true,
-                    // theme: "vs-dark",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    scrollBeyondLastLine: false,
-                    eadOnly: true,
-                    value: [
-                        '# no data loaded'
-                    ].join('\n'),
-                    language: 'yaml'
+                    var editor = monaco.editor.create(document.getElementById("editor-container"), {
+                        automaticLayout: true,
+                        // theme: "vs-dark",
+                        fontSize: 16,
+                        fontWeight: "bold",
+                        scrollBeyondLastLine: false,
+                        eadOnly: true,
+                        value: [
+                            '# no data loaded'
+                        ].join('\n'),
+                        language: 'yaml'
+                    });
+
+                    window.appModel = new api_modeller.ViewModel(editor);
+                    window.appModel.apply(document.getElementById("the-app"));
                 });
-
-                window.appModel = new api_modeller.ViewModel(editor);
-                window.appModel.apply(document.getElementById("the-app"));
-            });
-        };
-        reloadApp();
+            };
+            reloadApp();
+        });
     })();
 </script>
 </body>

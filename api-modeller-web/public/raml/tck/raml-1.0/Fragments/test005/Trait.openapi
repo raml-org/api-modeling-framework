@@ -1,0 +1,11 @@
+{
+    "x-abstract-node": true,
+    "parameters": [
+        {
+            "in": "header",
+            "name": "TestHeader",
+            "required": true,
+            "type": "string"
+        }
+    ]
+}

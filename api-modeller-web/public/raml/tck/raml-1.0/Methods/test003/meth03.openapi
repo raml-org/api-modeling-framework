@@ -1,0 +1,75 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "test",
+        "version": ""
+    },
+    "paths": {
+        "/methods": {
+            "delete": {
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            },
+            "get": {
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            },
+            "x-method-set": {
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            },
+            "head": {
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            },
+            "options": {
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            },
+            "patch": {
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            },
+            "post": {
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            },
+            "put": {
+                "responses": {
+                    "default": {
+                        "description": "",
+                        "x-generated": true
+                    }
+                }
+            }
+        }
+    }
+}

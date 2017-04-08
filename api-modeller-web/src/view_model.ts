@@ -22,7 +22,7 @@ export interface ReferenceFile {
 }
 
 const createModel = function(text, mode) {
-  window["monaco"].createModel(text, mode);
+  return window["monaco"].editor.createModel(text, mode);
 };
 
 export class ViewModel {

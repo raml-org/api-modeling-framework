@@ -1,0 +1,46 @@
+{
+    "swagger": "2.0",
+    "basePath": "/some/base/uri",
+    "info": {
+        "title": "API",
+        "version": ""
+    },
+    "paths": {
+        "/someChildUri": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "description": "some very useful resource",
+                            "type": "object"
+                        },
+                        "x-media-type": "application/xml"
+                    }
+                }
+            }
+        },
+        "/someChildUri/anotherChild": {
+            "put": {
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "",
+                        "schema": {
+                            "description": "another very useful resource",
+                            "type": "object"
+                        },
+
+                        "x-media-type": "application/json"
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "x-generated": true,
+                        "description": ""
+                    }
+                }
+            }
+        }
+    }
+}

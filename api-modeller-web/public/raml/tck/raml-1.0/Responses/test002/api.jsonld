@@ -1,0 +1,84 @@
+{
+    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test002/api.raml",
+    "@type": [
+        "http://raml.org/vocabularies/document#Document",
+        "http://raml.org/vocabularies/document#Fragment",
+        "http://raml.org/vocabularies/document#Module",
+        "http://raml.org/vocabularies/document#Unit"
+    ],
+    "http://raml.org/vocabularies/document#encodes": [
+        {
+            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test002/api.raml#/api-documentation",
+            "@type": [
+                "http://raml.org/vocabularies/http#APIDocumentation",
+                "http://raml.org/vocabularies/document#DomainElement"
+            ],
+            "http://raml.org/vocabularies/http#endpoint": [
+                {
+                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test002/api.raml#/api-documentation/end-points/0",
+                    "@type": [
+                        "http://raml.org/vocabularies/http#EndPoint",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                    ],
+                    "http://raml.org/vocabularies/http#path": [
+                        {
+                            "@value": "/test"
+                        }
+                    ],
+                    "http://www.w3.org/ns/hydra/core#supportedOperation": [
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test002/api.raml#/api-documentation/end-points/0/get",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "get"
+                                }
+                            ],
+                            "http://www.w3.org/ns/hydra/core#returns": [
+                                {
+                                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test002/api.raml#/api-documentation/end-points/0/get/200",
+                                    "@type": [
+                                        "http://raml.org/vocabularies/http#Response",
+                                        "http://raml.org/vocabularies/document#DomainElement"
+                                    ],
+                                    "http://raml.org/vocabularies/http#payload": [
+                                        {
+                                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test002/api.raml#/api-documentation/end-points/0/get/200/%3Aapplication%2Fjson",
+                                            "@type": [
+                                                "http://raml.org/vocabularies/http#Payload",
+                                                "http://raml.org/vocabularies/document#DomainElement"
+                                            ],
+                                            "http://raml.org/vocabularies/http#mediaType": [
+                                                {
+                                                    "@value": "application/json"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "http://schema.org/name": [
+                                        {
+                                            "@value": "200"
+                                        }
+                                    ],
+                                    "http://www.w3.org/ns/hydra/core#statusCode": [
+                                        {
+                                            "@value": "200"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "test"
+                }
+            ]
+        }
+    ]
+}

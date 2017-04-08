@@ -167,7 +167,7 @@ export class ModelProxy {
     references(): string[] {
         const files: string[] = [];
         files.push(this.location());
-        from_clj(apiFramework.references(this.raw).forEach(f => files.push(f)));
+        apiFramework.references(this.raw).forEach(f => files.push(f));
         return files;
     }
 

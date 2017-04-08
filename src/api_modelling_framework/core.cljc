@@ -309,8 +309,9 @@
                nil)))
 
          (references [this]
-           (->> (domain-model this)
-                document/references
-                (map :location)))
+           (-> (->> (domain-model this)
+                    document/references
+                    (map :location))
+               platform/<-clj))
 
          (raw [this] (:raw res)))))))
