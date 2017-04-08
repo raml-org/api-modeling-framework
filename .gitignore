@@ -34,6 +34,12 @@ api-modeller-web/.gitattributes
 api-modeller-web/.github/
 api-modeller-web/src/**/*.js
 api-modeller-web/src/**/*.js.map
-
 index_package.js
 package.json
+.idea/
+api-modeller-web/node_modules/
+api-modeller-web/public/bower_components/
+api-modeller-web/public/bower_components/
+api-modeller-web/public/js/
+api-modeller-web/typings.json
+output/

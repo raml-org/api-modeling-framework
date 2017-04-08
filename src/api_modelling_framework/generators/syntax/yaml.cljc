@@ -12,7 +12,9 @@
                      ;; for the web version
                      ;; it will be a noop for the node version
 
-                     [api_modelling_framework.web.yaml]))
+                     ;; This will introduce JS_YAML from the index.js in node of from the loaded
+                     ;; code in the web version
+                     [api_modelling_framework.js-support]))
 
   #?(:clj (:require [api-modelling-framework.model.syntax :as syntax]
                     [api-modelling-framework.utils :as utils]
@@ -20,11 +22,6 @@
                     [clojure.core.async :refer [<! >! go]]
                     [clojure.walk :refer [keywordize-keys]]
                     [clojure.string :as string])))
-
-;; This will come from the index.js in node of from the loaded
-;; code in the web version
-#?(:cljs (def yaml js/JS_YAML))
-
 
 (def key-orders {"title" 0
                  "description" 1
@@ -37,7 +34,7 @@
           (let [yaml (org.yaml.snakeyaml.Yaml.)]
             (.dump yaml (utils/ramlify ast))))
    :cljs (defn generate-yaml-string [ast]
-           (.dump yaml (clj->js (utils/ramlify ast)) (clj->js {"sortKeys" (fn [ka kb]
+           (JS_YAML/dump (clj->js (utils/ramlify ast)) (clj->js {"sortKeys" (fn [ka kb]
                                                                             (cond
                                                                               (and (string/starts-with? ka "/")
                                                                                    (string/starts-with? kb "/"))  0

@@ -3,7 +3,8 @@
   (:require [clojure.string :as string]
             [cljs.core.async  :refer [<! >! chan]]
             [clojure.walk :refer [keywordize-keys]]
-            [api_modelling_framework.web.yaml :as js-yaml]))
+            ;; loading Node / web support
+            [api_modelling_framework.js-support]))
 
 (enable-console-print!)
 

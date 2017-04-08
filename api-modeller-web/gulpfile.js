@@ -11,19 +11,26 @@ var buffer = require('vinyl-buffer');
 var gutil = require('gulp-util');
 var sourcemaps = require('gulp-sourcemaps');
 var browserSync = require('browser-sync').create();
-
+var bower = require('gulp-bower');
 var child = require("child_process");
 
-gulp.task("deps", function() {
+gulp.task("cljbuild", function() {
     console.log("* Local NPM deps");
     child.execSync("npm install");
 
+    console.log("* Local Bower deps");
+    child.execSync("cd public && bower install");
+
     console.log("* Building Clojurescript dependency");
     console.log(child.execSync("rm -f ../index_package.js").toString());
-    console.log(child.execSync("cd .. && lein cljsbuild once web").toString());
+    console.log(child.execSync("cd .. && lein web").toString());
     console.log(child.execSync("mkdir -p public/js").toString());
-    console.log(child.execSync("cp -rf ../target/cljsbuild-compiler-1 public/js/").toString());
+    console.log(child.execSync("cp -rf ../output/web/* public/js/").toString());
     console.log(child.execSync("cp -rf ../index_package.js public/js/amf.js").toString());
+});
+
+gulp.task('bower', function() {
+    return bower({cwd: "public"})
 });
 
 const options = {"standalone":"api_modeller"};
@@ -51,7 +58,7 @@ b.on('update', bundle); // on any dep update, runs the bundler
 b.on('log', gutil.log); // output build logs to terminal
 
 
-gulp.task('serve', ['bundle'], function () {
+gulp.task('serve', ["bower"], function () {
     browserSync.init({
         server: "public",
         startPath: "/index.html"

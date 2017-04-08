@@ -5,23 +5,16 @@
                      [cljs.core.async :refer [<! >! chan]]
                      [clojure.string :as string]
 
-                     ;; this will trigger adding the js-yaml-bundle in compilation
-                     ;; for the web version
+                     ;; this will trigger adding the js-support-bundle in compilation
+                     ;; for the web version and introduce JS_YAML
                      ;; it will be a noop for the node version
 
-                     [api_modelling_framework.web.yaml :as js-yaml]))
+                     [api_modelling_framework.js-support]))
 
   #?(:clj (:require [clj-yaml.core :as yaml]
                     [clojure.core.async :refer [<! >! go]]
                     [clojure.walk :refer [stringify-keys]]
                     [clojure.string :as string])))
-
-
-
-;; This will come from the index.js in node of from the loaded
-;; code in the web version
-#?(:cljs (def yaml js/JS_YAML))
-
 
 (declare parse-file)
 
@@ -70,11 +63,11 @@
 #?(:cljs (defn parse-file
            ([uri options]
             (let [ch (chan)]
-              (.parseYamlFile yaml uri (clj->js options) (fn [e result]
-                                                           (go (try (if e
-                                                                      (>! ch (ex-info (str e) e))
-                                                                      (>! ch (->> result js->clj keywordize-keys add-location-meta)))
-                                                                    (catch #?(:cljs js/Error :clj Exception) ex ex)))))
+              (JS_YAML/parseYamlFile uri (clj->js options) (fn [e result]
+                                                             (go (try (if e
+                                                                        (>! ch (ex-info (str e) e))
+                                                                        (>! ch (->> result js->clj keywordize-keys add-location-meta)))
+                                                                      (catch #?(:cljs js/Error :clj Exception) ex ex)))))
               ch))
            ([uri] (parse-file uri {})))
    :clj (defn parse-file
@@ -89,11 +82,11 @@
 #?(:cljs (defn parse-string
            ([uri string options]
             (let [ch (chan)]
-              (.parseYamlString yaml uri string (clj->js options) (fn [e result]
-                                                                    (go (try (if e
-                                                                               (>! ch (ex-info (str e) e))
-                                                                               (>! ch (->> result js->clj keywordize-keys add-location-meta)))
-                                                                             (catch #?(:cljs js/Error :clj Exception) ex ex)))))
+              (JS_YAML/parseYamlString uri string (clj->js options) (fn [e result]
+                                                                      (go (try (if e
+                                                                                 (>! ch (ex-info (str e) e))
+                                                                                 (>! ch (->> result js->clj keywordize-keys add-location-meta)))
+                                                                               (catch #?(:cljs js/Error :clj Exception) ex ex)))))
               ch))
            ([uri string] (parse-string uri string {})))
    :clj (defn parse-string
