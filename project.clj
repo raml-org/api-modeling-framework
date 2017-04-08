@@ -55,7 +55,7 @@
                                             :asset-path "/"
                                             :optimizations :advanced
                                             :foreign-libs [{:file "js/js-support-bundle.js"
-                                                            :provides ["api_modelling_framework.js_support"]}]
+                                                            :provides ["api_modelling_framework.js-support"]}]
                                             :externs ["js/externs.js"]
                                             :pretty-print true}}
 
