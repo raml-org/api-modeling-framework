@@ -18,14 +18,15 @@ export class Nav {
         });
     }
 
-    private listeners: ((evt:string, e:ModelLevel) => undefined)[] = [];
+    private listeners: ((e:ModelLevel) => undefined)[] = [];
 
     on(evt, listener) {
         this.listeners.push(listener);
     }
 
     emit(evt: string, level: ModelLevel) {
-        this.listeners.forEach(l => l(evt, level));
+        debugger;
+        this.listeners.forEach(l => l(level));
     }
 
 }

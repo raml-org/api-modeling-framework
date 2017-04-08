@@ -1,12 +1,23 @@
 {
     "compilerOptions": {
-        "target": "es6",
+        "target": "es5",
         "sourceMap": true,
         "removeComments": false
     },
     "files": [
         "typings/index.d.ts",
-        "src/view_model.ts"
+        "src/view_model.ts",
+        "src/utils.ts",
+        "src/view_models/diagram.ts",
+        "src/view_models/load_modal.ts",
+        "src/view_models/nav.ts",
+        "src/view_models/query.ts",
+        "src/view_models/ui.ts",
+        "src/main/api_modeller_window.ts",
+        "src/main/domain_model.ts",
+        "src/main/model_proxy.ts",
+        "src/main/model_utils.ts",
+        "src/main/units_model.ts"
     ],
     "exclude": [
         "node_modules",

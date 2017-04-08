@@ -45,11 +45,16 @@ export class Module implements DocumentId, Unit {
     constructor(public id: string, public label: string, public references: (string | DocumentId)[], public declares: DocumentDeclaration[]) { }
 }
 
-async function consumePromises<T>(ps: (Promise<T> | null)[]) {
-    if (ps.length > 0) {
-        const next = ps.pop();
-        if (next != null) { await next }
-        await consumePromises(ps)
+function consumePromises<T>(promises: ((ke: (e) => void, kd:(T) => void) => void)[], k:(e:any | undefined) => void) {
+    if (promises.length > 0) {
+        const next = promises.pop();
+        if (next != null) {
+            next((e) => {
+                k(e);
+            }, (_) => {
+                consumePromises(promises, k);
+            })
+        }
     }
 }
 
@@ -61,7 +66,7 @@ export class UnitModel {
         const references = this.model.references();
         const promises = references.map(reference => {
             if (modelLevel == "document" || reference == this.model.location()) {
-                return new Promise((resolve, reject) => {
+                return (resolve, reject) => {
                     let nestedModel = this.model.nestedModel(reference);
                     nestedModel.toAPIModelProcessed(modelLevel, false, false, { "source-maps?": true }, (err, jsonld: any) => {
                         if (err != null) {
@@ -77,17 +82,20 @@ export class UnitModel {
                             resolve(undefined);
                         }
                     });
-                });
+                };
             } else {
                 return null;
             }
         });
 
-        consumePromises(promises)
-            .then((_) => {
+        consumePromises(promises, (e) => {
+            if (e != null) {
+                cb(e, null);
+            } else {
                 this.foldReferences(acc);
                 cb(null, acc);
-            }).catch((e) => cb(e, null));
+            }
+        });
     }
 
     isDocument(doc: any) {

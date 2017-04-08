@@ -44,7 +44,12 @@ export class LoadModal {
     public constructor() {
         this.selectedApiExample.subscribe((newValue) => {
             if (newValue != null) {
-                const parserType = this.parserTypes().find((e) => e.key == newValue.key);
+                let parserType = null;
+                this.parserTypes().forEach((e) => {
+                    if (e.key === newValue.key) {
+                        parserType = e;
+                    }
+                });
                 if (parserType != null) {
                     this.selectedParserType(parserType);
                 }
@@ -55,6 +60,7 @@ export class LoadModal {
 
     public show() {
         this.fileUrl("");
+        this.selectedApiExample(null);
         this.el().className += " is-active";
     }
 
@@ -65,6 +71,7 @@ export class LoadModal {
 
     public cancel() {
         this.fileUrl("");
+        this.selectedApiExample(null);
         this.hide();
     }
 

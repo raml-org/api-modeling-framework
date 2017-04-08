@@ -8,6 +8,11 @@ import {NS_MAPPING} from "../main/domain_model";
 import {Payload} from "../main/domain_model";
 import {Schema} from "../main/domain_model";
 
+const endsWith = (s: string, postfix: string): boolean => {
+    const postIndex = s.indexOf(postfix);
+    return s.length == postIndex + postfix.length;
+};
+
 export class UI {
     iconClassForUnit(unit: units.DocumentId) {
         if (unit.kind === "Document") {
@@ -23,13 +28,13 @@ export class UI {
 
     iconClassForDomainUnit(unit: units.DomainElement) {
         //console.log("ICON FOR " + unit.id + " => " + unit.elementClass);
-        if (unit.elementClass.endsWith("#APIDocumentation")) {
+        if (endsWith(unit.elementClass, "#APIDocumentation")) {
             return "fa fa-book";
-        } else if (unit.elementClass.endsWith("#Payload")) {
+        } else if (endsWith(unit.elementClass, "#Payload")) {
             return "fa fa-paper-plane";
-        } else if (unit.elementClass.endsWith("#Schema")) {
+        } else if (endsWith(unit.elementClass, "#Schema")) {
             return "fa fa-cubes";
-        } else if (unit.elementClass.endsWith("#Operation")) {
+        } else if (endsWith(unit.elementClass, "#Operation")) {
             return "fa fa-rocket";
         } else {
             return "fa fa-code";

@@ -68,12 +68,17 @@ export class ViewModel {
         editor.onDidChangeModelContent((e) => {
             this.shouldReload++;
             ((number) => {
-                setTimeout(async () => {
+                setTimeout(() => {
                     if (this.shouldReload === number && this.model && this.documentModel) {
-                        await this.documentModel.update(this.model.location(), this.editor.getModel().getValue()).then(() => {
-                            this.resetUnits();
-                            this.resetReferences();
-                            this.resetDiagram();
+                        this.documentModel.update(this.model.location(), this.editor.getModel().getValue(),(e) => {
+                            if (e != null) {
+                                this.resetUnits();
+                                this.resetReferences();
+                                this.resetDiagram();
+                            } else {
+                                console.log(e);
+                                alert(e);
+                            }
                         });
                     }
                 }, this.RELOAD_PERIOD);
@@ -204,7 +209,12 @@ export class ViewModel {
         if (this.documentModel) {
             const topLevelUnit = this.isTopLevelUnit(unit);
             if (topLevelUnit != null) {
-                const foundRef = this.references().find(ref => unit.id.startsWith(ref.id));
+                let foundRef = null;
+                this.references().forEach(ref => {
+                    if (unit.id.indexOf(ref.id) === 0) {
+                        foundRef = ref;
+                    }
+                });
                 if (foundRef) {
                     this.selectNavigatorFile(foundRef);
                 }
@@ -222,7 +232,12 @@ export class ViewModel {
 
     public isTopLevelUnit(unit: DomainElement) {
         for (var kind in this.domainUnits()) {
-            const found = this.domainUnits()[kind].find( domainUnit => domainUnit.id === unit.id);
+            let found = null;
+            this.domainUnits()[kind].forEach( domainUnit => {
+                if (domainUnit.id === unit.id) {
+                    found = domainUnit;
+                }
+            });
             if (found != null) {
                 return found;
             }
@@ -377,7 +392,12 @@ export class ViewModel {
     }
 
     private onSelectedDiagramId(id, unit) {
-        const foundReference = this.references().find(ref => ref.id === id);
+        let foundReference = null;
+        this.references().forEach(ref => {
+            if (ref.id === id) {
+                foundReference = ref;
+            }
+        });
         if (foundReference) {
             this.selectNavigatorFile(foundReference);
         } else {
@@ -447,8 +467,8 @@ export class ViewModel {
         const parts = currentLocation.split("/");
         parts.pop();
         const currentLocationDir = parts.join("/") + "/";
-        const isRemote = reference.startsWith("http");
-        if (reference.startsWith(currentLocationDir)) {
+        const isRemote = reference.indexOf("http") === 0;
+        if (reference.indexOf(currentLocationDir) === 0) {
             return {
                 type: (isRemote ? "remote" : "local"),
                 id: reference,

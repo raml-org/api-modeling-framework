@@ -37,7 +37,9 @@ const options = {"standalone":"api_modeller"};
 const b = watchify(browserify(options));
 function bundle() {
     return b
-        .add('src/view_model.ts')
+        .add([
+            "src/view_model.ts"
+        ])
         .plugin(tsify, { target: 'es6' })
         .transform(babelify, { extensions: [ '.tsx', '.ts' ] })
         .bundle()
@@ -59,6 +61,7 @@ b.on('log', gutil.log); // output build logs to terminal
 
 
 gulp.task('serve', ["bower"], function () {
+    bundle();
     browserSync.init({
         server: "public",
         startPath: "/index.html"

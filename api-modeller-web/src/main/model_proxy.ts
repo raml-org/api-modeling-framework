@@ -88,17 +88,14 @@ export class ModelProxy {
             });
     }
 
-    update(location: string, text: string): Promise<undefined> {
-        return new Promise<undefined>((resolve, reject) => {
-            console.log("*** TRYING TO RUN THE UPDATE FOR " + location );
-            apiFramework.update_reference_model(this.raw, this.location(), this.sourceType, text, (e, newRaw) => {
-                if (e != null) {
-                    reject(e);
-                } else {
-                    this.raw = newRaw;
-                    resolve();
-                }
-            });
+    update(location: string, text: string, cb: (e: any) => void): void {
+        console.log("*** TRYING TO RUN THE UPDATE FOR " + location );
+        apiFramework.update_reference_model(this.raw, this.location(), this.sourceType, text, (e, newRaw) => {
+            if (e != null) {
+                cb(e);
+            } else {
+                this.raw = newRaw;
+            }
         });
     }
 
