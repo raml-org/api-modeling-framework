@@ -1,0 +1,24 @@
+#%RAML 1.0
+title: API
+
+types:
+  SomeType:
+    properties:
+      name: string
+#    example:
+#      name: somestring
+
+  AnotherType:
+    type: SomeType
+    properties:
+      age: number
+    additionalProperties: false
+
+  ComplexType:
+    properties:
+      someProperty: AnotherType
+
+#    example:
+#      someProperty:
+#        name: stringValue
+#        age: 123

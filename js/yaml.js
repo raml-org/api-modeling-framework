@@ -1,5 +1,4 @@
-var fs = require('fs');
-var p = require('path');
+var fs = (typeof(NODE_FS) === 'undefined' ? {readFile: function() { throw new Error("readFile only supported in node.js")}} : NODE_FS);
 var yaml = require('./js-yaml/index.js');
 var path = require("path");
 var rest = require("rest");
@@ -232,3 +231,9 @@ var parseYamlString = function (location, data, options, cb) {
 
 module.exports.parseYamlFile = parseYamlFile;
 module.exports.parseYamlString = parseYamlString;
+module.exports.dump = yaml.dump;
+global.JS_YAML = {};
+global.JS_YAML.parseYamlFile = parseYamlFile;
+global.JS_YAML.parseYamlString = parseYamlString;
+global.JS_YAML.dump = yaml.dump;
+global.JS_REST = rest;

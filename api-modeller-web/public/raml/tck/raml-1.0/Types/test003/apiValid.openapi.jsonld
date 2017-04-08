@@ -1,0 +1,53 @@
+{
+    "swagger": "2.0",
+    "definitions": {
+        "AnotherType": {
+            "x-merge": {
+                "source": {
+                    "type": "object",
+                    "properties": {
+                        "age": {
+                            "type": "number",
+                            "x-rdf-type": "xsd:integer"
+                        }
+                    },
+                    "required": ["age"],
+                    "title": "AnotherType",
+                    "additionalProperties": false
+                },
+                "with": {
+                    "$ref": "#/definitions/SomeType"
+                }
+            }
+        },
+        "ComplexType": {
+            "properties": {
+                "someProperty": {
+                    "$ref": "#/definitions/AnotherType"
+                }
+            },
+            "title": "ComplexType",
+            "required": [
+                "someProperty"
+            ],
+            "type": "object"
+        },
+        "SomeType": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "title": "SomeType",
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        }
+    },
+    "info": {
+        "title": "API",
+        "version": ""
+    },
+    "paths": {}
+}

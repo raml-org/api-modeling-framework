@@ -4,10 +4,7 @@ import {JsonLd} from "jsonld";
 import {stringify} from "querystring";
 import {UnitModel} from "./units_model";
 import {LexicalInfo} from "./model_utils";
-require("api_modelling_framework");
-
-const apiFramework = global["api_modelling_framework"].core;
-const apiFrameworDocumentModel = global["api_modelling_framework"].model.document;
+import * as apiFramework from "api-modelling-framework";
 
 export type ModelLevel = "document" | "domain";
 
@@ -170,8 +167,7 @@ export class ModelProxy {
     references(): string[] {
         const files: string[] = [];
         files.push(this.location());
-        const references = from_clj(apiFrameworDocumentModel.references(this.domainModel()));
-        references.forEach(ref => files.push(ref.location));
+        from_clj(apiFramework.references(this.raw).forEach(f => files.push(f)));
         return files;
     }
 

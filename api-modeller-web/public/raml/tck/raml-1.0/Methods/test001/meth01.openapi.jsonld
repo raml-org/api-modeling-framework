@@ -1,0 +1,33 @@
+{
+    "swagger": "2.0",
+    "definitions": {
+        "TestSchema": {
+            "type": "object",
+            "title": "TestSchema",
+            "properties": {
+                "type": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "info": {
+        "title": "test",
+        "version": ""
+    },
+    "paths": {
+        "/test": {
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/TestSchema"
+                        },
+                        "x-media-type": "application/json"
+                    }
+                }
+            }
+        }
+    }
+}

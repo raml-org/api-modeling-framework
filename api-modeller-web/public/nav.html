@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<div class="box imported is-paddingless">
+    <nav class="nav">
+        <div class="nav-left nav-menu">
+            <span class="nav-item">
+                <a class="button" data-bind="click: loadModal.show.bind(loadModal)">
+                    <span class="icon">
+                        <i class="fa fa-folder-open-o"></i>
+                    </span>
+                    <span>Load</span>
+                </a>
+            </span>
+        </div>
+        <div class="nav-right">
+            <!--<span class="nav-item">
+                <p class="control">
+                    <label class="label">Source</label>
+                    <span class="select">
+                        <select>
+                            <option>RAML</option>
+                            <option>OpenAPI</option>
+                        </select>
+                    </span>
+                </p>
+            </span>-->
+            <span class="nav-item">
+                <p class="control">
+                    <!-- <label class="label">Level</label> -->
+                    <span class="select">
+                        <select data-bind="options: nav.documentLevelOptions,
+                                           optionsText: 'name',
+                                           value: nav.selectedDocumentLevel">
+                        </select>
+                    </span>
+                </p>
+            </span>
+        </div>
+    </nav>
+</div>

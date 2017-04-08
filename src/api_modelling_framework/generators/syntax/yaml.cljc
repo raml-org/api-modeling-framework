@@ -1,13 +1,20 @@
 (ns api-modelling-framework.generators.syntax.yaml
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
 
-  #?(:cljs (:require [cljs.nodejs :as nodejs]
-                     [api-modelling-framework.utils :as utils]
+  #?(:cljs (:require [api-modelling-framework.utils :as utils]
                      [api-modelling-framework.platform :as platform]
                      [clojure.string :as string]
                      [api-modelling-framework.model.syntax :as syntax]
                      [clojure.walk :refer [keywordize-keys]]
-                     [cljs.core.async :refer [<! >! chan]]))
+                     [cljs.core.async :refer [<! >! chan]]
+
+                     ;; this will trigger adding the js-yaml-bundle in compilation
+                     ;; for the web version
+                     ;; it will be a noop for the node version
+
+                     ;; This will introduce JS_YAML from the index.js in node of from the loaded
+                     ;; code in the web version
+                     [api_modelling_framework.js-support]))
 
   #?(:clj (:require [api-modelling-framework.model.syntax :as syntax]
                     [api-modelling-framework.utils :as utils]
@@ -15,9 +22,6 @@
                     [clojure.core.async :refer [<! >! go]]
                     [clojure.walk :refer [keywordize-keys]]
                     [clojure.string :as string])))
-
-#?(:cljs (def __dirname (js* "__dirname")))
-#?(:cljs (def js-yaml (nodejs/require (str __dirname "/../../../../js/js-yaml/index"))))
 
 (def key-orders {"title" 0
                  "description" 1
@@ -30,15 +34,15 @@
           (let [yaml (org.yaml.snakeyaml.Yaml.)]
             (.dump yaml (utils/ramlify ast))))
    :cljs (defn generate-yaml-string [ast]
-           (.dump js-yaml (clj->js (utils/ramlify ast)) (clj->js {"sortKeys" (fn [ka kb]
-                                                                               (cond
-                                                                                 (and (string/starts-with? ka "/")
-                                                                                      (string/starts-with? kb "/"))  0
-                                                                                 (string/starts-with? ka "/")        1
-                                                                                 (string/starts-with? kb "/")        -1
-                                                                                 :else  (let [pos-a (get key-orders ka 100)
-                                                                                              pos-b (get key-orders kb 100)]
-                                                                                          (compare pos-a pos-b))))}))))
+           (JS_YAML/dump (clj->js (utils/ramlify ast)) (clj->js {"sortKeys" (fn [ka kb]
+                                                                            (cond
+                                                                              (and (string/starts-with? ka "/")
+                                                                                   (string/starts-with? kb "/"))  0
+                                                                              (string/starts-with? ka "/")        1
+                                                                              (string/starts-with? kb "/")        -1
+                                                                              :else  (let [pos-a (get key-orders ka 100)
+                                                                                           pos-b (get key-orders kb 100)]
+                                                                                       (compare pos-a pos-b))))}))))
 
 (defn include-fragment [fragment]
   (let [location (syntax/<-location fragment)]

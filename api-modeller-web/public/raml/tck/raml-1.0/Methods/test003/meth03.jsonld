@@ -1,0 +1,135 @@
+{
+    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml",
+    "@type": [
+        "http://raml.org/vocabularies/document#Document",
+        "http://raml.org/vocabularies/document#Fragment",
+        "http://raml.org/vocabularies/document#Module",
+        "http://raml.org/vocabularies/document#Unit"
+    ],
+    "http://raml.org/vocabularies/document#encodes": [
+        {
+            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation",
+            "@type": [
+                "http://raml.org/vocabularies/http#APIDocumentation",
+                "http://raml.org/vocabularies/document#DomainElement"
+            ],
+            "http://raml.org/vocabularies/http#endpoint": [
+                {
+                    "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0",
+                    "@type": [
+                        "http://raml.org/vocabularies/http#EndPoint",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                    ],
+                    "http://raml.org/vocabularies/http#path": [
+                        {
+                            "@value": "/methods"
+                        }
+                    ],
+                    "http://www.w3.org/ns/hydra/core#supportedOperation": [
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0/get",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "get"
+                                }
+                            ]
+                        },
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0/set",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "set"
+                                }
+                            ]
+                        },
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0/patch",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "patch"
+                                }
+                            ]
+                        },
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0/delete",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "delete"
+                                }
+                            ]
+                        },
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0/head",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "head"
+                                }
+                            ]
+                        },
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0/post",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "post"
+                                }
+                            ]
+                        },
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0/options",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "options"
+                                }
+                            ]
+                        },
+                        {
+                            "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Methods/test003/meth03.raml#/api-documentation/end-points/0/put",
+                            "@type": [
+                                "http://www.w3.org/ns/hydra/core#Operation",
+                                "http://raml.org/vocabularies/document#DomainElement"
+                            ],
+                            "http://www.w3.org/ns/hydra/core#method": [
+                                {
+                                    "@value": "put"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "http://schema.org/name": [
+                {
+                    "@value": "test"
+                }
+            ]
+        }
+    ]
+}

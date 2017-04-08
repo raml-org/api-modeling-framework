@@ -1,0 +1,204 @@
+{
+  "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml",
+  "@type": [
+    "http://raml.org/vocabularies/document#Document",
+    "http://raml.org/vocabularies/document#Fragment",
+    "http://raml.org/vocabularies/document#Module",
+    "http://raml.org/vocabularies/document#Unit"
+  ],
+  "http://raml.org/vocabularies/document#encodes": [
+    {
+      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation",
+      "@type": [
+        "http://raml.org/vocabularies/http#APIDocumentation",
+        "http://raml.org/vocabularies/document#DomainElement"
+      ],
+      "http://raml.org/vocabularies/http#endpoint": [
+        {
+          "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0",
+          "@type": [
+            "http://raml.org/vocabularies/http#EndPoint",
+            "http://raml.org/vocabularies/document#DomainElement"
+          ],
+          "http://raml.org/vocabularies/http#path": [
+            {
+              "@value": "/test"
+            }
+          ],
+          "http://www.w3.org/ns/hydra/core#supportedOperation": [
+            {
+              "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post",
+              "@type": [
+                "http://www.w3.org/ns/hydra/core#Operation",
+                "http://raml.org/vocabularies/document#DomainElement"
+              ],
+              "http://www.w3.org/ns/hydra/core#method": [
+                {
+                  "@value": "post"
+                }
+              ],
+              "http://www.w3.org/ns/hydra/core#returns": [
+                {
+                  "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200",
+                  "@type": [
+                    "http://raml.org/vocabularies/http#Response",
+                    "http://raml.org/vocabularies/document#DomainElement"
+                  ],
+                  "http://raml.org/vocabularies/http#payload": [
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Amime%2Ftype",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "mime/type"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Amultipart%2Fvoice-message",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "multipart/voice-message"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Aaudio%2FEVRCB",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "audio/EVRCB"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Aaudio%2Fvnd.dts",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "audio/vnd.dts"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Aapplication%2Fjson",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "application/json"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Atext%2Fturtle",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "text/turtle"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Amessage%2Fglobal",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "message/global"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Aapplication%2Fvnd.xara",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "application/vnd.xara"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Avideo%2FJPEG",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "video/JPEG"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Amodel%2Fvnd.moml%2Bxml",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "model/vnd.moml+xml"
+                        }
+                      ]
+                    },
+                    {
+                      "@id": "file:///Users/antoniogarrote/Development/raml-tck/tests/raml-1.0/Responses/test003/api.raml#/api-documentation/end-points/0/post/200/%3Aimage%2Ftiff",
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "image/tiff"
+                        }
+                      ]
+                    }
+                  ],
+                  "http://schema.org/name": [
+                    {
+                      "@value": "200"
+                    }
+                  ],
+                  "http://www.w3.org/ns/hydra/core#statusCode": [
+                    {
+                      "@value": "200"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "http://schema.org/name": [
+        {
+          "@value": "test"
+        }
+      ]
+    }
+  ]
+}

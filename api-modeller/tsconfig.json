@@ -9,10 +9,13 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "removeComments": false,
-        "strictNullChecks": true,
-        "jsx": "react",
         "lib": ["dom", "es6"]
     },
+    "files": [
+        "typings/index.d.ts",
+        "src/main.ts",
+        "src/view_model.ts"
+    ],
     "exclude": [
         "node_modules",
         "public/bower_components"

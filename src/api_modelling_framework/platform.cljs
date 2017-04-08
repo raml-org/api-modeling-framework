@@ -1,12 +1,13 @@
 (ns api-modelling-framework.platform
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.nodejs :as nodejs]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [cljs.core.async  :refer [<! >! chan]]
-            [clojure.walk :refer [keywordize-keys]]))
+            [clojure.walk :refer [keywordize-keys]]
+            ;; loading Node / web support
+            [api_modelling_framework.js-support]))
 
-(def fs (nodejs/require "fs"))
 (enable-console-print!)
+
 
 (defn error? [x]
   (or (instance? js/Error x)
@@ -22,21 +23,30 @@
         :else returned))))
 
 (defn read-location [location]
-  (let [location (if (string/starts-with? location "file://")
-                   (string/replace location "file://" "")
-                   location)
-        ch (chan)]
-    (go (.readFile fs (first (string/split location #"#"))
-                   (fn [e buffer]
-                     (go (if (some? e)
-                           (>! ch {:error e})
-                           (>! ch (.toString buffer)))))))
-    ch))
+  (if (or (string/starts-with? location "http://")
+          (string/starts-with? location "https://"))
+    (let [ch (chan)]
+      (go (-> (js/JS_REST location)
+              (.then
+               (fn [response] (go (>! ch (.-entity response)))))
+              (.catch
+               (fn [e] (go (>! ch {:error err} ))))))
+      ch)
+    (let [location (if (string/starts-with? location "file://")
+                     (string/replace location "file://" "")
+                     location)
+          ch (chan)]
+      (go (.readFile js/NODE_FS (first (string/split location #"#"))
+                     (fn [e buffer]
+                       (go (if (some? e)
+                             (>! ch {:error e})
+                             (>! ch (.toString buffer)))))))
+      ch)))
 
 
 (defn write-location [location data]
   (let [ch (chan)]
-    (go (.writeFile fs first (string/split location #"#")) data
+    (go (.writeFile js/NODE_FS first (string/split location #"#")) data
         (fn [e]
           (go (if (some? e))
               (>! ch {:error e})

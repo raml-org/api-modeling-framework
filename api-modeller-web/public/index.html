@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+
+    <!-- polyfills -->
+    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+
+    <script src="js/amf.js"></script>
+    <script src="js/api_modeller.js"></script>
+
+    <!-- Loading Monaco -->
+    <script src="bower_components/monaco-editor/release/min/vs/loader.js"></script>
+    <!-- Insert this line above script imports  -->
+    <!--<script type='text/javascript' src="bower_components/jquery/dist/jquery.min.js"></script>-->
+    <!--<script type='text/javascript' src="bower_components/lodash/lodash.min.js"></script>-->
+    <!--<script type='text/javascript' src="bower_components/backbone/backbone-min.js"></script>-->
+    <!--<script type='text/javascript' src="bower_components/graphlib/dist/graphlib.core.min.js"></script>-->
+    <!--<script type='text/javascript' src="bower_components/dagre/dist/dagre.core.js"></script>-->
+    <!--<script type='text/javascript' src="bower_components/jointjs/dist/joint.js"></script>-->
+
+    <link rel="stylesheet" href="bower_components/bulma/css/bulma.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="bower_components/balloon-css/balloon.css">
+    <link rel="stylesheet" href="bower_components/jointjs/dist/joint.css">
+    <meta charset="UTF-8">
+    <title>API Modeller</title>
+</head>
+<body>
+<!-- Load spec modal window -->
+<link rel="import" href="nav/load_modal.html">
+<!-- Query user inteface -->
+<link rel="import" href="query.html">
+<!-- Main container class -->
+<link rel="import" href="nav.html">
+<div class="section" style="padding-bottom: 0px">
+    <div id="the-app" class="container is-marginless is-fluid">
+        <div class="columns">
+            <div class="column">
+                <link rel="import" href="navigator.html">
+            </div>
+            <div class="column is-three-quarters">
+                <link rel="import" href="editor.html">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        window.global = window;
+        window.addEventListener('WebComponentsReady', function() {
+            document.getElementsByName("body");
+            // Imported content
+            window.reloadApp = function () {
+                var importedMap = {};
+                var pending = true;
+                while (pending === true) {
+                    pending = false;
+                    var links = document.querySelectorAll('link[rel="import"]');
+                    for (var i = 0; i < links.length; i++) {
+                        var link = links[i];
+                        if (link.import != null && importedMap[link.href] == null) {
+                            pending = true;
+                            importedMap[link.href] = true;
+                            var content = link.import;
+                            var el = content.querySelector('.imported');
+                            link.parentNode.insertBefore(el.cloneNode(true), link);
+                        }
+                    }
+                }
+
+                require.config({paths: {'vs': 'bower_components/monaco-editor/release/min/vs'}});
+                require(['vs/editor/editor.main'], function () {
+                    var resize = function () {
+                        console.log("** Resizing **");
+                        var height = document.documentElement.clientHeight;
+                        var containerDiv = document.getElementById("editor-container");
+                        var style = window.getComputedStyle(containerDiv);
+                        var hidden = style.display == "none";
+                        if (!hidden) {
+                            containerDiv.setAttribute("style", "height: " + (height - 200) + "px");
+                        }
+                    };
+
+                    window.onresize = resize;
+                    window.resizeFn = resize;
+                    resize();
+
+                    var editor = monaco.editor.create(document.getElementById("editor-container"), {
+                        automaticLayout: true,
+                        // theme: "vs-dark",
+                        fontSize: 16,
+                        fontWeight: "bold",
+                        scrollBeyondLastLine: false,
+                        eadOnly: true,
+                        value: [
+                            '# no data loaded'
+                        ].join('\n'),
+                        language: 'yaml'
+                    });
+
+                    window.appModel = new api_modeller.ViewModel(editor);
+                    window.appModel.apply(document.getElementById("the-app"));
+                });
+            };
+            reloadApp();
+        });
+    })();
+</script>
+</body>
+</html>

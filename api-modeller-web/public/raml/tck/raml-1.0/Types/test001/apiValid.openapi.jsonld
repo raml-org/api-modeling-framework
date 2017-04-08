@@ -1,0 +1,22 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "API",
+        "version": ""
+    },
+    "definitions": {
+        "SomeType": {
+            "title": "SomeType",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        }
+    },
+    "paths": {}
+}
