@@ -185,6 +185,16 @@
     (prn generated)
     (is (= input generated))))
 
+(deftest parser-raml-enum
+  (let [input {:enum [ ".json" ".xml" ]
+               :type "string"
+               :description "Use .json to specify application/json or .xml to specify text/xml"}
+        parsed(openapi-parser/parse-ast input {:parsed-location "/response"
+                                            :type-hint :type
+                                            :location "/response"})
+        generated (openapi-generator/to-openapi parsed {})]
+    (is (= input generated))))
+
 
 (deftest parser-ast-refs
   (let [fragments (atom {})

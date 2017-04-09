@@ -148,7 +148,7 @@
                                                                                                     :range (infer-annotation-schema model (assoc context :parsed-location schema-id))}))))))
         (domain/map->ParsedDomainProperty {:id schema-id
                                            :name annotation-name
-                                           :object (utils/annotation->jsonld schema-id model)})))))
+                                           :object (utils/annotation->jsonld model)})))))
 
 (defn annotation? [x] (string/starts-with? (utils/safe-str x) "x-"))
 

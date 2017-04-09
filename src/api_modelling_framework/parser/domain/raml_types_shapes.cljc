@@ -68,6 +68,7 @@
                   :uniqueItems #(assoc % (v/shapes-ns "uniqueItems") [{"@value" v}])
                   :multipleOf #(assoc % (v/shapes-ns "multipleOf") [{"@value" v}])
                   :minimum    #(assoc % (v/sh-ns "minExclusive") [{"@value" v}])
+                  :enum       #(assoc % (v/sh-ns "in") (->> v (map utils/annotation->jsonld)))
                   identity)))
          (reduce (fn [acc p] (p acc)) shape)
          (parse-generic-keywords node))

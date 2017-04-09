@@ -190,13 +190,13 @@
     (-> maybe-hash (string/split #"#") last)))
 
 
-(defn annotation->jsonld [base-uri data]
+(defn annotation->jsonld [data]
   (cond
     (map? data) (->> data
                      (map (fn [[k v]]
-                            [(v/anon-shapes-ns (safe-str k)) (annotation->jsonld base-uri v)]))
+                            [(v/anon-shapes-ns (safe-str k)) (annotation->jsonld v)]))
                      (into {}))
-    (coll? data) (mapv #(annotation->jsonld base-uri %) data)
+    (coll? data) (mapv #(annotation->jsonld %) data)
     :else        {"@value" data}))
 
 (defn jsonld->annotation [data]

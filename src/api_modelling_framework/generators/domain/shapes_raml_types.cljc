@@ -65,6 +65,7 @@
                 (v/sh-ns "pattern")         #(assoc % :pattern   (get (first v) "@value"))
                 (v/sh-ns "closed")          #(assoc % :additionalProperties (not (utils/->bool (get (first v) "@value"))))
                 (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems (get (first v) "@value"))
+                (v/sh-ns "in")              #(assoc % :enum (map utils/jsonld->annotation v))
                 identity)))
        (reduce (fn [acc p] (p acc)) raml-type)
        (parse-generic-keywords shape)

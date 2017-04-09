@@ -281,6 +281,16 @@
         generated (raml-genenerator/to-raml parsed {})]
     (is (= input generated))))
 
+(deftest parser-raml-enum
+  (let [input {:enum [ ".json" ".xml" ]
+               :type "string"
+               :description "Use .json to specify application/json or .xml to specify text/xml"}
+        parsed(raml-parser/parse-ast input {:parsed-location "/response"
+                                            :type-hint :type
+                                            :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= input generated))))
+
 (deftest parse-ast-includes
   (let [fragments (atom {})
         node {:displayName "Users"
