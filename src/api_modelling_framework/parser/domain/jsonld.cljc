@@ -38,6 +38,7 @@
   (debug "Parsing " v/http:APIDocumentation " " (get m "@id"))
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))
         parameters (->> (get m v/http:parameter []) (mapv #(from-jsonld %)))]
     (domain/map->ParsedAPIDocumentation {:id (get m "@id")
                                          :sources parsed-sources
@@ -54,6 +55,7 @@
                                          :parameters parameters
                                          :version (utils/find-value m v/sorg:version)
                                          :license (from-jsonld (-> m (get v/sorg:license) first))
+                                         :additional-properties additional-properties
                                          :endpoints (map from-jsonld (-> m (get v/http:endpoint [])))})))
 
 (defmethod from-jsonld v/http:EndPoint [m]
@@ -61,7 +63,8 @@
   (let [sources (get m v/document:source)
         parsed-sources (map from-jsonld sources)
         extend-rels (get m v/document:extends [])
-        extensions (map from-jsonld extend-rels)]
+        extensions (map from-jsonld extend-rels)
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))]
     (domain/map->ParsedEndPoint {:id (get m "@id")
                                  :sources parsed-sources
                                  :abstract (utils/find-value m v/document:abstract)
@@ -69,6 +72,7 @@
                                  :description (utils/find-value m v/sorg:description)
                                  :path (utils/find-value m v/http:path)
                                  :extends extensions
+                                 :additional-properties additional-properties
                                  :parameters (map from-jsonld (-> m (get v/http:parameter [])))
                                  :supported-operations (map from-jsonld (-> m (get v/hydra:supportedOperation [])))})))
 
@@ -111,7 +115,8 @@
         parsed-sources (map from-jsonld sources)
         extend-rels (get m v/document:extends [])
         extensions (map from-jsonld extend-rels)
-        request (first (map from-jsonld (-> m (get v/hydra:expects))))]
+        request (first (map from-jsonld (-> m (get v/hydra:expects))))
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))]
     (domain/map->ParsedOperation {:id (get m "@id")
                                   :sources parsed-sources
                                   :abstract (utils/find-value m v/document:abstract)
@@ -122,52 +127,61 @@
                                   :scheme (utils/find-values m v/http:scheme)
                                   :method (utils/find-value m v/hydra:method)
                                   :extends extensions
+                                  :additional-properties additional-properties
                                   :request request
                                   :responses (map from-jsonld (-> m (get v/hydra:returns [])))})))
 
 (defmethod from-jsonld v/http:Response [m]
   (debug "Parsing " v/http:Response " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+        parsed-sources (map from-jsonld sources)
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))]
     (domain/map->ParsedResponse {:id (get m "@id")
                                  :sources parsed-sources
                                  :abstract (utils/find-value m v/document:abstract)
                                  :name (utils/find-value m v/sorg:name)
                                  :description (utils/find-value m v/sorg:description)
+                                 :additional-properties additional-properties
                                  :payloads (mapv from-jsonld (-> m (get v/http:payload [])))
                                  :status-code (utils/find-value m v/hydra:statusCode)})))
 
 (defmethod from-jsonld v/http:Payload [m]
   (debug "Parsing " v/http:Payload " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+        parsed-sources (map from-jsonld sources)
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))]
     (domain/map->ParsedPayload {:id (get m "@id")
                                 :sources parsed-sources
                                 :abstract (utils/find-value m v/document:abstract)
                                 :name (utils/find-value m v/sorg:name)
                                 :description (utils/find-value m v/sorg:description)
                                 :media-type (utils/find-value m v/http:media-type)
+                                :additional-properties additional-properties
                                 :schema (from-jsonld (first (get m v/http:schema)))})))
 
 (defmethod from-jsonld v/sh:Shape [m]
   (debug "Parsing " v/sh:Shape " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+        parsed-sources (map from-jsonld sources)
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))]
     (domain/map->ParsedType {:id (str (get m "@id") "/wrapper")
                              :abstract (utils/find-value m v/document:abstract)
                              :name (utils/find-value m v/sorg:name)
+                             :additional-properties additional-properties
                              ;; shapes are expressed already in JSON-LD, they are passed as it
                              :shape m})))
 
 (defmethod from-jsonld v/http:Parameter [m]
   (debug "Parsing " v/http:Parameter " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+        parsed-sources (map from-jsonld sources)
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))]
     (domain/map->ParsedParameter {:id (get m "@id")
                                   :sources parsed-sources
                                   :abstract (utils/find-value m v/document:abstract)
                                   :name (utils/find-value m v/sorg:name)
                                   :description (utils/find-value m v/sorg:description)
+                                  :additional-properties additional-properties
                                   ;; shapes are expressed already in JSON-LD, they are passed as it
                                   :required (utils/find-value m v/hydra:required)
                                   :parameter-kind (utils/find-value m v/http:param-binding)
@@ -183,7 +197,8 @@
                      (map #(from-jsonld %)))
         not-headers (->> params
                          (filter #(not= "header" (utils/find-value % v/http:param-binding)))
-                         (map #(from-jsonld %)))]
+                         (map #(from-jsonld %)))
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))]
     (domain/map->ParsedRequest {:id (get m "@id")
                                 :sources parsed-sources
                                 :abstract (utils/find-value m v/document:abstract)
@@ -191,17 +206,20 @@
                                 :description (utils/find-value m v/sorg:description)
                                 :headers headers
                                 :parameters not-headers
+                                :additional-properties additional-properties
                                 :payloads (mapv from-jsonld (get m v/http:payload []))})))
 
 (defmethod from-jsonld v/document:ExtendRelationship [m]
   (debug "Parsing " v/document:ExtendRelationship " " (get m "@id"))
   (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+        parsed-sources (map from-jsonld sources)
+        additional-properties (->> (get m v/document:additional-properties []) (map from-jsonld))]
     (document/map->ParsedExtends {:id (get m "@id")
                                   :sources parsed-sources
                                   :target (utils/find-link m v/document:target)
                                   :label (utils/find-value m v/document:label)
                                   :name (utils/find-value m v/sorg:name)
+                                  :additional-properties additional-properties
                                   :arguments (utils/find-values m v/document:arguments)})))
 
 (defmethod from-jsonld v/document:IncludeRelationship [m]
@@ -223,7 +241,17 @@
                                              :description (utils/find-value m v/sorg:description)
                                              :sources sources
                                              :domain (utils/find-values m v/document:domain)
-                                             :range (utils/find-links v/document:range)})))
+                                             :range (from-jsonld (-> m (get v/document:range []) first))})))
+
+(defmethod from-jsonld v/document:DomainProperty [m]
+  (debug "Parsing " v/document:DomainProperty  " " (get m "@id"))
+  (let [sources (get m v/document:source)
+        parsed-sources (map from-jsonld sources)]
+    (domain/map->ParsedDomainProperty {:id (get m "@id")
+                                       :name (utils/find-value m v/sorg:name)
+                                       :description (utils/find-value m v/sorg:description)
+                                       :sources sources
+                                       :object (-> m (get v/document:object []) first)})))
 
 (defmethod from-jsonld nil [m]
   (debug "Parsing " nil)

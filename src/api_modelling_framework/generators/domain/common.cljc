@@ -29,11 +29,21 @@
 (defn trait-reference? [model]
   (satisfies? domain/Operation model))
 
+(defn annotation-reference? [model]
+  (or (some? (-> model (document/find-tag document/is-annotation-tag) first))
+      (satisfies? domain/DomainPropertySchema model)))
+
+(defn annotation-label [annotation]
+  (let [tag (-> annotation (document/find-tag document/is-annotation-tag) first)]
+    (if (some? tag)
+      (document/value tag)
+      (or (document/name annotation)
+          (utils/last-component (document/id annotation))))))
+
 (defn model->annotationTypes [declares context domain-generator]
   (->> declares
-       (filter (fn [declare] (some? (-> declare (document/find-tag document/is-annotation-tag) first))))
-       (mapv (fn [annotation]
-               [(-> annotation (document/find-tag document/is-annotation-tag) first document/value) (domain-generator annotation context)]))
+       (filter annotation-reference?)
+       (mapv (fn [annotation] [(annotation-label annotation) (domain-generator annotation context)]))
        (into {})))
 
 (defn model->traits [{:keys [references] :as ctx} domain-generator]

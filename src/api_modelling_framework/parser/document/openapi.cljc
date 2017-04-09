@@ -84,9 +84,9 @@
     (->> (:x-annotationTypes node {})
          (reduce (fn [acc [annotation-name annotation-node]]
                    (let [encoded-annotation-name (url/url-encode (utils/safe-str annotation-name))
-                         range (parse-ast annotation-node (-> nested-context
-                                                              (assoc :parsed-location (utils/path-join parsed-location (str encoded-annotation-name "/shape")))
-                                                              (assoc :type-hint :type)))
+                         range (domain-parser/parse-ast  annotation-node (-> nested-context
+                                                                             (assoc :parsed-location (utils/path-join parsed-location (str encoded-annotation-name "/shape")))
+                                                                             (assoc :type-hint :type)))
                          description (document/description range)
                          range (assoc range :description nil)
                          name (or (:displayName annotation-node) (utils/safe-str annotation-name))

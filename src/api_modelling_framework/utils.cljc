@@ -254,7 +254,8 @@
 
 (defn property-shape->scalar-shape [property]
   {"@type" [(v/shapes-ns "Scalar")]
-   (v/sh-ns "dataType") (get property (v/sh-ns "dataType"))})
+   (v/sh-ns "dataType") (get property (v/sh-ns "dataType"))
+   (v/sh-ns "in") (get property (v/sh-ns "in"))})
 
 (defn array-range? [property]
   (= {"@value" true} (-> property (get (v/shapes-ns "ordered") []) first)))
@@ -283,6 +284,7 @@
                 (-> items (get (v/sh-ns "or")) (get "@list"))
                 [items])]
     {"@type" [(v/shapes-ns "Array")]
+     (v/sh-ns "in") (get property (v/sh-ns "in"))
      (v/shapes-ns "item") items}))
 
 (defn property-shape->node-shape [property]

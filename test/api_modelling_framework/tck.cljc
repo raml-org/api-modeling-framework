@@ -96,6 +96,11 @@
                                        :test004 {:raml (str raml-10-tests "/Types/test004/apiValid.raml")
                                                  :openapi (str raml-10-tests "/Types/test004/apiValid.openapi")
                                                  :jsonld (str raml-10-tests "/Types/test004/apiValid.jsonld")}}
+
+                               :annotations {:test001 {:raml (str raml-10-tests "/Annotations/test001/apiValid.raml")
+                                                       :openapi (str raml-10-tests "/Annotations/test001/apiValid.openapi")
+                                                       :jsonld (str raml-10-tests "/Annotations/test001/apiValid.jsonld")}
+                                             }
                                }})
 
 

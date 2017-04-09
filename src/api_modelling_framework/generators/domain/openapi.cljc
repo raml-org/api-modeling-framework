@@ -162,6 +162,7 @@
          :x-traits traits
          :x-annotationTypes (:annotations ctx)
          :paths paths}
+        (->> (with-annotations model ctx))
         utils/clean-nils
         (utils/ensure :paths {}))))
 

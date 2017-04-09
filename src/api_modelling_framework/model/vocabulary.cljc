@@ -29,8 +29,8 @@
   ([s] (str (xsd-ns) s)))
 
 (defn anon-shapes-ns
-  ([] (shapes-ns "anon/"))
-  ([s] (str (sh-ns) s)))
+  ([] "http://raml.org/vocabularies/shapes/anon#")
+  ([s] (str (anon-shapes-ns) s)))
 
 (def document:Document (document-ns "Document"))
 (def document:Fragment (document-ns "Fragment"))

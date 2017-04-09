@@ -161,6 +161,7 @@
   (->> references
        (filter (fn [ref] (and (not (common/trait-reference? ref))
                              (not (common/type-reference? ref))
+                             (not (common/annotation-reference? ref))
                              (not (satisfies? domain/Type ref)))))
        (map (fn [ref] [(or (:name ref) (:id ref)) (to-raml! ref ctx)]))
        (into {})))
@@ -193,6 +194,7 @@
          ;; for method not to display the name
          :traits (common/model->traits (assoc ctx :is-trait true) to-raml!)}
         (merge-children-resources children-resources ctx)
+        (->> (with-annotations model ctx))
         utils/clean-nils)))
 
 (defmethod to-raml domain/EndPoint [model {:keys [all-resources] :as ctx}]

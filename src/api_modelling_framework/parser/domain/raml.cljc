@@ -132,10 +132,11 @@
         annotation (get annotations annotation-name)]
     (if (nil? annotation)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find annotation " p)))
-      (->> (domain/map->ParsedDomainProperty {:id (document/id annotation)
-                                              :name annotation-name
-                                              :object (utils/annotation->jsonld model)})
-           (common/with-location-meta-from model)))))
+      (do
+        (->> (domain/map->ParsedDomainProperty {:id (document/id annotation)
+                                                :name annotation-name
+                                                :object (utils/annotation->jsonld model)})
+               (common/with-location-meta-from model))))))
 
 (defn with-annotations [node ctx model]
   (if (map? node)

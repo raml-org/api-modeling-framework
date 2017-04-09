@@ -1,6 +1,7 @@
 (ns clj-yaml.core
   (:require [clojure.string :as string]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [api-modelling-framework.utils :as utils])
   (:import (org.yaml.snakeyaml Yaml DumperOptions DumperOptions$FlowStyle)
            (org.yaml.snakeyaml.reader StreamReader)
            [java.io File]))
@@ -68,7 +69,9 @@
     (with-meta parsed location)))
 
 (defmethod node->ast "scalar" [node _ _]
-  (.getValue node))
+  (if (= "tag:yaml.org,2002:bool" (.getValue (.getTag node)))
+    (utils/->bool (.getValue node))
+    (.getValue node)))
 
 
 (defmethod node->ast "sequence" [node file options]
