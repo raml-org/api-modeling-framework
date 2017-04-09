@@ -139,6 +139,7 @@
   (build-web)
 
   (let [api-modeller-web (str (pwd) "/api-modeller-web")]
+    (mkdir (str api-modeller-web "/public/js"))
     (cp "output/web/amf.js" (str api-modeller-web "/public/js/"))
     (npm-install api-modeller-web)
     (gulp-serve api-modeller-web)))

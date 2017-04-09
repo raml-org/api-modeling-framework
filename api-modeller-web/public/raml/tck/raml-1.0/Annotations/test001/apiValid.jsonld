@@ -1,0 +1,142 @@
+{
+  "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml",
+  "@type": [
+    "http://raml.org/vocabularies/document#Document",
+    "http://raml.org/vocabularies/document#Fragment",
+    "http://raml.org/vocabularies/document#Module",
+    "http://raml.org/vocabularies/document#Unit"
+  ],
+  "http://raml.org/vocabularies/document#declares": [
+    {
+      "@id": "http://raml.org/vocabularies/shapes/anon#test",
+      "@type": [
+        "http://raml.org/vocabularies/document#DomainPropertySchema"
+      ],
+      "http://schema.org/name": [
+        {
+          "@value": "test"
+        }
+      ],
+      "http://raml.org/vocabularies/document#range": [
+        {
+          "@type": [
+            "http://www.w3.org/ns/shacl#NodeShape",
+            "http://www.w3.org/ns/shacl#Shape"
+          ],
+          "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape",
+          "http://www.w3.org/ns/shacl#property": [
+            {
+              "http://www.w3.org/ns/shacl#maxCount": [
+                {
+                  "@value": 1
+                }
+              ],
+              "http://www.w3.org/ns/shacl#dataType": [
+                {
+                  "@id": "http://www.w3.org/2001/XMLSchema#boolean"
+                }
+              ],
+              "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape/property/q",
+              "@type": [
+                "http://www.w3.org/ns/shacl#PropertyShape",
+                "http://www.w3.org/ns/shacl#Shape"
+              ],
+              "http://www.w3.org/ns/shacl#path": [
+                {
+                  "@id": "http://www.w3.org/ns/shacl#q"
+                }
+              ],
+              "http://raml.org/vocabularies/shapes#propertyLabel": [
+                {
+                  "@value": "q"
+                }
+              ],
+              "http://www.w3.org/ns/shacl#minCount": [
+                {
+                  "@value": 1
+                }
+              ]
+            },
+            {
+              "http://www.w3.org/ns/shacl#maxCount": [
+                {
+                  "@value": 1
+                }
+              ],
+              "http://www.w3.org/ns/shacl#dataType": [
+                {
+                  "@id": "http://www.w3.org/2001/XMLSchema#string"
+                }
+              ],
+              "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape/property/items",
+              "@type": [
+                "http://www.w3.org/ns/shacl#PropertyShape",
+                "http://www.w3.org/ns/shacl#Shape"
+              ],
+              "http://www.w3.org/ns/shacl#path": [
+                {
+                  "@id": "http://www.w3.org/ns/shacl#items"
+                }
+              ],
+              "http://raml.org/vocabularies/shapes#propertyLabel": [
+                {
+                  "@value": "items"
+                }
+              ],
+              "http://www.w3.org/ns/shacl#minCount": [
+                {
+                  "@value": 1
+                }
+              ],
+              "http://www.w3.org/ns/shacl#in": [
+                {
+                  "@value": "W"
+                },
+                {
+                  "@value": "A"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "http://raml.org/vocabularies/document#encodes": [
+    {
+      "@type": [
+        "http://raml.org/vocabularies/http#APIDocumentation",
+        "http://raml.org/vocabularies/document#DomainElement"
+      ],
+      "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/api-documentation",
+      "http://schema.org/name": [
+        {
+          "@value": "H"
+        }
+      ],
+      "http://raml.org/vocabularies/document#additionalProperties": [
+        {
+          "@id": "http://raml.org/vocabularies/shapes/anon#test",
+          "@type": [
+            "http://raml.org/vocabularies/document#DomainProperty"
+          ],
+          "http://schema.org/name": [
+            {
+              "@value": "test"
+            }
+          ],
+          "http://raml.org/vocabularies/document#object": [
+            {
+              "http://raml.org/vocabularies/shapes/anon#q": {
+                "@value": true
+              },
+              "http://raml.org/vocabularies/shapes/anon#items": {
+                "@value": "W"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
