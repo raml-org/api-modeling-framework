@@ -205,7 +205,7 @@
   (-> {"@id" (document/id m)
        "@type" [v/document:DomainPropertySchema]}
       (with-node-properties m context)
-      (utils/assoc-values m v/document:domain domain/domain)
+      (utils/assoc-objects m v/document:domain domain/domain (fn [node-uri] {"@id" node-uri}))
       (utils/assoc-object m v/document:range domain/range #(to-jsonld % context))
       (utils/clean-nils)))
 

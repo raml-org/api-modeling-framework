@@ -112,7 +112,7 @@
 (defn parse-file [node context]
   (->> {"@type" [(v/shapes-ns "FileUpload")
                  (v/sh-ns "Shape")]
-        (v/shapes-ns "fileType") (utils/map-values node :x-fileTypes (v/shapes-ns "fileType"))}
+        (v/shapes-ns "fileType") (utils/map-values node :x-fileTypes)}
        utils/clean-nils
        (parse-type-constraints node)))
 
@@ -130,7 +130,8 @@
         label (label reference location)
         shape {"@id" parsed-location
                "@type" [(v/shapes-ns "NodeShape") (v/sh-ns "Shape")]
-               (v/shapes-ns "inherits") [{"@id" location}]}]
+               (v/shapes-ns "inherits") [{"@id" location}]
+               }]
     (if (and (some? reference) (some? label))
       (assoc shape v/sorg:name [{"@value" label}])
       shape)))

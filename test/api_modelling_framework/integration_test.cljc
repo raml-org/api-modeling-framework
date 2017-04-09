@@ -77,7 +77,10 @@
                (is (some? (-> output :traits :secured)))
                (is (= ["secured"] (-> output (get (keyword "/albums")) :is)))
                (is (= "Album" (-> output (get (keyword "/albums")) :get :responses :200 :body :items)))
-               (is (= {:behaviour {:properties {:name "string"}}, :test {:type "string"}}
+               (is (= {:behaviour {:displayName "behaviour"
+                                   :properties {:name "string"}},
+                       :test {:displayName "test"
+                              :type "string"}}
                       (:annotationTypes output)))
                (is (= "albumsTest" (-> output (get (keyword "/albums")) :post (get (keyword "(test)")))))
                (is (= "safe" (-> output (get (keyword "/albums")) :get :responses :200 (get (keyword "(behaviour)")) :name)))

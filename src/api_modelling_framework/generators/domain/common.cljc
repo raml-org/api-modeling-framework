@@ -26,12 +26,6 @@
                                (document/value trait-tag)
                                (-> (document/target trait) (string/split #"/") last)))))))))
 
-(defn annotation-reference? [model]
-  (-> model
-      (document/find-tag document/is-annotation-tag)
-      first
-      some?))
-
 (defn trait-reference? [model]
   (satisfies? domain/Operation model))
 
@@ -137,7 +131,7 @@
                     [alias lib])))))))
 
 (defn process-anonymous-libraries
-  "Some libraries will not have a source map, in this case we find them in the list of references and we generated an identifier"
+  "Some libraries will not have a source map (comming from OpenAPI), in this case we find them in the list of references and we generated an identifier"
   [uses model]
   (let [uses-map (->> uses (map (fn [[alias lib]] [(document/id lib) true])) (into {}))
         refs (document/references model)

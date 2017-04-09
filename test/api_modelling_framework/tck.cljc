@@ -250,7 +250,6 @@
                                                                   {:source-maps? false
                                                                    :full-graph? false}))))
             doc-generated (<! (to-data-structure generated-file-name  type raw-generated-data))]
-
         (is (same-structure? (ensure-not-nil (clean-ids (platform/decode-json generated-jsonld)))
                              (ensure-not-nil (clean-ids target))))
         (is (same-structure? (ensure-not-nil (clean-ids doc-generated))

@@ -297,3 +297,27 @@
     (is (= "file://path/to/get_method.raml") (-> parsed first domain/supported-operations first document/extends first document/target))
     (is (= 1 (-> parsed first domain/supported-operations count)))
     (is (some? (get @fragments "file://path/to/get_method.raml")))))
+
+
+(deftest parse-annotation-test
+  (let [node {:annotationTypes
+              {:testAnnotation {:properties {:q "boolean"}
+                                :allowedTargets ["API" "DocumentationItem"]}}}
+        result (raml-parser/process-annotations node {:base-uri "/test"
+                                                      :location "/test#"
+                                                      :parsed-location "/test#"
+                                                      })
+        test-annotation (get result "testAnnotation")]
+
+    (is (some? test-annotation))
+
+    (is (some? (-> test-annotation
+                   domain/range
+                   domain/shape)))
+
+    (is (= "testAnnotation" (-> test-annotation
+                                document/name)))
+
+    (is (= ["http://raml.org/vocabularies/http#APIDocumentation"
+            "http://raml.org/vocabularies/http#DocumentationItem"]
+           (domain/domain test-annotation)))))

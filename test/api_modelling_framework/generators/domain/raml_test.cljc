@@ -164,7 +164,8 @@
   (let [base-uri "file://path/to/resource.raml"
         location "file://path/to/resource.raml#"
         input {:annotationTypes {:testHarness {:type "string"
-                                               :displayName "test harness"}}
+                                               :displayName "test harness"
+                                               :allowedTargets ["API"]}}
                (keyword "/users") {:displayName "Users"
                                    "(testHarness)" "usersTest"
                                    :get {:displayName "get method"

@@ -26,3 +26,11 @@
     (do (prn (:error x))
         true)
     false))
+
+
+(deftest node->uri->node-test
+  (let [nodes ["API" "DocumentationItem" "Resource" "Method" "Response" "RequestBody" "ResponseBody" "TypeDeclaration"
+               "Example" "ResourceType" "Trait" "SecurityScheme"
+               "SecuritySchemeSettings" "AnnotationType" "Library" "Overlay" "Extension"]]
+    (doseq [node nodes]
+      (is (= node ((comp utils/domain-uri->node-name utils/node-name->domain-uri) node))))))

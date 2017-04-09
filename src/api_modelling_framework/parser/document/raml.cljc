@@ -4,7 +4,7 @@
             [api-modelling-framework.model.document :as document]
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.parser.domain.raml :as domain-parser]
-            [api-modelling-framework.generators.domain.common :as common]
+            [api-modelling-framework.parser.domain.common :as common]
             [api-modelling-framework.utils :as utils]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros) [debug]]))
@@ -26,13 +26,13 @@
 
 (defmulti parse-ast (fn [node context] (parse-ast-dispatch-function node context)))
 
-(defn process-library [node {:keys [location parsed-location] :as context}]
+(defn process-libraries [node {:keys [location parsed-location] :as context}]
   (let [uses (:uses (syntax/<-data node) {})
-        libraries (reduce (fn [acc [alias library]]
-                            (let [declares (parse-ast library context)]
-                              (assoc acc alias declares)))
-                          {}
-                          uses)
+        libraries (->> uses
+                       (reduce (fn [acc [alias library]]
+                                 (let [library (parse-ast library context)]
+                                   (assoc acc alias library)))
+                               {}))
         declares (reduce (fn [acc [alias library]]
                            (merge acc
                                   (->> (document/declares library)
@@ -71,13 +71,13 @@
         context (assoc context :base-uri location)
         _ (debug "Parsing RAML Document at " location)
         fragments (or (:fragments context) (atom {}))
-        fragments (or (:fragments context) (atom {}))
         ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored
         ;; in the model, we will just keep a reference to the library through the uses tags
-        {:keys [libraries library-declarations]} (process-library node {:location (str location "#")
-                                                                        :fragments fragments
-                                                                        :document-parser parse-ast
-                                                                        :parsed-location (str location "#/libraries")})
+        {:keys [libraries library-declarations]} (process-libraries node {:location (str location "#")
+                                                                          :fragments fragments
+                                                                          :document-parser parse-ast
+                                                                          :parsed-location (str location "#/libraries")})
+        ;; just tags here, the libraries have been processed just above
         uses-tags (process-uses-tags node context)
         libraries-annotation (->> library-declarations
                                   (filter (fn [declaration]
@@ -87,7 +87,7 @@
                                   (into {}))
         doc-annotations (domain-parser/process-annotations (syntax/<-data node) {:base-uri location
                                                                                  :location (str location "#")
-                                                                                 :parsed-location (str location "#/annotations")})
+                                                                                 :parsed-location (str location "#")})
         annotations (merge library-declarations doc-annotations)
         ;; we parse traits and types and add the information into the context
         traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
@@ -126,7 +126,7 @@
         context (assoc context :base-uri location)
         _ (debug "Parsing RAML Library at " location)
         fragments (or (:fragments context) (atom {}))
-        {:keys [libraries library-declarations]} (process-library node (dissoc context :alias-chain))
+        {:keys [libraries library-declarations]} (process-libraries node (dissoc context :alias-chain))
         uses-tags (process-uses-tags node context)
         libraries-annotation (->> library-declarations
                                   (filter (fn [declaration]
@@ -176,10 +176,17 @@
          fragments (or (:fragments context) (atom {}))
          ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored
          ;; in the model, we will just keep a reference to the library through the uses tags
-         {:keys [libraries library-declarations]} (process-library node {:location (str location "#")
-                                                                         :fragments fragments
-                                                                         :document-parser parse-ast
-                                                                         :parsed-location (str location "#/libraries")})
+         {:keys [libraries library-declarations]} (process-libraries node {:location (str location "#")
+                                                                           :fragments fragments
+                                                                           :document-parser parse-ast
+                                                                           :parsed-location (str location "#/libraries")})
+         libraries-annotation (->> library-declarations
+                                   (filter (fn [declaration]
+                                             (common/annotation-reference? declaration)))
+                                   (mapv (fn [annotation]
+                                           [(document/name annotation) annotation]))
+                                   (into {}))
+
          uses-tags (process-uses-tags node context)
          document-tags (document/generate-document-sources location fragment-type)
 
@@ -193,6 +200,7 @@
                                                          {:location (str location "#")
                                                           :fragments fragments
                                                           :references (merge references library-declarations)
+                                                          :annotations libraries-annotation
                                                           :parsed-location (str location "#")
                                                           :type-hint (condp = fragment-type
                                                                        "#%RAML 1.0 Trait" :method

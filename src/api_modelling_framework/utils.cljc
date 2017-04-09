@@ -194,9 +194,9 @@
   (cond
     (map? data) (->> data
                      (map (fn [[k v]]
-                            [(path-join base-uri k) (annotation->jsonld base-uri v)]))
+                            [(v/anon-shapes-ns (safe-str k)) (annotation->jsonld base-uri v)]))
                      (into {}))
-    (coll? data) (mapv #(annotation->jsonld %) data)
+    (coll? data) (mapv #(annotation->jsonld base-uri %) data)
     :else        {"@value" data}))
 
 (defn jsonld->annotation [data]
@@ -311,3 +311,64 @@
         (dissoc :type)
         (dissoc :schema)
         (assoc :type type))))
+
+
+(defn node-name->domain-uri [node-name]
+  (condp = node-name
+    ;; Open API
+    "Swagger" v/http:APIDocumentation
+    "Info" v/http:APIDocumentation
+    "Paths" v/http:APIDocumentation
+    "PathItem" v/http:EndPoint
+    "Schema" (v/sh-ns "Shape")
+    "Operation" v/hydra:Operation
+    ;; RAML
+    "API" v/http:APIDocumentation
+    "DocumentationItem" (v/http-ns "DocumentationItem")
+    "Resource" v/http:EndPoint
+    "Method" v/hydra:Operation
+    "Response" v/http:Response
+    "RequestBody" v/http:Request
+    "ResponseBody" v/http:Payload
+    "TypeDeclaration" (v/sh-ns "Shape")
+    "Example" (v/http-ns "Example")
+    "ResourceType" (v/http-ns "AbstractEndPoint")
+    "Trait" (v/http-ns "AbstractResponse")
+    "SecurityScheme" (v/http-ns "SecurityScheme")
+    "SecuritySchemeSettings" (v/http-ns "SecuritySettings")
+    "AnnotationType" v/document:DomainPropertySchema
+    "Library" v/document:Module
+    "Overlay" (v/http-ns "AbstractAPIDocumentation")
+    "Extension" (v/http-ns "PartialAPIDocumentation")
+    nil))
+
+(defn domain-uri->node-name [node-name]
+  (condp = node-name
+    v/http:APIDocumentation "API"
+    (v/http-ns "DocumentationItem") "DocumentationItem"
+    v/http:EndPoint "Resource"
+    v/hydra:Operation "Method"
+    v/http:Response "Response"
+    v/http:Request "RequestBody"
+    v/http:Payload "ResponseBody"
+    (v/sh-ns "Shape") "TypeDeclaration"
+    (v/http-ns "Example") "Example"
+    (v/http-ns "AbstractEndPoint") "ResourceType"
+    (v/http-ns "AbstractResponse") "Trait"
+    (v/http-ns "SecurityScheme") "SecurityScheme"
+    (v/http-ns "SecuritySettings") "SecuritySchemeSettings"
+    v/document:DomainPropertySchema "AnnotationType"
+    v/document:Module "Library"
+    (v/http-ns "AbstractAPIDocumentation") "Overlay"
+    (v/http-ns "PartialAPIDocumentation") "Extension"
+    nil))
+
+(defn domain-uri->openapi-node-name [node-name]
+  (condp = node-name
+    v/http:APIDocumentation "Swagger"
+    v/http:EndPoint "PathItem"
+    v/hydra:Operation "Operation"
+    v/http:Response "Response"
+    (v/sh-ns "Shape") "Schema"
+    ;; If there's no OpenAPI node name, let's use raml
+    (domain-uri->node-name node-name)))

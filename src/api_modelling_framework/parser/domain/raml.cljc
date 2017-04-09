@@ -72,10 +72,6 @@
    })
 
 
-(defn with-location-meta-from [n m]
-  (if (meta n)
-    (assoc m :lexical (meta n))
-    m))
 
 (defn  extract-scalar
   "Function used to unwrap an scalar value if it defined using the value syntax"
@@ -139,7 +135,7 @@
       (->> (domain/map->ParsedDomainProperty {:id (document/id annotation)
                                               :name annotation-name
                                               :object (utils/annotation->jsonld (document/id annotation) model)})
-           (with-location-meta-from model)))))
+           (common/with-location-meta-from model)))))
 
 (defn with-annotations [node ctx model]
   (if (map? node)
@@ -186,7 +182,7 @@
                                      :shape property-shape}]
                      (with-annotations property-value context
                        (->> (domain/map->ParsedParameter properties)
-                            (with-location-meta-from property-value)))))))))
+                            (common/with-location-meta-from property-value)))))))))
 
 (defn base-uri->host [base-uri]
   (when (some? base-uri)
@@ -277,35 +273,34 @@
     [(document/->DocumentSourceMap (utils/path-join parsed-location "/source-map") location [is-trait-tag] [])]))
 
 
-(defn generate-is-annotation-sources [annotation-name location parsed-location]
-  (let [source-map-id (utils/path-join parsed-location "/source-map/is-annotation")
-        is-trait-tag (document/->IsAnnotationTag source-map-id annotation-name)]
-    [(document/->DocumentSourceMap (utils/path-join parsed-location "/source-map") location [is-trait-tag] [])]))
 
 (defn process-annotations [node {:keys [base-uri location parsed-location] :as context}]
   (debug "Processing " (count (:annotationTypes node {})) " annotations")
-  (let [location (utils/path-join location "annotationTypes")
+  (let [location (utils/path-join location "/x-annotationTypes")
         nested-context (-> context (assoc :location location) (assoc :parsed-location (str base-uri "#")))]
     (->> (:annotationTypes node {})
          (reduce (fn [acc [annotation-name annotation-node]]
                    (let [encoded-annotation-name (url/url-encode (utils/safe-str annotation-name))
                          range (parse-ast annotation-node (-> nested-context
-                                                              (assoc :parsed-location (utils/path-join parsed-location (str encoded-annotation-name "/range")))
+                                                              (assoc :parsed-location (utils/path-join parsed-location (str encoded-annotation-name "/shape")))
                                                               (assoc :type-hint :type)))
                          description (document/description range)
                          range (assoc range :description nil)
-                         name (:displayName annotation-node)
+                         name (or (:displayName annotation-node) (utils/safe-str annotation-name))
                          range (assoc range :name nil)
-                         allowed-targets (:allowedTargets node [])
-                         id (utils/path-join (str base-uri "#") encoded-annotation-name)]
+                         allowed-targets (->> [(:allowedTargets annotation-node [])]
+                                              flatten
+                                              (map utils/node-name->domain-uri)
+                                              (filter some?))
+                         id (v/anon-shapes-ns encoded-annotation-name)]
                      (assoc acc
                             (utils/safe-str annotation-name) (->> (domain/map->ParsedDomainPropertySchema {:id id
                                                                                                            :name name
                                                                                                            :description description
-                                                                                                           :sources (generate-is-annotation-sources annotation-name id parsed-location)
+                                                                                                           :sources (common/generate-is-annotation-sources annotation-name id parsed-location)
                                                                                                            :domain allowed-targets
                                                                                                            :range range})
-                                                                  (with-location-meta-from node)))))
+                                                                  (common/with-location-meta-from node)))))
                  {}))))
 
 (defn process-traits [node {:keys [location parsed-location] :as context}]
@@ -424,7 +419,7 @@
                     :endpoints nested-resources}]
     (->> (domain/map->ParsedAPIDocumentation properties)
          (with-annotations node context)
-         (with-location-meta-from node))))
+         (common/with-location-meta-from node))))
 
 (defn generate-extends-trait-sources [trait-name location parsed-location]
   (let [source-map-id (utils/path-join parsed-location "/source-map/extend-trait")
@@ -452,7 +447,7 @@
                                                      :label "trait"
                                                      :arguments []})
                        (with-annotations trait context)
-                       (with-location-meta-from trait)))
+                       (common/with-location-meta-from trait)))
                    (throw (new #?(:clj Exception :cljs js/Error)
                                (str "Cannot find trait '" trait-name "' to extend in node '" resource-id "'")))))
                (range 0 (count traits))))))
@@ -499,7 +494,7 @@
     (concat [(->>
               (domain/map->ParsedEndPoint properties)
               (with-annotations node context)
-              (with-location-meta-from node))]
+              (common/with-location-meta-from node))]
             (or nested-resources []))))
 
 (defn extract-bodies [node {:keys [location parsed-location] :as context}]
@@ -536,7 +531,7 @@
                                                                   :schema schema
                                                                   :sources node-parsed-source-map}))
                      (with-annotations node context)
-                     (with-location-meta-from node))))))))
+                     (common/with-location-meta-from node))))))))
 
 (defn parse-request [node {:keys [location parsed-location] :as context}]
   (let [request-id (str parsed-location "/request")
@@ -558,7 +553,7 @@
                                    :headers headers
                                    :payloads payloads})
        (with-annotations node context)
-       (with-location-meta-from node)))))
+       (common/with-location-meta-from node)))))
 
 (defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method references] :as context}]
   (debug "Parsing method " method)
@@ -585,7 +580,7 @@
     (->>
      (domain/map->ParsedOperation properties)
      (with-annotations node context)
-     (with-location-meta-from node))))
+     (common/with-location-meta-from node))))
 
 (defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing responses")
@@ -616,7 +611,7 @@
     (->>
      (domain/map->ParsedResponse properties)
      (with-annotations node context)
-     (with-location-meta-from node))))
+     (common/with-location-meta-from node))))
 
 (defmethod parse-ast :body-media-type [node {:keys [location parsed-location is-fragment] :as context}]
   (debug "Parsing body media-type")
@@ -667,7 +662,7 @@
     ;; They should not generate stand-alone nodes in the JSON-LD domain model, the node IS the shape
     (->> (domain/map->ParsedType {:id type-id
                                   :shape shape})
-         (with-location-meta-from node))))
+         (common/with-location-meta-from node))))
 
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                       :or {fragments (atom {})}
@@ -712,6 +707,6 @@
           (->>
            (document/map->ParsedIncludes properties)
            (with-annotations node context)
-           (with-location-meta-from node)))))))
+           (common/with-location-meta-from node)))))))
 
 (defmethod parse-ast :undefined [_ _] nil)

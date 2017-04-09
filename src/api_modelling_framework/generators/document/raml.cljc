@@ -131,18 +131,29 @@
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))
                                {}))
-        annotations (common/model->annotationTypes declares ctx domain-generator/to-raml!)
+        uses (->> (common/model->uses model)
+                  (mapv (fn [[alias location]]
+                          [alias (get fragments location)]))
+                  (into {}))
+        uses (common/process-anonymous-libraries uses model)
+        library-declares (->> uses
+                              (mapv (fn [[alias fragment]]
+                                      (mapv #(common/update-alias % alias) (document/declares fragment))))
+                              flatten
+                              (mapv (fn [declaration] (assoc declaration :from-library true))))
+        uses (->> uses
+                  (mapv (fn [[alias fragment]]
+                          [(keyword alias) (to-raml fragment ctx)]))
+                  (into {}))
+        uses (if (> (count uses) 0) uses nil)
         context (-> ctx
-                    (assoc :references declares)
+                    (assoc :references (merge declares library-declares))
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
                     (assoc :document-generator to-raml))
         types (common/model->types (assoc context :resolve-types true) domain-generator/to-raml!)
         traits (common/model->traits context domain-generator/to-raml!)
-        uses (->> (common/model->uses model)
-                  (mapv (fn [[alias location]]
-                          [alias (get fragments location)]))
-                  (into {}))]
+        annotations (common/model->annotationTypes declares ctx domain-generator/to-raml!)]
     {(keyword "@location") (document/location model)
      (keyword "@data") (-> {:usage (document/description model)
                             :uses uses

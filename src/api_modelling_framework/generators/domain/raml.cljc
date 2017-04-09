@@ -352,7 +352,7 @@
   (let [range (to-raml! (domain/range model) ctx)
         range (if (string? range) {:type range} range)
         name  (document/name model)
-        domain (domain/domain model)
+        domain (->> model domain/domain (map utils/domain-uri->node-name))
         description (document/description model)]
     (utils/clean-nils (merge range
                              {:displayName name

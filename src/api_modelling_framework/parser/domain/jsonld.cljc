@@ -223,7 +223,7 @@
                                              :description (utils/find-value m v/sorg:description)
                                              :sources sources
                                              :domain (utils/find-values m v/document:domain)
-                                             :range (get m v/document:range)})))
+                                             :range (utils/find-links v/document:range)})))
 
 (defmethod from-jsonld nil [m]
   (debug "Parsing " nil)

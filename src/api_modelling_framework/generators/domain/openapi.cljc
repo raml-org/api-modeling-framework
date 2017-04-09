@@ -72,8 +72,17 @@
   (if (map? generated)
     (let [annotations (document/additional-properties model)
           annotations-map (->> annotations
+                               (filter (fn [annotation]
+                                         (let [annotation-name (document/name annotation)]
+                                           (and (not= annotation-name "traits")
+                                                (not= annotation-name "is")
+                                                (not= annotation-name "media-type")
+                                                (not= annotation-name "requests")
+                                                (not= annotation-name "abstract-node")
+                                                (not= annotation-name "responses")))))
                                (map (fn [annotation]
-                                      [(str "x-" (document/name annotation)) (->  annotation domain/object utils/jsonld->annotation)]))
+                                      [(keyword (str "x-" (document/name annotation)))
+                                       (->  annotation domain/object utils/jsonld->annotation)]))
                                (into {}))]
       (merge generated
              annotations-map))
@@ -85,7 +94,6 @@
           included-tag (first (document/find-tag (first extended) document/extend-include-fragment-parsed-tag))]
       (some? included-tag))
     false))
-
 
 ;; Safe version of to-openapi that checks for includes
 (defn to-openapi! [base-element {:keys [fragments expanded-fragments document-generator] :as ctx}]
@@ -170,11 +178,13 @@
         parameters (unparse-params model ctx)
         end-point (->> operations
                        (map (fn [op] [(method-name (domain/method op)) (to-openapi! op ctx)]))
-                       (into {}))]
-    (-> end-point
-        (assoc :x-is (common/find-traits model ctx :openapi))
-        (assoc :parameters parameters)
-        (utils/clean-nils))))
+                       (into {}))
+        traits (common/find-traits model ctx :openapi)
+        end-point (-> end-point
+                      (assoc :x-is traits)
+                      (assoc :parameters parameters)
+                      (utils/clean-nils))]
+    end-point))
 
 (defn unparse-bodies
   "Payloads == Bodies of the Request"
@@ -324,7 +334,7 @@
   (debug "Generating DomainPropertySchema")
   (let [range (to-openapi! (domain/range model) ctx)
         name  (document/name model)
-        domain (domain/domain model)
+        domain (->> model domain/domain (map utils/domain-uri->openapi-node-name))
         description (document/description model)]
     (utils/clean-nils (merge range
                              {:displayName name

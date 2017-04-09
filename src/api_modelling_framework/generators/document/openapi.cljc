@@ -26,11 +26,18 @@
 
 (defmulti to-openapi (fn [model ctx] (to-openapi-dispatch-fn model ctx)))
 
+(defn model->annotationType-ref [declares]
+  (->> declares
+       (filter (fn [declare] (some? (-> declare (document/find-tag document/is-annotation-tag) first))))
+       (mapv (fn [annotation]
+               [(-> annotation (document/find-tag document/is-annotation-tag) first document/value)
+                (document/id annotation)]))
+       (into {})))
+
 
 (defmethod to-openapi :document [model ctx]
   (debug "Generating Document at " (document/location model))
-  (let [declares (document/declares model)
-        fragments (->> (document/references model)
+  (let [fragments (->> (document/references model)
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))
                                {}))
@@ -38,20 +45,23 @@
                   (mapv (fn [[alias location]]
                           (get fragments location))))
         uses (common/process-anonymous-libraries-list uses model)
+        declares (document/declares model)
         library-declares (->> uses
                               (mapv (fn [fragment]
                                       (mapv (fn [fragment] (assoc fragment :from-library true))
                                             (document/declares fragment))))
                               (apply concat))
-        annotations (common/model->annotationTypes declares ctx domain-generator/to-openapi!)
+        ;; transforming uses OpenAPI
         uses (mapv (fn [library] (to-openapi library ctx)) uses)
+        annotations (common/model->annotationTypes declares ctx domain-generator/to-openapi!)
+        library-annotations (model->annotationType-ref library-declares)
         context (-> ctx
                     (assoc :document-location (document/location model))
                     (assoc :references (concat declares library-declares))
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
                     (assoc :document-generator to-openapi)
-                    (assoc :annotations annotations))
+                    (assoc :annotations (merge annotations library-annotations)))
         encoded (domain-generator/to-openapi (document/encodes model) context)
         encoded (if (> (count uses) 0) (assoc encoded :x-uses uses) encoded)]
     {syntax/at-location (document/location model)
@@ -75,7 +85,9 @@
                                       (mapv (fn [fragment] (assoc fragment :from-library true))
                                             (document/declares fragment))))
                               (apply concat))
+        ;; transforming uses OpenAPI
         uses (mapv (fn [library] (to-openapi library ctx)) uses)
+        library-annotations (model->annotationType-ref library-declares)
 
         context (-> ctx
                     (assoc :fragments fragments)
@@ -83,7 +95,8 @@
                     (assoc :document-location (document/location model))
                     (assoc :expanded-fragments (or (:expanded-fragments ctx)
                                                    (atom {})))
-                    (assoc :document-generator to-openapi))
+                    (assoc :document-generator to-openapi)
+                    (assoc :annotations library-annotations))
         fragment (domain-generator/to-openapi (document/encodes model) context)
         fragment (if (> (count uses) 0) (assoc fragment :x-uses uses) fragment)
         fragment (domain-generator/check-abstract fragment (document/encodes model))]
@@ -102,9 +115,18 @@
                                  (assoc acc (document/location fragment) fragment))
                                {}))
         annotations (common/model->annotationTypes declares ctx domain-generator/to-openapi!)
+        uses (->> (common/model->uses model)
+                  (mapv (fn [[alias location]]
+                          (get fragments location))))
+        library-declares (->> uses
+                              (mapv (fn [fragment]
+                                      (mapv (fn [fragment] (assoc fragment :from-library true))
+                                            (document/declares fragment))))
+                              (apply concat))
+        library-annotations (model->annotationType-ref library-declares)
         context (-> ctx
                     (assoc :document-location (document/location model))
-                    (assoc :references declares)
+                    (assoc :references (concat declares library-declares))
                     (assoc :fragments fragments)
                     (assoc :expanded-fragments (atom {}))
                     (assoc :document-generator to-openapi))
@@ -113,6 +135,12 @@
         uses (->> (common/model->uses model)
                   (mapv (fn [[alias location]]
                           (get fragments location))))
+        uses (common/process-anonymous-libraries-list uses model)
+        library-declares (->> uses
+                              (mapv (fn [fragment]
+                                      (mapv (fn [fragment] (assoc fragment :from-library true))
+                                            (document/declares fragment))))
+                              (apply concat))
         uses (mapv (fn [library] (to-openapi library ctx)) uses)]
     {syntax/at-location (document/location model)
      syntax/at-data (-> {:swagger "Swagger Library"
