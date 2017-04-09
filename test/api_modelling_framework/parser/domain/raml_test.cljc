@@ -256,8 +256,8 @@
 (deftest parser-raml-nil-value
   (let [input "nil"
         parsed (raml-parser/parse-ast input {:parsed-location "/response"
-                                                     :type-hint :type
-                                                     :location "/response"})
+                                             :type-hint :type
+                                             :location "/response"})
         generated (raml-genenerator/to-raml parsed {})]
     (is (= input generated)))
   (let [input {:properties {:nilValue "nil"}}

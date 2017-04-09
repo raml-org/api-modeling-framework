@@ -274,7 +274,7 @@
     ;; file type
     (= type-ref "file") (parse-type-constraints node (parse-file-type node parse-file-type))
     ;; nil type
-    (= type-ref "nil") (parse-type-constraints node (utils/parse-nil-value parsed-location))
+    (= type-ref "nil") (parse-type-constraints node (utils/parse-nil-value context))
     ;; object
     (= type-ref "object")  (parse-shape node context)
     ;; array
