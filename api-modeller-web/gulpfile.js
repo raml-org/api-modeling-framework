@@ -67,11 +67,3 @@ gulp.task('serve', ["bower"], function () {
         startPath: "/index.html"
     });
 });
-
-gulp.task('force', function() {
-    bundle();
-    browserSync.init({
-        server: "public",
-        startPath: "/index.html"
-    });
-});
