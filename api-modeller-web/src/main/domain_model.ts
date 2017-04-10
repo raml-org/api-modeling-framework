@@ -30,6 +30,7 @@ export const RESPONSE: string = HTTP_NS + "Response";
 export const REQUEST: string = HTTP_NS + "Request";
 export const PAYLOAD: string = HTTP_NS + "Payload";
 export const SCHEMA: string = HTTP_NS + "Schema";
+export const SHAPE: string = SHACL_NS + "Shape"
 export const INCLUDE_RELATIONSHIP: string = DOCUMENT_NS + "IncludeRelationship";
 
 // RDF Properties
@@ -69,7 +70,7 @@ function has_type(node, type) {
 }
 
 // Model Classes
-export type DomainElementKind = "APIDocumentation" | "EndPoint" | "Operation" | "Response" | "Request" | "Payload" | "DomainElement" | "Schema" | "Include" | "Extends";
+export type DomainElementKind = "APIDocumentation" | "EndPoint" | "Operation" | "Response" | "Request" | "Payload" | "DomainElement" | "Shape" | "Include" | "Extends";
 
 export interface DomainModelElement {
     id: string;
@@ -116,13 +117,13 @@ export class Response extends DomainElement {
 export class Payload extends DomainElement {
     kind: DomainElementKind = "Payload";
 
-    constructor(public raw: any, public id: string, public label: string, public mediaType: string, public schema: Schema | IncludeRelationship | undefined) { super(raw, id, label) }
+    constructor(public raw: any, public id: string, public label: string, public mediaType: string, public schema: Shape | IncludeRelationship | undefined) { super(raw, id, label) }
 }
 
-export class Schema extends DomainElement {
-    kind: DomainElementKind = "Schema";
+export class Shape extends DomainElement {
+    kind: DomainElementKind = "Shape";
 
-    constructor(public raw: any, public id: string, public label: string, public shape: any) { super(raw, id, label); }
+    constructor(public raw: any, public id: string, public label: string) { super(raw, id, label); }
 }
 
 export class IncludeRelationship extends DomainElement {
@@ -162,9 +163,9 @@ export class DomainModel {
         } else if(has_type(encoded, PAYLOAD)) {
             console.log("* Processing Payload");
             return this.buildPayload(encoded);
-        } else if(has_type(encoded, SCHEMA)) {
-            console.log("* Processing Schema");
-            return this.buildSchema(encoded);
+        } else if(has_type(encoded, SHAPE)) {
+            console.log("* Processing Shape");
+            return this.buildShape(encoded);
         } else if(has_type(encoded, INCLUDE_RELATIONSHIP)) {
             console.log("* Processing Include");
             return this.buildInclude(encoded);
@@ -262,22 +263,21 @@ export class DomainModel {
         }
         console.log("* Building Payload " + encoded["@id"]);
         const mediaType = extract_value(encoded, MEDIA_TYPE);
-        const schema = this.buildSchema(extract_link(encoded, PAYLOAD_SCHEMA)) as Schema | IncludeRelationship;
+        const shape = this.buildShape(extract_link(encoded, PAYLOAD_SCHEMA)) as Shape | IncludeRelationship;
         const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
-        const element = new Payload(encoded, encoded["@id"], label, mediaType, schema);
+        const element = new Payload(encoded, encoded["@id"], label, mediaType, shape);
         this.elements[element.id] = element;
         return element;
     }
 
-    private buildSchema(encoded: any): DomainElement {
+    private buildShape(encoded: any): DomainElement {
         if (encoded == null || encoded["@id"] == null) { return undefined }
         if (has_type(encoded, INCLUDE_RELATIONSHIP)) {
             return this.buildInclude(encoded);
         }
-        const shape = extract_link(encoded, SCHEMA_SHAPE);
-        const label = extract_value(shape, NAME) || extract_value(encoded, LABEL);
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
 
-        const element = new Schema(encoded, encoded["@id"], label, shape);
+        const element = new Shape(encoded, encoded["@id"], label);
         this.elements[element.id] = element;
         return element;
     }

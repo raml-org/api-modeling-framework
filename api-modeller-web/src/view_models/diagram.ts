@@ -303,16 +303,16 @@ export class Diagram {
                     this.processDomainElement(element.id, (element as Payload).schema);
                     break;
                 }
-                case "Schema": {
+                case "Shape": {
                     //console.log("Processing Schema in graph " + element.id);
                     this.makeNode(element, "domain", element);
-                    this.makeLink(parentId, element.id, "schema");
+                    this.makeLink(parentId, element.id, "shape");
                     break;
                 }
                 case "Include": {
                     //console.log("Processing Schema in graph " + parentId + " <-> " + element.id + " <-> " + (element as IncludeRelationship).target);
                     this.makeNode(element, "relationship", element);
-                    this.makeLink(parentId, element.id, "schema");
+                    this.makeLink(parentId, element.id, "include");
                     this.makeLink(element.id, (element as IncludeRelationship).target, "includes");
                     break;
                 }

@@ -25,7 +25,6 @@ export class Nav {
     }
 
     emit(evt: string, level: ModelLevel) {
-        debugger;
         this.listeners.forEach(l => l(level));
     }
 

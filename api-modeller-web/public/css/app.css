@@ -48,3 +48,7 @@
 .link-tools .tool-remove { display: none }
 .link-tools .tool-options { display: none }
 .link .marker-arrowheads { display: none; }
+
+.navigator-item {
+    padding: 5px;
+}

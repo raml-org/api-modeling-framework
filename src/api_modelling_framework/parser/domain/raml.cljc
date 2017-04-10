@@ -348,7 +348,7 @@
                                      {:type type-node}
                                      type-node)
                          type-name  (url/url-encode (utils/safe-str type-name))
-                         type-id (common/type-reference location type-name)
+                         type-id (common/type-reference parsed-location type-name)
                          references (get nested-context :references {})
                          type-fragment (parse-ast type-node (-> nested-context
                                                                 (assoc :references (merge references acc))

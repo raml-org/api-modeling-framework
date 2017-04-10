@@ -49,12 +49,14 @@ function consumePromises<T>(promises: ((ke: (e) => void, kd:(T) => void) => void
     if (promises.length > 0) {
         const next = promises.pop();
         if (next != null) {
-            next((e) => {
-                k(e);
-            }, (_) => {
+            next((_) => {
                 consumePromises(promises, k);
-            })
+            },(e) => {
+                k(e);
+            });
         }
+    } else {
+        k(undefined);
     }
 }
 

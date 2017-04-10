@@ -6,7 +6,7 @@ import {Response} from "../main/domain_model";
 import {RdfValue} from "rdfstore";
 import {NS_MAPPING} from "../main/domain_model";
 import {Payload} from "../main/domain_model";
-import {Schema} from "../main/domain_model";
+import {Shape} from "../main/domain_model";
 
 const endsWith = (s: string, postfix: string): boolean => {
     const postIndex = s.indexOf(postfix);
@@ -32,7 +32,7 @@ export class UI {
             return "fa fa-book";
         } else if (endsWith(unit.elementClass, "#Payload")) {
             return "fa fa-paper-plane";
-        } else if (endsWith(unit.elementClass, "#Schema")) {
+        } else if (endsWith(unit.elementClass, "Shape")) {
             return "fa fa-cubes";
         } else if (endsWith(unit.elementClass, "#Operation")) {
             return "fa fa-rocket";
@@ -54,7 +54,7 @@ export class UI {
             return "fa fa-envelope-open"
         } else if (unit.kind === "Payload") {
             return "fa fa-paper-plane"
-        } else if (unit.kind === "Schema") {
+        } else if (unit.kind === "Shape") {
             return "fa fa-cubes"
         } else {
             return "fa fa-code"
@@ -75,11 +75,9 @@ export class UI {
                 return (unit as Response).status || unit.label || label(unit.id)
             } else if (unit.kind === "Payload") {
                 return (unit as Payload).mediaType || "*/*";
-            } else if (unit.kind === "Schema") {
+            } else if (unit.kind === "Shape") {
                 if (unit.label) {
                     return unit.label;
-                } else if ((unit as Schema).shape != null) {
-                    return label((unit as Schema).shape["@id"]);
                 } else {
                     return label(unit.id);
                 }

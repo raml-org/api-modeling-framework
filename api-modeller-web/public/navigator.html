@@ -88,7 +88,7 @@
                               css: {'is-active': $parent.selectedReference() && $parent.selectedReference().id === id}"></a>
                 <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Encodes</p>
                 <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-list" style="margin-left: 15px">
-                    <li>
+                    <li class="navigator-item">
                         <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                             <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data.encodes) }"></i>
                         </span>
@@ -100,7 +100,7 @@
                     <ul data-bind="foreach: references"
                         class="menu-list"
                         style="margin-left: 15px">
-                        <li>
+                        <li class="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
                             </span>
@@ -123,7 +123,7 @@
                     <ul data-bind="foreach: declares"
                         class="menu-list"
                         style="margin-left: 15px">
-                        <li>
+                        <li class="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
                             </span>
@@ -136,7 +136,7 @@
                     <ul data-bind="foreach: references"
                         class="menu-list"
                         style="margin-left: 15px">
-                        <li>
+                        <li class="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
                             </span>
@@ -152,7 +152,7 @@
            class="menu" id="domain-navigator">
         <p class="menu-label">API Documentation</p>
         <ul class="menu-list" data-bind="foreach: domainUnits()['APIDocumentation']">
-            <li>
+            <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
@@ -162,7 +162,7 @@
                 <span data-bind="if: $data.expanded && $data.endpoints && $data.endpoints.length > 0">
                     <p class="menu-label submenu-label">Endpoints</p>
                     <ul data-bind="foreach: $data.endpoints">
-                        <li>
+                        <li class="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                             </span>
@@ -177,7 +177,7 @@
         </ul>
         <p class="menu-label">End Points</p>
         <ul class="menu-list" data-bind="foreach: domainUnits()['EndPoint']">
-            <li>
+            <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
@@ -189,7 +189,7 @@
         </ul>
         <p class="menu-label">Operations</p>
         <ul class="menu-list" data-bind="foreach: domainUnits()['Operation']">
-            <li>
+            <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
@@ -202,7 +202,7 @@
         </ul>
         <p class="menu-label">Responses</p>
         <ul class="menu-list" data-bind="foreach: domainUnits()['Response']">
-            <li>
+            <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
@@ -214,7 +214,8 @@
         </ul>
         <p class="menu-label">Payloads</p>
         <ul class="menu-list" data-bind="foreach: domainUnits()['Payload']">
-            <li data-bind="css: {'is-active': viewModel.focusedId() === $data.id}">
+            <li class="navigator-item"
+                data-bind="css: {'is-active': viewModel.focusedId() === $data.id}">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                 </span>
@@ -229,7 +230,7 @@
         <span data-bind="if: ($data.schema && $data.expanded)">
             <p class="menu-label submenu-label imported">Schema</p>
             <ul>
-                <li>
+                <li class="navigator-item">
                     <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data.schema) }"></i>
                     </span>
@@ -244,7 +245,7 @@
         <span data-bind="if: ($data.payloads && $data.expanded)">
             <p class="menu-label submenu-label imported">Payloads</p>
             <ul data-bind="foreach: $data.payloads">
-                <li>
+                <li class="navigator-item">
                     <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                     </span>
@@ -261,7 +262,7 @@
         <span data-bind="if: $data.expanded && $data.responses && $data.responses.length > 0">
             <p class="menu-label submenu-label">Returns</p>
             <ul data-bind="foreach: $data.responses">
-                <li>
+                <li class="navigator-item">
                     <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                     </span>
@@ -278,7 +279,7 @@
         <span data-bind="if: $data.expanded && $data.requests && $data.requests.length > 0">
             <p class="menu-label submenu-label">Expects</p>
             <ul data-bind="foreach: $data.requests">
-                <li>
+                <li class="navigator-item">
                     <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                     </span>
@@ -295,7 +296,7 @@
         <span data-bind="if: $data.expanded && $data.operations && $data.operations.length > 0">
             <p class="menu-label submenu-label">Supported Operations</p>
             <ul data-bind="foreach: $data.operations">
-                <li>
+                <li class="navigator-item">
                     <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
                     </span>
