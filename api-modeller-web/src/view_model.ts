@@ -205,6 +205,8 @@ export class ViewModel {
         this.selectElementDocument(unit);
     }
 
+    private decorations: any = [];
+
     public selectElementDocument(unit: DomainElement) {
         if (this.documentModel) {
             const topLevelUnit = this.isTopLevelUnit(unit);
@@ -227,6 +229,15 @@ export class ViewModel {
                         endLineNumber: lexicalInfo.endLine,
                         endColumn: lexicalInfo.endColumn
                     });
+                    this.decorations = this.editor.deltaDecorations(this.decorations,[
+                        {
+                            range: new monaco.Range(lexicalInfo.startLine,1,lexicalInfo.endLine,1),
+                            options: {
+                                linesDecorationsClassName: 'selected-element-line-decoration',
+                                isWholeLine: true
+                            }
+                        }
+                    ])
                 }
             }
         }
