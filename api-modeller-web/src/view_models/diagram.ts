@@ -342,21 +342,15 @@ export class Diagram {
         if (this.nodes[node.id] == null) {
             this.nodes[node.id] = new Rect({
                 attrs: {
-                    /*
                     rect: {
                         fill: COLORS[kind],
                         stroke: node.id === this.selectedId ? SELECTED_STROKE_COLOR : "black",
                         "stroke-width": node.id === this.selectedId ? "3" : "1"
                     },
-                    */
                     text: {
                         text: label,
                         fill: "black"
                     }
-                    /*
-                    nodeId: node.id,
-                    unit: unit
-                    */
                 },
                 position: {
                     x: 0,
@@ -367,6 +361,8 @@ export class Diagram {
                     height: 30
                 }
             });
+            this.nodes[node.id].attributes.attrs.nodeId = node.id
+            this.nodes[node.id].attributes.attrs.unit = unit
             //console.log("GENERATING NODE " + node.id + " => " + this.nodes[node.id].id);
         }
     }
