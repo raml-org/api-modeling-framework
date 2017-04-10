@@ -135,7 +135,8 @@
                         ;;              parsed-type)
                         parsed-type (if (and (some? (domain/required parameter))
                                              (= false (domain/required parameter)))
-                                      (assoc parsed-type :required (domain/required parameter))
+                                      (let [parsed-type (if (map? parsed-type) parsed-type {:type parsed-type})]
+                                        (assoc parsed-type :required (domain/required parameter)))
                                       parsed-type)]
                     [(keyword (document/name parameter))
                      parsed-type])))

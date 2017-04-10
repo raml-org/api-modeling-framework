@@ -322,12 +322,14 @@
                    output-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/petstore.raml"
                                                         output-model
                                                         {})))
+                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/petstore.raml" output-raml)))
                    output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/petstore.jsonld"
                                                         output-model
                                                         {})))]
                (is (some? (:raw output-model)))
-               ;; @todo ADD ASSERTIONS HERE
-               ;;(println output-raml)
+
+               (is (-> yaml-data (get (keyword "/pets")) some?))
+               (is (-> yaml-data (get (keyword "/pets/{petId}")) some?))
                (done)))))
 
 (deftest integration-test-update-raml
@@ -437,19 +439,47 @@
 (comment
 
   (deftest integration-test-raml->open-api
+    (async done
+           (go (let [parser (core/->RAMLParser)
+                     generator (core/->OpenAPIGenerator)
+                     model (<! (cb->chan (partial core/parse-file parser "/Users/antoniogarrote/Development/api-modelling-framework/resources/other-examples/mobile-order-api/api.raml")))
+                     _ (is (not (error? model)))
+                     output-model (core/domain-model model)
+                     _ (is (not (error? output-model)))
+                     open-api-string (<! (cb->chan (partial core/generate-string generator "/Users/antoniogarrote/Development/tmp/ramlapitest1/api.json"
+                                                            output-model
+                                                            {})))
+                     _ (is (not (error? open-api-string)))
+                     output (platform/decode-json open-api-string)]
+                 (clojure.pprint/pprint output)
+                 (done)))))
+
+  (deftest integration-test-openapi-ps->domain
   (async done
-         (go (let [parser (core/->RAMLParser)
-                   generator (core/->APIModelGenerator)
-                   model (<! (cb->chan (partial core/parse-file parser "/Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Fragments/test005/Trait.raml")))
-                   _ (is (not (error? model)))
+         (go (let [parser (core/->OpenAPIParser)
+                   generator-openapi (core/->OpenAPIGenerator)
+                   generator-raml (core/->RAMLGenerator)
+                   generator-jsonld (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "file://resources/uber.json")))
                    output-model (core/document-model model)
                    _ (is (not (error? output-model)))
-                   open-api-string (<! (cb->chan (partial core/generate-string generator "/Users/antoniogarrote/Development/tmp/ramlapitest1/api.json"
-                                                      output-model
-                                                      {})))
-                   _ (is (not (error? open-api-string)))
-                   output (platform/decode-json open-api-string)]
+                   output-openapi (<! (cb->chan (partial core/generate-string generator-openapi "resources/uber.json"
+                                                         output-model
+                                                         {})))
+                   output-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/uber.raml"
+                                                        output-model
+                                                        {})))
+                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/petstore.raml" output-raml)))
+                   output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/uber.jsonld"
+                                                        output-model
+                                                        {})))]
+               (clojure.pprint/pprint yaml-data)
+               ;;(is (some? (:raw output-model)))
+               ;;
+               ;;(is (-> yaml-data (get (keyword "/pets")) some?))
+               ;;(is (-> yaml-data (get (keyword "/pets/{petId}")) some?))
                (done)))))
+
 
 
   )

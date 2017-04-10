@@ -245,8 +245,10 @@
                               "null"    (utils/parse-nil-value context)
                               "object"  (parse-shape node context)
                               "array"   (parse-array node context)
-                              (if (some? (get node :properties))
-                                (parse-shape node context)
-                                nil))
+                              nil)
+
+      (some? (get node :properties)) (parse-shape node context)
+
+      (some? (get node :items))      (parse-array node context)
 
       :else                 nil)))

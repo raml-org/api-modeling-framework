@@ -223,8 +223,14 @@
                                [(document/location fragment) (ensure-encoded-fragment
                                                               (resolve fragment ctx))]))
                        (into {}))
+        library-declarations (->> (document/references model)
+                                  (filter #(satisfies? document/Module %))
+                                  (map #(document/declares %))
+                                  (filter some?)
+                                  (apply concat))
         types-fragments (compute-types (vals fragments) [])
-        declarations (->> (document/declares model)
+        declarations (->> (concat (document/declares model)
+                                  library-declarations)
                           (mapv (fn [declaration]
                                   [(document/id declaration) (ensure-encoded-fragment
                                                               (resolve declaration (-> ctx
@@ -249,12 +255,18 @@
                        (mapv (fn [fragment]
                                [(document/location fragment) (ensure-encoded-fragment
                                                               (resolve fragment ctx))]))
-                       (into {}))]
+                       (into {}))
+        library-declarations (->> (document/references model)
+                                  (filter #(satisfies? document/Module %))
+                                  (map #(document/declares %))
+                                  (filter some?)
+                                  (apply concat))]
     (-> model
         (assoc :resolved true)
         (assoc :encodes (resolve (document/encodes model) (-> ctx
                                                               (assoc :document model)
                                                               (assoc :fragments fragments)
+                                                              (assoc :declarations library-declarations)
                                                               (assoc :types (compute-types fragments []))))))))
 
 

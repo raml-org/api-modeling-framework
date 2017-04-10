@@ -20,7 +20,9 @@ export class LoadModal {
     ]);
     public apiExamples: KnockoutObservableArray<any> = ko.observableArray([
         { name: "World Music API (RAML)", key: "raml", url: getBaseUrl() + "raml/world-music-api/api.raml" },
+        { name: "Mobile Order API (RAML)", key: "raml", url: getBaseUrl() + "raml/mobile-order-api/api.raml" },
         { name: "Pet Store API (Open API)", key: "open-api", url: getBaseUrl() + "openapi/petstore.json" },
+        { name: "Uber API (Open API)", key: "open-api", url: getBaseUrl() + "openapi/uber.json" },
         { name: "Api/test001 (RAML)", key: "raml", url: getBaseUrl() + "raml/tck/raml-1.0/Api/test001/api.raml" },
         { name: "Api/test003 (RAML)", key: "raml", url: getBaseUrl() + "raml/tck/raml-1.0/Api/test003/api.raml" },
         { name: "Api/test004 (RAML)", key: "raml", url: getBaseUrl() + "raml/tck/raml-1.0/Api/test004/api.raml" },
