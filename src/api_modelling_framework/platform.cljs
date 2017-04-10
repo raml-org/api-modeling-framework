@@ -28,7 +28,7 @@
     (let [ch (chan)]
       (go (-> (js/JS_REST location)
               (.then
-               (fn [response] (go (>! ch (.-entity response)))))
+               (fn [response] (go (>! ch (aget response "entity")))))
               (.catch
                (fn [e] (go (>! ch {:error err} ))))))
       ch)
