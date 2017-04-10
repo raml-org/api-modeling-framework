@@ -181,7 +181,8 @@
   (generate-string [this uri model options cb]
     (debug "Generating RAML string")
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
-                                                   {:location uri}))
+                                                   {:location uri
+                                                    :syntax :raml}))
                    res (-> model
                            (pre-process-model)
                            (raml-document-generator/to-raml options))
@@ -193,7 +194,8 @@
   (generate-file [this uri model options cb]
     (debug "Generating RAML file")
     (go (let [options (keywordize-keys (merge (or (platform/->clj options) {})
-                                              {:location uri}))
+                                              {:location uri
+                                               :syntax :raml}))
               res (<! (-> model
                           (pre-process-model)
                           (raml-document-generator/to-raml options)))
@@ -208,7 +210,8 @@
   (generate-string [this uri model options cb]
     (debug "Generating OpenAPI string")
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
-                                                   {:location uri}))
+                                                   {:location uri
+                                                    :syntax :openapi}))
                    res (-> model
                            (pre-process-model)
                            (openapi-document-generator/to-openapi options)
@@ -220,7 +223,8 @@
   (generate-file [this uri model options cb]
     (debug "Generating OpenAPI file")
     (go (let [options (keywordize-keys (merge (or (platform/->clj options) {})
-                                              {:location uri}))
+                                              {:location uri
+                                               :syntax :openapi}))
               res (-> model
                       (pre-process-model)
                       (openapi-document-generator/to-openapi options)

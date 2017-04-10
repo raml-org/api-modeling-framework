@@ -50,6 +50,20 @@
             :consumes "application/json"}
            (generator/to-openapi api-documentation {})))))
 
+(deftest to-openapi-APIDocumentation-with-amf
+  (let [api-documentation (domain/map->ParsedAPIDocumentation {:host "test.com"
+                                                               :scheme ["http" "https"]
+                                                               :base-path "/path"
+                                                               :accepts ["application/json"]
+                                                               :content-type ["appliaton/json"]
+                                                               :version "1.0"
+                                                               :terms-of-service "terms"
+                                                               :id "model-id"
+                                                               :name "name"
+                                                               :description "description"})
+        generated (generator/to-openapi api-documentation {:syntax :openapi :generate-amf-info true})]
+    (is (= "model-id" (:x-amf-id generated)))
+    (is (= "http://raml.org/vocabularies/http#APIDocumentation" (:x-amf-class generated)))))
 
 (deftest to-openapi-EndPoint
   (let [node {:swagger "2.0"

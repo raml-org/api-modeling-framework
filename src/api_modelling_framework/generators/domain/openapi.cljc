@@ -162,7 +162,8 @@
          :x-traits traits
          :x-annotationTypes (:annotations ctx)
          :paths paths}
-        (->> (with-annotations model ctx))
+        (->> (with-annotations model ctx)
+             (common/with-amf-info model ctx "API"))
         utils/clean-nils
         (utils/ensure :paths {}))))
 
@@ -184,6 +185,7 @@
         end-point (-> end-point
                       (assoc :x-is traits)
                       (assoc :parameters parameters)
+                      (->> (common/with-amf-info model ctx "PathItem"))
                       (utils/clean-nils))]
     end-point))
 
@@ -267,6 +269,7 @@
          :consumes (domain/accepts model)
          :produces produces
          :responses responses}
+        (->> (common/with-amf-info model ctx "Operation"))
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Response [model ctx]
@@ -295,6 +298,7 @@
          :schema main-payload
          :x-media-type (if (not= "*/*" (:x-media-type main-body)) (:x-media-type main-body) nil)
          :x-response-payloads x-payloads}
+        (->> (common/with-amf-info model ctx "Response"))
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Parameter [model ctx]
@@ -337,10 +341,12 @@
         name  (document/name model)
         domain (->> model domain/domain (map utils/domain-uri->openapi-node-name))
         description (document/description model)]
-    (utils/clean-nils (merge range
-                             {:displayName name
-                              :description description
-                              :allowedTargets domain}))))
+    (->> (merge range
+                {:displayName name
+                 :description description
+                 :allowedTargets domain})
+         (common/with-amf-info model ctx "DomainPropertySchema")
+         (utils/clean-nils))))
 
 (defmethod to-openapi nil [_ _]
   (debug "Generating nil")

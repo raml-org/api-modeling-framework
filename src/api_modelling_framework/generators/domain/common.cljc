@@ -195,3 +195,17 @@
                                                      [is-type-tag]
                                                      [])]
         (assoc declare :sources (concat sources [source-map]))))))
+
+
+(defn with-amf-info [model {:keys [generate-amf-info syntax]} node-name node]
+  (if generate-amf-info
+    (let [id-key (if (= syntax :raml)
+                   (keyword "(amf-id)")
+                   (keyword "x-amf-id"))
+          class-key (if (= syntax :raml)
+                      (keyword "(amf-class)")
+                      (keyword "x-amf-class"))]
+      (-> node
+          (assoc id-key (:id model))
+          (assoc class-key (utils/node-name->domain-uri node-name))))
+    node))

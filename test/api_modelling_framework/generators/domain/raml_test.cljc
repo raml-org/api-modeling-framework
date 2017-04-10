@@ -27,6 +27,21 @@
             :mediaType ["appliaton/json" "application/json"]}
            (generator/to-raml api-documentation {})))))
 
+(deftest to-raml-APIDocumentation-with-amf
+  (let [api-documentation (domain/map->ParsedAPIDocumentation {:host "test.com"
+                                                               :scheme ["http" "https"]
+                                                               :base-path "/path"
+                                                               :accepts ["application/json"]
+                                                               :content-type ["appliaton/json"]
+                                                               :version "1.0"
+                                                               :terms-of-service "terms"
+                                                               :id "model-id"
+                                                               :name "name"
+                                                               :description "description"})
+        generated (generator/to-raml api-documentation {:syntax :raml :generate-amf-info true})]
+    (is (= "model-id" (get generated (keyword "(amf-id)"))))
+    (is (= "http://raml.org/vocabularies/http#APIDocumentation" (get generated (keyword "(amf-class)"))))))
+
 
 (deftest to-raml-EndPoint
   (let [input {:baseUri "test.com"

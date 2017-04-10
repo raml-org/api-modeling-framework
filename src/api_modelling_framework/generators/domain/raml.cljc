@@ -195,7 +195,8 @@
          ;; for method not to display the name
          :traits (common/model->traits (assoc ctx :is-trait true) to-raml!)}
         (merge-children-resources children-resources ctx)
-        (->> (with-annotations model ctx))
+        (->> (with-annotations model ctx)
+             (common/with-amf-info model ctx "API"))
         utils/clean-nils)))
 
 (defmethod to-raml domain/EndPoint [model {:keys [all-resources] :as ctx}]
@@ -217,6 +218,7 @@
          :description (document/description model)}
         (merge operations)
         (merge-children-resources children-resources ctx)
+        (->> (common/with-amf-info model ctx "Resource"))
         (utils/clean-nils))))
 
 (defn clean-default-object-body
@@ -290,22 +292,27 @@
                         (group-responses context))
          :is (common/find-traits model context :raml)}
         (merge request)
+        (->> (common/with-amf-info model context "Operation"))
         utils/clean-nils)))
 
 (defmethod to-raml domain/Response [model context]
   (debug "Generating response " (document/name model))
   (let [bodies (project-bodies (domain/payloads model) context)]
-    (utils/clean-nils {:description (document/description model)
-                       :headers (unparse-parameters (domain/headers model) context)
-                       :body bodies})))
+    (->> {:description (document/description model)
+          :headers (unparse-parameters (domain/headers model) context)
+          :body bodies}
+         (common/with-amf-info model context "Response")
+         (utils/clean-nils ))))
 
 
 (defmethod to-raml :Request [model context]
   (debug "Generating request " (document/name model))
   (let [bodies (project-bodies (domain/payloads model) context)]
-    (utils/clean-nils {:queryParameters (unparse-query-parameters model context)
-                       :body bodies
-                       :headers (unparse-parameters (domain/headers model) context)})))
+    (->> {:queryParameters (unparse-query-parameters model context)
+          :body bodies
+          :headers (unparse-parameters (domain/headers model) context)}
+         (common/with-amf-info model context "RequestBody")
+         utils/clean-nils)))
 
 (defmethod to-raml domain/Type [model context]
   (debug "Generating type")
@@ -357,10 +364,12 @@
         name  (document/name model)
         domain (->> model domain/domain (map utils/domain-uri->node-name))
         description (document/description model)]
-    (utils/clean-nils (merge range
-                             {:displayName name
-                              :description description
-                              :allowedTargets domain}))))
+    (->> (merge range
+                {:displayName name
+                 :description description
+                 :allowedTargets domain})
+         (common/with-amf-info model ctx "AnnotationType")
+         (utils/clean-nils))))
 
 (defmethod to-raml nil [_ _]
   (debug "Generating nil")

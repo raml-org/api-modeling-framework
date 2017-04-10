@@ -37,7 +37,8 @@
 
 (defmethod to-openapi :document [model ctx]
   (debug "Generating Document at " (document/location model))
-  (let [fragments (->> (document/references model)
+  (let [ctx (assoc ctx :syntax :openapi)
+        fragments (->> (document/references model)
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))
                                {}))
@@ -70,7 +71,8 @@
 
 (defmethod to-openapi :fragment [model ctx]
   (debug "Generating Fragment at " (document/location model))
-  (let [fragments (if (:fragments ctx)
+  (let [ctx (assoc ctx :syntax :openapi)
+        fragments (if (:fragments ctx)
                     (:fragments ctx)
                     (->> (document/references model)
                          (reduce (fn [acc fragment]
@@ -109,7 +111,8 @@
 
 (defmethod to-openapi :library [model ctx]
   (debug "Generating Document at " (document/location model))
-  (let [declares (document/declares model)
+  (let [ctx (assoc ctx :syntax :openapi)
+        declares (document/declares model)
         fragments (->> (document/references model)
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))

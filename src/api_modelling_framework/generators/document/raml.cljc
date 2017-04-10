@@ -42,7 +42,8 @@
 
 (defmethod to-raml :document [model ctx]
   (debug "Generating Document at " (document/location model))
-  (let [fragments (->> (document/references model)
+  (let [ctx (assoc ctx :syntax :raml)
+        fragments (->> (document/references model)
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))
                                {}))
@@ -77,7 +78,8 @@
 
 (defmethod to-raml :fragment [model ctx]
   (debug "Generating Fragment at " (document/location model))
-  (let [fragments (if (:fragments ctx)
+  (let [ctx (assoc ctx :syntax :raml)
+        fragments (if (:fragments ctx)
                     (:fragments ctx)
                     (->> (document/references model)
                          (reduce (fn [acc fragment]
@@ -126,7 +128,8 @@
 
 (defmethod to-raml :library [model ctx]
   (debug "Generating Library at " (document/location model))
-  (let [declares (document/declares model)
+  (let [ctx (assoc ctx :syntax :raml)
+        declares (document/declares model)
         fragments (->> (document/references model)
                        (reduce (fn [acc fragment]
                                  (assoc acc (document/location fragment) fragment))
