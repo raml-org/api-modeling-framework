@@ -182,17 +182,20 @@ export class ModelProxy {
         }
     }
 
-    elementLexicalInfo(id: string): LexicalInfo {
+    elementLexicalInfo(id: string): LexicalInfo | undefined {
         console.log("*** Looking for lexical information about " + id);
-        const res = apiFramework.lexical_info_for_unit(this.raw, id);
-
-        return new LexicalInfo(
-            parseInt(res["start-line"]),
-            parseInt(res["start-column"]),
-            parseInt(res["start-index"]),
-            parseInt(res["end-line"]),
-            parseInt(res["end-column"]),
-            parseInt(res["end-index"])
-        );
+        const res = apiFramework.lexical_info_for_unit(this.raw, "raml", id);
+        if (res != null) {
+            return new LexicalInfo(
+                parseInt(res["start-line"]),
+                parseInt(res["start-column"]),
+                parseInt(res["start-index"]),
+                parseInt(res["end-line"]),
+                parseInt(res["end-column"]),
+                parseInt(res["end-index"])
+            );
+        } else {
+            return undefined;
+        }
     }
 }

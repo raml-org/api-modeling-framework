@@ -199,6 +199,8 @@ export class ViewModel {
             }
         }
         this.focusedId(unit.id);
+        debugger;
+        this.model.elementLexicalInfo(unit.id);
         this.domainUnits({});
         this.resetDomainUnits();
         this.resetDiagram();

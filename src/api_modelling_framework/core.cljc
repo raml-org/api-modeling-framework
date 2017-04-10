@@ -70,7 +70,8 @@
   (^:export update-reference-model [this location syntax-type text cb] "Updates a model for a reference model")
   (^:export references [this] "Returns a list of all the files referenced by this model")
   (^:export find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment")
-  (^:export raw [this] "Returns the raw text for the model"))
+  (^:export raw [this] "Returns the raw text for the model")
+  (^:export lexical-info-for-unit [model syntax unit-id] "Finds lexical information for a particular unit for a particular syntax (\"raml\", \"openapi\")"))
 
 (defprotocol Parser
   (^:export parse-file
@@ -260,7 +261,8 @@
                  "open-api" (parse-string (OpenAPIParser.) location text {} (fn [e r] (go (>! ch r)))))
                ch))]
 
-     (let [domain-cache (atom nil)]
+     (let [domain-cache (atom nil)
+           lexical-cache-raml (atom {})]
        (reify Model
          (location [_] (document/location res))
 
@@ -275,7 +277,7 @@
                    (let []
                      (cb nil (update-reference-model* res parsed-unit)))))
                (cb {:err (new #?(:clj Exception :cljs js/Error)
-                              (str "Unsupported spec " syntax-type " only 'ram' and 'openapi' supported"))}
+                              (str "Unsupported spec " syntax-type " only 'raml' and 'openapi' supported"))}
                    nil))))
 
          (domain-model [_]
@@ -313,5 +315,18 @@
                     document/references
                     (map :location))
                platform/<-clj))
+
+         (lexical-info-for-unit [this syntax unit-id]
+           (let [cache lexical-cache-raml]
+             (platform/<-clj
+              (if-let [lexical-info (get @cache unit-id)]
+                lexical-info
+                (let [element (find-element* res unit-id)
+                      lexical-info (:lexical element)]
+                  (if (some? lexical-info)
+                    (do
+                      (swap! cache (fn [acc] (assoc acc unit-id lexical-info)))
+                      lexical-info)
+                    nil))))))
 
          (raw [this] (:raw res)))))))

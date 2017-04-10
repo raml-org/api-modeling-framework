@@ -16,6 +16,7 @@
             [api-modelling-framework.generators.domain.raml-test]
             [api-modelling-framework.generators.document.openapi-test]
             [api-modelling-framework.model.document-test]
+            [api-modelling-framework.core-test]
             ))
 
 (doo-tests 'api-modelling-framework.tck
@@ -34,4 +35,5 @@
            'api-modelling-framework.generators.domain.raml-test
            'api-modelling-framework.generators.document.raml-test
            'api-modelling-framework.generators.document.openapi-test
+           'api-modelling-framework.core-test
            )
