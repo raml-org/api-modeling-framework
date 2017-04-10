@@ -41,6 +41,11 @@
 (defn decode-json [s]
   (json/parse-string s))
 
+(defn decode-json-ast
+  ([location s]
+   (decode-json s))
+  ([s] (decode-json-ast "" s)))
+
 (defn encode-json [s]
   (json/generate-string s))
 

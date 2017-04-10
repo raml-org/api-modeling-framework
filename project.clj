@@ -24,7 +24,8 @@
             [lein-npm "0.6.2"]
             [lein-doo "0.1.7"]]
   :npm {:dependencies [[uri-templates "0.2.0"]
-                       [rest "2.0.0"]]}
+                       [rest "2.0.0"]
+                       [json-to-ast "2.0.0-alpha1.2"]]}
 
   :profiles {:build {:source-paths ["build"]
                      :main api-modelling-framework.build}}

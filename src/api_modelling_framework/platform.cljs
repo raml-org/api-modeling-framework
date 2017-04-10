@@ -55,6 +55,19 @@
 
 (defn decode-json [s] (js->clj (.parse js/JSON s)))
 
+(defn decode-json-ast
+  ([location s]
+   (try (->> s
+             clj->js
+             (js/JS_AST location)
+             js->clj)
+        (catch js/Error e
+          (println "ERROR")
+          (prn e)
+          (println s)
+          (js->clj (.parse js/JSON s)))))
+  ([s] (decode-json-ast "" s)))
+
 (defn encode-json [s] (.stringify js/JSON (clj->js s)))
 
 (def Err js/Error)

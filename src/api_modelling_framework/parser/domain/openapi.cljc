@@ -113,7 +113,8 @@
                 (coll? model)     (shapes/parse-type {:type "array"} context)
                 :else             nil)]
     (if (some? shape)
-      (domain/map->ParsedType {:shape shape})
+      (->> (domain/map->ParsedType {:shape shape})
+           (common/with-location-meta-from model))
       nil)))
 
 (defn parse-annotation-ast [p model node-name {:keys [base-uri annotations parsed-location] :as context}]
@@ -147,9 +148,10 @@
                                                                                                     :sources (generate-is-annotation-sources annotation-name schema-id parsed-location)
                                                                                                     :domain domain
                                                                                                     :range (infer-annotation-schema model (assoc context :parsed-location schema-id))}))))))
-        (domain/map->ParsedDomainProperty {:id schema-id
-                                           :name annotation-name
-                                           :object (utils/annotation->jsonld model)})))))
+        (->> (domain/map->ParsedDomainProperty {:id schema-id
+                                                :name annotation-name
+                                                :object (utils/annotation->jsonld model)})
+             (common/with-location-meta-from model))))))
 
 (defn annotation? [x] (string/starts-with? (utils/safe-str x) "x-"))
 
@@ -295,20 +297,21 @@
                      location (str location "[" i "]")
                      parsed-location (str parsed-location "/" (url/url-encode name))
                      node-sources (generate-parsed-node-sources "parameter" location parsed-location)]
-                 {:id parsed-location
-                  :name (if (= name "") nil name)
-                  :description (:description parameter)
-                  :sources node-sources
-                  :parameter-kind (:in parameter)
-                  :required (:required parameter)
-                  :shape (shapes/parse-type (-> parameter
-                                                (dissoc :name)
-                                                (dissoc :description)
-                                                (dissoc :in))
-                                            (-> context
-                                                (assoc :parse-ast parse-ast)
-                                                (assoc :location location)
-                                                (assoc :parsed-location parsed-location)))}))
+                 (->> {:id parsed-location
+                       :name (if (= name "") nil name)
+                       :description (:description parameter)
+                       :sources node-sources
+                       :parameter-kind (:in parameter)
+                       :required (:required parameter)
+                       :shape (shapes/parse-type (-> parameter
+                                                     (dissoc :name)
+                                                     (dissoc :description)
+                                                     (dissoc :in))
+                                                 (-> context
+                                                     (assoc :parse-ast parse-ast)
+                                                     (assoc :location location)
+                                                     (assoc :parsed-location parsed-location)))}
+                      (common/with-location-meta-from parameter))))
              (range 0 (count parameters)))
        (mapv (fn [properties] (domain/map->ParsedParameter properties)))))
 
@@ -356,7 +359,9 @@
          ;; annotations in the paths node, no model equivalent, we need annotations here
          (with-annotations (:paths node) context "Info")
          ;; annotations in the info node, no model equivalent, we need annotations here
-         (with-annotations (:info node) context "Paths"))))
+         (with-annotations (:info node) context "Paths")
+         ;; lexcal meta-data
+         (common/with-location-meta-from node))))
 
 (defmethod parse-ast :info [node {:keys [location parsed-location is-fragment]}]
   (debug "Parsing info")
@@ -456,7 +461,8 @@
                     :extends traits}]
     (->> properties
          (domain/map->ParsedEndPoint)
-         (with-annotations node context "PathItem"))))
+         (with-annotations node context "PathItem")
+         (common/with-location-meta-from node))))
 
 (defn parse-body [parameters {:keys [location parsed-location is-fragment] :as context}]
   (->> (or parameters [])
@@ -468,19 +474,20 @@
                      parsed-location (str parsed-location "/body")
                      node-sources (generate-parsed-node-sources "body" location parsed-location)]
                  [x-media-type
-                  {:id parsed-location
-                   :name (if (= name "") nil name)
-                   :description (:description parameter)
-                   :sources node-sources
-                   :shape (if (-> parameter :schema :x-generated)
-                            nil
-                            (shapes/parse-type (:schema parameter)
-                                               (-> context
-                                                   (assoc :is-fragment false)
-                                                   (assoc :type-hint :type)
-                                                   (assoc :location location)
-                                                   (assoc :parse-ast parse-ast)
-                                                   (assoc :parsed-location parsed-location))))}]))
+                  (->> {:id parsed-location
+                        :name (if (= name "") nil name)
+                        :description (:description parameter)
+                        :sources node-sources
+                        :shape (if (-> parameter :schema :x-generated)
+                                 nil
+                                 (shapes/parse-type (:schema parameter)
+                                                    (-> context
+                                                        (assoc :is-fragment false)
+                                                        (assoc :type-hint :type)
+                                                        (assoc :location location)
+                                                        (assoc :parse-ast parse-ast)
+                                                        (assoc :parsed-location parsed-location))))}
+                       (common/with-location-meta-from parameter))]))
              (range 0 (count parameters)))
        (mapv (fn [[media-type properties]]
                {:media-type media-type
@@ -509,18 +516,19 @@
                                                 (assoc :parsed-location (str parsed-location "/body"))))
 
         payload (if (some? body)
-                  (domain/map->ParsedPayload {:id (utils/path-join parsed-location "/main-payload")
-                                              :media-type (:media-type body)
-                                              :name (-> body :body :name)
-                                              :description (-> body :body :description)
-                                              :schema (-> (:body body)
-                                                          (assoc :name nil)
-                                                          (assoc :description nil)
-                                                          (assoc :media-type nil))})
+                  (->> (domain/map->ParsedPayload {:id (utils/path-join parsed-location "/main-payload")
+                                                   :media-type (:media-type body)
+                                                   :name (-> body :body :name)
+                                                   :description (-> body :body :description)
+                                                   :schema (-> (:body body)
+                                                               (assoc :name nil)
+                                                               (assoc :description nil)
+                                                               (assoc :media-type nil))})
+                       (common/with-location-meta-from body))
                   nil)
         ;; we support multiple request per operation, OpenAPI only supports 1 we need the additional x-requests
         x-payloads (->> (get node :x-request-payloads [])
-                        (mapv (fn [i {:keys [schema x-media-type]}]
+                        (mapv (fn [i {:keys [schema x-media-type] :as x-payload}]
                                 (let [x-payload-id (utils/path-join parsed-location (str "x-request-payload" i))
                                       location (utils/path-join location (str "x-request-payloads[" i "]"))
                                       properties {:id x-payload-id
@@ -529,7 +537,8 @@
                                                                                 (assoc :location location)
                                                                                 (assoc :parsed-location parsed-location)
                                                                                 (assoc :type-hint :type)))}]
-                                  (domain/map->ParsedPayload (utils/clean-nils properties))))
+                                  (->> (domain/map->ParsedPayload (utils/clean-nils properties))
+                                       (common/with-location-meta-from x-payload))))
                               (range 0 (count (get node :x-request-payloads []))))
                         (filter some?))
         payloads (->> (concat [payload] x-payloads)
@@ -544,7 +553,8 @@
                                        :headers headers
                                        :parameters parameters
                                        :payloads payloads})
-           (with-annotations node context "RequestBody")))))
+           (with-annotations node context "RequestBody")
+           (common/with-location-meta-from node)))))
 
 (defn method-name
   "Apparently, according to Methods/ meth03.raml example in the TCK, 'set' method must be supported. Let's add a mechanism to support custom method names"
@@ -585,7 +595,8 @@
                                                                 (assoc :is-fragment false)))}]
     (->> properties
          domain/map->ParsedOperation
-         (with-annotations node context "Operation"))))
+         (with-annotations node context "Operation")
+         (common/with-location-meta-from node))))
 
 (defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment x-response-bodies-with-media-types] :as context}]
   (debug "Parsing responses")
@@ -643,7 +654,8 @@
                       :payloads payloads}]
       (->> properties
            domain/map->ParsedResponse
-           (with-annotations node context "Response")))))
+           (with-annotations node context "Response")
+           (common/with-location-meta-from node)))))
 
 
 
@@ -657,7 +669,8 @@
     ;; They should not generate stand-alone nodes in the JSON-LD domain model, the node IS the shape
     (->> (domain/map->ParsedType {:id type-id
                                   :shape shape})
-         (with-annotations node context "Schema"))))
+         (with-annotations node context "Schema")
+         (common/with-location-meta-from node))))
 
 (defn parse-included-fragment
   "Generates a Includes element from an $ref occurrence in the AST. The $ref tag might point to a local or remote reference.

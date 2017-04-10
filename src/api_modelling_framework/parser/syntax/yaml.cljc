@@ -9,12 +9,14 @@
                      ;; for the web version and introduce JS_YAML
                      ;; it will be a noop for the node version
 
-                     [api_modelling_framework.js-support]))
+                     [api_modelling_framework.js-support]
+                     [api-modelling-framework.parser.syntax.common :refer [add-location-meta]]))
 
   #?(:clj (:require [clj-yaml.core :as yaml]
                     [clojure.core.async :refer [<! >! go]]
                     [clojure.walk :refer [stringify-keys]]
-                    [clojure.string :as string])))
+                    [clojure.string :as string]
+                    [api-modelling-framework.parser.syntax.common :refer [add-location-meta]])))
 
 (declare parse-file)
 
@@ -39,26 +41,6 @@
                               (rest libraries)))))
             uses (into {} uses)]
         (assoc parsed :uses uses))))
-
-;; This function is only used by the JS parser.
-;; We transform the additional property into
-;; lexical meta-data for the parsed node.
-;; The Java version in clj-yaml already generates the
-;; lexical meta-data from the AST information
-(defn add-location-meta [node]
-  (cond
-    (map? node)  (let [location (get node (keyword "__location__"))]
-                   (if (some? location)
-                     (with-meta
-                       (->> (dissoc node (keyword "__location__"))
-                            (mapv (fn [[k v]] [k (add-location-meta v)]))
-                            (into {}))
-                       location)
-                     (->> (dissoc node (keyword "__location__"))
-                          (mapv (fn [[k v]] [k (add-location-meta v)]))
-                          (into {}))))
-    (coll? node) (mapv add-location-meta node)
-    :else        node))
 
 #?(:cljs (defn parse-file
            ([uri options]

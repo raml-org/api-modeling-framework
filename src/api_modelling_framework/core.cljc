@@ -71,7 +71,7 @@
   (^:export references [this] "Returns a list of all the files referenced by this model")
   (^:export find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment")
   (^:export raw [this] "Returns the raw text for the model")
-  (^:export lexical-info-for-unit [model syntax unit-id] "Finds lexical information for a particular unit for a particular syntax (\"raml\", \"openapi\")"))
+  (^:export lexical-info-for-unit [model unit-id] "Finds lexical information for a particular unit for a particular syntax (\"raml\", \"openapi\")"))
 
 (defprotocol Parser
   (^:export parse-file
@@ -316,7 +316,7 @@
                     (map :location))
                platform/<-clj))
 
-         (lexical-info-for-unit [this syntax unit-id]
+         (lexical-info-for-unit [this unit-id]
            (let [cache lexical-cache-raml]
              (platform/<-clj
               (if-let [lexical-info (get @cache unit-id)]

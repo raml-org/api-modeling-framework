@@ -9,14 +9,26 @@
             #?(:cljs [cljs.core.async :refer [<! >! chan]])
             [api-modelling-framework.core :as core]))
 
-(deftest lexical-info-test
+(deftest lexical-info-raml-test
   (async done
          (go
            (let [parser (core/->RAMLParser)
-                 generator (core/->OpenAPIGenerator)
                  model (<! (cb->chan (partial core/parse-file parser "resources/world-music-api/wip.raml")))
                  id #?(:cljs "file://resources/world-music-api/wip.raml#/api-documentation/end-points/0/post/body"
                        :clj "resources/world-music-api/wip.raml#/api-documentation/end-points/0/post/body")
-                 info(core/lexical-info-for-unit model "raml" id)]
+                 info(core/lexical-info-for-unit model id)]
              (is (some? info))
              (done)))))
+
+
+#?(:cljs
+   (deftest lexical-info-raml-test
+     (async done
+            (go
+              (let [parser (core/->OpenAPIParser)
+                    model (<! (cb->chan (partial core/parse-file parser "resources/petstore.json")))
+                    id "file://./resources/petstore.json#/paths/%2Fpets/%2Fpets/get/get"
+                    info(core/lexical-info-for-unit model id)]
+                (is (some? info))
+
+                (done))))))

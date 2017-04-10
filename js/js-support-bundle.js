@@ -1,414 +1,4 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.yaml = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-(function (process){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// resolves . and .. elements in a path array with directory names there
-// must be no slashes, empty elements, or device names (c:\) in the array
-// (so also no leading and trailing slashes - it does not distinguish
-// relative and absolute paths)
-function normalizeArray(parts, allowAboveRoot) {
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = parts.length - 1; i >= 0; i--) {
-    var last = parts[i];
-    if (last === '.') {
-      parts.splice(i, 1);
-    } else if (last === '..') {
-      parts.splice(i, 1);
-      up++;
-    } else if (up) {
-      parts.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (allowAboveRoot) {
-    for (; up--; up) {
-      parts.unshift('..');
-    }
-  }
-
-  return parts;
-}
-
-// Split a filename into [root, dir, basename, ext], unix version
-// 'root' is just a slash, or nothing.
-var splitPathRe =
-    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-var splitPath = function(filename) {
-  return splitPathRe.exec(filename).slice(1);
-};
-
-// path.resolve([from ...], to)
-// posix version
-exports.resolve = function() {
-  var resolvedPath = '',
-      resolvedAbsolute = false;
-
-  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    var path = (i >= 0) ? arguments[i] : process.cwd();
-
-    // Skip empty and invalid entries
-    if (typeof path !== 'string') {
-      throw new TypeError('Arguments to path.resolve must be strings');
-    } else if (!path) {
-      continue;
-    }
-
-    resolvedPath = path + '/' + resolvedPath;
-    resolvedAbsolute = path.charAt(0) === '/';
-  }
-
-  // At this point the path should be resolved to a full absolute path, but
-  // handle relative paths to be safe (might happen when process.cwd() fails)
-
-  // Normalize the path
-  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
-    return !!p;
-  }), !resolvedAbsolute).join('/');
-
-  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
-};
-
-// path.normalize(path)
-// posix version
-exports.normalize = function(path) {
-  var isAbsolute = exports.isAbsolute(path),
-      trailingSlash = substr(path, -1) === '/';
-
-  // Normalize the path
-  path = normalizeArray(filter(path.split('/'), function(p) {
-    return !!p;
-  }), !isAbsolute).join('/');
-
-  if (!path && !isAbsolute) {
-    path = '.';
-  }
-  if (path && trailingSlash) {
-    path += '/';
-  }
-
-  return (isAbsolute ? '/' : '') + path;
-};
-
-// posix version
-exports.isAbsolute = function(path) {
-  return path.charAt(0) === '/';
-};
-
-// posix version
-exports.join = function() {
-  var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    if (typeof p !== 'string') {
-      throw new TypeError('Arguments to path.join must be strings');
-    }
-    return p;
-  }).join('/'));
-};
-
-
-// path.relative(from, to)
-// posix version
-exports.relative = function(from, to) {
-  from = exports.resolve(from).substr(1);
-  to = exports.resolve(to).substr(1);
-
-  function trim(arr) {
-    var start = 0;
-    for (; start < arr.length; start++) {
-      if (arr[start] !== '') break;
-    }
-
-    var end = arr.length - 1;
-    for (; end >= 0; end--) {
-      if (arr[end] !== '') break;
-    }
-
-    if (start > end) return [];
-    return arr.slice(start, end - start + 1);
-  }
-
-  var fromParts = trim(from.split('/'));
-  var toParts = trim(to.split('/'));
-
-  var length = Math.min(fromParts.length, toParts.length);
-  var samePartsLength = length;
-  for (var i = 0; i < length; i++) {
-    if (fromParts[i] !== toParts[i]) {
-      samePartsLength = i;
-      break;
-    }
-  }
-
-  var outputParts = [];
-  for (var i = samePartsLength; i < fromParts.length; i++) {
-    outputParts.push('..');
-  }
-
-  outputParts = outputParts.concat(toParts.slice(samePartsLength));
-
-  return outputParts.join('/');
-};
-
-exports.sep = '/';
-exports.delimiter = ':';
-
-exports.dirname = function(path) {
-  var result = splitPath(path),
-      root = result[0],
-      dir = result[1];
-
-  if (!root && !dir) {
-    // No dirname whatsoever
-    return '.';
-  }
-
-  if (dir) {
-    // It has a dirname, strip trailing slash
-    dir = dir.substr(0, dir.length - 1);
-  }
-
-  return root + dir;
-};
-
-
-exports.basename = function(path, ext) {
-  var f = splitPath(path)[2];
-  // TODO: make this comparison case-insensitive on windows?
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
-  }
-  return f;
-};
-
-
-exports.extname = function(path) {
-  return splitPath(path)[3];
-};
-
-function filter (xs, f) {
-    if (xs.filter) return xs.filter(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (f(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-}
-
-// String.prototype.substr - negative index don't work in IE8
-var substr = 'ab'.substr(-1) === 'b'
-    ? function (str, start, len) { return str.substr(start, len) }
-    : function (str, start, len) {
-        if (start < 0) start = str.length + start;
-        return str.substr(start, len);
-    }
-;
-
-}).call(this,require('_process'))
-},{"_process":2}],2:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],3:[function(require,module,exports){
 'use strict';
 
 
@@ -417,7 +7,7 @@ var yaml = require('./lib/js-yaml.js');
 
 module.exports = yaml;
 
-},{"./lib/js-yaml.js":4}],4:[function(require,module,exports){
+},{"./lib/js-yaml.js":2}],2:[function(require,module,exports){
 'use strict';
 
 
@@ -458,7 +48,7 @@ module.exports.parse          = deprecated('parse');
 module.exports.compose        = deprecated('compose');
 module.exports.addConstructor = deprecated('addConstructor');
 
-},{"./js-yaml/dumper":6,"./js-yaml/exception":7,"./js-yaml/loader":8,"./js-yaml/schema":10,"./js-yaml/schema/core":11,"./js-yaml/schema/default_full":12,"./js-yaml/schema/default_safe":13,"./js-yaml/schema/failsafe":14,"./js-yaml/schema/json":15,"./js-yaml/type":16}],5:[function(require,module,exports){
+},{"./js-yaml/dumper":4,"./js-yaml/exception":5,"./js-yaml/loader":6,"./js-yaml/schema":8,"./js-yaml/schema/core":9,"./js-yaml/schema/default_full":10,"./js-yaml/schema/default_safe":11,"./js-yaml/schema/failsafe":12,"./js-yaml/schema/json":13,"./js-yaml/type":14}],3:[function(require,module,exports){
 'use strict';
 
 
@@ -519,7 +109,7 @@ module.exports.repeat         = repeat;
 module.exports.isNegativeZero = isNegativeZero;
 module.exports.extend         = extend;
 
-},{}],6:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable no-use-before-define*/
@@ -1322,7 +912,7 @@ function safeDump(input, options) {
 module.exports.dump     = dump;
 module.exports.safeDump = safeDump;
 
-},{"./common":5,"./exception":7,"./schema/default_full":12,"./schema/default_safe":13}],7:[function(require,module,exports){
+},{"./common":3,"./exception":5,"./schema/default_full":10,"./schema/default_safe":11}],5:[function(require,module,exports){
 // YAML error class. http://stackoverflow.com/questions/8458984
 //
 'use strict';
@@ -1367,7 +957,7 @@ YAMLException.prototype.toString = function toString(compact) {
 
 module.exports = YAMLException;
 
-},{}],8:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable max-len,no-use-before-define*/
@@ -3008,7 +2598,7 @@ module.exports.load = load;
 module.exports.safeLoadAll = safeLoadAll;
 module.exports.safeLoad = safeLoad;
 
-},{"./common":5,"./exception":7,"./mark":9,"./schema/default_full":12,"./schema/default_safe":13}],9:[function(require,module,exports){
+},{"./common":3,"./exception":5,"./mark":7,"./schema/default_full":10,"./schema/default_safe":11}],7:[function(require,module,exports){
 'use strict';
 
 
@@ -3086,7 +2676,7 @@ Mark.prototype.toString = function toString(compact) {
 
 module.exports = Mark;
 
-},{"./common":5}],10:[function(require,module,exports){
+},{"./common":3}],8:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable max-len*/
@@ -3196,7 +2786,7 @@ Schema.create = function createSchema() {
 
 module.exports = Schema;
 
-},{"./common":5,"./exception":7,"./type":16}],11:[function(require,module,exports){
+},{"./common":3,"./exception":5,"./type":14}],9:[function(require,module,exports){
 // Standard YAML's Core schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2804923
 //
@@ -3216,7 +2806,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":10,"./json":15}],12:[function(require,module,exports){
+},{"../schema":8,"./json":13}],10:[function(require,module,exports){
 // JS-YAML's default schema for `load` function.
 // It is not described in the YAML specification.
 //
@@ -3243,7 +2833,7 @@ module.exports = Schema.DEFAULT = new Schema({
   ]
 });
 
-},{"../schema":10,"../type/js/function":21,"../type/js/regexp":22,"../type/js/undefined":23,"./default_safe":13}],13:[function(require,module,exports){
+},{"../schema":8,"../type/js/function":19,"../type/js/regexp":20,"../type/js/undefined":21,"./default_safe":11}],11:[function(require,module,exports){
 // JS-YAML's default schema for `safeLoad` function.
 // It is not described in the YAML specification.
 //
@@ -3273,7 +2863,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":10,"../type/binary":17,"../type/merge":25,"../type/omap":27,"../type/pairs":28,"../type/set":30,"../type/timestamp":32,"./core":11}],14:[function(require,module,exports){
+},{"../schema":8,"../type/binary":15,"../type/merge":23,"../type/omap":25,"../type/pairs":26,"../type/set":28,"../type/timestamp":30,"./core":9}],12:[function(require,module,exports){
 // Standard YAML's Failsafe schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2802346
 
@@ -3292,7 +2882,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":10,"../type/map":24,"../type/seq":29,"../type/str":31}],15:[function(require,module,exports){
+},{"../schema":8,"../type/map":22,"../type/seq":27,"../type/str":29}],13:[function(require,module,exports){
 // Standard YAML's JSON schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2803231
 //
@@ -3319,7 +2909,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":10,"../type/bool":18,"../type/float":19,"../type/int":20,"../type/null":26,"./failsafe":14}],16:[function(require,module,exports){
+},{"../schema":8,"../type/bool":16,"../type/float":17,"../type/int":18,"../type/null":24,"./failsafe":12}],14:[function(require,module,exports){
 'use strict';
 
 var YAMLException = require('./exception');
@@ -3382,7 +2972,7 @@ function Type(tag, options) {
 
 module.exports = Type;
 
-},{"./exception":7}],17:[function(require,module,exports){
+},{"./exception":5}],15:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable no-bitwise*/
@@ -3519,7 +3109,7 @@ module.exports = new Type('tag:yaml.org,2002:binary', {
   represent: representYamlBinary
 });
 
-},{"../type":16}],18:[function(require,module,exports){
+},{"../type":14}],16:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -3556,7 +3146,7 @@ module.exports = new Type('tag:yaml.org,2002:bool', {
   defaultStyle: 'lowercase'
 });
 
-},{"../type":16}],19:[function(require,module,exports){
+},{"../type":14}],17:[function(require,module,exports){
 'use strict';
 
 var common = require('../common');
@@ -3663,7 +3253,7 @@ module.exports = new Type('tag:yaml.org,2002:float', {
   defaultStyle: 'lowercase'
 });
 
-},{"../common":5,"../type":16}],20:[function(require,module,exports){
+},{"../common":3,"../type":14}],18:[function(require,module,exports){
 'use strict';
 
 var common = require('../common');
@@ -3833,7 +3423,7 @@ module.exports = new Type('tag:yaml.org,2002:int', {
   }
 });
 
-},{"../common":5,"../type":16}],21:[function(require,module,exports){
+},{"../common":3,"../type":14}],19:[function(require,module,exports){
 'use strict';
 
 var esprima;
@@ -3919,7 +3509,7 @@ module.exports = new Type('tag:yaml.org,2002:js/function', {
   represent: representJavascriptFunction
 });
 
-},{"../../type":16}],22:[function(require,module,exports){
+},{"../../type":14}],20:[function(require,module,exports){
 'use strict';
 
 var Type = require('../../type');
@@ -3981,7 +3571,7 @@ module.exports = new Type('tag:yaml.org,2002:js/regexp', {
   represent: representJavascriptRegExp
 });
 
-},{"../../type":16}],23:[function(require,module,exports){
+},{"../../type":14}],21:[function(require,module,exports){
 'use strict';
 
 var Type = require('../../type');
@@ -4011,7 +3601,7 @@ module.exports = new Type('tag:yaml.org,2002:js/undefined', {
   represent: representJavascriptUndefined
 });
 
-},{"../../type":16}],24:[function(require,module,exports){
+},{"../../type":14}],22:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4021,7 +3611,7 @@ module.exports = new Type('tag:yaml.org,2002:map', {
   construct: function (data) { return data !== null ? data : {}; }
 });
 
-},{"../type":16}],25:[function(require,module,exports){
+},{"../type":14}],23:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4035,7 +3625,7 @@ module.exports = new Type('tag:yaml.org,2002:merge', {
   resolve: resolveYamlMerge
 });
 
-},{"../type":16}],26:[function(require,module,exports){
+},{"../type":14}],24:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4071,7 +3661,7 @@ module.exports = new Type('tag:yaml.org,2002:null', {
   defaultStyle: 'lowercase'
 });
 
-},{"../type":16}],27:[function(require,module,exports){
+},{"../type":14}],25:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4117,7 +3707,7 @@ module.exports = new Type('tag:yaml.org,2002:omap', {
   construct: constructYamlOmap
 });
 
-},{"../type":16}],28:[function(require,module,exports){
+},{"../type":14}],26:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4172,7 +3762,7 @@ module.exports = new Type('tag:yaml.org,2002:pairs', {
   construct: constructYamlPairs
 });
 
-},{"../type":16}],29:[function(require,module,exports){
+},{"../type":14}],27:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4182,7 +3772,7 @@ module.exports = new Type('tag:yaml.org,2002:seq', {
   construct: function (data) { return data !== null ? data : []; }
 });
 
-},{"../type":16}],30:[function(require,module,exports){
+},{"../type":14}],28:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4213,7 +3803,7 @@ module.exports = new Type('tag:yaml.org,2002:set', {
   construct: constructYamlSet
 });
 
-},{"../type":16}],31:[function(require,module,exports){
+},{"../type":14}],29:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4223,7 +3813,7 @@ module.exports = new Type('tag:yaml.org,2002:str', {
   construct: function (data) { return data !== null ? data : ''; }
 });
 
-},{"../type":16}],32:[function(require,module,exports){
+},{"../type":14}],30:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4313,12 +3903,71 @@ module.exports = new Type('tag:yaml.org,2002:timestamp', {
   represent: representYamlTimestamp
 });
 
-},{"../type":16}],33:[function(require,module,exports){
+},{"../type":14}],31:[function(require,module,exports){
+(function (global){
+var parse = require("json-to-ast");
+
+var reconstructNode = function (node, lexicalInfo) {
+    var acc = {};
+    node.children.forEach(function (child) {
+        acc[child.key.value] = reconstruct(child.value);
+    });
+    acc['__location__'] = lexicalInfo;
+    return acc;
+};
+
+var reconstructLiteral = function (node) {
+    return node.value;
+};
+
+var reconstructArray = function (node) {
+    var acc = [];
+    node.children.forEach(function (child) {
+        acc.push(reconstruct(child));
+    });
+    return acc;
+};
+
+var reconstruct = function (node) {
+    var location = node.loc;
+    var lexicalInfo = null;
+    if (location != null) {
+        lexicalInfo = {
+            "start-line": location.start.line,
+            "start-column": location.start.column,
+            "start-index": -1,
+            "end-line": location.end.line,
+            "end-column": location.end.column,
+            "end-index": -1
+        };
+    }
+
+    switch (node.type) {
+        case "object": return reconstructNode(node, lexicalInfo);
+        case "literal": return reconstructLiteral(node);
+        case "array": return reconstructArray(node);
+    }
+};
+
+var ast = function (file, text) {
+    var tree = parse(text, { source: file });
+    return reconstruct(tree);
+};
+
+
+module.exports = ast;
+global.JS_AST = ast;
+
+//console.log(JSON.stringify(ast("test.yaml", '{"a":1,"b":[{"b":3,"d":{"e":3}}, true, false]}'), null, 2));
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"json-to-ast":33}],32:[function(require,module,exports){
 (function (global){
 var fs = (typeof(NODE_FS) === 'undefined' ? {readFile: function() { throw new Error("readFile only supported in node.js")}} : NODE_FS);
 var yaml = require('./js-yaml/index.js');
 var path = require("path");
 var rest = require("rest");
+var json_ast  =require("./json_ast");
 
 global.FRAGMENTS_CACHE = {};
 global.PENDING_LIBRARIES = [];
@@ -4556,7 +4205,813 @@ global.JS_YAML.dump = yaml.dump;
 global.JS_REST = rest;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./js-yaml/index.js":3,"path":1,"rest":34}],34:[function(require,module,exports){
+},{"./js-yaml/index.js":1,"./json_ast":31,"path":40,"rest":34}],33:[function(require,module,exports){
+(function (global, factory) {
+	if (typeof define === "function" && define.amd) {
+		define(['module'], factory);
+	} else if (typeof exports !== "undefined") {
+		factory(module);
+	} else {
+		var mod = {
+			exports: {}
+		};
+		factory(mod);
+		global.parse = mod.exports;
+	}
+})(this, function (module) {
+	'use strict';
+
+	var _extends = Object.assign || function (target) {
+		for (var i = 1; i < arguments.length; i++) {
+			var source = arguments[i];
+
+			for (var key in source) {
+				if (Object.prototype.hasOwnProperty.call(source, key)) {
+					target[key] = source[key];
+				}
+			}
+		}
+
+		return target;
+	};
+
+	function _classCallCheck(instance, Constructor) {
+		if (!(instance instanceof Constructor)) {
+			throw new TypeError("Cannot call a class as a function");
+		}
+	}
+
+	function _possibleConstructorReturn(self, call) {
+		if (!self) {
+			throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+		}
+
+		return call && (typeof call === "object" || typeof call === "function") ? call : self;
+	}
+
+	function _inherits(subClass, superClass) {
+		if (typeof superClass !== "function" && superClass !== null) {
+			throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+		}
+
+		subClass.prototype = Object.create(superClass && superClass.prototype, {
+			constructor: {
+				value: subClass,
+				enumerable: false,
+				writable: true,
+				configurable: true
+			}
+		});
+		if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+	}
+
+	var location = function location(startLine, startColumn, startOffset, endLine, endColumn, endOffset, source) {
+		return {
+			start: {
+				line: startLine,
+				column: startColumn,
+				offset: startOffset
+			},
+			end: {
+				line: endLine,
+				column: endColumn,
+				offset: endOffset
+			},
+			source: source || null
+		};
+	};
+
+	function showCodeFragment(source, linePosition, columnPosition) {
+		var lines = source.split(/\n|\r\n?|\f/);
+		var line = lines[linePosition - 1];
+		var marker = new Array(columnPosition).join(' ') + '^';
+
+		return line + '\n' + marker;
+	}
+
+	var ParseError = function (_SyntaxError) {
+		_inherits(ParseError, _SyntaxError);
+
+		function ParseError(message, source, linePosition, columnPosition) {
+			_classCallCheck(this, ParseError);
+
+			var fullMessage = linePosition ? message + '\n' + showCodeFragment(source, linePosition, columnPosition) : message;
+
+			var _this = _possibleConstructorReturn(this, (ParseError.__proto__ || Object.getPrototypeOf(ParseError)).call(this, fullMessage));
+
+			_this.rawMessage = message;
+			return _this;
+		}
+
+		return ParseError;
+	}(SyntaxError);
+
+	var error = function error(message, source, line, column) {
+		throw new ParseError(message, source, line, column);
+	};
+
+	var parseErrorTypes = {
+		unexpectedEnd: function unexpectedEnd() {
+			return 'Unexpected end of JSON input';
+		},
+		unexpectedToken: function unexpectedToken(token, line, column) {
+			return 'Unexpected token <' + token + '> at ' + line + ':' + column;
+		}
+	};
+
+	var tokenizeErrorTypes = {
+		cannotTokenizeSymbol: function cannotTokenizeSymbol(symbol, line, column) {
+			return 'Cannot tokenize symbol <' + symbol + '> at ' + line + ':' + column;
+		}
+	};
+
+	var tokenTypes = {
+		LEFT_BRACE: 0, // {
+		RIGHT_BRACE: 1, // }
+		LEFT_BRACKET: 2, // [
+		RIGHT_BRACKET: 3, // ]
+		COLON: 4, // :
+		COMMA: 5, // ,
+		STRING: 6, //
+		NUMBER: 7, //
+		TRUE: 8, // true
+		FALSE: 9, // false
+		NULL: 10 // null
+	};
+
+	var punctuatorTokensMap = { // Lexeme: Token
+		'{': tokenTypes.LEFT_BRACE,
+		'}': tokenTypes.RIGHT_BRACE,
+		'[': tokenTypes.LEFT_BRACKET,
+		']': tokenTypes.RIGHT_BRACKET,
+		':': tokenTypes.COLON,
+		',': tokenTypes.COMMA
+	};
+
+	var keywordTokensMap = { // Lexeme: Token config
+		'true': { type: tokenTypes.TRUE, value: true },
+		'false': { type: tokenTypes.FALSE, value: false },
+		'null': { type: tokenTypes.NULL, value: null }
+	};
+
+	var stringStates = {
+		_START_: 0,
+		START_QUOTE_OR_CHAR: 1,
+		ESCAPE: 2
+	};
+
+	var escapes = {
+		'"': 0, // Quotation mask
+		'\\': 1, // Reverse solidus
+		'/': 2, // Solidus
+		'b': 3, // Backspace
+		'f': 4, // Form feed
+		'n': 5, // New line
+		'r': 6, // Carriage return
+		't': 7, // Horizontal tab
+		'u': 8 // 4 hexadecimal digits
+	};
+
+	var numberStates = {
+		_START_: 0,
+		MINUS: 1,
+		ZERO: 2,
+		DIGIT: 3,
+		POINT: 4,
+		DIGIT_FRACTION: 5,
+		EXP: 6,
+		EXP_DIGIT_OR_SIGN: 7
+	};
+
+	// HELPERS
+
+	function isDigit1to9(char) {
+		return char >= '1' && char <= '9';
+	}
+
+	function isDigit(char) {
+		return char >= '0' && char <= '9';
+	}
+
+	function isHex(char) {
+		return isDigit(char) || char >= 'a' && char <= 'f' || char >= 'A' && char <= 'F';
+	}
+
+	function isExp(char) {
+		return char === 'e' || char === 'E';
+	}
+
+	// PARSERS
+
+	function parseWhitespace(input, index, line, column) {
+		var char = input.charAt(index);
+
+		if (char === '\r') {
+			// CR (Unix)
+			index++;
+			line++;
+			column = 1;
+			if (input.charAt(index) === '\n') {
+				// CRLF (Windows)
+				index++;
+			}
+		} else if (char === '\n') {
+			// LF (MacOS)
+			index++;
+			line++;
+			column = 1;
+		} else if (char === '\t' || char === ' ') {
+			index++;
+			column++;
+		} else {
+			return null;
+		}
+
+		return {
+			index: index,
+			line: line,
+			column: column
+		};
+	}
+
+	function parseChar(input, index, line, column) {
+		var char = input.charAt(index);
+
+		if (char in punctuatorTokensMap) {
+			return {
+				type: punctuatorTokensMap[char],
+				line: line,
+				column: column + 1,
+				index: index + 1,
+				value: null
+			};
+		}
+
+		return null;
+	}
+
+	function parseKeyword(input, index, line, column) {
+		for (var name in keywordTokensMap) {
+			if (keywordTokensMap.hasOwnProperty(name) && input.substr(index, name.length) === name) {
+				var _keywordTokensMap$nam = keywordTokensMap[name],
+				    type = _keywordTokensMap$nam.type,
+				    value = _keywordTokensMap$nam.value;
+
+
+				return {
+					type: type,
+					line: line,
+					column: column + name.length,
+					index: index + name.length,
+					value: value
+				};
+			}
+		}
+
+		return null;
+	}
+
+	function parseString(input, index, line, column) {
+		var startIndex = index;
+		var buffer = '';
+		var state = stringStates._START_;
+
+		while (index < input.length) {
+			var char = input.charAt(index);
+
+			switch (state) {
+				case stringStates._START_:
+					{
+						if (char === '"') {
+							state = stringStates.START_QUOTE_OR_CHAR;
+							index++;
+						} else {
+							return null;
+						}
+						break;
+					}
+
+				case stringStates.START_QUOTE_OR_CHAR:
+					{
+						if (char === '\\') {
+							state = stringStates.ESCAPE;
+							buffer += char;
+							index++;
+						} else if (char === '"') {
+							index++;
+							return {
+								type: tokenTypes.STRING,
+								line: line,
+								column: column + index - startIndex,
+								index: index,
+								value: buffer
+							};
+						} else {
+							buffer += char;
+							index++;
+						}
+						break;
+					}
+
+				case stringStates.ESCAPE:
+					{
+						if (char in escapes) {
+							buffer += char;
+							index++;
+							if (char === 'u') {
+								for (var i = 0; i < 4; i++) {
+									var curChar = input.charAt(index);
+									if (curChar && isHex(curChar)) {
+										buffer += curChar;
+										index++;
+									} else {
+										return null;
+									}
+								}
+							}
+							state = stringStates.START_QUOTE_OR_CHAR;
+						} else {
+							return null;
+						}
+						break;
+					}
+			}
+		}
+	}
+
+	function parseNumber(input, index, line, column) {
+		var startIndex = index;
+		var passedValueIndex = index;
+		var state = numberStates._START_;
+
+		iterator: while (index < input.length) {
+			var char = input.charAt(index);
+
+			switch (state) {
+				case numberStates._START_:
+					{
+						if (char === '-') {
+							state = numberStates.MINUS;
+						} else if (char === '0') {
+							passedValueIndex = index + 1;
+							state = numberStates.ZERO;
+						} else if (isDigit1to9(char)) {
+							passedValueIndex = index + 1;
+							state = numberStates.DIGIT;
+						} else {
+							return null;
+						}
+						break;
+					}
+
+				case numberStates.MINUS:
+					{
+						if (char === '0') {
+							passedValueIndex = index + 1;
+							state = numberStates.ZERO;
+						} else if (isDigit1to9(char)) {
+							passedValueIndex = index + 1;
+							state = numberStates.DIGIT;
+						} else {
+							return null;
+						}
+						break;
+					}
+
+				case numberStates.ZERO:
+					{
+						if (char === '.') {
+							state = numberStates.POINT;
+						} else if (isExp(char)) {
+							state = numberStates.EXP;
+						} else {
+							break iterator;
+						}
+						break;
+					}
+
+				case numberStates.DIGIT:
+					{
+						if (isDigit(char)) {
+							passedValueIndex = index + 1;
+						} else if (char === '.') {
+							state = numberStates.POINT;
+						} else if (isExp(char)) {
+							state = numberStates.EXP;
+						} else {
+							break iterator;
+						}
+						break;
+					}
+
+				case numberStates.POINT:
+					{
+						if (isDigit(char)) {
+							passedValueIndex = index + 1;
+							state = numberStates.DIGIT_FRACTION;
+						} else {
+							break iterator;
+						}
+						break;
+					}
+
+				case numberStates.DIGIT_FRACTION:
+					{
+						if (isDigit(char)) {
+							passedValueIndex = index + 1;
+						} else if (isExp(char)) {
+							state = numberStates.EXP;
+						} else {
+							break iterator;
+						}
+						break;
+					}
+
+				case numberStates.EXP:
+					{
+						if (char === '+' || char === '-') {
+							state = numberStates.EXP_DIGIT_OR_SIGN;
+						} else if (isDigit(char)) {
+							passedValueIndex = index + 1;
+							state = numberStates.EXP_DIGIT_OR_SIGN;
+						} else {
+							break iterator;
+						}
+						break;
+					}
+
+				case numberStates.EXP_DIGIT_OR_SIGN:
+					{
+						if (isDigit(char)) {
+							passedValueIndex = index + 1;
+						} else {
+							break iterator;
+						}
+						break;
+					}
+			}
+
+			index++;
+		}
+
+		if (passedValueIndex > 0) {
+			return {
+				type: tokenTypes.NUMBER,
+				line: line,
+				column: column + passedValueIndex - startIndex,
+				index: passedValueIndex,
+				value: parseFloat(input.substring(startIndex, passedValueIndex))
+			};
+		}
+
+		return null;
+	}
+
+	function tokenize(input, settings) {
+		var line = 1;
+		var column = 1;
+		var index = 0;
+		var tokens = [];
+
+		while (index < input.length) {
+			var args = [input, index, line, column];
+			var whitespace = parseWhitespace.apply(undefined, args);
+
+			if (whitespace) {
+				index = whitespace.index;
+				line = whitespace.line;
+				column = whitespace.column;
+				continue;
+			}
+
+			var matched = parseChar.apply(undefined, args) || parseKeyword.apply(undefined, args) || parseString.apply(undefined, args) || parseNumber.apply(undefined, args);
+
+			if (matched) {
+				var token = {
+					type: matched.type,
+					value: matched.value,
+					loc: location(line, column, index, matched.line, matched.column, matched.index, settings.source)
+				};
+
+				tokens.push(token);
+				index = matched.index;
+				line = matched.line;
+				column = matched.column;
+			} else {
+				error(tokenizeErrorTypes.cannotTokenizeSymbol(input.charAt(index), line, column), input, line, column);
+			}
+		}
+
+		return tokens;
+	}
+
+	var literals = [tokenTypes.STRING, tokenTypes.NUMBER, tokenTypes.TRUE, tokenTypes.FALSE, tokenTypes.NULL];
+
+	var objectStates = {
+		_START_: 0,
+		OPEN_OBJECT: 1,
+		PROPERTY: 2,
+		COMMA: 3
+	};
+
+	var propertyStates = {
+		_START_: 0,
+		KEY: 1,
+		COLON: 2
+	};
+
+	var arrayStates = {
+		_START_: 0,
+		OPEN_ARRAY: 1,
+		VALUE: 2,
+		COMMA: 3
+	};
+
+	var defaultSettings = {
+		verbose: true,
+		source: null
+	};
+
+	function parseObject(input, tokenList, index, settings) {
+		// object: LEFT_BRACE (property (COMMA property)*)? RIGHT_BRACE
+		var startToken = void 0;
+		var object = {
+			type: 'object',
+			children: []
+		};
+		var state = objectStates._START_;
+
+		while (index < tokenList.length) {
+			var token = tokenList[index];
+
+			switch (state) {
+				case objectStates._START_:
+					{
+						if (token.type === tokenTypes.LEFT_BRACE) {
+							startToken = token;
+							state = objectStates.OPEN_OBJECT;
+							index++;
+						} else {
+							return null;
+						}
+						break;
+					}
+
+				case objectStates.OPEN_OBJECT:
+					{
+						if (token.type === tokenTypes.RIGHT_BRACE) {
+							if (settings.verbose) {
+								object.loc = location(startToken.loc.start.line, startToken.loc.start.column, startToken.loc.start.offset, token.loc.end.line, token.loc.end.column, token.loc.end.offset, settings.source);
+								return {
+									value: object,
+									index: index + 1
+								};
+							}
+						} else {
+							var property = parseProperty(input, tokenList, index, settings);
+							object.children.push(property.value);
+							state = objectStates.PROPERTY;
+							index = property.index;
+						}
+						break;
+					}
+
+				case objectStates.PROPERTY:
+					{
+						if (token.type === tokenTypes.RIGHT_BRACE) {
+							if (settings.verbose) {
+								object.loc = location(startToken.loc.start.line, startToken.loc.start.column, startToken.loc.start.offset, token.loc.end.line, token.loc.end.column, token.loc.end.offset, settings.source);
+							}
+							return {
+								value: object,
+								index: index + 1
+							};
+						} else if (token.type === tokenTypes.COMMA) {
+							state = objectStates.COMMA;
+							index++;
+						} else {
+							error(parseErrorTypes.unexpectedToken(input.substring(token.loc.start.offset, token.loc.end.offset), token.loc.start.line, token.loc.start.column), input, token.loc.start.line, token.loc.start.column);
+						}
+						break;
+					}
+
+				case objectStates.COMMA:
+					{
+						var _property = parseProperty(input, tokenList, index, settings);
+						if (_property) {
+							index = _property.index;
+							object.children.push(_property.value);
+							state = objectStates.PROPERTY;
+						} else {
+							error(parseErrorTypes.unexpectedToken(input.substring(token.loc.start.offset, token.loc.end.offset), token.loc.start.line, token.loc.start.column), input, token.loc.start.line, token.loc.start.column);
+						}
+						break;
+					}
+			}
+		}
+
+		error(parseErrorTypes.unexpectedEnd());
+	}
+
+	function parseProperty(input, tokenList, index, settings) {
+		// property: STRING COLON value
+		var startToken = void 0;
+		var property = {
+			type: 'property',
+			key: null,
+			value: null
+		};
+		var state = objectStates._START_;
+
+		while (index < tokenList.length) {
+			var token = tokenList[index];
+
+			switch (state) {
+				case propertyStates._START_:
+					{
+						if (token.type === tokenTypes.STRING) {
+							var key = {
+								type: 'identifier',
+								value: token.value
+							};
+							if (settings.verbose) {
+								key.loc = token.loc;
+							}
+							startToken = token;
+							property.key = key;
+							state = propertyStates.KEY;
+							index++;
+						} else {
+							return null;
+						}
+						break;
+					}
+
+				case propertyStates.KEY:
+					{
+						if (token.type === tokenTypes.COLON) {
+							state = propertyStates.COLON;
+							index++;
+						} else {
+							error(parseErrorTypes.unexpectedToken(input.substring(token.loc.start.offset, token.loc.end.offset), token.loc.start.line, token.loc.start.column), input, token.loc.start.line, token.loc.start.column);
+						}
+						break;
+					}
+
+				case propertyStates.COLON:
+					{
+						var value = parseValue(input, tokenList, index, settings);
+						property.value = value.value;
+						if (settings.verbose) {
+							property.loc = location(startToken.loc.start.line, startToken.loc.start.column, startToken.loc.start.offset, value.value.loc.end.line, value.value.loc.end.column, value.value.loc.end.offset, settings.source);
+						}
+						return {
+							value: property,
+							index: value.index
+						};
+					}
+
+			}
+		}
+	}
+
+	function parseArray(input, tokenList, index, settings) {
+		// array: LEFT_BRACKET (value (COMMA value)*)? RIGHT_BRACKET
+		var startToken = void 0;
+		var array = {
+			type: 'array',
+			children: []
+		};
+		var state = arrayStates._START_;
+		var token = void 0;
+
+		while (index < tokenList.length) {
+			token = tokenList[index];
+
+			switch (state) {
+				case arrayStates._START_:
+					{
+						if (token.type === tokenTypes.LEFT_BRACKET) {
+							startToken = token;
+							state = arrayStates.OPEN_ARRAY;
+							index++;
+						} else {
+							return null;
+						}
+						break;
+					}
+
+				case arrayStates.OPEN_ARRAY:
+					{
+						if (token.type === tokenTypes.RIGHT_BRACKET) {
+							if (settings.verbose) {
+								array.loc = location(startToken.loc.start.line, startToken.loc.start.column, startToken.loc.start.offset, token.loc.end.line, token.loc.end.column, token.loc.end.offset, settings.source);
+							}
+							return {
+								value: array,
+								index: index + 1
+							};
+						} else {
+							var value = parseValue(input, tokenList, index, settings);
+							index = value.index;
+							array.children.push(value.value);
+							state = arrayStates.VALUE;
+						}
+						break;
+					}
+
+				case arrayStates.VALUE:
+					{
+						if (token.type === tokenTypes.RIGHT_BRACKET) {
+							if (settings.verbose) {
+								array.loc = location(startToken.loc.start.line, startToken.loc.start.column, startToken.loc.start.offset, token.loc.end.line, token.loc.end.column, token.loc.end.offset, settings.source);
+							}
+							index++;
+							return {
+								value: array,
+								index: index
+							};
+						} else if (token.type === tokenTypes.COMMA) {
+							state = arrayStates.COMMA;
+							index++;
+						} else {
+							error(parseErrorTypes.unexpectedToken(input.substring(token.loc.start.offset, token.loc.end.offset), token.loc.start.line, token.loc.start.column), input, token.loc.start.line, token.loc.start.column);
+						}
+						break;
+					}
+
+				case arrayStates.COMMA:
+					{
+						var _value = parseValue(input, tokenList, index, settings);
+						index = _value.index;
+						array.children.push(_value.value);
+						state = arrayStates.VALUE;
+						break;
+					}
+			}
+		}
+
+		error(parseErrorTypes.unexpectedEnd());
+	}
+
+	function parseLiteral(input, tokenList, index, settings) {
+		// literal: STRING | NUMBER | TRUE | FALSE | NULL
+		var token = tokenList[index];
+
+		var isLiteral = literals.indexOf(token.type) !== -1;
+
+		if (isLiteral) {
+			var literal = {
+				type: 'literal',
+				value: token.value,
+				rawValue: input.substring(token.loc.start.offset, token.loc.end.offset)
+			};
+			if (settings.verbose) {
+				literal.loc = token.loc;
+			}
+			return {
+				value: literal,
+				index: index + 1
+			};
+		}
+
+		return null;
+	}
+
+	function parseValue(input, tokenList, index, settings) {
+		// value: literal | object | array
+		var token = tokenList[index];
+
+		var value = parseLiteral.apply(undefined, arguments) || parseObject.apply(undefined, arguments) || parseArray.apply(undefined, arguments);
+
+		if (value) {
+			return value;
+		} else {
+			error(parseErrorTypes.unexpectedToken(input.substring(token.loc.start.offset, token.loc.end.offset), token.loc.start.line, token.loc.start.column), input, token.loc.start.line, token.loc.start.column);
+		}
+	}
+
+	var parse = function parse(input, settings) {
+		settings = _extends({}, defaultSettings, settings);
+		var tokenList = tokenize(input, settings);
+
+		if (tokenList.length === 0) {
+			error(parseErrorTypes.unexpectedEnd());
+		}
+
+		var value = parseValue(input, tokenList, 0, settings);
+
+		if (value.index === tokenList.length) {
+			return value.value;
+		} else {
+			var token = tokenList[value.index];
+			error(parseErrorTypes.unexpectedToken(input.substring(token.loc.start.offset, token.loc.end.offset), token.loc.start.line, token.loc.start.column), input, token.loc.start.line, token.loc.start.column);
+		}
+	};
+
+	module.exports = parse;
+});
+},{}],34:[function(require,module,exports){
 /*
  * Copyright 2014-2016 the original author or authors
  * @license MIT, see LICENSE.txt for details
@@ -5082,5 +5537,415 @@ responsePromise.promise = function (func) {
 
 module.exports = responsePromise;
 
-},{"./normalizeHeaderName":38}]},{},[33])(33)
+},{"./normalizeHeaderName":38}],40:[function(require,module,exports){
+(function (process){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+}).call(this,require('_process'))
+},{"_process":41}],41:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}]},{},[32])(32)
 });

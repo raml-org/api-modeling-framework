@@ -2,6 +2,7 @@ var fs = (typeof(NODE_FS) === 'undefined' ? {readFile: function() { throw new Er
 var yaml = require('./js-yaml/index.js');
 var path = require("path");
 var rest = require("rest");
+var json_ast  =require("./json_ast");
 
 global.FRAGMENTS_CACHE = {};
 global.PENDING_LIBRARIES = [];

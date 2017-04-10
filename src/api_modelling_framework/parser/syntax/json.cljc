@@ -3,12 +3,14 @@
   #?(:clj (:require [clojure.core.async :refer [<! >! go chan] :as async]
                     [clojure.string :as string]
                     [cemerick.url :as url]
-                    [api-modelling-framework.platform :as platform]))
+                    [api-modelling-framework.platform :as platform]
+                    [api-modelling-framework.parser.syntax.common :refer [add-location-meta]]))
   #?(:cljs (:require [clojure.string :as string]
                      [cemerick.url :as url]
                      [clojure.walk :refer [keywordize-keys]]
                      [cljs.core.async :refer [<! >! chan] :as async]
-                     [api-modelling-framework.platform :as platform])))
+                     [api-modelling-framework.platform :as platform]
+                     [api-modelling-framework.parser.syntax.common :refer [add-location-meta]])))
 
 (defn extract-fragment [data]
   (condp = (get data "swagger" (get data :swagger))
@@ -202,7 +204,7 @@
                      raw (<! (platform/read-location ref))
                      _ (when (:error raw)
                          (throw (new #?(:clj Exception :cljs js/Error) (:error raw))))
-                     resolved (platform/decode-json raw)
+                     resolved (platform/decode-json-ast raw)
                      pointed (if (string/index-of ref "#")
                                (json-pointer (str "#" (last (string/split ref #"#"))) resolved )
                                resolved)]
@@ -224,10 +226,10 @@
 (defn parse-file
   ([location keywordize]
    (go (try
-         (let [post-process (if keywordize clojure.walk/keywordize-keys identity)
+         (let [post-process (comp add-location-meta (if keywordize clojure.walk/keywordize-keys identity))
                id (->id location)
                data (<! (platform/read-location id))
-               parsed (platform/decode-json data)
+               parsed (platform/decode-json-ast data)
                [processed-acc processed] (find-references id parsed)]
            (loop [processed processed
                   processed-acc @processed-acc]
@@ -248,8 +250,8 @@
   ([location data keywordize]
    (go (try
          (let [id (->id location)
-               post-process (if keywordize clojure.walk/keywordize-keys identity)
-               parsed (platform/decode-json data)
+               post-process (comp add-location-meta (if keywordize clojure.walk/keywordize-keys identity))
+               parsed (platform/decode-json-ast data)
                [processed-acc processed] (find-references id parsed)]
            (loop [processed processed
                   processed-acc @processed-acc]
