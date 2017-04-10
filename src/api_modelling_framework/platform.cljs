@@ -11,7 +11,7 @@
 
 (defn error? [x]
   (or (instance? js/Error x)
-      (instance? (.-Error js/global) x)
+      (instance? (aget js/global "Error") x)
       (some? (:error x))))
 
 (comment
