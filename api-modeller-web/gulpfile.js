@@ -55,7 +55,7 @@ function bundle() {
         .pipe(gulp.dest('./public/js'))
         .pipe(browserSync.stream({once: true}));
 }
-gulp.task('bundle', ['deps'], bundle); // so you can run `gulp js` to build the file
+gulp.task('bundle', bundle); // so you can run `gulp js` to build the file
 b.on('update', bundle); // on any dep update, runs the bundler
 b.on('log', gutil.log); // output build logs to terminal
 
@@ -69,7 +69,7 @@ gulp.task('serve', ["bower"], function () {
 });
 
 gulp.task('force', function() {
-   bundle();
+    bundle();
     browserSync.init({
         server: "public",
         startPath: "/index.html"

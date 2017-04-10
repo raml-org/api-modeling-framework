@@ -10,7 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "jointjs": "^1.1.0",
-    "knockout": "^3.4.2"
+    "jsonld": "^0.4.11",
+    "knockout": "^3.4.2",
+    "rdfstore": "^0.9.17"
   },
   "devDependencies": {
     "babelify": "^7.3.0",
