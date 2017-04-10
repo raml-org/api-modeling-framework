@@ -199,8 +199,6 @@ export class ViewModel {
             }
         }
         this.focusedId(unit.id);
-        debugger;
-        this.model.elementLexicalInfo(unit.id);
         this.domainUnits({});
         this.resetDomainUnits();
         this.resetDiagram();
@@ -221,12 +219,14 @@ export class ViewModel {
                     this.selectNavigatorFile(foundRef);
                 }
             } else {
-                const unitModel = this.documentModel.findElement(this.documentLevel, unit.id);
-                if (unitModel != null) {
-                    this.model = unitModel;
-                    this.resetDocuments();
-                } else {
-                    console.log(`Cannot find element with id ${unit.id}`);
+                const lexicalInfo = this.model.elementLexicalInfo(unit.id);
+                if (lexicalInfo != null) {
+                    this.editor.revealRangeInCenter({
+                        startLineNumber: lexicalInfo.startLine,
+                        startColumn: lexicalInfo.startColumn,
+                        endLineNumber: lexicalInfo.endLine,
+                        endColumn: lexicalInfo.endColumn
+                    });
                 }
             }
         }
