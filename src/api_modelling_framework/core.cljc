@@ -309,7 +309,7 @@
                nil)))
 
          (references [this]
-           (-> (->> (domain-model this)
+           (-> (->> res
                     document/references
                     (map :location))
                platform/<-clj))
