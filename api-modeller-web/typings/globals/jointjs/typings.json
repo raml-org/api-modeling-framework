@@ -1,8 +1,0 @@
-{
-  "resolution": "main",
-  "tree": {
-    "src": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/cfb7872755f562ffaef33683241447765fe03837/jointjs/index.d.ts",
-    "raw": "registry:dt/jointjs#1.0.1+20170216143505",
-    "typings": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/cfb7872755f562ffaef33683241447765fe03837/jointjs/index.d.ts"
-  }
-}
