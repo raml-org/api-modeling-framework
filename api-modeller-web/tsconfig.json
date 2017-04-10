@@ -2,10 +2,15 @@
     "compilerOptions": {
         "target": "es5",
         "sourceMap": true,
-        "removeComments": false
+        "removeComments": false,
+        "typeRoots" : [
+            "./typings/custom",
+            "./typings/globals",
+            "./typings/modules",
+            "./node_modules/@types"
+        ]
     },
     "files": [
-        "typings/index.d.ts",
         "src/view_model.ts",
         "src/utils.ts",
         "src/view_models/diagram.ts",
