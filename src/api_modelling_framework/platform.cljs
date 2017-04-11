@@ -11,7 +11,7 @@
 
 (defn error? [x]
   (or (instance? js/Error x)
-      (instance? (.-Error js/global) x)
+      (instance? (aget js/global "Error") x)
       (some? (:error x))))
 
 (comment
@@ -28,7 +28,7 @@
     (let [ch (chan)]
       (go (-> (js/JS_REST location)
               (.then
-               (fn [response] (go (>! ch (.-entity response)))))
+               (fn [response] (go (>! ch (aget response "entity")))))
               (.catch
                (fn [e] (go (>! ch {:error err} ))))))
       ch)
