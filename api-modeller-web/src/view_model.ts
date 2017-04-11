@@ -221,23 +221,28 @@ export class ViewModel {
                     this.selectNavigatorFile(foundRef);
                 }
             } else {
-                const lexicalInfo = this.model.elementLexicalInfo(unit.id);
-                if (lexicalInfo != null) {
-                    this.editor.revealRangeInCenter({
-                        startLineNumber: lexicalInfo.startLine,
-                        startColumn: lexicalInfo.startColumn,
-                        endLineNumber: lexicalInfo.endLine,
-                        endColumn: lexicalInfo.endColumn
+                if (this.editorSection() === "raml" || this.editorSection() === "open-api") {
+                    this.model.elementLexicalInfoFor(unit.id, this.editorSection() as "raml" | "open-api", this.documentLevel, (err, lexicalInfo) => {
+                       if (err == null) {
+                           if (lexicalInfo != null) {
+                               this.editor.revealRangeInCenter({
+                                   startLineNumber: lexicalInfo.startLine,
+                                   startColumn: lexicalInfo.startColumn,
+                                   endLineNumber: lexicalInfo.endLine,
+                                   endColumn: lexicalInfo.endColumn
+                               });
+                               this.decorations = this.editor.deltaDecorations(this.decorations, [
+                                   {
+                                       range: new monaco.Range(lexicalInfo.startLine, 1, lexicalInfo.endLine, 1),
+                                       options: {
+                                           linesDecorationsClassName: 'selected-element-line-decoration',
+                                           isWholeLine: true
+                                       }
+                                   }
+                               ])
+                           }
+                       }
                     });
-                    this.decorations = this.editor.deltaDecorations(this.decorations,[
-                        {
-                            range: new monaco.Range(lexicalInfo.startLine,1,lexicalInfo.endLine,1),
-                            options: {
-                                linesDecorationsClassName: 'selected-element-line-decoration',
-                                isWholeLine: true
-                            }
-                        }
-                    ])
                 }
             }
         }

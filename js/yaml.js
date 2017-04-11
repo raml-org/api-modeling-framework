@@ -232,8 +232,10 @@ var parseYamlString = function (location, data, options, cb) {
 
 module.exports.parseYamlFile = parseYamlFile;
 module.exports.parseYamlString = parseYamlString;
+module.exports.loadYaml = yaml.load;
 module.exports.dump = yaml.dump;
 global.JS_YAML = {};
+global.JS_YAML.loadYaml = yaml.load;
 global.JS_YAML.parseYamlFile = parseYamlFile;
 global.JS_YAML.parseYamlString = parseYamlString;
 global.JS_YAML.dump = yaml.dump;

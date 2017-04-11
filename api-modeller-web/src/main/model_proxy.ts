@@ -2,6 +2,7 @@ import {ModelType} from "./api_modeller_window";
 import * as jsonld from "jsonld";
 import {UnitModel} from "./units_model";
 import {LexicalInfo} from "./model_utils";
+import {LexicalInfoGenerator} from "./lexical_info_generator";
 
 const apiFramework = window["api_modelling_framework"].core;
 
@@ -11,6 +12,10 @@ export type ModelLevel = "document" | "domain";
 const ramlGenerator = new apiFramework.__GT_RAMLGenerator();
 const openAPIGenerator = new apiFramework.__GT_OpenAPIGenerator();
 const apiModelGenerator = new apiFramework.__GT_APIModelGenerator();
+
+const ramlParser = new apiFramework.__GT_RAMLParser();
+const openAPIParser = new apiFramework.__GT_OpenAPIParser();
+const apiModelParser = new apiFramework.__GT_APIModelParser();
 
 function from_clj(x: any) {
     return apiFramework.fromClj(x)
@@ -32,10 +37,24 @@ function to_clj(x: any) {
 export class ModelProxy {
     // holders for the generated strings
     public ramlString: string = "";
+    public generatedRamlModel: any;
     public openAPIString: string = "";
+    public generatedOpenAPIModel: any;
     public apiModeltring: string = "";
+    public generatedAPIModel: any;
+    public lexicalInfoGenerator: LexicalInfoGenerator;
 
-    constructor(public raw: any, public sourceType: ModelType) {}
+    constructor(public raw: any, public sourceType: ModelType) {
+        // we setup the default model with the value passed in the constructor
+        // for the kind of model.
+        if (this.sourceType === "raml") {
+            this.generatedRamlModel = raw;
+        } else if(this.sourceType === "open-api") {
+            this.generatedOpenAPIModel = raw;
+        }
+
+        this.lexicalInfoGenerator = new LexicalInfoGenerator(this);
+    }
     location(): string { return apiFramework.location(this.raw) }
     documentModel() { return apiFramework.document_model(this.raw); }
     domainModel() { return apiFramework.domain_model(this.raw); }
@@ -48,21 +67,14 @@ export class ModelProxy {
      */
     toRaml(level: ModelLevel, options: any, cb) {
         console.log(`** Generating RAML with level ${level}`);
-        let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
-        apiFramework.generate_string(
-            ramlGenerator,
-            this.location(),
-            liftedModel,
-            {},
-            (err, res) => {
-                if (err != null) {
-                    cb(err,res);
-                } else {
-                    this.ramlString = res;
-                    cb(err,res)
-                }
+        this.lexicalInfoGenerator.generateLexicalInfo("raml", level, (err, res) => {
+            if (err) {
+                cb(err, null);
+            } else {
+                this.ramlString = this.lexicalInfoGenerator.text["raml"];
+                cb(null, this.ramlString);
             }
-        );
+        });
     }
 
     /**
@@ -72,20 +84,14 @@ export class ModelProxy {
      */
     toOpenAPI(level: ModelLevel, options: any, cb) {
         console.log(`** Generating OpenAPI with level ${level}`);
-        let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
-        apiFramework.generate_string(
-            openAPIGenerator,
-            this.location(),
-            liftedModel,
-            {},
-            (err, res) => {
-                if (err != null) {
-                    cb(err, res);
-                } else {
-                    this.openAPIString = JSON.stringify(JSON.parse(res), null, 2);
-                    cb(err, this.openAPIString);
-                }
-            });
+        this.lexicalInfoGenerator.generateLexicalInfo("openapi", level, (err, res) => {
+            if (err) {
+                cb(err, null);
+            } else {
+                this.openAPIString = this.lexicalInfoGenerator.text["openapi"];
+                cb(null, this.openAPIString);
+            }
+        });
     }
 
     update(location: string, text: string, cb: (e: any) => void): void {
@@ -116,6 +122,7 @@ export class ModelProxy {
                 if (err != null) {
                     cb(err, res);
                 } else {
+
                     const parsed = JSON.parse(res);
                     if ( compacted ) {
                         const context = {
@@ -138,7 +145,7 @@ export class ModelProxy {
                                 this.apiModeltring = JSON.stringify(finalJson, null, 2);
                                 cb(err, this.apiModeltring);
                             } else {
-                                cb(err, finalJson)
+                                cb(err, finalJson);
                             }
                         });
                     } else {
@@ -184,7 +191,7 @@ export class ModelProxy {
 
     elementLexicalInfo(id: string): LexicalInfo | undefined {
         console.log("*** Looking for lexical information about " + id);
-        const res = apiFramework.lexical_info_for_unit(this.raw, "raml", id);
+        const res = apiFramework.lexical_info_for_unit(this.raw, id);
         if (res != null) {
             return new LexicalInfo(
                 parseInt(res["start-line"]),
@@ -197,5 +204,18 @@ export class ModelProxy {
         } else {
             return undefined;
         }
+    }
+
+    elementLexicalInfoFor(id: string, model: "raml" | "open-api" | "jsonld", level: ModelLevel, cb:(err: any, res: LexicalInfo | undefined) => void) {
+        console.log("*** Looking for lexical information about " + id + " for model " + model);
+        var syntax =  null;
+        if (model === "raml") {
+            syntax = "raml";
+        } else if (model === "open-api") {
+            syntax = "openapi"
+        } else if (model === "jsonld") {
+            cb(null, undefined);
+        }
+        this.lexicalInfoGenerator.lexicalInfoFor(id, syntax, level, cb);
     }
 }
