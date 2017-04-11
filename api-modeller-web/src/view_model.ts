@@ -333,7 +333,7 @@ export class ViewModel {
                     console.log(err);
                 } else {
                     if (this.editorSection() === "api-model") {
-                        this.editor.setModel(createModel(this.model!.apiModeltring, "json"));
+                        this.editor.setModel(createModel(this.model!.apiModelString, "json"));
                         this.editor['_configuration'].editor.readOnly = true;
                     }
                 }
@@ -399,7 +399,7 @@ export class ViewModel {
             window['resizeFn']();
         } else if (section === "api-model") {
             if (this.model != null) {
-                this.editor.setModel(createModel(this.model!.apiModeltring, "json"));
+                this.editor.setModel(createModel(this.model!.apiModelString, "json"));
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
             }
@@ -616,8 +616,8 @@ export class ViewModel {
     }
 
     resetQuery() {
-        if (this.model && this.model.apiModeltring && this.model.apiModeltring !== "") {
-            this.query.process(this.model.apiModeltring, (err, store) => {
+        if (this.model && this.model.apiModelString && this.model.apiModelString !== "") {
+            this.query.process(this.model.apiModelString, (err, store) => {
                 if (err) {
                     alert("Error loading data into string " + err);
                 }

@@ -33,7 +33,7 @@ export class ModelProxy {
     // holders for the generated strings
     public ramlString: string = "";
     public openAPIString: string = "";
-    public apiModeltring: string = "";
+    public apiModelString: string = "";
 
     constructor(public raw: any, public sourceType: ModelType) {}
     location(): string { return apiFramework.location(this.raw) }
@@ -138,16 +138,16 @@ export class ModelProxy {
                             }
                             const finalJson = (err == null) ? compacted : parsed;
                             if ( stringify ) {
-                                this.apiModeltring = JSON.stringify(finalJson, null, 2);
-                                cb(err, this.apiModeltring);
+                                this.apiModelString = JSON.stringify(finalJson, null, 2);
+                                cb(err, this.apiModelString);
                             } else {
                                 cb(err, finalJson)
                             }
                         });
                     } else {
                         if ( stringify ) {
-                            this.apiModeltring = JSON.stringify(parsed, null, 2);
-                            cb(err, this.apiModeltring);
+                            this.apiModelString = JSON.stringify(parsed, null, 2);
+                            cb(err, this.apiModelString);
                         } else {
                             cb(err, parsed)
                         }
