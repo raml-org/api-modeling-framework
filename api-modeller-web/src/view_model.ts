@@ -411,7 +411,6 @@ export class ViewModel {
         } else {
 
         }
-        var self = this
         this.onEditorSectionChangeCallbacks.forEach(func => {
             func.call(this)
         })
