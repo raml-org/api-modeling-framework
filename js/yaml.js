@@ -179,7 +179,8 @@ var FragmentType = new yaml.Type("!include", {
         return {
             "@location": ensureFileUri(location),
             "@fragment": fragmentInfo,
-            "@data": parsed
+            "@data": parsed,
+            "@raw": fragment.data
         };
     }
 });

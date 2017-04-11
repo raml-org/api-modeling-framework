@@ -333,4 +333,5 @@
                       lexical-info)
                     nil))))))
 
-         (raw [this] (:raw res)))))))
+         (raw [this]
+           (:raw res)))))))

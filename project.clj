@@ -54,8 +54,8 @@
                                  :compiler {:output-to "output/web/amf.js"
                                             :main api-modelling-framework.core
                                             :asset-path "/js"
-                                            :optimizations :whitespace
-                                            ;:optimizations :advanced
+                                            ;:optimizations :whitespace
+                                            :optimizations :advanced
                                             :foreign-libs [{:file "js/js-support-bundle.js"
                                                             :provides ["api_modelling_framework.js-support"]}]
                                             :externs ["js/externs.js"]

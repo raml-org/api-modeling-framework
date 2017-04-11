@@ -360,7 +360,7 @@
       [(DocumentSourceMap. source-map-id source (filter some? [file-parsed-tag document-type-tag]) [])]
       [])))
 
-(defrecord ParsedDocument [location encodes declares references additional-properties document-type resolved ]
+(defrecord ParsedDocument [location encodes declares references additional-properties document-type resolved raw]
   Node
   (id [this] location)
   (name [this] location)
@@ -378,7 +378,7 @@
   Module
   (declares [this] (or declares [])))
 
-(defrecord ParsedModule [location declares references additional-properties document-type resolved description]
+(defrecord ParsedModule [location declares references additional-properties document-type resolved description raw]
   Node
   (id [this] location)
   (name [this] location)
@@ -394,7 +394,7 @@
   Module
   (declares [this] (or declares [])))
 
-(defrecord ParsedFragment [location encodes additional-properties references document-type resolved]
+(defrecord ParsedFragment [location encodes additional-properties references document-type resolved raw]
   Node
   (id [this] location)
   (name [this] location)

@@ -141,6 +141,8 @@
                               (into {}))
                    api-resource (get paths "/api")
                    song-resource (get paths "/songs/{songId}")]
+               (doseq [ref (document/references (core/document-model model))]
+                 (is (some? (:raw ref))))
                (is (= "World Music API" (document/name api-documentation)))
                (is (= "This is an example of a music API." (document/description api-documentation)))
                (is (= "/{version}" (domain/base-path api-documentation)))
@@ -330,6 +332,16 @@
 
                (is (-> yaml-data (get (keyword "/pets")) some?))
                (is (-> yaml-data (get (keyword "/pets/{petId}")) some?))
+               (done)))))
+
+(deftest integration-getting-references
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/other-examples/world-music-api/api.raml")))
+                   references (document/references (core/document-model model))]
+               (doseq [reference references]
+                 (let [found-model (core/reference-model model (document/location reference))]
+                   (is (some? (core/raw found-model)))))
                (done)))))
 
 (deftest integration-test-update-raml
