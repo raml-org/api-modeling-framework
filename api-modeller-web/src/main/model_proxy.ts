@@ -40,7 +40,7 @@ export class ModelProxy {
     public generatedRamlModel: any;
     public openAPIString: string = "";
     public generatedOpenAPIModel: any;
-    public apiModeltring: string = "";
+    public apiModelString: string = "";
     public generatedAPIModel: any;
     public lexicalInfoGenerator: LexicalInfoGenerator;
 
@@ -142,16 +142,16 @@ export class ModelProxy {
                             }
                             const finalJson = (err == null) ? compacted : parsed;
                             if ( stringify ) {
-                                this.apiModeltring = JSON.stringify(finalJson, null, 2);
-                                cb(err, this.apiModeltring);
+                                this.apiModelString = JSON.stringify(finalJson, null, 2);
+                                cb(err, this.apiModelString);
                             } else {
                                 cb(err, finalJson);
                             }
                         });
                     } else {
                         if ( stringify ) {
-                            this.apiModeltring = JSON.stringify(parsed, null, 2);
-                            cb(err, this.apiModeltring);
+                            this.apiModelString = JSON.stringify(parsed, null, 2);
+                            cb(err, this.apiModelString);
                         } else {
                             cb(err, parsed)
                         }
