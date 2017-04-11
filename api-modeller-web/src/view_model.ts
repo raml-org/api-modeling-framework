@@ -36,7 +36,6 @@ export class ViewModel {
     // model are selected and we need to show different spec texts
     public model?: ModelProxy = undefined;
     public referenceToDomainUnits: { [id: string]: DomainModel[] } = {};
-    public onEditorSectionChangeCallbacks: { (): void; }[] = []
 
     // Observables for the main interface state
     public navigatorSection: KnockoutObservable<NavigatorSection> = ko.observable<NavigatorSection>("files");
@@ -222,32 +221,29 @@ export class ViewModel {
                     this.selectNavigatorFile(foundRef);
                 }
             } else {
-                var revealAndDecorate = () => {
-                    if (this.editorSection() === "raml" || this.editorSection() === "open-api") {
-                        this.model.elementLexicalInfoFor(unit.id, this.editorSection() as "raml" | "open-api", this.documentLevel, (err, lexicalInfo) => {
-                           if (err == null) {
-                               if (lexicalInfo != null) {
-                                   this.editor.revealRangeInCenter({
-                                       startLineNumber: lexicalInfo.startLine,
-                                       startColumn: lexicalInfo.startColumn,
-                                       endLineNumber: lexicalInfo.endLine,
-                                       endColumn: lexicalInfo.endColumn
-                                   });
-                                   this.decorations = this.editor.deltaDecorations(this.decorations, [
-                                       {
-                                           range: new monaco.Range(lexicalInfo.startLine, 1, lexicalInfo.endLine, 1),
-                                           options: {
-                                               linesDecorationsClassName: 'selected-element-line-decoration',
-                                               isWholeLine: true
-                                           }
+                if (this.editorSection() === "raml" || this.editorSection() === "open-api") {
+                    this.model.elementLexicalInfoFor(unit.id, this.editorSection() as "raml" | "open-api", this.documentLevel, (err, lexicalInfo) => {
+                       if (err == null) {
+                           if (lexicalInfo != null) {
+                               this.editor.revealRangeInCenter({
+                                   startLineNumber: lexicalInfo.startLine,
+                                   startColumn: lexicalInfo.startColumn,
+                                   endLineNumber: lexicalInfo.endLine,
+                                   endColumn: lexicalInfo.endColumn
+                               });
+                               this.decorations = this.editor.deltaDecorations(this.decorations, [
+                                   {
+                                       range: new monaco.Range(lexicalInfo.startLine, 1, lexicalInfo.endLine, 1),
+                                       options: {
+                                           linesDecorationsClassName: 'selected-element-line-decoration',
+                                           isWholeLine: true
                                        }
-                                   ])
-                               }
+                                   }
+                               ])
                            }
-                        });
-                    }
+                       }
+                    });
                 }
-                this.onEditorSectionChangeCallbacks.push(revealAndDecorate)
             }
         }
     }
@@ -411,10 +407,7 @@ export class ViewModel {
         } else {
 
         }
-        this.onEditorSectionChangeCallbacks.forEach(func => {
-            func.call(this)
-        })
-        this.onEditorSectionChangeCallbacks = []
+        this.selectElementDocument({id: this.focusedId()} as DomainElement)
     }
 
     private onSelectedDiagramId(id, unit) {
