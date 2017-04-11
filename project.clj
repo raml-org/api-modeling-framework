@@ -34,7 +34,7 @@
             "web" ["with-profile" "build" "run" "web"]
             "api-modeller" ["with-profile" "build" "run" "api-modeller"]
             "api-modeller-web" ["with-profile" "build" "run" "api-modeller-web"]
-            "test-js" ["doo" "node" "test"]}
+            "test-js" ["doo" "node" "test" "once"]}
 
   :cljsbuild {:builds {
                        :node {:source-paths ["src", "src_node"]
