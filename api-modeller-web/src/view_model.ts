@@ -160,7 +160,7 @@ export class ViewModel {
             if (next.id === target) {
                 return acc.concat([next]);
             } else {
-                for (var p in next) {
+                for (let p in next) {
                     if (next.hasOwnProperty(p)) {
                         const elem = next[p];
                         if (elem instanceof Array) {

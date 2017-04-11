@@ -80,7 +80,6 @@ export class UI {
             } else if (unit.kind === "Payload") {
                 return (unit as Payload).mediaType || "*/*";
             } else if (unit.kind === "DomainPropertySchema") {
-                debugger;
                 return unit.label || unit.id.split("#").pop();
             } else if (unit.kind === "Shape") {
                 if (unit.label) {

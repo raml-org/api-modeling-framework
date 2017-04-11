@@ -54,6 +54,8 @@ function consumePromises<T>(promises: ((ke: (e) => void, kd:(T) => void) => void
             },(e) => {
                 k(e);
             });
+        } else {
+            consumePromises(promises, k);
         }
     } else {
         k(undefined);
@@ -88,7 +90,7 @@ export class UnitModel {
             } else {
                 return null;
             }
-        });
+        }).filter(p => p != null);
 
         consumePromises(promises, (e) => {
             if (e != null) {

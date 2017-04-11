@@ -71,7 +71,7 @@ export class ModelProxy {
             if (err) {
                 cb(err, null);
             } else {
-                this.ramlString = this.lexicalInfoGenerator.text["raml"];
+                this.ramlString = this.lexicalInfoGenerator.getText("raml", level);
                 cb(null, this.ramlString);
             }
         });
@@ -88,7 +88,7 @@ export class ModelProxy {
             if (err) {
                 cb(err, null);
             } else {
-                this.openAPIString = this.lexicalInfoGenerator.text["open-api"];
+                this.openAPIString = this.lexicalInfoGenerator.getText("open-api", level);
                 cb(null, this.openAPIString);
             }
         });

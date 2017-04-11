@@ -14,11 +14,19 @@ export class LexicalInfoGenerator {
     public text: {[syntax: string]: string} = {};
 
     constructor(public model: ModelProxy) {
-        this.text[model.sourceType] = model.text();
+        this.text[this.key(model.sourceType, "document")] = model.text();
+    }
+
+    private key(syntax: LexicalSyntaxes, level: ModelLevel) {
+        return `${syntax}::${level}`;
+    }
+
+    getText(syntax: LexicalSyntaxes, level: ModelLevel) {
+        return this.text[this.key(syntax, level)];
     }
 
     lexicalInfoFor(id: string, syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
-        if (this.model.sourceType === syntax) {
+        if (this.model.sourceType === syntax && level === "document") {
             // in this case the lexical info is native to the generated model, we can retrieve it directly
             cb(null, this.model.elementLexicalInfo(id));
         } else {
@@ -34,8 +42,8 @@ export class LexicalInfoGenerator {
     }
 
     exportLexicalInfo(id: string, syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
-        if (this.lexicalInfoMaps[syntax] != null) {
-            cb(null, this.lexicalInfoMaps[syntax][id]);
+        if (this.lexicalInfoMaps[this.key(syntax,level)] != null) {
+            cb(null, this.lexicalInfoMaps[this.key(syntax,level)][id]);
         } else {
             this.generateLexicalInfo(syntax, level, (err, _) => {
                 if (err) {
@@ -48,8 +56,8 @@ export class LexicalInfoGenerator {
     }
 
     generateLexicalInfo(syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
-        if (this.lexicalInfoMaps[syntax] != null) {
-            cb(null, this.lexicalInfoMaps[syntax]);
+        if (this.lexicalInfoMaps[this.key(syntax, level)] != null) {
+            cb(null, this.lexicalInfoMaps[this.key(syntax, level)]);
         } else {
             this.generateSyntax(syntax, level, (err, textWithIds) => {
                 if (err) {
@@ -58,9 +66,9 @@ export class LexicalInfoGenerator {
                     const header = this.findHeader(syntax, textWithIds);
                     const mappingInfo = this.generateIdsMap(textWithIds, syntax);
                     const mapping = mappingInfo.mapping;
-                    const ast = this.generateCleanAST(mappingInfo.ast, header, syntax);
-                    this.lexicalInfoMaps[syntax] = this.fetchLexicalInfo(ast, mapping, header == null ? 0 : 1);
-                    cb(null, this.lexicalInfoMaps[syntax]);
+                    const ast = this.generateCleanAST(mappingInfo.ast, level, header, syntax);
+                    this.lexicalInfoMaps[this.key(syntax, level)] = this.fetchLexicalInfo(ast, mapping, header == null ? 0 : 1);
+                    cb(null, this.lexicalInfoMaps[this.key(syntax, level)]);
                 }
             });
         }
@@ -96,9 +104,9 @@ export class LexicalInfoGenerator {
     }
 
     generateIdsMap(textWithIds: string, syntax: LexicalSyntaxes) {
-        var idKey = null;
-        var classKey = null;
-        var parser = null;
+        let idKey = null;
+        let classKey = null;
+        let parser = null;
         if (syntax === "raml") {
             idKey = "(amf-id)";
             classKey = "(amf-class)";
@@ -111,9 +119,9 @@ export class LexicalInfoGenerator {
 
         if (parser != null && idKey != null && classKey != null) {
             // This will not follow $refs/!includes
-            var parsed = parser(textWithIds);
-            var acc = {};
-            var cleanAST = this.traceIds(idKey, classKey, parsed, [], acc);
+            let parsed = parser(textWithIds);
+            let acc = {};
+            let cleanAST = this.traceIds(idKey, classKey, parsed, [], acc);
             cleanAST = this.removeLocations(cleanAST);
             return {
                 ast: cleanAST,
@@ -168,9 +176,9 @@ export class LexicalInfoGenerator {
         return node;
     }
 
-    generateCleanAST(ast, header: string | undefined, syntax: LexicalSyntaxes) {
-        var generator = null;
-        var parser = null;
+    generateCleanAST(ast, level: ModelLevel, header: string | undefined, syntax: LexicalSyntaxes) {
+        let generator = null;
+        let parser = null;
         if (syntax === "raml") {
             generator = window['JS_YAML'].dump;
             parser = window['JS_YAML'].loadYaml;
@@ -179,9 +187,9 @@ export class LexicalInfoGenerator {
             parser = function(text) { return window['JS_AST']("", text); };
         }
 
-        var textWithoutIds = generator(ast);
+        let textWithoutIds = generator(ast);
         const finalText = header != null ? (header + "\n" + textWithoutIds) : textWithoutIds;
-        this.text[syntax] = finalText;
+        this.text[this.key(syntax,level)] = finalText;
         return parser(textWithoutIds);
     }
 
