@@ -55,16 +55,29 @@ export class LexicalInfoGenerator {
                 if (err) {
                     cb(err, null);
                 } else {
+                    const header = this.findHeader(syntax, textWithIds);
                     const mappingInfo = this.generateIdsMap(textWithIds, syntax);
                     const mapping = mappingInfo.mapping;
-                    var ast = this.generateCleanAST(mappingInfo.ast, syntax);
-                    this.lexicalInfoMaps[syntax] = this.fetchLexicalInfo(ast, mapping);
+                    const ast = this.generateCleanAST(mappingInfo.ast, header, syntax);
+                    this.lexicalInfoMaps[syntax] = this.fetchLexicalInfo(ast, mapping, header == null ? 0 : 1);
                     cb(null, this.lexicalInfoMaps[syntax]);
                 }
             });
         }
     }
 
+    findHeader(syntax, text) {
+        if (syntax === "raml") {
+            const maybeHeader = text.split("\n")[0];
+            if(maybeHeader.indexOf("#") === 0) {
+                return maybeHeader;
+            } else {
+                return undefined;
+            }
+        } else {
+            return undefined;
+        }
+    }
     generateSyntax(syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
         var generator = null;
         if (syntax === "raml") {
@@ -155,7 +168,7 @@ export class LexicalInfoGenerator {
         return node;
     }
 
-    generateCleanAST(ast, syntax: LexicalSyntaxes) {
+    generateCleanAST(ast, header: string | undefined, syntax: LexicalSyntaxes) {
         var generator = null;
         var parser = null;
         if (syntax === "raml") {
@@ -167,21 +180,22 @@ export class LexicalInfoGenerator {
         }
 
         var textWithoutIds = generator(ast);
-        this.text[syntax] = textWithoutIds;
+        const finalText = header != null ? (header + "\n" + textWithoutIds) : textWithoutIds;
+        this.text[syntax] = finalText;
         return parser(textWithoutIds);
     }
 
-    fetchLexicalInfo(ast, mapping) {
+    fetchLexicalInfo(ast, mapping, offset = 0) {
         for (let id in mapping) {
             const nodeMapping = mapping[id];
 
             const res = this.findLexicalInfoInPath(ast, nodeMapping.path);
             if (res != null) {
                 const lexical = new LexicalInfo(
-                    parseInt(res["start-line"]),
+                    parseInt(res["start-line"]) + offset,
                     parseInt(res["start-column"]),
                     parseInt(res["start-index"]),
-                    parseInt(res["end-line"]),
+                    parseInt(res["end-line"]) + offset,
                     parseInt(res["end-column"]),
                     parseInt(res["end-index"])
                 );
