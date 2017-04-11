@@ -7,11 +7,13 @@
     <!-- polyfills -->
     <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
 
-    <script src="./js/amf.js"></script>
-    <script src="./js/api_modeller.js"></script>
+    <script src="js/preload.js"></script>
+
+    <!-- <script src="./js/amf.js"></script> -->
+    <!-- <script src="./js/api_modeller.js"></script> -->
 
     <!-- Loading Monaco -->
-    <script src="bower_components/monaco-editor/release/min/vs/loader.js"></script>
+    <!-- <script src="bower_components/monaco-editor/release/min/vs/loader.js"></script> -->
     <!-- Insert this line above script imports  -->
     <!--<script type='text/javascript' src="bower_components/jquery/dist/jquery.min.js"></script>-->
     <!--<script type='text/javascript' src="bower_components/lodash/lodash.min.js"></script>-->
@@ -29,6 +31,12 @@
     <title>API Modeller</title>
 </head>
 <body>
+<!-- Loader view -->
+<div id="preloader" class="container is-marginless is-fluid" style="width: 100%; height: 100%; text-align: center; padding-top: 13%">
+    <h2 class="title is-2">Loading API Modeller</h2>
+    <progress id="preloader-progress" class="progress is-primary" value="0" max="100" style="margin-left: 25%; max-width: 50%; margin-bottom: 1000px">0%</progress>
+</div>
+
 <!-- Load spec modal window -->
 <link rel="import" href="nav/load_modal.html">
 <!-- Main container class -->
@@ -49,6 +57,33 @@
 <script>
     (function() {
         window.global = window;
+        var loadApp = function(cb) {
+            var assets = [
+                "./js/amf.js",
+                "./js/api_modeller.js",
+                "bower_components/monaco-editor/release/min/vs/loader.js"
+            ];
+            var loaded = 0;
+            var preload = new createjs.LoadQueue();
+            var handleFileComplete = function(event) {
+                var oldValue = document.getElementById("preloader-progress").value;
+                var newValue = Math.floor(oldValue + (100 / (loaded + assets.length)));
+                document.getElementById("preloader-progress").value = newValue;
+                document.body.appendChild(event.result);
+                loaded++;
+                if(assets.length == 0) {
+                    document.getElementById("preloader-progress").value = 100;
+                    cb();
+                } else {
+                    console.log("loading " + assets[0]);
+                    preload.loadFile(assets.shift());
+                }
+            };
+            preload.addEventListener("fileload", handleFileComplete);
+            console.log("loading " + assets[0]);
+            preload.loadFile(assets.shift());
+        };
+
         window.addEventListener('WebComponentsReady', function() {
             document.getElementsByName("body");
             // Imported content
@@ -102,9 +137,15 @@
 
                     window.appModel = new api_modeller.ViewModel(editor);
                     window.appModel.apply(document.getElementById("the-app"));
+                    setTimeout(function() {
+                        document.getElementById("preloader").style.display = "none";
+                    }, 200);
                 });
             };
-            reloadApp();
+
+            loadApp(function(){
+                reloadApp();
+            });
         });
     })();
 </script>

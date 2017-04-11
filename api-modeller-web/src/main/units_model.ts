@@ -138,7 +138,6 @@ export class UnitModel {
         const references = this.extractReferences(doc);
         const encoded = this.extractEncodedElement(doc);
         const encodedLabel = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
-        debugger;
         acc.fragments.push(new Fragment(doc["@id"], encodedLabel || label(doc["@id"]), references, encoded));
     }
 
