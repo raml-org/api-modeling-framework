@@ -97,6 +97,11 @@ var cacheFragments = function (fileOrData, cb, pending) {
         updateFragments(fileOrData, fileOrData.data, pending, cb);
     } else {
         // console.log(fileOrData);
+        if (typeof(AMF_LOADING_EVENT) !== 'undefined') {
+            try {
+                AMF_LOADING_EVENT(fileOrData.location);
+            } catch (e) {}
+        }
         resolveFile(fileOrData.location, function (err, data) {
             if (err) {
                 cb(err);

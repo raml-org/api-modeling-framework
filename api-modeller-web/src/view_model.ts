@@ -50,6 +50,7 @@ export class ViewModel {
     public generateSourceMaps: KnockoutObservable<string> = ko.observable<string>("no");
     public focusedId: KnockoutObservable<string> = ko.observable<string>("");
     public selectedParserType: KnockoutObservable<ParserType|undefined> = ko.observable<ParserType|undefined>(undefined);
+    public lastLoadedFile: KnockoutObservable<string|undefined> = ko.observable<string|undefined>(undefined);
 
     // Nested interfaces
     public ui: UI = new UI();
@@ -65,6 +66,16 @@ export class ViewModel {
     private apiModellerWindow = new ApiModellerWindow();
 
     constructor(public editor: any) {
+        window["AMF_LOADING_EVENT"] = (loaded) => {
+            this.lastLoadedFile(loaded);
+            ((loaded) => {
+                setTimeout(() => {
+                    if(this.lastLoadedFile() === loaded){
+                        this.lastLoadedFile(undefined);
+                    }
+                }, 1500);
+            })(loaded);
+        };
         editor.onDidChangeModelContent((e) => {
             this.shouldReload++;
             ((number) => {

@@ -7,3 +7,5 @@ var JS_REST = {};
 JS_REST.location = function () { };
 
 var JS_AST = function() {};
+
+var AMF_LOADING_EVENT = function() {};

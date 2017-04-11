@@ -51,6 +51,15 @@
                 <link rel="import" href="editor.html">
             </div>
         </div>
+        <!-- data-bind="visible: (lastLoadedFile() != null)" -->
+        <div data-bind="visible: (lastLoadedFile() != null)"
+             style="position: absolute; width: 100%; padding: 10px; bottom: -20px">
+            <i class="fa fa-cog fa-spin fa-3x fa-fw"
+               data-bind="visible: (lastLoadedFile() != null)"
+               style="float:left; font-size: 22px; margin-right: 10px">
+            </i>
+            <p data-bind="text: ('Loading ' + lastLoadedFile())"></p>
+        </div>
     </div>
 </div>
 
