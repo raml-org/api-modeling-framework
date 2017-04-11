@@ -314,7 +314,7 @@
          (common/with-amf-info model context "RequestBody")
          utils/clean-nils)))
 
-(defmethod to-raml domain/Type [model context]
+(defmethod to-raml domain/Type [model {:keys [generate-amf-info] :as context}]
   (debug "Generating type")
   (cond
     (and (not (:resolve-types context))
@@ -323,6 +323,10 @@
                                                          (shapes-parser/parse-shape
                                                           (domain/shape model) (assoc context :to-raml to-raml)))]
                                            (cond
+                                             generate-amf-info (let [out-type (if (map? out-type)
+                                                                                out-type
+                                                                                {:type out-type})]
+                                                                 (common/with-amf-info model context "TypeDeclaration" out-type))
                                              (map? out-type)  (if (= [:type] (keys out-type)) ;; If only type, we don't need the extra inheritance
                                                                 (:type out-type)
                                                                 out-type)

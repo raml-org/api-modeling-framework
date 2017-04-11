@@ -209,7 +209,8 @@
     (->> (:x-traits node {})
          (reduce (fn [acc [trait-name trait-node]]
                    (debug (str "Processing trait " trait-name))
-                   (let [fragment-name (url/url-encode (utils/safe-str trait-name))
+                   (let [location-meta (meta trait-name)
+                         fragment-name (url/url-encode (utils/safe-str trait-name))
                          references (get nested-context :references {})
                          trait-fragment (parse-ast trait-node (-> nested-context
                                                                   (assoc :references (merge references acc))
@@ -225,7 +226,8 @@
                          sources (concat sources (generate-is-trait-sources fragment-name
                                                                             (str location "/" fragment-name)
                                                                             (str parsed-location "/" fragment-name)))
-                         parsed-trait (assoc trait-fragment :sources sources)]
+                         parsed-trait (assoc trait-fragment :sources sources)
+                         parsed-trait (assoc parsed-trait :locaton location-meta)]
                      (assoc acc (keyword trait-name) parsed-trait)))
                  {}))))
 
@@ -241,7 +243,8 @@
     (->> (:definitions node {})
                         (reduce (fn [acc [type-name type-node]]
                                   (debug (str "Processing type " type-name))
-                                  (let [type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))
+                                  (let [location-meta (meta type-node)
+                                        type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))
                                         type-fragment (parse-ast type-node (-> context
                                                                                ;; the physical location matches the structure of the OpennAPI document
                                                                                (assoc :location (utils/path-join location "/definitions/" type-name))
@@ -255,7 +258,8 @@
                                         parsed-type (-> type-fragment
                                                         (assoc :name (utils/safe-str type-name))
                                                         (assoc :sources sources)
-                                                        (assoc :id type-id))]
+                                                        (assoc :id type-id))
+                                        parsed-type (assoc parsed-type :lexical location-meta)]
                                     (assoc acc type-id parsed-type)))
                                 {}))))
 
@@ -664,9 +668,10 @@
   (let [shape (shapes/parse-type node (-> context
                                           (assoc :parsed-location parsed-location)
                                           (assoc :parse-ast parse-ast)))
-        type-id (str (get shape "@id") "/wrapper")]
+        type-id (get shape "@id")]
     ;; ParsedType nodes just wrap the JSON-LD description for the shape.
     ;; They should not generate stand-alone nodes in the JSON-LD domain model, the node IS the shape
+    ;; They have the same ID
     (->> (domain/map->ParsedType {:id type-id
                                   :shape shape})
          (with-annotations node context "Schema")

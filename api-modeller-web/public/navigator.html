@@ -46,11 +46,13 @@
                     <ul data-bind="foreach: declares"
                         class="menu-list"
                         style="margin-left: 15px">
-                        <li>
+                        <li classs="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
                             </span>
-                            <p data-bind="text: $data.label"></p>
+                            <a href="#" data-bind="text: $data.label,
+                                                   click: function(){ (viewModel.selectUnitDeclaration.bind(viewModel))($data) },
+                                                   clickBubble: false"></a>
                         </li>
                     </ul>
                 </span>
@@ -127,7 +129,9 @@
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
                             </span>
-                            <p data-bind="text: $data.label"></p>
+                            <a href="#" data-bind="text: $data.label,
+                                                   click: function(){ (viewModel.selectUnitDeclaration.bind(viewModel))($data) },
+                                                   clickBubble: false"></a>
                         </li>
                     </ul>
                 </span>

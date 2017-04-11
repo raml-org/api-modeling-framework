@@ -201,15 +201,16 @@
            (mapv (fn [payload]
                    (let [body (<-domain (domain/schema payload) ctx)
                          schema (to-openapi! body ctx)
-                         parsed-body (-> {:name (if (and  (some? body)
-                                                          (some? (document/name payload)))
-                                                  (document/name payload)
-                                                  "")
-                                          :x-media-type (if (not= "*/*" (domain/media-type payload))
-                                                          (domain/media-type payload)
-                                                          nil)
-                                          :schema schema}
-                                         utils/clean-nils)]
+                         parsed-body (->> {:name (if (and  (some? body)
+                                                           (some? (document/name payload)))
+                                                   (document/name payload)
+                                                   "")
+                                           :x-media-type (if (not= "*/*" (domain/media-type payload))
+                                                           (domain/media-type payload)
+                                                           nil)
+                                           :schema schema}
+                                          (common/with-amf-info payload ctx "ResponseBody")
+                                          utils/clean-nils)]
                      (if (or (= {} parsed-body)
                              (= {:name ""} parsed-body))
                        nil
@@ -313,7 +314,10 @@
 
 (defmethod to-openapi domain/Type [model context]
   (debug "Generating type")
-  (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context)))
+  (common/with-amf-info
+    model
+    context "TypeDeclaration"
+    (keywordize-keys (shapes-parser/parse-shape (domain/shape model) context))))
 
 (defmethod to-openapi document/Includes [model {:keys [fragments expanded-fragments document-generator references]
                                                 :as context

@@ -5,7 +5,7 @@ import { ApiModellerWindow } from "./main/api_modeller_window";
 import { Nav } from "./view_models/nav";
 // import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor;
 // import createModel = monaco.editor.createModel;
-import {Document, Fragment, Module, DocumentId, Unit} from "./main/units_model";
+import {Document, Fragment, Module, DocumentId, Unit, DocumentDeclaration} from "./main/units_model";
 import { label } from "./utils";
 import { UI } from "./view_models/ui";
 import { DomainElement, DomainModel } from "./main/domain_model";
@@ -151,18 +151,20 @@ export class ViewModel {
     }
 
     public selectNavigatorFile(reference: ReferenceFile) {
-        this.selectedReference(reference);
-        this.focusedId(reference.id);
-        if (this.documentModel != null) {
-            if (this.documentModel.location() !== reference.id) {
-                this.model = this.documentModel.nestedModel(reference.id);
-            } else {
-                this.model = this.documentModel;
+        if (this.selectedReference() == null || this.selectedReference().id !== reference.id) {
+            this.selectedReference(reference);
+            this.focusedId(reference.id);
+            if (this.documentModel != null) {
+                if (this.documentModel.location() !== reference.id) {
+                    this.model = this.documentModel.nestedModel(reference.id);
+                } else {
+                    this.model = this.documentModel;
+                }
+                this.resetDocuments()
             }
-            this.resetDocuments()
+            this.resetDiagram();
+            this.resetDomainUnits();
         }
-        this.resetDiagram();
-        this.resetDomainUnits();
     }
 
 
@@ -216,11 +218,23 @@ export class ViewModel {
         this.selectElementDocument(unit);
     }
 
+    public selectUnitDeclaration(unit: DocumentDeclaration) {
+        this.focusedId(unit.id);
+        this.domainUnits({});
+        this.resetDomainUnits();
+        this.resetDiagram();
+        this.selectElementDocument(unit);
+    }
+
     private decorations: any = [];
 
-    public selectElementDocument(unit: DomainElement) {
+    public selectElementDocument(unit: DomainElement | DocumentDeclaration) {
         if (this.documentModel) {
-            const topLevelUnit = this.isTopLevelUnit(unit);
+            let topLevelUnit = null;
+            if (unit instanceof DomainElement) {
+                this.isTopLevelUnit(unit)
+            }
+
             if (topLevelUnit != null) {
                 let foundRef = null;
                 this.references().forEach(ref => {
@@ -236,6 +250,7 @@ export class ViewModel {
                     this.model.elementLexicalInfoFor(unit.id, this.editorSection() as "raml" | "open-api", this.documentLevel, (err, lexicalInfo) => {
                        if (err == null) {
                            if (lexicalInfo != null) {
+                               console.log("FOUND LEXICAL INFO FOR " + unit.id);
                                this.editor.revealRangeInCenter({
                                    startLineNumber: lexicalInfo.startLine,
                                    startColumn: lexicalInfo.startColumn,

@@ -314,7 +314,8 @@
     (->> (:traits node {})
          (reduce (fn [acc [trait-name trait-node]]
                    (debug (str "Processing trait " trait-name))
-                   (let [fragment-name (url/url-encode (utils/safe-str trait-name))
+                   (let [location-meta (meta trait-node)
+                         fragment-name (url/url-encode (utils/safe-str trait-name))
                          trait-fragment (parse-ast trait-node (-> nested-context
                                                                   (assoc :location location)
                                                                   (assoc :parsed-location (utils/path-join parsed-location fragment-name))
@@ -328,7 +329,8 @@
                          sources (concat sources (generate-is-trait-sources fragment-name
                                                                             (utils/path-join location fragment-name)
                                                                             (utils/path-join parsed-location fragment-name)))
-                         parsed-trait (assoc trait-fragment :sources sources)]
+                         parsed-trait (assoc trait-fragment :sources sources)
+                         parsed-trait (assoc parsed-trait :lexical location-meta)]
                      (assoc acc (keyword (utils/alias-chain trait-name context)) parsed-trait)))
                  {}))))
 
@@ -341,7 +343,8 @@
     (->> types
          (reduce (fn [acc [type-name type-node]]
                    (debug (str "Processing type " type-name))
-                   (let [type-node (if (syntax/fragment? type-node)
+                   (let [location-meta (meta type-node)
+                         type-node (if (syntax/fragment? type-node)
                                      ;; avoiding situations where we transform this into an include
                                      ;; and then we cannot transform this back into type because there's
                                      ;; no way to tell it without source maps
@@ -364,7 +367,8 @@
                          parsed-type (assoc type-fragment :sources sources)
                          parsed-type (if (nil? (:name parsed-type))
                                        (assoc parsed-type :name type-name)
-                                       parsed-type)]
+                                       parsed-type)
+                         parsed-type (assoc parsed-type :lexical location-meta)]
                      (assoc acc (keyword (utils/alias-chain type-name context)) parsed-type)))
                  {}))))
 
@@ -658,9 +662,10 @@
         shape (if (shapes/inline-json-schema? node)
                 (json-schema-shapes/parse-type (keywordize-keys (platform/decode-json node)) shape-context)
                 (shapes/parse-type node shape-context))
-        type-id (str (get shape "@id") "/wrapper")]
+        type-id (get shape "@id")]
     ;; ParsedType nodes just wrap the JSON-LD description for the shape.
     ;; They should not generate stand-alone nodes in the JSON-LD domain model, the node IS the shape
+    ;; They have the same ID
     (->> (domain/map->ParsedType {:id type-id
                                   :shape shape})
          (common/with-location-meta-from node))))

@@ -30,6 +30,7 @@ export class LexicalInfoGenerator {
             // in this case the lexical info is native to the generated model, we can retrieve it directly
             cb(null, this.model.elementLexicalInfo(id));
         } else {
+            debugger;
             // We need to generate the output text and generate the lexical info
             this.exportLexicalInfo(id, syntax, level, (err, lexicalInfo) => {
                 if (err == null){

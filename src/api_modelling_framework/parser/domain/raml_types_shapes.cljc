@@ -282,10 +282,7 @@
     ;; json schema
     (and
      (string? type-ref)
-     (string/starts-with? type-ref "{"))  (do
-                                          (println "TYPE REF:::")
-                                          (println type-ref)
-                                          (parse-json-node parsed-location type-ref))
+     (string/starts-with? type-ref "{"))  (parse-json-node parsed-location type-ref)
     ;; xmls schema
     (and
      (string? type-ref)

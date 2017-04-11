@@ -381,6 +381,20 @@
                           document/name)))
                (done)))))
 
+;;(deftest integration-test-find-declarations
+;;  (async done
+;;         (go (let [parser (core/->RAMLParser)
+;;                   generator (core/->OpenAPIGenerator)
+;;                   model (<! (cb->chan (partial core/parse-file parser "resources/other-examples/world-music-api/api.raml")))
+;;                   declarations (-> model core/document-model document/declares)]
+;;               (doseq [declaration declarations]
+;;                 (let [found (core/find-element model "document" (document/id declaration))
+;;                       lexical (core/lexical-info-for-unit model (document/id declaration))]
+;;                   (println (document/id declaration) " -> " (some? lexical))
+;;                   (is (some? lexical))
+;;                   (is (some? found))))
+;;               (done)))))
+
 (deftest integration-test-jsonld-generator-parser
   (async done
          (go (let [parser (core/->RAMLParser)

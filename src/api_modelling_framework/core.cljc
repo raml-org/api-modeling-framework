@@ -236,7 +236,7 @@
 
 (defn find-element* [model id]
   (cond
-    (map? model) (if (= id (:id model))
+    (map? model) (if (= id (or (:id model) (get model "@id")))
                    model
                    (->> (vals model)
                         (map (fn [m] (find-element* m id)))
