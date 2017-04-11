@@ -1,6 +1,6 @@
 import { ModelProxy, ModelLevel } from "./model_proxy";
 import { label, nestedLabel } from "../utils";
-import { DomainModel } from "./domain_model";
+import {DomainModel, extract_value, LABEL, NAME} from "./domain_model";
 
 export type DocumentKind = "DomainElement" | "DocumentDeclaration" | "Document" | "Fragment" | "Module";
 export interface DocumentId {
@@ -17,7 +17,7 @@ export interface Unit {
 export class DomainElement implements DocumentId {
     public kind: DocumentKind = "DomainElement";
     public domain: DomainModel;
-    constructor(public id: string, raw: any, public label: string, public elementClass: string, isAbstract: boolean) {
+    constructor(public id: string, public raw: any, public label: string, public elementClass: string, isAbstract: boolean) {
         this.domain = new DomainModel(raw);
     }
 }
@@ -121,10 +121,11 @@ export class UnitModel {
     parseDocument(doc: any, acc) {
         const docId = doc["@id"];
         const declares = (doc["http://raml.org/vocabularies/document#declares"] || []).map((declaration) => {
+
             return new DocumentDeclaration(
                 declaration["@id"],
                 declaration,
-                nestedLabel(docId, declaration["@id"]),
+                nestedLabel(doc, declaration),
                 (declaration["@type"] || [])[0],
                 this.extractTag("is-trait-tag", declaration)
             );
@@ -135,7 +136,10 @@ export class UnitModel {
 
     parseFragment(doc: any, acc) {
         const references = this.extractReferences(doc);
-        acc.fragments.push(new Fragment(doc["@id"], label(doc["@id"]), references, this.extractEncodedElement(doc)));
+        const encoded = this.extractEncodedElement(doc);
+        const encodedLabel = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
+        debugger;
+        acc.fragments.push(new Fragment(doc["@id"], encodedLabel || label(doc["@id"]), references, encoded));
     }
 
     parseModule(doc: any, acc) {
@@ -144,7 +148,7 @@ export class UnitModel {
             return new DocumentDeclaration(
                 declaration["@id"],
                 declaration,
-                nestedLabel(docId, declaration["@id"]),
+                nestedLabel(doc, declaration),
                 (declaration["@type"] || [])[0],
                 this.extractTag("is-trait-tag", declaration)
             );
@@ -202,7 +206,7 @@ export class UnitModel {
         const encoded = (node["http://raml.org/vocabularies/document#encodes"] || [])[0];
         if (encoded != null) {
             const isAbstract = encoded["@type"].find(t => t === "http://raml.org/vocabularies/document#AbstractDomainElement");
-            return new DomainElement(encoded["@id"], encoded, nestedLabel(node["@id"], encoded["@id"]), encoded["@type"][0], isAbstract, );
+            return new DomainElement(encoded["@id"], encoded, nestedLabel(node, encoded), encoded["@type"][0], isAbstract, );
         } else {
             return undefined;
         }

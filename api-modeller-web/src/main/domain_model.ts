@@ -32,6 +32,7 @@ export const PAYLOAD: string = HTTP_NS + "Payload";
 export const SCHEMA: string = HTTP_NS + "Schema";
 export const SHAPE: string = SHACL_NS + "Shape"
 export const INCLUDE_RELATIONSHIP: string = DOCUMENT_NS + "IncludeRelationship";
+export const DOMAIN_PROPERTY_SCHEMA: string = DOCUMENT_NS + "DomainPropertySchema";
 
 // RDF Properties
 export const LABEL: string = DOCUMENT_NS + "label";
@@ -49,28 +50,30 @@ export const MEDIA_TYPE: string = HTTP_NS + "mediaType";
 export const SCHEMA_SHAPE: string = HTTP_NS + "shape";
 export const PAYLOAD_SCHEMA: string = HTTP_NS + "schema";
 export const TARGET: string = DOCUMENT_NS + "target";
+export const DOMAIN: string = DOCUMENT_NS + "domain";
+export const RANGE: string = DOCUMENT_NS + "range";
 
 // Utility functions
-function extract_link(node: any, property: string) {
+export function extract_link(node: any, property: string) {
     return ((node[property] || [])[0]) || {};
 }
 
-function extract_links(node: any, property: string) {
+export function extract_links(node: any, property: string) {
     return (node[property] || []);
 }
 
-function extract_value(node: any, property: string) {
+export function extract_value(node: any, property: string) {
     const value = ((node[property] || [])[0]) || {};
     return value["@value"];
 }
 
-function has_type(node, type) {
+export function has_type(node, type) {
     const types = node["@type"] || [];
     return types.find(t => t === type) != null;
 }
 
 // Model Classes
-export type DomainElementKind = "APIDocumentation" | "EndPoint" | "Operation" | "Response" | "Request" | "Payload" | "DomainElement" | "Shape" | "Include" | "Extends";
+export type DomainElementKind = "APIDocumentation" | "EndPoint" | "Operation" | "Response" | "Request" | "Payload" | "DomainElement" | "Shape" | "Include" | "Extends" | "DomainPropertySchema";
 
 export interface DomainModelElement {
     id: string;
@@ -132,8 +135,14 @@ export class IncludeRelationship extends DomainElement {
     constructor(public raw: any, public id, public target: string, public label: string) { super(raw, id, label) };
 }
 
+export class DomainPropertySchema extends DomainElement {
+    kind: DomainElementKind = "DomainPropertySchema";
+
+    constructor(public raw: any, public id, public domain: string, public range: string, public label: string) { super(raw, id, label) }
+}
+
 // Factory
-export class DomainModel {
+export class DomainModel {[name: string]: any;
 
     public elements: {[id: string] : DomainElement} = {};
     public root: DomainElement | undefined;
@@ -169,6 +178,9 @@ export class DomainModel {
         } else if(has_type(encoded, INCLUDE_RELATIONSHIP)) {
             console.log("* Processing Include");
             return this.buildInclude(encoded);
+        } else if(has_type(encoded, DOMAIN_PROPERTY_SCHEMA)) {
+            console.log("* Processing DomainPropertySchema");
+            return this.buildDomainPropertySchema(encoded);
         } else {
             return this.buildDomainElement(encoded);
         }
@@ -290,6 +302,17 @@ export class DomainModel {
         const target = extract_link(encoded, TARGET);
         console.log("  Target: " + target["@id"]);
         const element = new IncludeRelationship(encoded, encoded["@id"], target["@id"], label);
+        this.elements[element.id] = element;
+        return element;
+    }
+
+    private buildDomainPropertySchema(encoded: any) {
+        if (encoded == null || encoded["@id"] == null) { return undefined }
+        console.log("* Building DomainPropertySchema " + encoded["@id"]);
+        const label = extract_value(encoded, NAME) || extract_value(encoded, LABEL);
+        const domain = extract_link(encoded, DOMAIN);
+        const range = extract_link(encoded, RANGE);
+        const element = new DomainPropertySchema(encoded, encoded["@id"], domain, range, label);
         this.elements[element.id] = element;
         return element;
     }

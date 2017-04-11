@@ -1,7 +1,7 @@
 import * as units from "../main/units_model";
 import * as domain from "../main/domain_model";
 import {label} from "../utils";
-import {Operation, EndPoint} from "../main/domain_model";
+import {Operation, EndPoint, SHAPES_NS, SHACL_NS} from "../main/domain_model";
 import {Response} from "../main/domain_model";
 import {RdfValue} from "rdfstore";
 import {NS_MAPPING} from "../main/domain_model";
@@ -32,10 +32,12 @@ export class UI {
             return "fa fa-book";
         } else if (endsWith(unit.elementClass, "#Payload")) {
             return "fa fa-paper-plane";
-        } else if (endsWith(unit.elementClass, "Shape")) {
+        } else if (unit.elementClass.indexOf(SHACL_NS) > -1 || unit.elementClass.indexOf(SHAPES_NS) > -1) {
             return "fa fa-cubes";
         } else if (endsWith(unit.elementClass, "#Operation")) {
             return "fa fa-rocket";
+        } else if (endsWith(unit.elementClass, "#DomainPropertySchema")) {
+            return "fa fa-pencil";
         } else {
             return "fa fa-code";
         }
@@ -56,6 +58,8 @@ export class UI {
             return "fa fa-paper-plane"
         } else if (unit.kind === "Shape") {
             return "fa fa-cubes"
+        } else if (unit.kind === "DomainPropertySchema") {
+            return "fa fa-pencil";
         } else {
             return "fa fa-code"
         }
@@ -75,6 +79,9 @@ export class UI {
                 return (unit as Response).status || unit.label || label(unit.id)
             } else if (unit.kind === "Payload") {
                 return (unit as Payload).mediaType || "*/*";
+            } else if (unit.kind === "DomainPropertySchema") {
+                debugger;
+                return unit.label || unit.id.split("#").pop();
             } else if (unit.kind === "Shape") {
                 if (unit.label) {
                     return unit.label;

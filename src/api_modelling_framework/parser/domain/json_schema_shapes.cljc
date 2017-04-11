@@ -92,9 +92,10 @@
 
 (defn parse-array [node {:keys [parsed-location] :as context}]
   (let [required-set (set (:required node []))
-        items (->> [(:items node {})]
-                   flatten
-                   (map (fn [shape] (parse-type shape (assoc context :parsed-location parsed-location)))))]
+        items (flatten [(:items node [])])
+        items (->> items
+                   (map (fn [i shape] (parse-type shape (assoc context :parsed-location (str parsed-location "/items/" i))))
+                        (range 0 (count items))))]
     (->> {"@type" [(v/shapes-ns "Array")
                    (v/sh-ns "Shape")]
           "@id" parsed-location
