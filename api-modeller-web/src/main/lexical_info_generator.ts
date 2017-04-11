@@ -23,7 +23,7 @@ export class LexicalInfoGenerator {
             // We need to generate the output text and generate the lexical info
             this.exportLexicalInfo(id, syntax, level, (err, lexicalInfo) => {
                 if (err == null){
-                    cb(null, lexicalInfo.lexical);
+                    cb(null, lexicalInfo ? lexicalInfo.lexical : null);
                 } else {
                     cb(err, null);
                 }
