@@ -239,8 +239,11 @@ export class ViewModel {
                                            isWholeLine: true
                                        }
                                    }
-                               ])
+                               ]);
                            }
+                       } else {
+                           // remove decorations
+                           this.decorations = this.editor.deltaDecorations(this.decorations, [])
                        }
                     });
                 }

@@ -84,11 +84,11 @@ export class ModelProxy {
      */
     toOpenAPI(level: ModelLevel, options: any, cb) {
         console.log(`** Generating OpenAPI with level ${level}`);
-        this.lexicalInfoGenerator.generateLexicalInfo("openapi", level, (err, res) => {
+        this.lexicalInfoGenerator.generateLexicalInfo("open-api", level, (err, res) => {
             if (err) {
                 cb(err, null);
             } else {
-                this.openAPIString = this.lexicalInfoGenerator.text["openapi"];
+                this.openAPIString = this.lexicalInfoGenerator.text["open-api"];
                 cb(null, this.openAPIString);
             }
         });
@@ -212,7 +212,7 @@ export class ModelProxy {
         if (model === "raml") {
             syntax = "raml";
         } else if (model === "open-api") {
-            syntax = "openapi"
+            syntax = "open-api"
         } else if (model === "jsonld") {
             cb(null, undefined);
         }

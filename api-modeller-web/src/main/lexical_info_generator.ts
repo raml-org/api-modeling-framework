@@ -7,6 +7,8 @@ const ramlGenerator = new apiFramework.__GT_RAMLGenerator();
 const openAPIGenerator = new apiFramework.__GT_OpenAPIGenerator();
 const apiModelGenerator = new apiFramework.__GT_APIModelGenerator();
 
+export type LexicalSyntaxes = "raml" | "open-api";
+
 export class LexicalInfoGenerator {
     private lexicalInfoMaps: {[syntax: string]: any} = {};
     public text: {[syntax: string]: string} = {};
@@ -15,7 +17,7 @@ export class LexicalInfoGenerator {
         this.text[model.sourceType] = model.text();
     }
 
-    lexicalInfoFor(id: string, syntax: string, level: ModelLevel, cb:(err, res) => void) {
+    lexicalInfoFor(id: string, syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
         if (this.model.sourceType === syntax) {
             // in this case the lexical info is native to the generated model, we can retrieve it directly
             cb(null, this.model.elementLexicalInfo(id));
@@ -31,7 +33,7 @@ export class LexicalInfoGenerator {
         }
     }
 
-    exportLexicalInfo(id: string, syntax: string, level: ModelLevel, cb:(err, res) => void) {
+    exportLexicalInfo(id: string, syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
         if (this.lexicalInfoMaps[syntax] != null) {
             cb(null, this.lexicalInfoMaps[syntax][id]);
         } else {
@@ -45,7 +47,7 @@ export class LexicalInfoGenerator {
         }
     }
 
-    generateLexicalInfo(syntax: string, level: ModelLevel, cb:(err, res) => void) {
+    generateLexicalInfo(syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
         if (this.lexicalInfoMaps[syntax] != null) {
             cb(null, this.lexicalInfoMaps[syntax]);
         } else {
@@ -63,7 +65,7 @@ export class LexicalInfoGenerator {
         }
     }
 
-    generateSyntax(syntax, level: ModelLevel, cb:(err, res) => void) {
+    generateSyntax(syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
         var generator = null;
         if (syntax === "raml") {
             generator = ramlGenerator;
@@ -80,7 +82,7 @@ export class LexicalInfoGenerator {
         );
     }
 
-    generateIdsMap(textWithIds: string, syntax) {
+    generateIdsMap(textWithIds: string, syntax: LexicalSyntaxes) {
         var idKey = null;
         var classKey = null;
         var parser = null;
@@ -153,7 +155,7 @@ export class LexicalInfoGenerator {
         return node;
     }
 
-    generateCleanAST(ast, syntax) {
+    generateCleanAST(ast, syntax: LexicalSyntaxes) {
         var generator = null;
         var parser = null;
         if (syntax === "raml") {
