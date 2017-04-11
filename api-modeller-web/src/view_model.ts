@@ -246,8 +246,9 @@ export class ViewModel {
                     this.selectNavigatorFile(foundRef);
                 }
             } else {
-                if (this.editorSection() === "raml" || this.editorSection() === "open-api") {
-                    this.model.elementLexicalInfoFor(unit.id, this.editorSection() as "raml" | "open-api", this.documentLevel, (err, lexicalInfo) => {
+                //if (this.editorSection() === "raml" || this.editorSection() === "open-api" || this.editorSection) {
+
+                    this.model.elementLexicalInfoFor(unit.id, this.editorSection() as "raml" | "open-api" | "api-model", this.documentLevel, (err, lexicalInfo) => {
                        if (err == null) {
                            if (lexicalInfo != null) {
                                console.log("FOUND LEXICAL INFO FOR " + unit.id);
@@ -272,7 +273,7 @@ export class ViewModel {
                            this.decorations = this.editor.deltaDecorations(this.decorations, [])
                        }
                     });
-                }
+                //}
             }
         }
     }

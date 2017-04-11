@@ -111,54 +111,65 @@ export class ModelProxy {
     }
 
     toAPIModelProcessed(level: ModelLevel, compacted: boolean, stringify: boolean, options: any, cb) {
+
         console.log(`** Generating API Model JSON-LD with level ${level}`);
-        let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
-        apiFramework.generate_string(
-            apiModelGenerator,
-            this.location(),
-            liftedModel,
-            to_clj(options),
-            (err, res) => {
-                if (err != null) {
-                    cb(err, res);
-                } else {
-
-                    const parsed = JSON.parse(res);
-                    if ( compacted ) {
-                        const context = {
-                            "raml-doc": "http://raml.org/vocabularies/document#",
-                            "raml-http": "http://raml.org/vocabularies/http#",
-                            "raml-shapes": "http://raml.org/vocabularies/shapes#",
-                            "hydra": "http://www.w3.org/ns/hydra/core#",
-                            "shacl": "http://www.w3.org/ns/shacl#",
-                            "schema-org": "http://schema.org/",
-                            "xsd": "http://www.w3.org/2001/XMLSchema#"
-                        };
-
-                        jsonld.compact(parsed, context, (err, compacted) => {
-                            if (err != null) {
-                                console.log("ERROR COMPACTING");
-                                console.log(err);
-                            }
-                            const finalJson = (err == null) ? compacted : parsed;
-                            if ( stringify ) {
-                                this.apiModelString = JSON.stringify(finalJson, null, 2);
-                                cb(err, this.apiModelString);
-                            } else {
-                                cb(err, finalJson);
-                            }
-                        });
+        this.lexicalInfoGenerator.jsonldGenerator = (cb) => {
+            let liftedModel = (level === "document") ? this.documentModel() : this.domainModel();
+            apiFramework.generate_string(
+                apiModelGenerator,
+                this.location(),
+                liftedModel,
+                to_clj(options),
+                (err, res) => {
+                    if (err != null) {
+                        cb(err, res);
                     } else {
-                        if ( stringify ) {
+
+                        const parsed = JSON.parse(res);
+                        if (compacted) {
+                            const context = {
+                                "raml-doc": "http://raml.org/vocabularies/document#",
+                                "raml-http": "http://raml.org/vocabularies/http#",
+                                "raml-shapes": "http://raml.org/vocabularies/shapes#",
+                                "hydra": "http://www.w3.org/ns/hydra/core#",
+                                "shacl": "http://www.w3.org/ns/shacl#",
+                                "schema-org": "http://schema.org/",
+                                "xsd": "http://www.w3.org/2001/XMLSchema#"
+                            };
+
+                            jsonld.compact(parsed, context, (err, compacted) => {
+                                if (err != null) {
+                                    console.log("ERROR COMPACTING");
+                                    console.log(err);
+                                }
+                                const finalJson = (err == null) ? compacted : parsed;
+                                if (stringify) {
+                                    this.apiModelString = JSON.stringify(finalJson, null, 2);
+                                    cb(err, this.apiModelString);
+                                } else {
+                                    cb(err, finalJson);
+                                }
+                            });
+                        } else {
                             this.apiModelString = JSON.stringify(parsed, null, 2);
                             cb(err, this.apiModelString);
-                        } else {
-                            cb(err, parsed)
                         }
-
                     }
+                });
+        };
+        this.lexicalInfoGenerator.generateLexicalInfo("api-model", level, (err, res) => {
+            if (err) {
+                cb(err, null);
+            } else {
+                this.apiModelString = this.lexicalInfoGenerator.getText("api-model", level);
+                if (stringify) {
+                    cb(null, this.apiModelString);
+                } else {
+                    cb(null, JSON.parse(this.apiModelString))
                 }
-            });
+
+            }
+        });
     }
 
 
@@ -206,15 +217,15 @@ export class ModelProxy {
         }
     }
 
-    elementLexicalInfoFor(id: string, model: "raml" | "open-api" | "jsonld", level: ModelLevel, cb:(err: any, res: LexicalInfo | undefined) => void) {
+    elementLexicalInfoFor(id: string, model: "raml" | "open-api" | "api-model", level: ModelLevel, cb:(err: any, res: LexicalInfo | undefined) => void) {
         console.log("*** Looking for lexical information about " + id + " for model " + model);
         var syntax =  null;
         if (model === "raml") {
             syntax = "raml";
         } else if (model === "open-api") {
             syntax = "open-api"
-        } else if (model === "jsonld") {
-            cb(null, undefined);
+        } else if (model === "api-model") {
+            syntax = "api-model";
         }
         this.lexicalInfoGenerator.lexicalInfoFor(id, syntax, level, cb);
     }

@@ -7,11 +7,12 @@ const ramlGenerator = new apiFramework.__GT_RAMLGenerator();
 const openAPIGenerator = new apiFramework.__GT_OpenAPIGenerator();
 const apiModelGenerator = new apiFramework.__GT_APIModelGenerator();
 
-export type LexicalSyntaxes = "raml" | "open-api";
+export type LexicalSyntaxes = "raml" | "open-api" | "api-model";
 
 export class LexicalInfoGenerator {
     private lexicalInfoMaps: {[syntax: string]: any} = {};
     public text: {[syntax: string]: string} = {};
+    jsonldGenerator: (cb) => any;
 
     constructor(public model: ModelProxy) {
         this.text[this.key(model.sourceType, "document")] = model.text();
@@ -30,7 +31,6 @@ export class LexicalInfoGenerator {
             // in this case the lexical info is native to the generated model, we can retrieve it directly
             cb(null, this.model.elementLexicalInfo(id));
         } else {
-            debugger;
             // We need to generate the output text and generate the lexical info
             this.exportLexicalInfo(id, syntax, level, (err, lexicalInfo) => {
                 if (err == null){
@@ -88,41 +88,51 @@ export class LexicalInfoGenerator {
         }
     }
     generateSyntax(syntax: LexicalSyntaxes, level: ModelLevel, cb:(err, res) => void) {
-        var generator = null;
-        if (syntax === "raml") {
-            generator = ramlGenerator;
+        if (syntax === "api-model") {
+            this.jsonldGenerator(cb);
         } else {
-            generator = openAPIGenerator;
+            var generator = null;
+            if (syntax === "raml") {
+                generator = ramlGenerator;
+            } else if (syntax === "open-api") {
+                generator = openAPIGenerator;
+            }
+            let liftedModel = (level === "document") ? this.model.documentModel() : this.model.domainModel();
+            apiFramework.generate_string(
+                generator,
+                this.model.location(),
+                liftedModel,
+                {"generate-amf-info": true},
+                cb
+            );
         }
-        let liftedModel = (level === "document") ? this.model.documentModel() : this.model.domainModel();
-        apiFramework.generate_string(
-            generator,
-            this.model.location(),
-            liftedModel,
-            {"generate-amf-info": true},
-            cb
-        );
     }
 
     generateIdsMap(textWithIds: string, syntax: LexicalSyntaxes) {
         let idKey = null;
         let classKey = null;
         let parser = null;
+        let removeIds = true;
         if (syntax === "raml") {
             idKey = "(amf-id)";
             classKey = "(amf-class)";
             parser = window['JS_YAML'].loadYaml;
-        } else {
+        } else if(syntax === "open-api") {
             idKey = "x-amf-id";
             classKey = "x-amf-class"
             parser = function(text) { return window['JS_AST']("", text); };
+        } else if(syntax === "api-model") {
+            idKey = "@id";
+            classKey = "@type";
+            parser = function(text) { return window['JS_AST']("", text); };
+            removeIds = false;
         }
 
         if (parser != null && idKey != null && classKey != null) {
             // This will not follow $refs/!includes
             let parsed = parser(textWithIds);
             let acc = {};
-            let cleanAST = this.traceIds(idKey, classKey, parsed, [], acc);
+            let cleanAST = this.traceIds(idKey, classKey, parsed, [], acc, removeIds);
             cleanAST = this.removeLocations(cleanAST);
             return {
                 ast: cleanAST,
@@ -133,12 +143,12 @@ export class LexicalInfoGenerator {
         }
     }
 
-    traceIds(idKey, classKey, node, path, acc) {
+    traceIds(idKey, classKey, node, path, acc, removeIds) {
         if (node == null){
             return node;
         } else if (Object.prototype.toString.call(node) === '[object Array]') {
             for (let i = 0; i < node.length ; i++) {
-                this.traceIds(idKey, classKey, node[i], path.concat([i]), acc);
+                this.traceIds(idKey, classKey, node[i], path.concat([i]), acc, removeIds);
             }
         } else if (typeof(node) === "object") {
             if (node[idKey] != null) {
@@ -146,13 +156,16 @@ export class LexicalInfoGenerator {
                     path: path.concat([]),
                     classId: node[classKey]
                 };
-                delete node[idKey];
-                delete node[classKey];
-                delete node["__location__"];
+                if (removeIds) {
+                    delete node[idKey];
+                    delete node[classKey];
+                } else {
+                    acc[node[idKey]].id = node[idKey];
+                }
             }
             for (let p in node) {
                 if (node.hasOwnProperty(p)) {
-                    this.traceIds(idKey, classKey, node[p], path.concat([p]), acc);
+                    this.traceIds(idKey, classKey, node[p], path.concat([p]), acc, removeIds);
                 }
             }
         }
@@ -197,8 +210,12 @@ export class LexicalInfoGenerator {
     fetchLexicalInfo(ast, mapping, offset = 0) {
         for (let id in mapping) {
             const nodeMapping = mapping[id];
-
-            const res = this.findLexicalInfoInPath(ast, nodeMapping.path);
+            let res = null;
+            if (nodeMapping.id != null) {
+                res = this.findLexicalInfoInId(ast, nodeMapping.id);
+            } else {
+                res = this.findLexicalInfoInPath(ast, nodeMapping.path);
+            }
             if (res != null) {
                 const lexical = new LexicalInfo(
                     parseInt(res["start-line"]) + offset,
@@ -224,6 +241,31 @@ export class LexicalInfoGenerator {
             const first = path[0];
             const rest = path.slice(1, path.length);
             return this.findLexicalInfoInPath(ast[first], rest);
+        }
+    }
+
+    findLexicalInfoInId(node, id) {
+        if (node == null){
+            return node;
+        } else if (Object.prototype.toString.call(node) === '[object Array]') {
+            for (let i = 0; i < node.length ; i++) {
+                let res = this.findLexicalInfoInId(node[i], id);
+                if (res != null) {
+                    return res;
+                }
+            }
+        } else if (typeof(node) === "object") {
+            if (node["@id"] === id) {
+                return node["__location__"];
+            }
+            for (let p in node) {
+                if (node.hasOwnProperty(p)) {
+                    let res = this.findLexicalInfoInId(node[p], id);
+                    if (res != null){
+                        return res;
+                    }
+                }
+            }
         }
     }
 }
