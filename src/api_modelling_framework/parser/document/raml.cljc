@@ -5,6 +5,7 @@
             [api-modelling-framework.model.domain :as domain]
             [api-modelling-framework.parser.domain.raml :as domain-parser]
             [api-modelling-framework.parser.domain.common :as common]
+            [api-modelling-framework.parser.document.common :refer [make-compute-fragments]]
             [api-modelling-framework.utils :as utils]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros) [debug]]))
@@ -71,6 +72,7 @@
         context (assoc context :base-uri location)
         _ (debug "Parsing RAML Document at " location)
         fragments (or (:fragments context) (atom {}))
+        compute-fragments (make-compute-fragments fragments)
         ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored
         ;; in the model, we will just keep a reference to the library through the uses tags
         {:keys [libraries library-declarations]} (process-libraries node {:location (str location "#")
@@ -115,8 +117,9 @@
                                        :encodes encoded
                                        :declares (concat (vals declarations)
                                                          (vals doc-annotations))
-                                       :references (concat (vals @fragments)
-                                                           (flatten (vals libraries)))
+                                       :references (compute-fragments
+                                                    (concat (vals @fragments)
+                                                            (flatten (vals libraries))))
                                        :sources uses-tags
                                        :document-type "#%RAML 1.0"})
         (assoc :raw (get node (keyword "@raw"))))))
@@ -126,6 +129,7 @@
         context (assoc context :base-uri location)
         _ (debug "Parsing RAML Library at " location)
         fragments (or (:fragments context) (atom {}))
+        compute-fragments (make-compute-fragments fragments)
         {:keys [libraries library-declarations]} (process-libraries node (dissoc context :alias-chain))
         uses-tags (process-uses-tags node context)
         libraries-annotation (->> library-declarations
@@ -161,8 +165,9 @@
                                       :location location
                                       :description usage
                                       :declares (concat (vals declarations) (vals doc-annotations))
-                                      :references (concat (vals @fragments)
-                                                          (flatten (vals libraries)))
+                                      :references (compute-fragments
+                                                   (concat (vals @fragments)
+                                                           (flatten (vals libraries))))
                                       :sources uses-tags
                                       :document-type "#%RAML 1.0 Library"}))
         (assoc :raw (get node (keyword "@raw"))))))
@@ -174,6 +179,7 @@
          context (assoc context :base-uri location)
          _ (debug "Parsing " fragment-type " Fragment at " location)
          fragments (or (:fragments context) (atom {}))
+         compute-fragments (make-compute-fragments fragments)
          ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored
          ;; in the model, we will just keep a reference to the library through the uses tags
          {:keys [libraries library-declarations]} (process-libraries node {:location (str location "#")
@@ -213,8 +219,9 @@
                                         :description usage
                                         :location location
                                         :encodes encoded
-                                        :references (concat (vals @fragments)
-                                                            (flatten (vals libraries)))
+                                        :references (compute-fragments
+                                                     (concat (vals @fragments)
+                                                             (flatten (vals libraries))))
                                         :sources (concat uses-tags document-tags)
                                         :document-type fragment-type})
          (assoc :raw (get node (keyword "@raw"))))))

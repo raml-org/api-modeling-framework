@@ -668,6 +668,7 @@
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                       :or {fragments (atom {})}
                                       :as context}]
+  (debug "Parsing included fragment " (syntax/<-location node))
   (let [fragment-location (syntax/<-location node)]
     (let [parsed-fragment (document-parser node context)
           encoded-element (document/encodes parsed-fragment)

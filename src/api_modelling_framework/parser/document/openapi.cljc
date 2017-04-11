@@ -7,6 +7,7 @@
             [api-modelling-framework.parser.domain.common :as common]
             [api-modelling-framework.utils :as utils]
             [api-modelling-framework.parser.domain.openapi :as domain-parser]
+            [api-modelling-framework.parser.document.common :refer [make-compute-fragments]]
             [cemerick.url :as url]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
@@ -111,6 +112,7 @@
         context (assoc context :base-uri location)
         _ (debug "Parsing OpenAPI Document at " location)
         fragments (or (:fragments context) (atom {}))
+        compute-fragments (make-compute-fragments fragments)
         {:keys [libraries library-declarations]} (process-libraries node context)
         ;; just tags here, the libraries have been processed just above
         uses-tags (process-uses-tags node context)
@@ -162,7 +164,8 @@
                                               :base-uri location
                                               :encodes encoded
                                               :declares (concat (vals declarations) annotations)
-                                              :references (concat (vals @fragments) libraries)
+                                              :references (compute-fragments
+                                                           (concat (vals @fragments) libraries))
                                               :sources uses-tags
                                               :document-type "OpenAPI"}))
         (assoc :raw (get node (keyword "@raw"))))))
@@ -172,7 +175,8 @@
   (let [location (syntax/<-location node)
         _ (debug "Parsing OpenAPI Library at " location)
         fragments (or (:fragments context) (atom {}))
-                {:keys [libraries library-declarations]} (process-libraries node context)
+        compute-fragments (make-compute-fragments fragments)
+        {:keys [libraries library-declarations]} (process-libraries node context)
         ;; just tags here, the libraries have been processed just above
         uses-tags (process-uses-tags node context)
         ;; only use of this is that when we parse the encoded
@@ -211,9 +215,10 @@
                                            {:id location
                                             :base-uri location
                                             :location location
-                                            :declares (concat (vals declarations) (filter
-                                                                                   #(nil? (:from-library %))
-                                                                                   annotations))
+                                            :declares (compute-fragments
+                                                       (concat (vals declarations) (filter
+                                                                                    #(nil? (:from-library %))
+                                                                                    annotations)))
                                             :references (vals @fragments)
                                             :tags uses-tags
                                             :document-type "OpenAPI Library"}))
@@ -225,6 +230,7 @@
         context (assoc context :base-uri location)
         _ (debug "Parsing OpenAPI Fragment at " location)
         fragments (or (:fragments context) (atom {}))
+        compute-fragments (make-compute-fragments fragments)
         {:keys [libraries library-declarations]} (process-libraries node context)
         ;; just tags here, the libraries have been processed just above
         uses-tags (process-uses-tags node context)
@@ -249,7 +255,8 @@
                                        :location location
                                        :base-uri location
                                        :encodes encoded
-                                       :references (concat (vals @fragments) libraries)
+                                       :references (compute-fragments
+                                                    (concat (vals @fragments) libraries))
                                        :sources uses-tags
                                        :document-type "OpenApi Fragment"})
         (assoc :raw (get node (keyword "@raw"))))))
