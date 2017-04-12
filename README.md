@@ -1,4 +1,4 @@
-# API Modelling Framework [![Build Status](https://travis-ci.com/raml-org/api-modelling-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)
+# API Modelling Framework ![Build Status](https://travis-ci.com/raml-org/api-modelling-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)
 
 ## Architecture
 
