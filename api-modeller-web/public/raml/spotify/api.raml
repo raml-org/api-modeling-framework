@@ -10,7 +10,7 @@ documentation:
       how to use the API, check out [Spotify's developer site](https://developer.spotify.com/web-api/).
 schemas:
   Playlist: !include schemas/playlist.json
-reurceTypes:
+resourceTypes:
   base:
     get?: &common
       headers:
@@ -28,7 +28,7 @@ reurceTypes:
   collection:
     type: base
     get?:
-seritySchemes:
+securitySchemes:
   oauth_2_0:
     description: |
         Spotify supports OAuth 2.0 for authenticating all API requests.
@@ -51,7 +51,7 @@ seritySchemes:
     settings:
       authorizationUri: https://accounts.spotify.com/authorize
       accessTokenUri: https://accounts.spotify.com/api/token
-      authorizationGrants: [ code, token ]
+      authorizationGrants: client_credentials
       scopes:
         - "playlist-read-private"
         - "playlist-read-collaborative"
@@ -96,7 +96,6 @@ traits:
   get:
     description: |
       [Get Several Albums](https://developer.spotify.com/web-api/get-several-albums/)
-    securedBy: [ null, oauth_2_0: { scopes: []}]
     queryParameters:
       ids:
         displayName: Spotify Album IDs
@@ -121,7 +120,6 @@ traits:
     get:
       description: |
         [Get an Album](https://developer.spotify.com/web-api/get-album/)
-      securedBy: [ null, oauth_2_0: { scopes: []}]
       queryParameters:
         market:
           displayName: Market
@@ -135,7 +133,6 @@ traits:
         is: [ paged ]
         description: |
           [Get an Album's Tracks](https://developer.spotify.com/web-api/get-albums-tracks/)
-        securedBy: [ null, oauth_2_0: { scopes: []}]
         queryParameters:
           market:
             displayName: Market
@@ -148,7 +145,6 @@ traits:
   get:
     description: |
       [Get Several Artists](https://developer.spotify.com/web-api/get-several-artists/)
-    securedBy: [ null, oauth_2_0: { scopes: []}]
     queryParameters:
       ids:
         displayName: Spotify Artist IDs
@@ -168,13 +164,11 @@ traits:
     get:
       description: |
         [Get an Artist](https://developer.spotify.com/web-api/get-artist/)
-      securedBy: [ null, oauth_2_0: { scopes: []}]
     /top-tracks:
       displayName: artist-top-tracks
       get:
         description: |
           [Get an Artist's Top Tracks](https://developer.spotify.com/web-api/get-artists-top-tracks/)
-        securedBy: [ null, oauth_2_0: { scopes: []}]
         queryParameters:
           country:
             displayName: Country
@@ -187,14 +181,12 @@ traits:
       get:
         description: |
           [Get an Artist's Related Artists](https://developer.spotify.com/web-api/get-related-artists/)
-        securedBy: [ null, oauth_2_0: { scopes: []}]
     /albums:
       displayName: artist-albums
       get:
         is: [ paged ]
         description: |
           [Get an Artist's Albums](https://developer.spotify.com/web-api/get-artists-albums/)
-        securedBy: [ null, oauth_2_0: { scopes: []}]
         queryParameters:
           album_type:
             displayName: Album Type (single, album, appears_on, compilation)
@@ -213,7 +205,6 @@ traits:
   get:
     description: |
       [Get Several Tracks](https://developer.spotify.com/web-api/get-several-tracks/)
-    securedBy: [ null, oauth_2_0: { scopes: []}]
     queryParameters:
       ids:
         displayName: Spotify Track IDs
@@ -237,7 +228,6 @@ traits:
     get:
       description: |
         [Get a Track](https://developer.spotify.com/web-api/get-track/)
-      securedBy: [ null, oauth_2_0: { scopes: []}]
       queryParameters:
         market:
           displayName: Market
@@ -251,7 +241,6 @@ traits:
     is: [ paged ]
     description: |
       [Search for an Item](https://developer.spotify.com/web-api/search-item/)
-    securedBy: [ null, oauth_2_0: { scopes: []}]
     queryParameters:
       q:
         displayName: Query
@@ -420,7 +409,6 @@ traits:
   get:
     description: |
       [Get a User's Profile](https://developer.spotify.com/web-api/get-users-profile/)
-    securedBy: [ null, oauth_2_0: { scopes: []}]
 /users/{user_id}/playlists:
   type: collection
   uriParameters:
@@ -473,7 +461,6 @@ traits:
     get:
       description: |
         [Get a Playlist](https://developer.spotify.com/web-api/get-playlist/)
-      securedBy: [ oauth_2_0: { scopes: []}]
       is: [ filterable ]
       queryParameters:
         market:
@@ -501,7 +488,6 @@ traits:
       get:
         description: |
           [Get a Playlist's Tracks](https://developer.spotify.com/web-api/get-playlists-tracks/)
-        securedBy: [ oauth_2_0: { scopes: []}]
         is: [ filterable, paged ]
         queryParameters:
           market:
@@ -574,7 +560,6 @@ traits:
         get:
           description: |
             [Check if Users Follow a Playlist](https://developer.spotify.com/web-api/check-user-following-playlist/)
-          securedBy: [ oauth_2_0: { scopes: []}]
           queryParameters:
             ids:
               displayName: Spotify user IDs
@@ -590,7 +575,6 @@ traits:
     is: [ paged ]
     description: |
       [Get a List of New Releases](https://developer.spotify.com/web-api/get-list-new-releases/)
-    securedBy: [ oauth_2_0: {scopes: []} ]
     queryParameters:
       country:
         displayName: Country
@@ -605,7 +589,6 @@ traits:
     is: [ paged ]
     description: |
       [Get a List of Featured Playlists](https://developer.spotify.com/web-api/get-list-featured-playlists/)
-    securedBy: [ oauth_2_0: {scopes: []} ]
     queryParameters:
       country:
         displayName: Country
@@ -633,7 +616,6 @@ traits:
   get:
     description: |
       [Get a List of Browse Categories](https://developer.spotify.com/web-api/get-list-categories/)
-    securedBy: [ oauth_2_0: {scopes: []} ]
     queryParameters:
       country:
         displayName: Country
@@ -676,7 +658,6 @@ traits:
     get:
       description: |
         [Get a Single Browse Category](https://developer.spotify.com/web-api/get-category/)
-      securedBy: [ oauth_2_0: {scopes: []} ]
       queryParameters:
         country:
           displayName: Country
@@ -697,7 +678,6 @@ traits:
       get:
         description: |
           [Get a Category's playlists](https://developer.spotify.com/web-api/get-categorys-playlists/)
-        securedBy: [ oauth_2_0: {scopes: []} ]
         queryParameters:
           country:
             displayName: Country
@@ -811,7 +791,6 @@ traits:
   get:
     description: |
       [Get Audio Features for Several Tracks](https://developer.spotify.com/web-api/get-several-audio-features/)
-    securedBy: [ oauth_2_0: { scopes: []}]
     queryParameters:
       ids:
         displayName: Spotify Track IDs
@@ -829,7 +808,6 @@ traits:
     get:
       description: |
         [Get Audio Features for a Track](https://developer.spotify.com/web-api/get-audio-features/)
-      securedBy: [ oauth_2_0: { scopes: []}]
 /audio-analysis/{id}:
   displayName: audio-analysis-track
   uriParameters:
@@ -840,13 +818,11 @@ traits:
   get:
     description: |
       [Get Audio Analysis for a Track](https://developer.spotify.com/web-api/get-audio-analysis/)
-    securedBy: [ oauth_2_0: { scopes: []}]
 /recommendations:
   displayName: recommendations
   get:
     description: |
       [Get Recommendations Based on Seeds](https://developer.spotify.com/web-api/get-recommendations/)
-    securedBy: [ oauth_2_0: { scopes: []}]
     queryParameters:
       limit:
         type: integer
@@ -1157,4 +1133,3 @@ traits:
     get:
       description: |
         [Get Available Genre Seeds](https://developer.spotify.com/web-api/get-recommendations/#available-genre-seeds)
-      securedBy: [ oauth_2_0: { scopes: []}]
