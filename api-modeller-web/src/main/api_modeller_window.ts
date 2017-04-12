@@ -69,7 +69,6 @@ export class ApiModellerWindow {
     }
 
     parseString(type: ModelType, baseUrl: string, value: string, cb: (err, model) => any) {
-        console.log("PARSING TEXT " + value + " TYPE " + type);
         let parser: any;
         if (type === "raml") {
             parser = new this.apiFramework.__GT_RAMLParser();

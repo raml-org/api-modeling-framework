@@ -52,6 +52,9 @@ export class ViewModel {
     public focusedId: KnockoutObservable<string> = ko.observable<string>("");
     public selectedParserType: KnockoutObservable<ParserType|undefined> = ko.observable<ParserType|undefined>(undefined);
     public lastLoadedFile: KnockoutObservable<string|undefined> = ko.observable<string|undefined>(undefined);
+    public canParse: KnockoutComputed<boolean> = ko.computed<boolean>(() => {
+        return (this.selectedParserType() == null || this.editorSection() === this.selectedParserType());
+    });
 
     // Nested interfaces
     public ui: UI = new UI();
