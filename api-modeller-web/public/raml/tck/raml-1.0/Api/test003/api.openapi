@@ -1,9 +1,0 @@
-{
-  "swagger":"2.0",
-  "host":"api.example.com",
-  "info": {
-    "title":"test",
-    "version": ""
-  },
-  "paths": {}
-}

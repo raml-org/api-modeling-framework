@@ -1,8 +1,0 @@
-#%RAML 1.0
-title: API
-
-types:
-  SomeType: string[]
-#    example:
-#      - some string
-#      - another string

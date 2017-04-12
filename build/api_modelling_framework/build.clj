@@ -122,22 +122,11 @@
   (println "** Building Target: web\n")
   (build "web"))
 
-(defn run-api-web []
-  (build-web)
-
-  (let [api-modeller-web (str (pwd) "/api-modeller-web")]
-    (mkdir (str api-modeller-web "/public/js"))
-    (cp "output/web/amf.js" (str api-modeller-web "/public/js/"))
-    (npm-install api-modeller-web)
-    (gulp-serve api-modeller-web)))
-
-
 (defn -main [& args]
   (try
     (condp = (first args)
       "web"              (build-web)
       "node"             (build-node)
-      "api-modeller-web" (run-api-web)
       (do (println "Unknown task")
           (System/exit 2)))
     (catch Exception ex
