@@ -4,6 +4,8 @@
 
 The API Modelling Framework (AMF) allows users to formally describe different kind of APIs, parse and generate instances of those APIS as sets of modular documents and to store those connected descriptions into a single unified data graph.
 
+![Overview](https://raml-org.github.io/api-modelling-framework/images/diagram.png)
+
 ## Status
 
 AMF is experimental and under active development.
@@ -29,6 +31,9 @@ A demo web application, displaying some of the capabilities of the project [can 
 ### Parsing and Generation
 
 AMF can be used as a tool to parse RAML and OpenAPI documents, generating a common data model stored in a data graph as the output.
+
+![Translation](https://raml-org.github.io/api-modelling-framework/images/translation.png)
+
 This model can be queried and manipulated, and then serialised back into documents using RAML or OpenAPI syntaxes.
 Additional syntaxes like JSON-LD are also supported by the library.
 
@@ -40,13 +45,18 @@ API information in the AMF model can not only be parsed and generated from RAML 
 
 AMF's data model is modelled after RAML modular features. API descriptions are not monolithic entities confined into a single document. Instead the RAML and AMF conception of APIs is that of a set of reusable behaviours, data types and practises that can be re-used and connected across different APIs in a organisation.
 
+![Composition](https://raml-org.github.io/api-modelling-framework/images/composition.png)
+
+
 AMF supports different kind of reusable units. The sum of all these units conform AMF's Document Model:
 
-- Documents: main entry points for an API description, describing the top level API object
-- Fragments: Small pieces of API description encapsulating a particular data type, or feature that can be re-used in other units
-- Modules: Libraries of related elements from an API with identifiers that can referenced in other units
+- *Documents*: main entry points for an API description, describing the top level API object
+- *Fragments*: Small pieces of API description encapsulating a particular data type, or feature that can be re-used in other units
+- *Modules*: Libraries of related elements from an API with identifiers that can referenced in other units
 
 These units can be connected by relationships of inclusion and extension to build aggregate or adapt descriptions
+
+![Document Model](https://raml-org.github.io/api-modelling-framework/images/document_model.png)
 
 ### Linked Descriptions
 
@@ -60,6 +70,8 @@ RAML annotations and OpenAPI patterned objects are examples of how extensibility
 In fact, RAML and OpenAPIs can be regarded as a collection of vocabularies to describe different domain: HTTP RPC APIs, authentication mechanisms and data shapes.
 
 AMF boost these capacities through the notion of an [extensible Domain Model](https://raml-org.github.io/api-modelling-framework/vocabularies.html).
+
+![Domain Model](https://raml-org.github.io/api-modelling-framework/images/domain_model.png)
 
 New vocabularies can be defined and connected, at the same time, with the existing ones, re-using components already defined.
 Eventually AMF will provide tools to easily define this extensions and generate parsers and generators for them.
