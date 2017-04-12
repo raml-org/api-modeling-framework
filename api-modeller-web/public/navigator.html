@@ -41,11 +41,13 @@
                 </span>
                 <a data-bind="text: label,
                               css: {'is-active': $parent.selectedReference() && $parent.selectedReference().id === id}"></a>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && declares && declares.length" class="menu-label submenu-label">Declares</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && declares && declares.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">Declares</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: declares"
                         class="menu-list"
-                        style="margin-left: 15px">
+                        style="margin-left: 25px">
                         <li classs="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
@@ -56,8 +58,10 @@
                         </li>
                     </ul>
                 </span>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && encodes" class="menu-label submenu-label">Encodes</p>
-                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && encodes" class="menu-list" style="margin-left: 15px">
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && encodes"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">Encodes</p>
+                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && encodes" class="menu-list" style="margin-left: 25px">
                     <li>
                         <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 3px">
                             <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit(encodes) }"></i>
@@ -65,11 +69,13 @@
                         <p data-bind="text: encodes.label"></p>
                     </li>
                 </ul>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
-                        style="margin-left: 15px">
+                        style="margin-left: 25px">
                         <li>
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
@@ -88,8 +94,10 @@
                 </span>
                 <a data-bind="text: label,
                               css: {'is-active': $parent.selectedReference() && $parent.selectedReference().id === id}"></a>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && $data.encodes" class="menu-label submenu-label">Encodes</p>
-                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && $data.encodes" class="menu-list" style="margin-left: 15px">
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && $data.encodes"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">Encodes</p>
+                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && $data.encodes" class="menu-list" style="margin-left: 25px">
                     <li class="navigator-item">
                         <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                             <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data.encodes) }"></i>
@@ -97,7 +105,9 @@
                         <p data-bind="text: $data.encodes.label"></p>
                     </li>
                 </ul>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
@@ -120,11 +130,13 @@
             <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
                 <a data-bind="text: label,
                               css: {'is-active': $parent.selectedReference().id === id}"></a>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && declares && declares.length" class="menu-label submenu-label">Declares</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && declares && declares.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">Declares</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: declares"
                         class="menu-list"
-                        style="margin-left: 15px">
+                        style="margin-left: 25px">
                         <li class="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
@@ -135,11 +147,13 @@
                         </li>
                     </ul>
                 </span>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
-                        style="margin-left: 15px">
+                        style="margin-left: 25px">
                         <li class="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
