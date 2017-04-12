@@ -38,6 +38,7 @@ export class ViewModel {
     public referenceToDomainUnits: { [id: string]: DomainModel[] } = {};
 
     // Observables for the main interface state
+    public baseUrl: KnockoutObservable<string> = ko.observable<string>("");
     public navigatorSection: KnockoutObservable<NavigatorSection> = ko.observable<NavigatorSection>("files");
     public editorSection: KnockoutObservable<EditorSection> = ko.observable<EditorSection>("raml");
     public references: KnockoutObservableArray<ReferenceFile> = ko.observableArray<ReferenceFile>([]);
@@ -148,6 +149,8 @@ export class ViewModel {
             this.resetDocuments();
         });
         this.editorSection.subscribe((section) => this.onEditorSectionChange(section));
+
+        this.selectedReference.subscribe((ref) => this.baseUrl(ref.id));
     }
 
     public selectNavigatorFile(reference: ReferenceFile) {
@@ -305,6 +308,25 @@ export class ViewModel {
         this.resetDiagram();
     }
 
+    public doParse() {
+        if (this.editorSection() === "raml" || this.editorSection() === "open-api" || this.editorSection() === "api-model") {
+            this.apiModellerWindow.parseString(this.editorSection() as "raml" | "open-api" | "api-model", this.baseUrl(), this.editor.getValue(), (err, model) => {
+                if (err) {
+                    console.log(err);
+                    alert("Error parsing model, see console for details");
+                } else {
+                    this.documentModel = model;
+                    this.model = model;
+                    this.selectedReference(this.makeReference(this.documentModel!.location(), this.documentModel!.location()));
+                    this.focusedId(this.documentModel!.location());
+                    this.resetUnits();
+                    this.resetReferences();
+                    this.resetDocuments();
+                    this.resetDiagram();
+                }
+            });
+        }
+    }
 
 
     apply(location: Node) {
@@ -319,7 +341,7 @@ export class ViewModel {
             // We generate the RAML representation
             if (this.selectedParserType() === "raml" && this.documentLevel === "document" && this.editorSection() === "raml" && this.model.text() != null) {
                 this.editor.setModel(createModel(this.model.text(), "yaml"));
-                this.editor['_configuration'].editor.readOnly = false;
+                //this.editor['_configuration'].editor.readOnly = false;
             } else {
                 this.model.toRaml(this.documentLevel, this.generationOptions(), (err, string) => {
                     if (err != null) {
@@ -328,7 +350,7 @@ export class ViewModel {
                     } else {
                         if (this.editorSection() === "raml") {
                             this.editor.setModel(createModel(this.model!.ramlString, "yaml"));
-                            this.editor['_configuration'].editor.readOnly = true;
+                            //this.editor['_configuration'].editor.readOnly = true;
                         }
                     }
                 });
@@ -337,7 +359,7 @@ export class ViewModel {
             // We generate the OpenAPI representation
             if (this.selectedParserType() === "open-api" && this.documentLevel === "document" && this.editorSection() === "open-api" && this.model.text() != null) {
                 this.editor.setModel(createModel(this.model.text(), "json"));
-                this.editor['_configuration'].editor.readOnly = false;
+                //this.editor['_configuration'].editor.readOnly = false;
             } else {
                 this.model.toOpenAPI(this.documentLevel, this.generationOptions(), (err, string) => {
                     if (err != null) {
@@ -346,7 +368,7 @@ export class ViewModel {
                     } else {
                         if (this.editorSection() === "open-api") {
                             this.editor.setModel(createModel(this.model!.openAPIString, "json"));
-                            this.editor['_configuration'].editor.readOnly = true;
+                            //this.editor['_configuration'].editor.readOnly = true;
                         }
                     }
                 });
@@ -360,7 +382,7 @@ export class ViewModel {
                 } else {
                     if (this.editorSection() === "api-model") {
                         this.editor.setModel(createModel(this.model!.apiModelString, "json"));
-                        this.editor['_configuration'].editor.readOnly = true;
+                        //this.editor['_configuration'].editor.readOnly = true;
                     }
                     this.resetQuery();
                 }
@@ -400,28 +422,28 @@ export class ViewModel {
             if (this.model != null) {
                 if (this.selectedParserType() === "raml" && this.documentLevel === "document" && this.model.text() != null) {
                     this.editor.setModel(createModel(this.model.text(), "yaml"));
-                    this.editor['_configuration'].editor.readOnly = false;
+                    //this.editor['_configuration'].editor.readOnly = false;
                 } else {
                     this.editor.setModel(createModel(this.model.ramlString, "yaml"));
-                    this.editor['_configuration'].editor.readOnly = true;
+                    //this.editor['_configuration'].editor.readOnly = true;
                 }
             } else {
-                this.editor.setModel(createModel("# no model loaded", "yaml"));
-                this.editor['_configuration'].editor.readOnly = true;
+                this.editor.setModel(createModel("# No model loaded", "yaml"));
+                //this.editor['_configuration'].editor.readOnly = true;
             }
             window['resizeFn']();
         } else if (section === "open-api") {
             if (this.model != null) {
                 if (this.selectedParserType() === "open-api" && this.documentLevel === "document" && this.model.text() != null) {
                     this.editor.setModel(createModel(this.model.text(), "json"));
-                    this.editor['_configuration'].editor.readOnly = false;
+                    //this.editor['_configuration'].editor.readOnly = false;
                 } else {
                     this.editor.setModel(createModel(this.model!.openAPIString, "json"));
-                    this.editor['_configuration'].editor.readOnly = true;
+                    //this.editor['_configuration'].editor.readOnly = true;
                 }
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
-                this.editor['_configuration'].editor.readOnly = true;
+                //this.editor['_configuration'].editor.readOnly = true;
             }
             window['resizeFn']();
         } else if (section === "api-model") {
@@ -430,7 +452,7 @@ export class ViewModel {
             } else {
                 this.editor.setModel(createModel("// no model loaded", "json"));
             }
-            this.editor['_configuration'].editor.readOnly = true;
+            //this.editor['_configuration'].editor.readOnly = true;
             window['resizeFn']();
         } else if (section === "diagram") {
             this.resetDiagram();

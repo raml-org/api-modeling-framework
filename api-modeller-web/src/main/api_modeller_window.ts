@@ -1,5 +1,5 @@
 import {ModelProxy} from "./model_proxy";
-export type ModelType = "raml" | "open-api";
+export type ModelType = "raml" | "open-api" | "api-model";
 export class ApiModellerWindow {
 
     private apiFramework = window['api_modelling_framework'].core;
@@ -68,4 +68,29 @@ export class ApiModellerWindow {
         }
     }
 
+    parseString(type: ModelType, baseUrl: string, value: string, cb: (err, model) => any) {
+        console.log("PARSING TEXT " + value + " TYPE " + type);
+        let parser: any;
+        if (type === "raml") {
+            parser = new this.apiFramework.__GT_RAMLParser();
+        } else if(type === "open-api") {
+            parser = new this.apiFramework.__GT_OpenAPIParser();
+        } else if(type === "api-model") {
+            parser = new this.apiFramework.__GT_APIModelParser();
+        }
+
+        try {
+            this.apiFramework.parse_string(parser, baseUrl, value, function (err, model) {
+                if (err != null) {
+                    console.log("Error parsing text");
+                    console.log(err);
+                    cb(err, null);
+                } else {
+                    cb(null, new ModelProxy(model, type))
+                }
+            })
+        } catch (e) {
+            cb(e, null);
+        }
+    }
 }

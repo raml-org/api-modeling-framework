@@ -47,6 +47,15 @@
         </p>
     </div>
     <div id="editor-container" data-bind="visible: (editorSection() !== 'diagram' && editorSection() !== 'query')"></div>
+    <form data-bind="visible: (editorSection() !== 'diagram' && editorSection() !== 'query')" style="margin-top: 20px">
+        <label class="label" style="float:left; padding-top: 7px; margin-right: 5px">Base URL</label>
+        <input class="input" type="text" data-bind="value: baseUrl" style="float: left; max-width: 90%">
+        <a data-bind="click: doParse"
+           style="float: right"
+           class="button is-primary">
+            Parse
+        </a>
+    </form>
     <div id="graph-container" style="overflow: auto" data-bind="visible: editorSection() === 'diagram'"></div>
     <div id="query"
          class="imported box"
