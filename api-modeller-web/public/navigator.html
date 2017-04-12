@@ -154,8 +154,9 @@
 
     <aside data-bind="visible: navigatorSection()==='domain'"
            class="menu" id="domain-navigator">
-        <p class="menu-label">API Documentation</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['APIDocumentation']">
+        <!-- ko with: domainUnits()['APIDocumentation'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">API Documentation</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
@@ -179,8 +180,10 @@
                 </span>
             </li>
         </ul>
-        <p class="menu-label">End Points</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['EndPoint']">
+        <!-- /ko -->
+        <!-- ko with: domainUnits()['EndPoint'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">End Points</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
@@ -191,8 +194,10 @@
                 <span data-bind="template: {name: 'operations-template', data: $data}"></span>
             </li>
         </ul>
-        <p class="menu-label">Operations</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['Operation']">
+        <!-- /ko -->
+        <!-- ko with: domainUnits()['Operation'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">Operations</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
@@ -204,8 +209,10 @@
                 <span data-bind="template: {name: 'requests-template', data: $data}"></span>
             </li>
         </ul>
-        <p class="menu-label">Responses</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['Response']">
+        <!-- /ko -->
+        <!-- ko with: domainUnits()['Response'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">Responses</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
@@ -216,8 +223,10 @@
                 <span data-bind="template: {name: 'payload-template', data: $data}"></span>
             </li>
         </ul>
-        <p class="menu-label">Payloads</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['Payload']">
+        <!-- /ko -->
+        <!-- ko with: domainUnits()['Payload'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">Payloads</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item"
                 data-bind="css: {'is-active': viewModel.focusedId() === $data.id}">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
@@ -227,7 +236,7 @@
                                        click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
             </li>
         </ul>
-
+        <!-- /ko -->
     </aside>
     <!-- templates -->
     <script type="text/html" id="schema-template">
