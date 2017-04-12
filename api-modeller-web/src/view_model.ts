@@ -307,8 +307,9 @@ export class ViewModel {
         }
         this.resetDocuments();
         this.resetReferences();
-        this.resetUnits();
-        this.resetDiagram();
+        this.resetUnits(() => {
+            this.resetDiagram();
+        });
     }
 
     public doParse() {
@@ -492,6 +493,8 @@ export class ViewModel {
 
     public resetDiagram() {
         try {
+            // cleaning the diagram
+            document.getElementById("graph-container").innerHTML = "";
             let level: "document" | "domain" | "files" = "files";
             if (this.navigatorSection() === "domain") {
                 level = "domain";
@@ -557,7 +560,7 @@ export class ViewModel {
         }
     }
 
-    private resetUnits() {
+    private resetUnits(k: () => void = () => {}) {
         if (this.documentModel != null) {
             this.documentModel.units(this.documentLevel, (err, units) => {
                 if (err == null) {
@@ -602,6 +605,10 @@ export class ViewModel {
                 } else {
                     console.log("Error loading units");
                     console.log(err);
+                }
+
+                if (k != null){
+                    k();
                 }
             });
         } else {
