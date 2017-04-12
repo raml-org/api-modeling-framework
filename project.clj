@@ -32,8 +32,6 @@
 
   :aliases {"node" ["with-profile" "build" "run" "node"]
             "web" ["with-profile" "build" "run" "web"]
-            "api-modeller" ["with-profile" "build" "run" "api-modeller"]
-            "api-modeller-web" ["with-profile" "build" "run" "api-modeller-web"]
             "test-js" ["doo" "node" "test" "once"]}
 
   :cljsbuild {:builds {
