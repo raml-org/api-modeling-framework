@@ -151,8 +151,7 @@
       (parse-type-constraints node)))
 
 (defn parse-array [node {:keys [parsed-location] :as context}]
-  (let [required-set (set (:required node []))
-        is-tuple (some? (get node (keyword "(is-tuple)")))
+  (let [is-tuple (some? (get node (keyword "(is-tuple)")))
         item-types (if is-tuple
                      (-> node :items :of)
                      [(:items node {:type "any"})])
