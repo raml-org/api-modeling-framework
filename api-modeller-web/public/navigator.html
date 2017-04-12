@@ -65,7 +65,7 @@
                         <p data-bind="text: encodes.label"></p>
                     </li>
                 </ul>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length > 0" class="menu-label submenu-label">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
@@ -97,7 +97,7 @@
                         <p data-bind="text: $data.encodes.label"></p>
                     </li>
                 </ul>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length > 0" class="menu-label submenu-label">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
@@ -135,7 +135,7 @@
                         </li>
                     </ul>
                 </span>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length > 0" class="menu-label submenu-label">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
