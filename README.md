@@ -2,12 +2,13 @@
 
 ## Vision
 
-The API Modelling Framework allows you to formally describe different kind of APIs, parse and generate instances of those APIS as sets of modular documents and store those connected descriptions into a single unified data graph.
+The API Modelling Framework (AMF) allows users to formally describe different kind of APIs, parse and generate instances of those APIS as sets of modular documents and to store those connected descriptions into a single unified data graph.
 
 ## Status
 
-AMF is experimental and under active development. No artifacts have been pushed to any repository but the current version of the library can be built from the code in this repository.
-Changes on the current interfaces and vocabularies are to be expected, as well as a possible split of the library in smaller units.
+AMF is experimental and under active development.
+No artifacts have been pushed yet to any repository but the current version of the library can be built from the source code in this project.
+Changes to the current interfaces and vocabularies are to be expected, as well as a possible split of the library into smaller units.
 
 ## Demo
 
@@ -27,19 +28,19 @@ A demo web application, displaying some of the capabilities of the project [can 
 
 ### Parsing and Generation
 
-AMF can be used as a tool to parse RAML and OpenAPI documents generating a common data model stored in a data graph.
-This model can be queried and manipulated and then serialised back into documents with RAML or OpenAPI syntaxes.
+AMF can be used as a tool to parse RAML and OpenAPI documents, generating a common data model stored in a data graph as the output.
+This model can be queried and manipulated, and then serialised back into documents using RAML or OpenAPI syntaxes.
 Additional syntaxes like JSON-LD are also supported by the library.
 
 ### Interoperability
 
-Data in the AMF model can not only be parsed and generated from RAML and OpenAPI documents, but it also provides a way for pieces of API description expressed in different syntaxes to work together through the common AMF data model.
+API information in the AMF model can not only be parsed and generated from RAML and OpenAPI documents, the library also provides functionality for pieces of API description expressed in different syntaxes to work together through the common AMF data model.
 
 ### Modularity and Reusability
 
-The AMF data model is modelled after RAML modular features. API descriptions are not monolithic entities confined into a single document. Instead RAML and AMF conception of an API is that of a set of reusable behaviours, data types and practises that can be re-used and connected across different APIs in a organisation.
+AMF's data model is modelled after RAML modular features. API descriptions are not monolithic entities confined into a single document. Instead the RAML and AMF conception of APIs is that of a set of reusable behaviours, data types and practises that can be re-used and connected across different APIs in a organisation.
 
-AMF supports different kind of reusable units conforming AMF's Document Model:
+AMF supports different kind of reusable units. The sum of all these units conform AMF's Document Model:
 
 - Documents: main entry points for an API description, describing the top level API object
 - Fragments: Small pieces of API description encapsulating a particular data type, or feature that can be re-used in other units
@@ -54,15 +55,18 @@ API modular units in the Document Model are connected through hyperlinks. The fo
 ### Extensible APIs
 
 Units in the Document Model can encode descriptions of APIs for different domains as sets of extensible vocabularies.
+
 RAML annotations and OpenAPI patterned objects are examples of how extensibility is an important feature of an API model, no matter how complete it is, users will need to adapt and extend it.
 In fact, RAML and OpenAPIs can be regarded as a collection of vocabularies to describe different domain: HTTP RPC APIs, authentication mechanisms and data shapes.
-AMF boost these capacities through the notion of an extensible Domain Model.
+
+AMF boost these capacities through the notion of an [extensible Domain Model](https://raml-org.github.io/api-modelling-framework/vocabularies.html).
+
 New vocabularies can be defined and connected, at the same time, with the existing ones, re-using components already defined.
 Eventually AMF will provide tools to easily define this extensions and generate parsers and generators for them.
 
 ### Unified Data Graph
 
-Linked API descriptions in the Domain Model split into units in the Document Mode can be combined by the AMF into a single data graph using the resolution algorithm. Pieces of API description from different documents are put together into a single local graph that contains a functional description of the API, composed only of Domain Model elments.
+Linked API descriptions in the Domain Model split into units in the Document Mode can be combined by the AMF into a single data graph using the resolution algorithm. Pieces of API description from different documents are put together into a single local graph that contains a functional description of the API, composed only of Domain Model elements.
 The information into this local data graph can be used by clients, like HTTP clients that just need to consume a API endpoint without caring about the set of linked documents the description of that API is broken into.
 
 ### Unified Data Validation
