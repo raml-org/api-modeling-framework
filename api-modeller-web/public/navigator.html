@@ -239,14 +239,14 @@
                         <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data.schema) }"></i>
                     </span>
                     <a href="#" data-bind="text: viewModel.ui.labelForDomainUnit($data.schema),
-                                           css: {'is-active': viewModel.focusedId() === $data.id}"></a>
+                                           css: {'is-active': viewModel.focusedId() === $data.schema.id}"></a>
                 </li>
             </ul>
         </span>
     </script>
 
     <script type="text/html" id="payload-template">
-        <span data-bind="if: ($data.payloads && $data.expanded)">
+        <span data-bind="if: ($data.payloads && $data.expanded && $data.payloads.length > 0)">
             <p class="menu-label submenu-label imported">Payloads</p>
             <ul data-bind="foreach: $data.payloads">
                 <li class="navigator-item">

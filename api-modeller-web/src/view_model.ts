@@ -246,7 +246,7 @@ export class ViewModel {
                     this.selectNavigatorFile(foundRef);
                 }
             } else {
-                //if (this.editorSection() === "raml" || this.editorSection() === "open-api" || this.editorSection) {
+                if (this.editorSection() === "api-model" || this.editorSection() === "raml" || this.editorSection() === "open-api") {
 
                     this.model.elementLexicalInfoFor(unit.id, this.editorSection() as "raml" | "open-api" | "api-model", this.documentLevel, (err, lexicalInfo) => {
                        if (err == null) {
@@ -273,7 +273,7 @@ export class ViewModel {
                            this.decorations = this.editor.deltaDecorations(this.decorations, [])
                        }
                     });
-                //}
+                }
             }
         }
     }
@@ -348,7 +348,6 @@ export class ViewModel {
                             this.editor.setModel(createModel(this.model!.openAPIString, "json"));
                             this.editor['_configuration'].editor.readOnly = true;
                         }
-                        this.resetQuery();
                     }
                 });
             }
@@ -363,6 +362,7 @@ export class ViewModel {
                         this.editor.setModel(createModel(this.model!.apiModelString, "json"));
                         this.editor['_configuration'].editor.readOnly = true;
                     }
+                    this.resetQuery();
                 }
             });
         }

@@ -507,7 +507,7 @@
         parsed-location (utils/path-join parsed-location "/body")
         responses (flatten [(parse-ast node (-> context
                                                 (assoc :location location)
-                                                (assoc :parsed-operation parsed-location)
+                                                (assoc :parsed-location parsed-location)
                                                 (dissoc :type-hint)))])]
     (->> responses
          (mapv (fn [res]
@@ -515,8 +515,8 @@
                    (and (satisfies? domain/Type res)
                         (satisfies? document/Node res)) {:media-type nil
                                                          :location location
-                                                         :body-id parsed-location
-                                                         :schema res}
+                                                         :body-id (document/id res)
+                                                         :schema (assoc res :id (utils/path-join (document/id res) "shape"))}
                    (some? (:media-type res))            res
                    (nil? res)                           nil
                    :else                                (throw (new #?(:clj Exception :cljs js/Error)
@@ -644,7 +644,7 @@
                                       :location location
                                       :schema (parse-ast body (-> context
                                                                   (assoc :location location)
-                                                                  (assoc :parsed-location parsed-location)
+                                                                  (assoc :parsed-location (utils/path-join parsed-location "shape"))
                                                                   (assoc :type-hint :type)))}))))))
 
 (defmethod parse-ast :type [node {:keys [location parsed-location is-fragment references] :as context}]
