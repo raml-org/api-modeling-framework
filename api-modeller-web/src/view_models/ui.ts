@@ -75,6 +75,8 @@ export class UI {
                 return (unit as EndPoint).path || unit.label || label(unit.id);
             } else if (unit.kind === "Operation") {
                 return (unit as Operation).method || unit.label || label(unit.id)
+            } else if (unit.kind === "Request") {
+                return unit.label || "Request";
             } else if (unit.kind === "Response") {
                 return (unit as Response).status || unit.label || label(unit.id)
             } else if (unit.kind === "Payload") {
@@ -85,7 +87,7 @@ export class UI {
                 if (unit.label) {
                     return unit.label;
                 } else {
-                    return label(unit.id);
+                    return "Data Shape"
                 }
             } else {
                 return unit.label || label(unit.id)
