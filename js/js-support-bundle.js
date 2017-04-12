@@ -3963,11 +3963,11 @@ global.JS_AST = ast;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"json-to-ast":33}],32:[function(require,module,exports){
 (function (global){
-var fs = (typeof(NODE_FS) === 'undefined' ? {readFile: function() { throw new Error("readFile only supported in node.js")}} : NODE_FS);
+var fs = (typeof (NODE_FS) === 'undefined' ? { readFile: function () { throw new Error("readFile only supported in node.js") } } : NODE_FS);
 var yaml = require('./js-yaml/index.js');
 var path = require("path");
 var rest = require("rest");
-var json_ast  =require("./json_ast");
+var json_ast = require("./json_ast");
 
 global.FRAGMENTS_CACHE = {};
 global.PENDING_LIBRARIES = [];
@@ -4007,7 +4007,7 @@ var resolveFile = function (location, cb) {
     } else if (inCache(location, global.PARSING_OPTIONS.cacheDirs || {})) {
         resolveFile(inCache(location, global.PARSING_OPTIONS.cacheDirs || {}), cb);
     } else {
-        rest(location).then(function (response) {
+        global.JS_REST(location).then(function (response) {
             cb(null, response.entity);
         }).catch(function (err) {
             cb(err);
@@ -4062,10 +4062,10 @@ var cacheFragments = function (fileOrData, cb, pending) {
         updateFragments(fileOrData, fileOrData.data, pending, cb);
     } else {
         // console.log(fileOrData);
-        if (typeof(AMF_LOADING_EVENT) !== 'undefined') {
+        if (typeof (AMF_LOADING_EVENT) !== 'undefined') {
             try {
                 AMF_LOADING_EVENT(fileOrData.location);
-            } catch (e) {}
+            } catch (e) { }
         }
         resolveFile(fileOrData.location, function (err, data) {
             if (err) {
@@ -4210,7 +4210,16 @@ global.JS_YAML.loadYaml = yaml.load;
 global.JS_YAML.parseYamlFile = parseYamlFile;
 global.JS_YAML.parseYamlString = parseYamlString;
 global.JS_YAML.dump = yaml.dump;
-global.JS_REST = rest;
+global.JS_REST = function (location) {
+    console.log("USING PROXY?");
+    if (typeof (global.JS_USE_PROXY) !== "undefined") {
+        console.log("YES: " + global.JS_USE_PROXY.replace("$URL", encodeURIComponent(location)));
+        location = global.JS_USE_PROXY.replace("$URL", encodeURIComponent(location));
+    } else {
+        console.log("NOPE!");
+    }
+    return rest(location);
+};
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./js-yaml/index.js":1,"./json_ast":31,"path":40,"rest":34}],33:[function(require,module,exports){
