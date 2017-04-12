@@ -18,7 +18,7 @@
     </div>
     <aside data-bind="visible: navigatorSection()==='files'"
            class="menu" id="files-navigator">
-        <p class="menu-label">FILES</p>
+        <p class="menu-label" data-bind="if: references && references.length">FILES</p>
         <ul class="menu-list" data-bind="foreach: references">
             <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
                 <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 15px">
@@ -33,7 +33,7 @@
 
     <aside  data-bind="visible: navigatorSection()==='logic'"
             class="menu" id="modules-navigator">
-        <p class="menu-label">DOCUMENTS</p>
+        <p class="menu-label" data-bind="if: documentUnits && documentUnits.length">DOCUMENTS</p>
         <ul class="menu-list" data-bind="foreach: documentUnits">
             <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
                 <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 15px">
@@ -41,11 +41,13 @@
                 </span>
                 <a data-bind="text: label,
                               css: {'is-active': $parent.selectedReference() && $parent.selectedReference().id === id}"></a>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Declares</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && declares && declares.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">Declares</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: declares"
                         class="menu-list"
-                        style="margin-left: 15px">
+                        style="margin-left: 25px">
                         <li classs="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
@@ -56,8 +58,10 @@
                         </li>
                     </ul>
                 </span>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Encodes</p>
-                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-list" style="margin-left: 15px">
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && encodes"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">Encodes</p>
+                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && encodes" class="menu-list" style="margin-left: 25px">
                     <li>
                         <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 3px">
                             <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit(encodes) }"></i>
@@ -65,11 +69,13 @@
                         <p data-bind="text: encodes.label"></p>
                     </li>
                 </ul>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
-                        style="margin-left: 15px">
+                        style="margin-left: 25px">
                         <li>
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
@@ -80,7 +86,7 @@
                 </span>
             </li>
         </ul>
-        <p class="menu-label">FRAGMENTS</p>
+        <p class="menu-label" data-bind="if: fragmentUnits && fragmentUnits.length">FRAGMENTS</p>
         <ul class="menu-list" data-bind="foreach: fragmentUnits">
             <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
                 <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 15px">
@@ -88,8 +94,10 @@
                 </span>
                 <a data-bind="text: label,
                               css: {'is-active': $parent.selectedReference() && $parent.selectedReference().id === id}"></a>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Encodes</p>
-                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-list" style="margin-left: 15px">
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && $data.encodes"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">Encodes</p>
+                <ul data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && $data.encodes" class="menu-list" style="margin-left: 25px">
                     <li class="navigator-item">
                         <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                             <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data.encodes) }"></i>
@@ -97,7 +105,9 @@
                         <p data-bind="text: $data.encodes.label"></p>
                     </li>
                 </ul>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
@@ -112,7 +122,7 @@
                 </span>
             </li>
         </ul>
-        <p class="menu-label">MODULES</p>
+        <p class="menu-label" data-bind="if: moduleUnits && moduleUnits.length">MODULES</p>
         <ul class="menu-list" data-bind="foreach: moduleUnits">
             <span class="icon is-small pull-left" style="margin-right: 5px; margin-top: 10px; margin-left: 15px">
                 <i data-bind="attr: { class: $parent.ui.iconClassForUnit($data) }"></i>
@@ -120,11 +130,13 @@
             <li data-bind="click: $parent.selectNavigatorFile.bind($parent)">
                 <a data-bind="text: label,
                               css: {'is-active': $parent.selectedReference().id === id}"></a>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">Declares</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && declares && declares.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">Declares</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: declares"
                         class="menu-list"
-                        style="margin-left: 15px">
+                        style="margin-left: 25px">
                         <li class="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForDomainUnit($data) }"></i>
@@ -135,15 +147,18 @@
                         </li>
                     </ul>
                 </span>
-                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id" class="menu-label submenu-label">References</p>
+                <p data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id && references && references.length"
+                   class="menu-label submenu-label"
+                   style="padding-left: 10px">References</p>
                 <span data-bind="if: $parent.selectedReference() && $parent.selectedReference().id === id">
                     <ul data-bind="foreach: references"
                         class="menu-list"
-                        style="margin-left: 15px">
+                        style="margin-left: 25px">
                         <li class="navigator-item">
                             <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 3px">
                                 <i data-bind="attr: { class: viewModel.ui.iconClassForUnit($data) }"></i>
                             </span>
+                            <!-- <p data-bind="text: JSON.stringify(references)></p> -->
                             <p data-bind="text: $data.label"></p>
                         </li>
                     </ul>
@@ -154,8 +169,9 @@
 
     <aside data-bind="visible: navigatorSection()==='domain'"
            class="menu" id="domain-navigator">
-        <p class="menu-label">API Documentation</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['APIDocumentation']">
+        <!-- ko with: domainUnits()['APIDocumentation'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">API Documentation</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
@@ -179,8 +195,10 @@
                 </span>
             </li>
         </ul>
-        <p class="menu-label">End Points</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['EndPoint']">
+        <!-- /ko -->
+        <!-- ko with: domainUnits()['EndPoint'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">End Points</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
@@ -191,8 +209,10 @@
                 <span data-bind="template: {name: 'operations-template', data: $data}"></span>
             </li>
         </ul>
-        <p class="menu-label">Operations</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['Operation']">
+        <!-- /ko -->
+        <!-- ko with: domainUnits()['Operation'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">Operations</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
@@ -204,8 +224,10 @@
                 <span data-bind="template: {name: 'requests-template', data: $data}"></span>
             </li>
         </ul>
-        <p class="menu-label">Responses</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['Response']">
+        <!-- /ko -->
+        <!-- ko with: domainUnits()['Response'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">Responses</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
                     <i data-bind="attr: { class: viewModel.ui.iconClassForDomainRDFUnit($data) }"></i>
@@ -216,8 +238,10 @@
                 <span data-bind="template: {name: 'payload-template', data: $data}"></span>
             </li>
         </ul>
-        <p class="menu-label">Payloads</p>
-        <ul class="menu-list" data-bind="foreach: domainUnits()['Payload']">
+        <!-- /ko -->
+        <!-- ko with: domainUnits()['Payload'] -->
+        <p class="menu-label" data-bind="if: $data && $data.length">Payloads</p>
+        <ul class="menu-list" data-bind="foreach: $data">
             <li class="navigator-item"
                 data-bind="css: {'is-active': viewModel.focusedId() === $data.id}">
                 <span class="icon is-small pull-left" style="margin-right: 10px; margin-top: 10px">
@@ -227,7 +251,7 @@
                                        click: function(){ (viewModel.expandDomainUnit.bind(viewModel))($data) }"></a>
             </li>
         </ul>
-
+        <!-- /ko -->
     </aside>
     <!-- templates -->
     <script type="text/html" id="schema-template">
