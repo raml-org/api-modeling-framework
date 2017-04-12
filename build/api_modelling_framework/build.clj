@@ -122,19 +122,6 @@
   (println "** Building Target: web\n")
   (build "web"))
 
-(defn run-api-modeller []
-  (build-node)
-  (let [api-modeller (str (pwd) "/api-modeller")]
-    (println "linking project to api-modeller")
-    (npm-link "output/node" api-modeller)
-
-    (println "Installing npm dependencies")
-    (npm-install api-modeller)
-
-    (println "Compiling typescript")
-    (no-error (tsc (local-tsc api-modeller) api-modeller))
-    (gulp-serve api-modeller)))
-
 (defn run-api-web []
   (build-web)
 
@@ -150,7 +137,6 @@
     (condp = (first args)
       "web"              (build-web)
       "node"             (build-node)
-      "api-modeller"     (run-api-modeller)
       "api-modeller-web" (run-api-web)
       (do (println "Unknown task")
           (System/exit 2)))

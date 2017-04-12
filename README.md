@@ -25,7 +25,6 @@ The API Modelling Framework Github's repository includes can be used to build th
 - API Modelling Framework Clojure/JVM JAR library
 - API Modelling Framework Clojurescript/Node NPM package
 - API Modelling Framework Clojurescript/Web library
-- API Modeller frontend Electron application
 - API Modeller frontend Web application
 
 The following leiningen invocations can be used to build each of this artifacts:
@@ -53,16 +52,6 @@ $ lein web
 ```
 
 The output JS library will be generated at `output/web`.
-
-### API Modeller frontend Electron application
-
-``` shell
-
-$ lein npm install # this is only required on the first run
-$ lein api-modeller
-```
-
-The electron will be immediately started after the setup process.
 
 ### API Modeller frontend Web application
 
