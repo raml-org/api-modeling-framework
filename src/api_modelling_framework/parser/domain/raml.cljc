@@ -523,7 +523,7 @@
                                                                     (str "Cannot parse body response at " location ", media-type or type declaration expected")))))))))
 
 (defn parse-http-payloads [body-id node {:keys [location parsed-location is-fragment] :as context}]
-  (let [bodies (extract-bodies (:body node) contextn)]
+  (let [bodies (extract-bodies (:body node) context)]
     (->> bodies
          (filter some?)
          (mapv (fn [{:keys [media-type body-id location schema] :as data}]
