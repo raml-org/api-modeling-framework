@@ -13,7 +13,7 @@
 
 (defn parse-generic-keywords [node shape]
   (->> node
-       (map (fn [[p v]]
+       (mapv (fn [[p v]]
               (condp = p
                 :title       #(assoc % v/sorg:name [{"@value" v}])
                 :description #(assoc % v/sorg:description [{"@value" v}])
@@ -21,7 +21,7 @@
        (reduce (fn [acc p] (p acc)) shape)))
 (defn parse-type-constraints [node shape]
   (->> node
-       (map (fn [[p v]]
+       (mapv (fn [[p v]]
               (condp = p
                 :minLength  #(assoc % (v/sh-ns "minLength") [{"@value" v}])
                 :maxLength  #(assoc % (v/sh-ns "maxLength") [{"@value" v}])
@@ -31,7 +31,7 @@
                 :x-uniqueItems #(assoc % (v/shapes-ns "uniqueItems") [{"@value" v}])
                 :multipleOf #(assoc % (v/shapes-ns "multipleOf") [{"@value" v}])
                 :minimum    #(assoc % (v/sh-ns "minExclusive") [{"@value" v}])
-                :enum       #(assoc % (v/sh-ns "in") (->> v (map utils/annotation->jsonld)))
+                :enum       #(assoc % (v/sh-ns "in") (->> v (mapv utils/annotation->jsonld)))
                 identity)))
        (reduce (fn [acc p] (p acc)) shape)
        (parse-generic-keywords node)))
@@ -62,7 +62,7 @@
 (defn parse-shape [node {:keys [parsed-location] :as context}]
   (let [required-set (set (:required node []))
         properties (->> (:properties node [])
-                        (map (fn [[k v]]
+                        (mapv (fn [[k v]]
                                (let [parsed-location (str parsed-location "/property/" (utils/safe-str k))
                                      parsed-property-target (parse-type v (assoc context :parsed-location parsed-location))
                                      property-shape (cond
@@ -94,7 +94,7 @@
   (let [required-set (set (:required node []))
         items (flatten [(:items node [])])
         items (->> items
-                   (map (fn [i shape] (parse-type shape (assoc context :parsed-location (str parsed-location "/items/" i))))
+                   (mapv (fn [i shape] (parse-type shape (assoc context :parsed-location (str parsed-location "/items/" i))))
                         (range 0 (count items))))]
     (->> {"@type" [(v/shapes-ns "Array")
                    (v/sh-ns "Shape")]
@@ -145,14 +145,14 @@
         file-reference-keyword (keyword file-reference)
         type-string-keyword (keyword type-string)
         found (->> [type-string type-string-keyword file-reference file-reference-keyword]
-                   (map #(get references %))
+                   (mapv #(get references %))
                    (filter some?)
                    first)]
     (if (some? found)
       found
       (->> references
            (filter (fn [[k _]] (string/ends-with? (utils/safe-str k) (utils/safe-str type-string))))
-           (map (fn [[_ v]] v))
+           (mapv (fn [[_ v]] v))
            first))))
 
 (defn check-reference
@@ -194,7 +194,7 @@
   (let [child (parse-type source context)
         with (flatten [with])
         super (->> with
-                   (map (fn [i with]
+                   (mapv (fn [i with]
                           (parse-type with (-> context
                                                (assoc :parsed-location (utils/path-join parsed-location (str "with/" i)))
                                                (assoc :location (utils/path-join location (str "with/" i))))))

@@ -48,7 +48,7 @@
 
 (defn parse-generic-keywords [node shape]
   (->> node
-       (map (fn [[p v]]
+       (mapv (fn [[p v]]
               (condp = p
                 :displayName #(assoc % v/sorg:name [{"@value" v}])
                 :description #(assoc % v/sorg:description [{"@value" v}])
@@ -58,7 +58,7 @@
 (defn parse-type-constraints [node shape]
   (if (map? node)
     (->> node
-         (map (fn [[p v]]
+         (mapv (fn [[p v]]
                 (condp = p
                   :minLength  #(assoc % (v/sh-ns "minLength") [{"@value" v}])
                   :maxLength  #(assoc % (v/sh-ns "maxLength") [{"@value" v}])
@@ -68,7 +68,7 @@
                   :uniqueItems #(assoc % (v/shapes-ns "uniqueItems") [{"@value" v}])
                   :multipleOf #(assoc % (v/shapes-ns "multipleOf") [{"@value" v}])
                   :minimum    #(assoc % (v/sh-ns "minExclusive") [{"@value" v}])
-                  :enum       #(assoc % (v/sh-ns "in") (->> v (map utils/annotation->jsonld)))
+                  :enum       #(assoc % (v/sh-ns "in") (->> v (mapv utils/annotation->jsonld)))
                   identity)))
          (reduce (fn [acc p] (p acc)) shape)
          (parse-generic-keywords node))
@@ -111,7 +111,7 @@
 
 (defn parse-shape [node {:keys [parsed-location] :as context}]
   (let [properties (->> (:properties node [])
-                        (map (fn [[k v]]
+                        (mapv (fn [[k v]]
                                (let [property-name (utils/safe-str k)
                                      property-name (final-property-name property-name v)
                                      parsed-location (utils/path-join parsed-location (str "/property/" property-name))
@@ -155,7 +155,7 @@
         item-types (if is-tuple
                      (-> node :items :of)
                      [(:items node {:type "any"})])
-        items  (map (fn [i item-type]
+        items  (mapv (fn [i item-type]
                       (parse-type item-type (assoc context :parsed-location (str parsed-location "/items/" i))))
                     (range 0 (count item-types))
                     item-types)]

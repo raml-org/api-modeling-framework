@@ -467,10 +467,10 @@
   (deftest integration-test-raml->open-api
     (async done
            (go (let [parser (core/->RAMLParser)
-                     generator (core/->OpenAPIGenerator)
-                     model (<! (cb->chan (partial core/parse-file parser "/Users/antoniogarrote/Development/api-modelling-framework/resources/other-examples/mobile-order-api/api.raml")))
+                     generator (core/->APIModelGenerator)
+                     model (<! (cb->chan (partial core/parse-file parser "/Users/antoniogarrote/Development/api-modelling-framework/resources/other-examples/world-music-api/api.raml")))
                      _ (is (not (error? model)))
-                     output-model (core/domain-model model)
+                     output-model (core/document-model model)
                      _ (is (not (error? output-model)))
                      open-api-string (<! (cb->chan (partial core/generate-string generator "/Users/antoniogarrote/Development/tmp/ramlapitest1/api.json"
                                                             output-model

@@ -142,7 +142,7 @@
   (if (map? node)
     (let [parsed-annotations (->> node
                                   (filter (fn [[k v]] (annotation? k)))
-                                  (map (fn [[k v]] (parse-annotation-ast k v ctx))))]
+                                  (mapv (fn [[k v]] (parse-annotation-ast k v ctx))))]
       (if (> (count parsed-annotations) 0)
         (if (some? (:properties model))
           (assoc-in model [:properties :additional-properties] parsed-annotations)
@@ -291,7 +291,7 @@
                          range (assoc range :name nil)
                          allowed-targets (->> [(:allowedTargets annotation-node [])]
                                               flatten
-                                              (map utils/node-name->domain-uri)
+                                              (mapv utils/node-name->domain-uri)
                                               (filter some?))
                          id (v/anon-shapes-ns encoded-annotation-name)]
                      (assoc acc
