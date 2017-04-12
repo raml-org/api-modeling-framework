@@ -246,8 +246,7 @@ export class ViewModel {
                     this.selectNavigatorFile(foundRef);
                 }
             } else {
-                //if (this.editorSection() === "raml" || this.editorSection() === "open-api" || this.editorSection) {
-
+                if (this.editorSection() === "raml" || this.editorSection() === "open-api" || this.editorSection() === "api-model" ) {
                     this.model.elementLexicalInfoFor(unit.id, this.editorSection() as "raml" | "open-api" | "api-model", this.documentLevel, (err, lexicalInfo) => {
                        if (err == null) {
                            if (lexicalInfo != null) {
@@ -273,7 +272,7 @@ export class ViewModel {
                            this.decorations = this.editor.deltaDecorations(this.decorations, [])
                        }
                     });
-                //}
+                }
             }
         }
     }
@@ -410,7 +409,6 @@ export class ViewModel {
                 this.editor['_configuration'].editor.readOnly = true;
             }
             window['resizeFn']();
-            this.selectElementDocument({id: this.focusedId()} as DomainElement)
         } else if (section === "open-api") {
             if (this.model != null) {
                 if (this.selectedParserType() === "open-api" && this.documentLevel === "document" && this.model.text() != null) {
@@ -425,7 +423,6 @@ export class ViewModel {
                 this.editor['_configuration'].editor.readOnly = true;
             }
             window['resizeFn']();
-            this.selectElementDocument({id: this.focusedId()} as DomainElement)
         } else if (section === "api-model") {
             if (this.model != null) {
                 this.editor.setModel(createModel(this.model!.apiModelString, "json"));
@@ -439,6 +436,7 @@ export class ViewModel {
         } else {
 
         }
+        this.selectElementDocument({id: this.focusedId()} as DomainElement)
     }
 
     private onSelectedDiagramId(id, unit) {
