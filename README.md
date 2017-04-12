@@ -140,6 +140,10 @@ $ lein npm install # this is only required on the first run
 $ lein test-js
 ```
 
+## Vocabularies
+
+The OWL ontology for the AMF vocabularies (document and domain models) [can be found here](https://github.com/raml-org/api-modelling-framework/blob/master/vocabulary/raml.ttl).
+
 ## Implementation Progress
 
 The following tables show the current support of the project for different syntactical elements of RAML, OpenAPI, RAML Types and JSONSchema.
