@@ -43,6 +43,12 @@
 (defn cljsbuild [target]
   (sh! "lein" "cljsbuild" "once" target))
 
+(defn no-logging-cljsbuild [target]
+  (def env (into {} (System/getenv)))
+  (def newEnv (assoc env :TIMBRE_LEVEL ":warn"))
+  (println "==> lein cljsbuild once web")
+  (jsh/sh "lein" "cljsbuild" "once" target :env newEnv))
+
 (defn clean []
   (sh! "lein" "clean"))
 
@@ -81,7 +87,7 @@
 
 ;; builds
 
-(defn build [target]
+(defn build [target builder]
   (println "* Cleaning output directory")
   (clean)
   (rm "target")
@@ -91,8 +97,8 @@
   (mkdir "output")
 
   (println "* Building " target)
-  (cljsbuild target
-)
+  (builder target)
+
   (println "* Copying license")
   (cp "LICENSE" (str "output/" target "/LICENSE")))
 
@@ -100,7 +106,7 @@
 
 (defn build-node []
   (println "** Building Target: node\n")
-  (build "node")
+  (build "node" cljsbuild)
   (cp "js" "output/node/js")
 
   (println "* copy package index file")
@@ -120,7 +126,7 @@
 
 (defn build-web []
   (println "** Building Target: web\n")
-  (build "web"))
+  (build "web" no-logging-cljsbuild))
 
 (defn -main [& args]
   (try
