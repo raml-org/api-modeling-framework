@@ -1,5 +1,5 @@
 {
-  "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml",
+  "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml",
   "@type": [
     "http://raml.org/vocabularies/document#Document",
     "http://raml.org/vocabularies/document#Fragment",
@@ -23,7 +23,7 @@
             "http://www.w3.org/ns/shacl#NodeShape",
             "http://www.w3.org/ns/shacl#Shape"
           ],
-          "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape",
+          "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape",
           "http://www.w3.org/ns/shacl#property": [
             {
               "http://www.w3.org/ns/shacl#maxCount": [
@@ -36,7 +36,7 @@
                   "@id": "http://www.w3.org/2001/XMLSchema#boolean"
                 }
               ],
-              "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape/property/q",
+              "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape/property/q",
               "@type": [
                 "http://www.w3.org/ns/shacl#PropertyShape",
                 "http://www.w3.org/ns/shacl#Shape"
@@ -68,7 +68,7 @@
                   "@id": "http://www.w3.org/2001/XMLSchema#string"
                 }
               ],
-              "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape/property/items",
+              "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/test/shape/property/items",
               "@type": [
                 "http://www.w3.org/ns/shacl#PropertyShape",
                 "http://www.w3.org/ns/shacl#Shape"
@@ -108,7 +108,7 @@
         "http://raml.org/vocabularies/http#APIDocumentation",
         "http://raml.org/vocabularies/document#DomainElement"
       ],
-      "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/api-documentation",
+      "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Annotations/test001/apiValid.raml#/api-documentation",
       "http://schema.org/name": [
         {
           "@value": "H"
