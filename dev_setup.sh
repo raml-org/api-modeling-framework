@@ -11,7 +11,7 @@ cd api-modeller
 tsc
 npm install
 cd ..
-ln -s $(pwd) $(pwd)/api-modeller/node_modules/api_modelling_framework
+ln -s $(pwd) $(pwd)/api-modeller/node_modules/api_modeling_framework
 pushd api-modeller/public
 bower install
 popd

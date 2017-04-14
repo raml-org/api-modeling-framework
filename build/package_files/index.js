@@ -21,7 +21,7 @@ require(path.join(__dirname, "cljs_deps.js"));
 goog.global.CLOSURE_UNCOMPILED_DEFINES = { "cljs.core._STAR_target_STAR_": "nodejs" };
 goog.global.NODE_FS = require('fs');
 require(__dirname + "/js/yaml");
-goog.require("api_modelling_framework.core");
+goog.require("api_modeling_framework.core");
 goog.require("cljs.nodejscli");
 
-module.exports = global.api_modelling_framework.core;
+module.exports = global.api_modeling_framework.core;

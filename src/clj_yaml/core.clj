@@ -1,7 +1,7 @@
 (ns clj-yaml.core
   (:require [clojure.string :as string]
             [clojure.java.io :as io]
-            [api-modelling-framework.utils :as utils])
+            [api-modeling-framework.utils :as utils])
   (:import (org.yaml.snakeyaml Yaml DumperOptions DumperOptions$FlowStyle)
            (org.yaml.snakeyaml.reader StreamReader)
            [java.io File]))
