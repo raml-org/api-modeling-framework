@@ -1,8 +1,8 @@
 (defproject api-modelling-framework "0.1.1-SNAPSHOT"
 
-  :description "API and domain modelling tools for RAML, OpenAPI (Swagger) and RDF"
+  :description "API and domain modeling tools for RAML, OpenAPI (Swagger) and RDF"
 
-  :url "https://github.com/mulesoft-labs/api-modelling-framework"
+  :url "https://github.com/mulesoft-labs/api-modeling-framework"
 
   :license {:name "Apache-2.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
