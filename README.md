@@ -1,10 +1,10 @@
-# API Modelling Framework ![Build Status](https://travis-ci.com/raml-org/api-modelling-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)
+# API Modeling Framework ![Build Status](https://travis-ci.com/raml-org/api-modeling-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)
 
 ## Vision
 
-The API Modelling Framework (AMF) allows users to formally describe different kind of APIs, parse and generate instances of those APIS as sets of modular documents and to store those connected descriptions into a single unified data graph.
+The API Modeling Framework (AMF) allows users to formally describe different kind of APIs, parse and generate instances of those APIS as sets of modular documents and to store those connected descriptions into a single unified data graph.
 
-![Overview](https://raml-org.github.io/api-modelling-framework/images/diagram.png)
+![Overview](https://raml-org.github.io/api-modeling-framework/images/diagram.png)
 
 ## Status
 
@@ -32,7 +32,7 @@ A demo web application, displaying some of the capabilities of the project [can 
 
 AMF can be used as a tool to parse RAML and OpenAPI documents, generating a common data model stored in a data graph as the output.
 
-![Translation](https://raml-org.github.io/api-modelling-framework/images/translation.png)
+![Translation](https://raml-org.github.io/api-modeling-framework/images/translation.png)
 
 This model can be queried and manipulated, and then serialised back into documents using RAML or OpenAPI syntaxes.
 Additional syntaxes like JSON-LD are also supported by the library.
@@ -45,7 +45,7 @@ API information in the AMF model can not only be parsed and generated from RAML 
 
 AMF's data model is modelled after RAML modular features. API descriptions are not monolithic entities confined into a single document. Instead the RAML and AMF conception of APIs is that of a set of reusable behaviours, data types and practises that can be re-used and connected across different APIs in a organisation.
 
-![Composition](https://raml-org.github.io/api-modelling-framework/images/composition.png)
+![Composition](https://raml-org.github.io/api-modeling-framework/images/composition.png)
 
 
 AMF supports different kind of reusable units. The sum of all these units conform AMF's Document Model:
@@ -56,7 +56,7 @@ AMF supports different kind of reusable units. The sum of all these units confor
 
 These units can be connected by relationships of inclusion and extension to build aggregate or adapt descriptions
 
-![Document Model](https://raml-org.github.io/api-modelling-framework/images/document_model.png)
+![Document Model](https://raml-org.github.io/api-modeling-framework/images/document_model.png)
 
 ### Linked Descriptions
 
@@ -69,9 +69,9 @@ Units in the Document Model can encode descriptions of APIs for different domain
 RAML annotations and OpenAPI patterned objects are examples of how extensibility is an important feature of an API model, no matter how complete it is, users will need to adapt and extend it.
 In fact, RAML and OpenAPIs can be regarded as a collection of vocabularies to describe different domain: HTTP RPC APIs, authentication mechanisms and data shapes.
 
-AMF boost these capacities through the notion of an [extensible Domain Model](https://raml-org.github.io/api-modelling-framework/vocabularies.html).
+AMF boost these capacities through the notion of an [extensible Domain Model](https://raml-org.github.io/api-modeling-framework/vocabularies.html).
 
-![Domain Model](https://raml-org.github.io/api-modelling-framework/images/domain_model.png)
+![Domain Model](https://raml-org.github.io/api-modeling-framework/images/domain_model.png)
 
 New vocabularies can be defined and connected, at the same time, with the existing ones, re-using components already defined.
 Eventually AMF will provide tools to easily define this extensions and generate parsers and generators for them.
@@ -103,22 +103,22 @@ Any subset of the original or resolved graph can be exported back as RAML, OpenA
 
 ## Installation
 
-The API Modelling Framework Github's repository includes can be used to build the following artifacts:
+The API Modeling Framework Github's repository includes can be used to build the following artifacts:
 
-- API Modelling Framework Clojure/JVM JAR library
-- API Modelling Framework Clojurescript/Node NPM package
-- API Modelling Framework Clojurescript/Web library
+- API Modeling Framework Clojure/JVM JAR library
+- API Modeling Framework Clojurescript/Node NPM package
+- API Modeling Framework Clojurescript/Web library
 
 The following leiningen invocations can be used to build each of this artifacts:
 
 
-### API Modelling Framework Clojure/JVM library
+### API Modeling Framework Clojure/JVM library
 
 ``` shell
 $ lein jar
 ```
 
-### API Modelling Framework Clojurescript/Node library
+### API Modeling Framework Clojurescript/Node library
 
 ``` shell
 $ lein npm install # this is only required on the first run
@@ -128,7 +128,7 @@ $ lein node
 The output NPM package will be generated at `output/node`.
 
 
-### API Modelling Framework Clojurescript/Node library
+### API Modeling Framework Clojurescript/Node library
 
 ``` shell
 $ lein web
@@ -158,8 +158,8 @@ $ lein test-js
 
 ## Vocabularies
 
-The OWL ontology for the AMF vocabularies (document and domain models) [can be found here](https://github.com/raml-org/api-modelling-framework/blob/master/vocabulary/raml.ttl).
-Reference documentation for the ontology can be found [here](https://raml-org.github.io/api-modelling-framework/vocabularies.html).
+The OWL ontology for the AMF vocabularies (document and domain models) [can be found here](https://github.com/raml-org/api-modeling-framework/blob/master/vocabulary/raml.ttl).
+Reference documentation for the ontology can be found [here](https://raml-org.github.io/api-modeling-framework/vocabularies.html).
 
 ## Implementation Progress
 
@@ -239,7 +239,7 @@ The following tables show the current support of the project for different synta
 ## TCK
 
 As part of the development of the library, we are developing a cross-language version of the [RAML TCK](https://github.com/raml-org/raml-tck).
-The list of test cases currently supporte can be found in the [tck](https://github.com/raml-org/api-modelling-framework/tree/master/resources/tck/raml-1.0) directory of the repository
+The list of test cases currently supporte can be found in the [tck](https://github.com/raml-org/api-modeling-framework/tree/master/resources/tck/raml-1.0) directory of the repository
 
 ## License
 
