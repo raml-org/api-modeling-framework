@@ -1,5 +1,5 @@
 {
-    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test004/apiValid.raml",
+    "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Types/test004/apiValid.raml",
     "@type": [
         "http://raml.org/vocabularies/document#Document",
         "http://raml.org/vocabularies/document#Fragment",
@@ -8,7 +8,7 @@
     ],
     "http://raml.org/vocabularies/document#declares": [
         {
-            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test004/apiValid.raml/types#/definitions/SomeType",
+            "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Types/test004/apiValid.raml/types#/definitions/SomeType",
 
             "@type": [
                 "http://raml.org/vocabularies/shapes#Array",
@@ -23,7 +23,7 @@
 
             "http://raml.org/vocabularies/shapes#item": [
                 {
-                    "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test004/apiValid.raml/types#/definitions/SomeType/type/items/0",
+                    "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Types/test004/apiValid.raml/types#/definitions/SomeType/type/items/0",
                     "@type": [
                         "http://raml.org/vocabularies/shapes#Scalar",
                         "http://www.w3.org/ns/shacl#Shape"
@@ -43,7 +43,7 @@
                 "http://raml.org/vocabularies/http#APIDocumentation",
                 "http://raml.org/vocabularies/document#DomainElement"
             ],
-            "@id": "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/tck/raml-1.0/Types/test004/apiValid.raml#/api-documentation",
+            "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Types/test004/apiValid.raml#/api-documentation",
             "http://schema.org/name": [
                 {
                     "@value": "API"
