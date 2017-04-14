@@ -1,8 +1,8 @@
-(defproject api-modelling-framework "0.1.1-SNAPSHOT"
+(defproject api-modeling-framework "0.1.1-SNAPSHOT"
 
-  :description "API and domain modelling tools for RAML, OpenAPI (Swagger) and RDF"
+  :description "API and domain modeling tools for RAML, OpenAPI (Swagger) and RDF"
 
-  :url "https://github.com/mulesoft-labs/api-modelling-framework"
+  :url "https://github.com/mulesoft-labs/api-modeling-framework"
 
   :license {:name "Apache-2.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -28,7 +28,7 @@
                        [json-to-ast "2.0.0-alpha1.2"]]}
 
   :profiles {:build {:source-paths ["build"]
-                     :main api-modelling-framework.build}}
+                     :main api-modeling-framework.build}}
 
   :aliases {"node" ["with-profile" "build" "run" "node"]
             "web" ["with-profile" "build" "run" "web"]
@@ -37,7 +37,7 @@
   :cljsbuild {:builds {
                        :node {:source-paths ["src", "src_node"]
                               :figwheel true
-                              :compiler {:main api-modelling-framework.core
+                              :compiler {:main api-modeling-framework.core
                                          :output-dir "output/node/"
                                          :output-to "output/node/amf.js"
                                          :optimizations :none,
@@ -50,18 +50,18 @@
                        :web     {:source-paths ["src"]
                                  :figwheel true
                                  :compiler {:output-to "output/web/amf.js"
-                                            :main api-modelling-framework.core
+                                            :main api-modeling-framework.core
                                             :asset-path "/js"
                                             ;:optimizations :whitespace
                                             :optimizations :advanced
                                             :foreign-libs [{:file "js/js-support-bundle.js"
-                                                            :provides ["api_modelling_framework.js-support"]}]
+                                                            :provides ["api_modeling_framework.js-support"]}]
                                             :externs ["js/externs.js"]
                                             :pretty-print true}}
 
                        :test    {:source-paths ["src" "src_node" "test"]
                                  :compiler {:output-dir "output/test/"
                                             :output-to "output/test/amf-test.js"
-                                            :main api-modelling-framework.runner
+                                            :main api-modeling-framework.runner
                                             :pretty-print true
                                             :target :nodejs}}}})
