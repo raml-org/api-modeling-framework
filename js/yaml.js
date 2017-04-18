@@ -150,7 +150,11 @@ var collectLibraries = function (fragment, location) {
     var libraries = fragment.uses || {};
     for (var p in libraries) {
         if (p !== "__location__") {
-            var resolvedLocation = resolvePath(location, libraries[p]);
+            var value = libraries[p];
+            if (typeof(value) === "object" && value["amf-lexical-token"]) {
+                value = value["amf-lexical-token"];
+            }
+            var resolvedLocation = resolvePath(location, value);
             PENDING_LIBRARIES.push({
                 "path": libraries[p],
                 "location": resolvedLocation,

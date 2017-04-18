@@ -10,6 +10,7 @@
             [api-modeling-framework.parser.syntax.yaml :as yaml-parser]
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.utils-test :refer [cb->chan error?]]
+            [api-modeling-framework.parser.domain.common :refer [purge-ast]]
             #?(:clj [com.georgejahad.difform :as difform])
             [clojure.string :as string]
             #?(:cljs [cljs.nodejs :as nodejs])
@@ -208,12 +209,15 @@
 
 (defn to-data-structure [uri type s]
   (go (condp = type
-        :raml      (->> (yaml-parser/parse-string uri (->  s
-                                                           (string/replace ".openapi" ".raml")
-                                                           (string/replace ".jsonld" ".raml")))
-                        <!
-                        -success->
-                        clean-fragments)
+        :raml
+        (->> (yaml-parser/parse-string uri (->  s
+                                                (string/replace ".openapi" ".raml")
+                                                (string/replace ".jsonld" ".raml")))
+             <!
+             -success->
+             ;;prn
+             purge-ast
+             clean-fragments)
         :openapi   (platform/decode-json s)
         :jsonld    (platform/decode-json s))))
 
@@ -255,7 +259,7 @@
                                                                   {:source-maps? false
                                                                    :full-graph? false}))))
             doc-generated (<! (to-data-structure generated-file-name  type raw-generated-data))]
-        ;;(println generated-jsonld)
+        (prn raw-generated-data)
         (is (same-structure? (ensure-not-nil (clean-ids (platform/decode-json generated-jsonld)))
                              (ensure-not-nil (clean-ids target))))
         (is (same-structure? (ensure-not-nil (clean-ids doc-generated))
@@ -265,7 +269,6 @@
   (go (doseq [[from to]  ;[[:openapi :raml]]
               conversions
               ]
-        (println "\n\nCOMPARING " from " -> " to "\n\n")
         (let [source (get files from)
               target (get files to)
               target (->> (target-file files to from)

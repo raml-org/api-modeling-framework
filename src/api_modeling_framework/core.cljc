@@ -98,7 +98,7 @@
             (cb (platform/<-clj res) nil)
             (try (cb nil (to-model (raml-document-parser/parse-ast res {})))
                  (catch #?(:clj Exception :cljs js/Error) ex
-                   (cb (platform/<-clj ex) nil)))))))
+                        (cb (platform/<-clj ex) nil)))))))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
     (go (let [res (<! (yaml-parser/parse-string uri string options))]

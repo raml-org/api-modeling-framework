@@ -10,11 +10,13 @@
             [api-modeling-framework.parser.syntax.yaml :as yaml-parser]
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.utils-test :refer [cb->chan error?]]
+            [api-modeling-framework.parser.domain.common :refer [purge-ast]]
             [clojure.string :as string]
             #?(:cljs [cljs.core.async :refer [<! >! chan]])
             #?(:clj [api-modeling-framework.platform :refer [async]])
             #?(:clj [clojure.core.async :refer [go <! >! chan]])
             #?(:clj [clojure.test :refer [deftest is]])))
+
 
 
 (deftest integration-test-raml->open-api
@@ -69,7 +71,7 @@
                                                         output-model
                                                         {})))
                    _ (is (not (error? output-string)))
-                   output (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string)))]
+                   output (purge-ast (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string))))]
 
                (is (= [:Album :Track] (-> output :types keys)))
                (is (= "SongsLib.Song" (-> output :types :Track :properties :song)))
@@ -113,7 +115,7 @@
                                                       output-model
                                                       {})))
                    _ (is (not (error? output-string)))
-                   output (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string)))
+                   output (purge-ast (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string))))
                    types (->> output
                               (filter (fn [[k v]] (string/starts-with? (utils/safe-str k) "/")))
                               (map last)
@@ -141,6 +143,9 @@
                               (into {}))
                    api-resource (get paths "/api")
                    song-resource (get paths "/songs/{songId}")]
+               #?(:cljs (prn (map (fn [parsed]
+                                    (is (some? (:lexical parsed))))
+                                  (document/declares document-model))))
                (doseq [ref (document/references (core/document-model model))]
                  (is (some? (:raw ref))))
                (is (= "World Music API" (document/name api-documentation)))
@@ -210,7 +215,7 @@
   (go (let [output-document-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/world-music-api/wip.raml"
                                                         output-document-model
                                                         {})))
-            raw (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-document-raml))
+            raw (purge-ast (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-document-raml)))
             ;; JS / JAVA parsers behave in a slightly different way, that's the reason for the or
             parsed-document-raml-output (or (syntax/<-data raw)
                                             (:data (get raw (keyword "resources/world-music-api/wip.raml"))))]
@@ -227,7 +232,7 @@
   (go (let [output-domain-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/world-music-api/wip.raml"
                                                       output-domain-model
                                                       {})))
-            raw (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-domain-raml))
+            raw (purge-ast (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-domain-raml)))
             ;; JS / JAVA parsers behave in a slightly different way, that's the reason for the or
             parsed-domain-raml-output (or
                                        ;; java
@@ -324,7 +329,7 @@
                    output-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/petstore.raml"
                                                         output-model
                                                         {})))
-                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/petstore.raml" output-raml)))
+                   yaml-data (purge-ast (syntax/<-data (<! (yaml-parser/parse-string "resources/petstore.raml" output-raml))))
                    output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/petstore.jsonld"
                                                         output-model
                                                         {})))]
@@ -411,7 +416,7 @@
                    output-yaml(<! (cb->chan (partial core/generate-string generator "resources/api.raml"
                                                      (core/document-model read-model)
                                                      {})))
-                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-yaml)))]
+                   yaml-data (purge-ast (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-yaml))))]
                (is (some? (-> yaml-data :types :User)))
                (is (= (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "User"))
                (done)))))
@@ -432,7 +437,7 @@
                    output-yaml(<! (cb->chan (partial core/generate-string generator "resources/api.raml"
                                                      (core/document-model read-model)
                                                      {})))
-                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-yaml)))]
+                   yaml-data (purge-ast (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-yaml))))]
                (is (some? (-> yaml-data :types :User)))
                (is (= (-> yaml-data (get (keyword "/users")) :get :responses :200 :body) "User"))
                (done)))))
@@ -449,7 +454,7 @@
                    output-yaml(<! (cb->chan (partial core/generate-string generator "resources/api.raml"
                                                      output-model
                                                      {})))
-                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/tck/raml-1.0/Fragments/test001/fragment.raml" output-yaml)))
+                   yaml-data (purge-ast (syntax/<-data (<! (yaml-parser/parse-string "resources/tck/raml-1.0/Fragments/test001/fragment.raml" output-yaml))))
                    output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/api.raml"
                                                         output-model
                                                         {:source-maps? false})))
@@ -495,7 +500,7 @@
                    output-raml (<! (cb->chan (partial core/generate-string generator-raml "resources/uber.raml"
                                                         output-model
                                                         {})))
-                   yaml-data (syntax/<-data (<! (yaml-parser/parse-string "resources/petstore.raml" output-raml)))
+                   yaml-data (purge-ast (syntax/<-data (<! (yaml-parser/parse-string "resources/petstore.raml" output-raml))))
                    output-jsonld (<! (cb->chan (partial core/generate-string generator-jsonld "resources/uber.jsonld"
                                                         output-model
                                                         {})))]

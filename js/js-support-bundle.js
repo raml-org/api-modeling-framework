@@ -1245,7 +1245,7 @@ function mergeMappings(state, destination, source, overridableKeys) {
 function storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, valueNode) {
     var index, quantity;
 
-    keyNode = String(keyNode);
+    keyNode = String(keyNode["amf-lexical-token"]);
 
     if (_result === null) {
         _result = {};
@@ -1376,6 +1376,10 @@ function readPlainScalar(state, nodeIndent, withinFlowCollection) {
         _result = state.result,
         ch;
 
+    var startLine = state.line;
+    var startColumn = state.lineStart;
+    var startIndex = state.position;
+
     ch = state.input.charCodeAt(state.position);
 
     if (is_WS_OR_EOL(ch) ||
@@ -1464,6 +1468,33 @@ function readPlainScalar(state, nodeIndent, withinFlowCollection) {
     captureSegment(state, captureStart, captureEnd, false);
 
     if (state.result) {
+        var endLine = state.line;
+        var endColumn = state.position - state.lineStart;
+        var endIndex = state.position;
+
+        var positions = {
+            "start-line": startLine,
+            "start-column": startColumn,
+            "start-index": startIndex,
+            "end-line": endLine,
+            "end-column": endColumn,
+            "end-index": endIndex
+        };
+        state.kind = _kind;
+        if (state.result === 'null') {
+            state.result = null;
+        }
+        if (state.result === 'true') {
+            state.result = true;
+        }
+        if (state.result === 'false') {
+            state.result = false;
+        }
+        state.result = {
+            "amf-lexical-token": state.result,
+            "__location__": positions
+        };
+
         return true;
     }
 
@@ -1475,6 +1506,10 @@ function readPlainScalar(state, nodeIndent, withinFlowCollection) {
 function readSingleQuotedScalar(state, nodeIndent) {
     var ch,
         captureStart, captureEnd;
+
+    var startLine = state.line;
+    var startColumn = state.lineStart;
+    var startIndex = state.position;
 
     ch = state.input.charCodeAt(state.position);
 
@@ -1497,6 +1532,23 @@ function readSingleQuotedScalar(state, nodeIndent) {
                 state.position++;
                 captureEnd = state.position;
             } else {
+                var endLine = state.line;
+                var endColumn = state.position - state.lineStart;
+                var endIndex = state.position;
+
+                var positions = {
+                    "start-line": startLine,
+                    "start-column": startColumn,
+                    "start-index": startIndex,
+                    "end-line": endLine,
+                    "end-column": endColumn,
+                    "end-index": endIndex
+                };
+                state.result = {
+                    "amf-lexical-token": state.result,
+                    "__location__": positions
+                };
+
                 return true;
             }
 
@@ -1525,6 +1577,10 @@ function readDoubleQuotedScalar(state, nodeIndent) {
         tmp,
         ch;
 
+    var startLine = state.line;
+    var startColumn = state.lineStart;
+    var startIndex = state.position;
+
     ch = state.input.charCodeAt(state.position);
 
     if (ch !== 0x22/* " */) {
@@ -1540,6 +1596,25 @@ function readDoubleQuotedScalar(state, nodeIndent) {
         if (ch === 0x22/* " */) {
             captureSegment(state, captureStart, state.position, true);
             state.position++;
+
+            var endLine = state.line;
+            var endColumn = state.position - state.lineStart;
+            var endIndex = state.position;
+
+            var positions = {
+                "start-line": startLine,
+                "start-column": startColumn,
+                "start-index": startIndex,
+                "end-line": endLine,
+                "end-column": endColumn,
+                "end-index": endIndex
+            };
+
+            state.result = {
+                "amf-lexical-token": state.result,
+                "__location__": positions
+            };
+
             return true;
 
         } else if (ch === 0x5C/* \ */) {
@@ -2379,13 +2454,19 @@ function composeNode(state, parentIndent, nodeContext, allowToSeek, allowCompact
                 }
             }
         } else if (_hasOwnProperty.call(state.typeMap[state.kind || 'fallback'], state.tag)) {
+            var isLexicaltoken = false;
+            if (state.result && state.result["amf-lexical-token"]) {
+                state.result = state.result["amf-lexical-token"];
+                isLexicaltoken = true;
+            }
             type = state.typeMap[state.kind || 'fallback'][state.tag];
 
-            if (state.result !== null && type.kind !== state.kind) {
+            if (!isLexicaltoken && state.result !== null && type.kind !== state.kind) {
                 throwError(state, 'unacceptable node kind for !<' + state.tag + '> tag; it should be "' + type.kind + '", not "' + state.kind + '"');
             }
 
             if (!type.resolve(state.result)) { // `state.result` updated in resolver if matched
+
                 throwError(state, 'cannot resolve a node with !<' + state.tag + '> explicit tag');
             } else {
                 state.result = type.construct(state.result);
@@ -4115,6 +4196,10 @@ var collectLibraries = function (fragment, location) {
     var libraries = fragment.uses || {};
     for (var p in libraries) {
         if (p !== "__location__") {
+            var value = libraries[p];
+            if (typeof(value) === "object" && value["amf-lexical-token"]) {
+                value = value["amf-lexical-token"];
+            }
             var resolvedLocation = resolvePath(location, libraries[p]);
             PENDING_LIBRARIES.push({
                 "path": libraries[p],

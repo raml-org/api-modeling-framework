@@ -17,6 +17,7 @@
             [api-modeling-framework.generators.document.openapi-test]
             [api-modeling-framework.model.document-test]
             [api-modeling-framework.core-test]
+            [api-modeling-framework.parser.domain.common-test]
             ))
 
 (doo-tests 'api-modeling-framework.tck
@@ -36,4 +37,5 @@
            'api-modeling-framework.generators.document.raml-test
            'api-modeling-framework.generators.document.openapi-test
            'api-modeling-framework.core-test
+           'api-modeling-framework.parser.domain.common-test
            )
