@@ -158,7 +158,7 @@ $ lein test-js
 
 ## Vocabularies
 
-The OWL ontology for the AMF vocabularies (document and domain models) [can be found here](https://github.com/raml-org/api-modeling-framework/blob/master/vocabulary/raml.ttl).
+The OWL ontology for the AMF vocabularies (document and domain models) [can be found here](https://github.com/raml-org/api-modeling-framework/blob/master/vocabulary/amf.ttl).
 Reference documentation for the ontology can be found [here](https://raml-org.github.io/api-modeling-framework/vocabularies.html).
 
 ## Implementation Progress
