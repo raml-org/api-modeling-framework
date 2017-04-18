@@ -1,5 +1,9 @@
 # API Modeling Framework ![Build Status](https://travis-ci.com/raml-org/api-modeling-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)
 
+This project aims to provide a common programming interface that lets developers interact with any API specification, whether it is written in OAS or RAML, in a similar way to how the HTML DOM allows programmatic interaction with an HTML document.
+
+MuleSoft provides a [playground website](https://mulesoft-labs.github.io/amf-playground/app/) for everyone to preview and play with the API Modeling Framework and its capabilities like interoperability, introspection, and more.
+
 ## Vision
 
 The API Modeling Framework (AMF) allows users to formally describe different kind of APIs, parse and generate instances of those APIS as sets of modular documents and to store those connected descriptions into a single unified data graph.
@@ -11,10 +15,6 @@ The API Modeling Framework (AMF) allows users to formally describe different kin
 AMF is experimental and under active development.
 No artifacts have been pushed yet to any repository but the current version of the library can be built from the source code in this project.
 Changes to the current interfaces and vocabularies are to be expected, as well as a possible split of the library into smaller units.
-
-## Demo
-
-A demo web application, displaying some of the capabilities of the project [can be found here](https://mulesoft-labs.github.io/amf-playground/app/).
 
 ## Goals
 
