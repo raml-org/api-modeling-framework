@@ -2,7 +2,7 @@
 
 This project aims to provide a common programming interface that lets developers interact with any API specification, whether it is written in OAS or RAML, in a similar way to how the HTML DOM allows programmatic interaction with an HTML document.
 
-MuleSoft provides a [playground website](https://mulesoft-labs.github.io/amf-playground/app/) for everyone to preview and play with the API Modeling Framework and its capabilities like interoperability, introspection, and more.
+MuleSoft provides a [playground website](https://mulesoft-labs.github.io/amf-playground/) for everyone to preview and play with the API Modeling Framework and its capabilities like interoperability, introspection, and more.
 
 ## Vision
 
