@@ -128,7 +128,7 @@ $ lein node
 The output NPM package will be generated at `output/node`.
 
 
-### API Modeling Framework Clojurescript/Node library
+### API Modeling Framework Clojurescript/Web library
 
 ``` shell
 $ lein web
