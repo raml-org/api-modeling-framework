@@ -241,6 +241,12 @@ The following tables show the current support of the project for different synta
 As part of the development of the library, we are developing a cross-language version of the [RAML TCK](https://github.com/raml-org/raml-tck).
 The list of test cases currently supporte can be found in the [tck](https://github.com/raml-org/api-modeling-framework/tree/master/resources/tck/raml-1.0) directory of the repository
 
+## Contribution
+
+If you are interested in contributing some code to this project, thanks! Please first [read and accept the Contributors Agreement](https://api-notebook.anypoint.mulesoft.com/notebooks#bc1cf75a0284268407e4).
+
+To discuss this project, please use its [github issues](https://github.com/raml-org/api-modeling-framework/issues) or the [RAML forum](http://forums.raml.org/).
+
 ## License
 
 Licensed under the Apache 2.0 License
