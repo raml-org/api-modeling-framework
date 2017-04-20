@@ -1,6 +1,6 @@
 # API Modeling Framework ![Build Status](https://travis-ci.com/raml-org/api-modeling-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)
 
-This project aims to provide a common programming interface that lets developers interact with any API specification, whether it is written in OAS or RAML, in a similar way to how the HTML DOM allows programmatic interaction with an HTML document.
+This project aims to provide a common programming interface that lets developers interact with any API specification, whether it is written in OpenAPI Specification (OAS) or RAML, in a similar way to how the HTML DOM allows programmatic interaction with an HTML document.
 
 MuleSoft provides a [playground website](https://mulesoft-labs.github.io/amf-playground/) for everyone to preview and play with the API Modeling Framework and its capabilities like interoperability, introspection, and more.
 
@@ -30,16 +30,16 @@ Changes to the current interfaces and vocabularies are to be expected, as well a
 
 ### Parsing and Generation
 
-AMF can be used as a tool to parse RAML and OpenAPI documents, generating a common data model stored in a data graph as the output.
+AMF can be used as a tool to parse RAML and OAS documents, generating a common data model stored in a data graph as the output.
 
 ![Translation](https://raml-org.github.io/api-modeling-framework/images/translation.png)
 
-This model can be queried and manipulated, and then serialised back into documents using RAML or OpenAPI syntaxes.
+This model can be queried and manipulated, and then serialised back into documents using RAML or OAS syntaxes.
 Additional syntaxes like JSON-LD are also supported by the library.
 
 ### Interoperability
 
-API information in the AMF model can not only be parsed and generated from RAML and OpenAPI documents, the library also provides functionality for pieces of API description expressed in different syntaxes to work together through the common AMF data model.
+API information in the AMF model can not only be parsed and generated from RAML and OAS documents, the library also provides functionality for pieces of API description expressed in different syntaxes to work together through the common AMF data model.
 
 ### Modularity and Reusability
 
@@ -66,8 +66,8 @@ API modular units in the Document Model are connected through hyperlinks. The fo
 
 Units in the Document Model can encode descriptions of APIs for different domains as sets of extensible vocabularies.
 
-RAML annotations and OpenAPI patterned objects are examples of how extensibility is an important feature of an API model, no matter how complete it is, users will need to adapt and extend it.
-In fact, RAML and OpenAPIs can be regarded as a collection of vocabularies to describe different domain: HTTP RPC APIs, authentication mechanisms and data shapes.
+RAML annotations and OAS patterned objects are examples of how extensibility is an important feature of an API model, no matter how complete it is, users will need to adapt and extend it.
+In fact, RAML and OAS can be regarded as a collection of vocabularies to describe different domain: HTTP RPC APIs, authentication mechanisms and data shapes.
 
 AMF boost these capacities through the notion of an [extensible Domain Model](https://raml-org.github.io/api-modeling-framework/vocabularies.html).
 
@@ -95,10 +95,10 @@ Other W3C standards like RDF as the logical model for the hypermedia data graph 
 
 ![Architectural diagram](doc/images/arch.png)
 
-The current architecture relies on a collection of parsers and generators for RAML, OpenAPI and JSON-LD (native RDF serialisation). These parsers follow the linked API descriptions in the document model and generate RDF graph data according to the semantics of the HTTP/RPC and data shapes vocabularies.
+The current architecture relies on a collection of parsers and generators for RAML, OAS and JSON-LD (native RDF serialisation). These parsers follow the linked API descriptions in the document model and generate RDF graph data according to the semantics of the HTTP/RPC and data shapes vocabularies.
 
 The resolution service can then be used to combine the information from all these documents in the graph into a single Domain Model resolved graph.
-Any subset of the original or resolved graph can be exported back as RAML, OpenAPI or JSON-LD syntaxes.
+Any subset of the original or resolved graph can be exported back as RAML, OAS or JSON-LD syntaxes.
 
 
 ## Installation
@@ -163,7 +163,7 @@ Reference documentation for the ontology can be found [here](https://raml-org.gi
 
 ## Implementation Progress
 
-The following tables show the current support of the project for different syntactical elements of RAML, OpenAPI, RAML Types and JSONSchema.
+The following tables show the current support of the project for different syntactical elements of RAML, OAS, RAML Types and JSONSchema.
 
 
 **RAML Nodes**
