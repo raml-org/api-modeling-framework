@@ -460,6 +460,7 @@
         properties {:path path
                     :sources (concat (generate-parsed-node-sources "path-item" location parsed-location) (or paths-sources []))
                     :id parsed-location
+                    :description (get node :x-description)
                     :parameters parameters
                     :supported-operations operations
                     :extends traits}]
