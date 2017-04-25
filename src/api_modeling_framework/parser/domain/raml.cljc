@@ -345,44 +345,53 @@
                      (assoc acc (keyword (utils/alias-chain trait-name context)) parsed-trait)))
                  {}))))
 
-(defn process-types [node {:keys [location parsed-location alias-chain] :as context}]
+(defn process-types [node {:keys [location parsed-location alias-chain references] :as context}]
   (let [types (or (:types node) (:schemas node) {})
         path-label (if (some? (:types node)) "types" "schemas")
         location (utils/path-join parsed-location "/" path-label)
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
     (debug "Processing " (count types) " types")
-    (->> types
-         (reduce (fn [acc [type-name type-node]]
-                   (debug (str "Processing type " type-name))
-                   (let [location-meta (meta type-node)
-                         type-node (common/purge-ast type-node)
-                         type-node (if (syntax/fragment? type-node)
-                                     ;; avoiding situations where we transform this into an include
-                                     ;; and then we cannot transform this back into type because there's
-                                     ;; no way to tell it without source maps
-                                     {:type type-node}
-                                     type-node)
-                         type-name  (url/url-encode (utils/safe-str type-name))
-                         type-id (common/type-reference parsed-location type-name)
-                         references (get nested-context :references {})
-                         type-fragment (parse-ast type-node (-> nested-context
-                                                                (assoc :references (merge references acc))
-                                                                (assoc :location location)
-                                                                (assoc :parsed-location type-id)
-                                                                (assoc :is-fragment false)
-                                                                (assoc :type-hint :type)))
-                         sources (or (-> type-fragment :sources) [])
-                         ;; we annotate the parsed type with the is-type source map so we can distinguish it from other declarations
-                         sources (concat sources (common/generate-is-type-sources type-name
-                                                                                  (utils/path-join location type-name)
-                                                                                  type-id))
-                         parsed-type (assoc type-fragment :sources sources)
-                         parsed-type (if (nil? (:name parsed-type))
-                                       (assoc parsed-type :name type-name)
-                                       parsed-type)
-                         parsed-type (assoc parsed-type :lexical location-meta)]
-                     (assoc acc (keyword (utils/alias-chain type-name context)) parsed-type)))
-                 {}))))
+    (let [;; we will mark the positions of references in the types node
+          ahead-references (->> types
+                                (map (fn [[type-name _]]
+                                       (let [type-name  (url/url-encode (utils/safe-str type-name))
+                                             type-id (common/type-reference parsed-location type-name)]
+                                         [(keyword type-name) {:x-ahead-declaration type-id}])))
+                                (into {}))
+          working-references (atom (merge references ahead-references))]
+      (->> types
+           (reduce (fn [acc [type-name type-node]]
+                     (debug (str "Processing type " type-name))
+                     (let [location-meta (meta type-node)
+                           type-node (common/purge-ast type-node)
+                           type-node (if (syntax/fragment? type-node)
+                                       ;; avoiding situations where we transform this into an include
+                                       ;; and then we cannot transform this back into type because there's
+                                       ;; no way to tell it without source maps
+                                       {:type type-node}
+                                       type-node)
+                           type-name  (url/url-encode (utils/safe-str type-name))
+                           type-id (common/type-reference parsed-location type-name)
+                           type-fragment (parse-ast type-node (-> nested-context
+                                                                  (assoc :references @working-references)
+                                                                  (assoc :location location)
+                                                                  (assoc :parsed-location type-id)
+                                                                  (assoc :is-fragment false)
+                                                                  (assoc :type-hint :type)))
+                           sources (or (-> type-fragment :sources) [])
+                           ;; we annotate the parsed type with the is-type source map so we can distinguish it from other declarations
+                           sources (concat sources (common/generate-is-type-sources type-name
+                                                                                    (utils/path-join location type-name)
+                                                                                    type-id))
+                           parsed-type (assoc type-fragment :sources sources)
+                           parsed-type (if (nil? (:name parsed-type))
+                                         (assoc parsed-type :name type-name)
+                                         parsed-type)
+                           parsed-type (assoc parsed-type :lexical location-meta)]
+                       ;; let's also update the working reference to this ahead declaration
+                       (swap! working-references (fn [old-working-references] (assoc old-working-references (keyword type-name) parsed-type)))
+                       (assoc acc (keyword (utils/alias-chain type-name context)) parsed-type)))
+                   {})))))
 
 (defn find-extend-tags [{:keys [location parsed-location references] :as context}]
   (->> references
@@ -428,7 +437,9 @@
                     :scheme (utils/ensure-not-blank (root->scheme node))
                     :base-path (utils/ensure-not-blank (base-uri->basepath (extract-scalar (:baseUri node))))
                     :accepts (filterv some? (flatten [(extract-scalar (:mediaType node))]))
-                    :content-type (filterv some? (flatten [(:mediaType node)]))
+                    :content-type (->> (flatten [(:mediaType node)])
+                                       (map extract-scalar)
+                                       (filterv some?))
                     :version (extract-scalar (:version node))
                     :provider nil
                     :terms-of-service nil

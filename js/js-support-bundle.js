@@ -1472,10 +1472,10 @@ function readPlainScalar(state, nodeIndent, withinFlowCollection) {
         var endIndex = state.position;
 
         var positions = {
-            "start-line": startLine,
+            "start-line": startLine + 1,
             "start-column": startColumn,
             "start-index": startIndex,
-            "end-line": endLine,
+            "end-line": endLine + 1,
             "end-column": endColumn,
             "end-index": endIndex
         };
@@ -1534,10 +1534,10 @@ function readSingleQuotedScalar(state, nodeIndent) {
                 var endIndex = state.position;
 
                 var positions = {
-                    "start-line": startLine,
+                    "start-line": startLine + 1,
                     "start-column": startColumn,
                     "start-index": startIndex,
-                    "end-line": endLine,
+                    "end-line": endLine + 1,
                     "end-column": endColumn,
                     "end-index": endIndex
                 };
@@ -1599,10 +1599,10 @@ function readDoubleQuotedScalar(state, nodeIndent) {
             var endIndex = state.position;
 
             var positions = {
-                "start-line": startLine,
+                "start-line": startLine + 1,
                 "start-column": startColumn,
                 "start-index": startIndex,
-                "end-line": endLine,
+                "end-line": endLine + 1,
                 "end-column": endColumn,
                 "end-index": endIndex
             };

@@ -186,10 +186,11 @@
    (v/shapes-ns "schemaRaw") [{"@value" text}]})
 
 
-(defn check-multiple-inheritance
+(defn parse-union
   "Computes multiple-inheritance references"
-  [types {:keys [parsed-location default-type] :as context}]
-  (let [types (mapv #(parse-type % context) types)]
+  [node {:keys [parsed-location default-type] :as context}]
+  (let [types (:anyOf node)
+        types (mapv #(parse-type % context) types)]
     {"@id" parsed-location
      "@type" [(v/shapes-ns "NodeShape") (v/sh-ns "Shape")]
      (v/shapes-ns "inherits") types}))
@@ -201,10 +202,11 @@
                 (some? (:properties node)) (parse-type (assoc node :type "object") context)
                 (some? (:items node))      (parse-type (assoc node :type "array") context)
                 :else {"@id"  parsed-location
-                       "@type" [(v/shapes-ns "NodeShape") (v/sh-ns "Shape")]})]
-    (assoc child (v/shapes-ns "inherits") [(parse-type (:type node) (-> context
-                                                                        (assoc :parsed-location (utils/path-join parsed-location "type"))
-                                                                        (assoc :location location)))])))
+                       "@type" [(v/shapes-ns "NodeShape") (v/sh-ns "Shape")]})
+        base-type (parse-type (:type node) (-> context
+                                               (assoc :parsed-location (utils/path-join parsed-location "type"))
+                                               (assoc :location location)))]
+    (assoc child (v/shapes-ns "inherits") [base-type])))
 
 (defn check-inclusion [node {:keys [parse-ast parsed-location] :as context}]
   (let [parsed (parse-ast node context)
@@ -277,6 +279,8 @@
     (= type-ref "object")  (parse-shape node context)
     ;; array
     (= type-ref "array")   (parse-array node context)
+    ;; unions
+    (= type-ref "union")   (parse-union node context)
     ;; json schema
     (and
      (string? type-ref)
@@ -290,7 +294,7 @@
 
 (defn parse-type-reference-link [type-ref with-raml-type-expression {:keys [parsed-location references] :as context}]
   (cond
-    ;; links to refernces
+    ;; links to references
     (utils/type-link? {:type type-ref} references) (check-reference type-ref context)
 
     (some? (syntax/<-data type-ref))               (check-inclusion type-ref context)
@@ -325,6 +329,8 @@
     (= type-ref "object")
     ;; array
     (= type-ref "array")
+    ;; unions
+    (= type-ref "union")
 
     ;; Careful with the next two, starts-with?
     ;; automatically transform maps into strings!

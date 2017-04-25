@@ -144,9 +144,8 @@
                    api-resource (get paths "/api")
                    song-resource (get paths "/songs/{songId}")]
                ;; checking we have lexical info in the JS parser
-               #?(:cljs (map (fn [parsed]
-                               (is (some? (:lexical parsed))))
-                             (document/declares document-model)))
+               #?(:cljs (doseq [parsed (document/declares document-model)]
+                          (is (some? (:lexical parsed)))))
                (doseq [ref (document/references (core/document-model model))]
                  (is (some? (:raw ref))))
                (is (= "World Music API" (document/name api-documentation)))
@@ -315,17 +314,24 @@
                (<! (test-openapi-domain-level generator-openapi output-model))
                (done)))))
 
-(defn not-nil-ids [node]
+(defn valid-jsonld [node]
   (cond (map? node)  (let [right-id (or (= :not-found (get node "@id" :not-found)) (some? (get node "@id")))
-                           right-class (or (= :not-found (get node "@class" :not-found)) (some? (get  node "@class")))]
+                           right-class (or (= :not-found (get node "@class" :not-found)) (some? (get  node "@class")))
+                           right-value (or (= :not-found (get node "@value" :not-found)) (some? (get node "@value")))
+                           right-value-literal (or (= :not-found (get node "@value" :not-found))
+                                                   (and (not (coll? (get node "@value")))
+                                                        (not (map? (get node "@value")))))]
                        ;(println "ID: " (get node "@id") " => " (keys node))
+                       ;(when (= ["@value"] (keys node))
+                       ;  (do (println "VALUE: " (get node "@value") " => " (keys node))
+                       ;      (prn node)))
                        (reduce (fn [acc [k v]]
-                                 (and acc (not-nil-ids v)))
-                               (and right-id right-class)
+                                 (and acc (valid-jsonld v)))
+                               (and right-id right-class right-value right-value-literal)
                                node))
 
         (coll? node) (reduce (fn [acc node]
-                               (and acc (not-nil-ids node)))
+                               (and acc (valid-jsonld node)))
                              true
                              node)
 
@@ -345,7 +351,7 @@
                                                         {})))
                    _ (is (not (error? output-jsonld)))
                    parsed-document-jsonld-output (platform/decode-json output-jsonld)]
-               (is (not-nil-ids parsed-document-jsonld-output))
+               (is (valid-jsonld parsed-document-jsonld-output))
                (done)))))
 
 (deftest integration-test-openapi-ps->domain
