@@ -79,6 +79,7 @@
                                                 (not= annotation-name "media-type")
                                                 (not= annotation-name "requests")
                                                 (not= annotation-name "abstract-node")
+                                                (not= annotation-name "description")
                                                 (not= annotation-name "responses")))))
                                (map (fn [annotation]
                                       [(keyword (str "x-" (document/name annotation)))
@@ -184,6 +185,7 @@
         traits (common/find-traits model ctx :openapi)
         end-point (-> end-point
                       (assoc :x-is traits)
+                      (assoc :x-description (document/description model))
                       (assoc :parameters parameters)
                       (->> (common/with-amf-info model ctx "PathItem"))
                       (utils/clean-nils))]
