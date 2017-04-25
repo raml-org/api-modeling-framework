@@ -203,13 +203,18 @@
 
 (defn jsonld->annotation [data]
   (cond
-    (some? (get data "@value")) (get data "@value")
-    (map? data)                 (->> data
-                                     (map (fn [[k v]]
-                                            [(last-component k) (jsonld->annotation v)]))
-                                     (into {}))
-    (coll? data)                (mapv (fn [v] (jsonld->annotation v)) data)
-    :else                       data))
+    (and
+     (map? data)
+     (= ["@value"] (keys data))) (get data "@value")
+
+    (map? data)                  (->> data
+                                      (map (fn [[k v]]
+                                             [(last-component k) (jsonld->annotation v)]))
+                                      (into {}))
+
+    (coll? data)                 (mapv (fn [v] (jsonld->annotation v)) data)
+
+    :else                        data))
 
 (defn ensure
   "Makes sure that at least a default value is present in the passed node"
