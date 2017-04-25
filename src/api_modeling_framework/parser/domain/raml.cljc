@@ -73,13 +73,20 @@
 
 
 
+(defn clean-ast-tokens [x]
+  (reduce (fn [x p]
+            (assoc x p (common/ast-value (get x p))))
+          x
+          (keys x)))
+
 (defn  extract-scalar
   "Function used to unwrap an scalar value if it defined using the value syntax"
   [x]
-  (cond
-    (and (map? x) (:value x)) (:value x)
-    (coll? x)                 (mapv extract-scalar x)
-    :else                     x))
+  (let [x (common/ast-value x)]
+    (cond
+      (and (map? x) (:value x)) (common/ast-value (:value x))
+      (coll? x)                 (mapv extract-scalar x)
+      :else                     x)))
 
 (defn guess-type-from-predicates
   "If the AST node is a string it can be one of these nodes: resource path, responses tatus or a media type, this function check for these occurrences.
@@ -114,6 +121,7 @@
   "If a type hint is available, we use that information to dispatch, otherwise we try to guess from properties"
   [node context]
   (cond
+    (common/wrapped-ast-token? node) :wrapped-ast-token
     (some? (syntax/<-location node)) :fragment
     (some? (:type-hint context))     (:type-hint context)
     (string? node)                   (check-reference node context)
@@ -132,11 +140,11 @@
         annotation (get annotations annotation-name)]
     (if (nil? annotation)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find annotation " p)))
-      (do
-        (->> (domain/map->ParsedDomainProperty {:id (document/id annotation)
-                                                :name annotation-name
-                                                :object (utils/annotation->jsonld model)})
-             (common/with-location-meta-from model))))))
+      (->> (domain/map->ParsedDomainProperty {:id (document/id annotation)
+                                              :name annotation-name
+                                              :object (utils/annotation->jsonld (common/purge-ast model))})
+           (clean-ast-tokens)
+           (common/with-location-meta-from model)))))
 
 (defn with-annotations [node ctx model]
   (if (map? node)
@@ -163,7 +171,8 @@
       (->> parameters
            (mapv (fn [[property-name property-value]]
 
-                   (let [property-value (if (string? property-value) {:type property-value} property-value)
+                   (let [property-value (common/purge-ast property-value)
+                         property-value (if (string? property-value) {:type property-value} property-value)
                          property-type (get property-value :type "string")
                          property-value (assoc property-value :type property-type)
                          parsed-location (utils/path-join location location-segment (url/url-encode (utils/safe-str property-name)))
@@ -183,6 +192,7 @@
                                      :shape property-shape}]
                      (with-annotations property-value context
                        (->> (domain/map->ParsedParameter properties)
+                            (clean-ast-tokens)
                             (common/with-location-meta-from property-value)))))))))
 
 (defn base-uri->host [base-uri]
@@ -200,7 +210,7 @@
 (defn root->scheme [{:keys [protocols baseUri]}]
   (let [baseUri (extract-scalar baseUri)]
     (cond
-      (some? protocols)                  (->> [protocols] flatten (mapv string/lower-case))
+      (some? protocols)                  (->> [protocols] flatten (mapv extract-scalar) (mapv string/lower-case))
       (and (some? baseUri)
            (string/index-of baseUri "://")
            (some? (:protocol
@@ -301,7 +311,8 @@
                                                                                                            :sources (common/generate-is-annotation-sources annotation-name id parsed-location)
                                                                                                            :domain allowed-targets
                                                                                                            :range range})
-                                                                  (common/with-location-meta-from node)))))
+                                                                  (clean-ast-tokens)
+                                                                  (common/with-location-meta-from annotation-node)))))
                  {}))))
 
 (defn process-traits [node {:keys [location parsed-location] :as context}]
@@ -334,43 +345,53 @@
                      (assoc acc (keyword (utils/alias-chain trait-name context)) parsed-trait)))
                  {}))))
 
-(defn process-types [node {:keys [location parsed-location alias-chain] :as context}]
+(defn process-types [node {:keys [location parsed-location alias-chain references] :as context}]
   (let [types (or (:types node) (:schemas node) {})
         path-label (if (some? (:types node)) "types" "schemas")
         location (utils/path-join parsed-location "/" path-label)
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
     (debug "Processing " (count types) " types")
-    (->> types
-         (reduce (fn [acc [type-name type-node]]
-                   (debug (str "Processing type " type-name))
-                   (let [location-meta (meta type-node)
-                         type-node (if (syntax/fragment? type-node)
-                                     ;; avoiding situations where we transform this into an include
-                                     ;; and then we cannot transform this back into type because there's
-                                     ;; no way to tell it without source maps
-                                     {:type type-node}
-                                     type-node)
-                         type-name  (url/url-encode (utils/safe-str type-name))
-                         type-id (common/type-reference parsed-location type-name)
-                         references (get nested-context :references {})
-                         type-fragment (parse-ast type-node (-> nested-context
-                                                                (assoc :references (merge references acc))
-                                                                (assoc :location location)
-                                                                (assoc :parsed-location type-id)
-                                                                (assoc :is-fragment false)
-                                                                (assoc :type-hint :type)))
-                         sources (or (-> type-fragment :sources) [])
-                         ;; we annotate the parsed type with the is-type source map so we can distinguish it from other declarations
-                         sources (concat sources (common/generate-is-type-sources type-name
-                                                                                  (utils/path-join location type-name)
-                                                                                  type-id))
-                         parsed-type (assoc type-fragment :sources sources)
-                         parsed-type (if (nil? (:name parsed-type))
-                                       (assoc parsed-type :name type-name)
-                                       parsed-type)
-                         parsed-type (assoc parsed-type :lexical location-meta)]
-                     (assoc acc (keyword (utils/alias-chain type-name context)) parsed-type)))
-                 {}))))
+    (let [;; we will mark the positions of references in the types node
+          ahead-references (->> types
+                                (map (fn [[type-name _]]
+                                       (let [type-name  (url/url-encode (utils/safe-str type-name))
+                                             type-id (common/type-reference parsed-location type-name)]
+                                         [(keyword type-name) {:x-ahead-declaration type-id}])))
+                                (into {}))
+          working-references (atom (merge references ahead-references))]
+      (->> types
+           (reduce (fn [acc [type-name type-node]]
+                     (debug (str "Processing type " type-name))
+                     (let [location-meta (meta type-node)
+                           type-node (common/purge-ast type-node)
+                           type-node (if (syntax/fragment? type-node)
+                                       ;; avoiding situations where we transform this into an include
+                                       ;; and then we cannot transform this back into type because there's
+                                       ;; no way to tell it without source maps
+                                       {:type type-node}
+                                       type-node)
+                           type-name  (url/url-encode (utils/safe-str type-name))
+                           type-id (common/type-reference parsed-location type-name)
+                           type-fragment (parse-ast type-node (-> nested-context
+                                                                  (assoc :references @working-references)
+                                                                  (assoc :location location)
+                                                                  (assoc :parsed-location type-id)
+                                                                  (assoc :is-fragment false)
+                                                                  (assoc :type-hint :type)))
+                           sources (or (-> type-fragment :sources) [])
+                           ;; we annotate the parsed type with the is-type source map so we can distinguish it from other declarations
+                           sources (concat sources (common/generate-is-type-sources type-name
+                                                                                    (utils/path-join location type-name)
+                                                                                    type-id))
+                           parsed-type (assoc type-fragment :sources sources)
+                           parsed-type (if (nil? (:name parsed-type))
+                                         (assoc parsed-type :name type-name)
+                                         parsed-type)
+                           parsed-type (assoc parsed-type :lexical location-meta)]
+                       ;; let's also update the working reference to this ahead declaration
+                       (swap! working-references (fn [old-working-references] (assoc old-working-references (keyword type-name) parsed-type)))
+                       (assoc acc (keyword (utils/alias-chain type-name context)) parsed-type)))
+                   {})))))
 
 (defn find-extend-tags [{:keys [location parsed-location references] :as context}]
   (->> references
@@ -416,13 +437,16 @@
                     :scheme (utils/ensure-not-blank (root->scheme node))
                     :base-path (utils/ensure-not-blank (base-uri->basepath (extract-scalar (:baseUri node))))
                     :accepts (filterv some? (flatten [(extract-scalar (:mediaType node))]))
-                    :content-type (filterv some? (flatten [(:mediaType node)]))
+                    :content-type (->> (flatten [(:mediaType node)])
+                                       (map extract-scalar)
+                                       (filterv some?))
                     :version (extract-scalar (:version node))
                     :provider nil
                     :terms-of-service nil
                     :license nil
                     :endpoints nested-resources}]
     (->> (domain/map->ParsedAPIDocumentation properties)
+         (clean-ast-tokens)
          (with-annotations node context)
          (common/with-location-meta-from node))))
 
@@ -434,6 +458,7 @@
 (defn parse-traits [resource-id node references {:keys [location parsed-location] :as context}]
   (let [traits (flatten [(:is node [])])]
     (->> traits
+         (mapv common/ast-value)
          (mapv (fn [trait-name]
                  [trait-name (-> references
                                  (get (keyword trait-name)))]))
@@ -451,6 +476,7 @@
                                                      :target (document/id trait)
                                                      :label "trait"
                                                      :arguments []})
+                       (clean-ast-tokens)
                        (with-annotations trait context)
                        (common/with-location-meta-from trait)))
                    (throw (new #?(:clj Exception :cljs js/Error)
@@ -498,6 +524,7 @@
                                       :parameters uri-parameters})]
     (concat [(->>
               (domain/map->ParsedEndPoint properties)
+              (clean-ast-tokens)
               (with-annotations node context)
               (common/with-location-meta-from node))]
             (or nested-resources []))))
@@ -535,6 +562,7 @@
                                                                                   utils/ensure-not-blank)
                                                                   :schema schema
                                                                   :sources node-parsed-source-map}))
+                    (clean-ast-tokens)
                      (with-annotations node context)
                      (common/with-location-meta-from node))))))))
 
@@ -557,6 +585,7 @@
                                    :parameters (concat query-parameters query-string)
                                    :headers headers
                                    :payloads payloads})
+       (clean-ast-tokens)
        (with-annotations node context)
        (common/with-location-meta-from node)))))
 
@@ -584,6 +613,7 @@
                        utils/clean-nils)]
     (->>
      (domain/map->ParsedOperation properties)
+     (clean-ast-tokens)
      (with-annotations node context)
      (common/with-location-meta-from node))))
 
@@ -615,6 +645,7 @@
                     :payloads payloads}]
     (->>
      (domain/map->ParsedResponse properties)
+     (clean-ast-tokens)
      (with-annotations node context)
      (common/with-location-meta-from node))))
 
@@ -649,7 +680,8 @@
 
 (defmethod parse-ast :type [node {:keys [location parsed-location is-fragment references] :as context}]
   (debug "Parsing type")
-  (let [;; the node can be the string of a type reference if that's the case,
+  (let [node (common/purge-ast node)
+        ;; the node can be the string of a type reference if that's the case,
         ;; we build a {:type TypeReference} node to process it
         node (if (and
                   (not (shapes/inline-json-schema? node))
@@ -668,6 +700,7 @@
     ;; They have the same ID
     (->> (domain/map->ParsedType {:id type-id
                                   :shape shape})
+         (clean-ast-tokens)
          (common/with-location-meta-from node))))
 
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
@@ -688,32 +721,62 @@
                                                 (assoc :sources nil))
                                   encoded-element)
           parsed-location (utils/path-join parsed-location "/includes")
-          extends (document/map->ParsedExtends {:id parsed-location
-                                                :sources (generate-extend-include-fragment-sources parsed-location fragment-location)
-                                                :target fragment-location
-                                                :label "!includes"
-                                                :arguments []})]
+          extends (->> (document/map->ParsedExtends {:id parsed-location
+                                                     :sources (generate-extend-include-fragment-sources parsed-location fragment-location)
+                                                     :target fragment-location
+                                                     :label "!includes"
+                                                     :arguments []})
+                       (clean-ast-tokens))]
       (swap! fragments (fn [acc]
                          (if (some? (get acc fragment-location))
                            acc
                            (assoc acc fragment-location (assoc parsed-fragment :encodes clean-encoded-element)))))
       (condp = type-hint
         :method  (with-annotations node context
-                   (domain/map->ParsedOperation {:id parsed-location
-                                                 :method (utils/safe-str (:method encoded-element))
-                                                 :sources encoded-element-sources
-                                                 :extends [extends]}))
+                   (->> (domain/map->ParsedOperation {:id parsed-location
+                                                      :method (utils/safe-str (:method encoded-element))
+                                                      :sources encoded-element-sources
+                                                      :extends [extends]})
+                        (clean-ast-tokens)))
         :resource (with-annotations node context
-                    (domain/map->ParsedEndPoint {:id parsed-location
-                                                 :path (:path encoded-element)
-                                                 :extends [extends]
-                                                 :sources encoded-element-sources}))
+                    (->> (domain/map->ParsedEndPoint {:id parsed-location
+                                                      :path (:path encoded-element)
+                                                      :extends [extends]
+                                                      :sources encoded-element-sources})
+                         (clean-ast-tokens)))
         (let [properties {:id parsed-location
                           :label "!includes"
                           :target fragment-location}]
           (->>
            (document/map->ParsedIncludes properties)
+           (clean-ast-tokens)
            (with-annotations node context)
            (common/with-location-meta-from node)))))))
+
+;;(defmethod parse-ast :wrapped-ast-token [token context]
+;;  (let [value (common/ast-value token)]
+;;    (if (map? value)
+;;      (let [location-info (->> value
+;;                               (mapv (fn [p token]
+;;                                       [p (:__location__ token)]))
+;;                               (into {}))
+;;            value (->> value
+;;                       (mapv (fn [p token]
+;;                               (let [token-value (common/ast-value token)]
+;;                                 (if (map? token-value)
+;;                                   [p token]
+;;                                   [p token-value]))))
+;;                       (into {}))]
+;;        (parse-ast value (assoc context :location-info location-info)))
+;;      (common/with-ast-parsing token
+;;        (fn [node] (parse-ast node context))))))
+
+(defmethod parse-ast :wrapped-ast-token [token context]
+  (let [value (common/ast-value token)
+        location (get token :__location__)
+        result (parse-ast value context)]
+    (if (map? result)
+      (assoc result :location location)
+      result)))
 
 (defmethod parse-ast :undefined [_ _] nil)

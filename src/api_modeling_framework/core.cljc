@@ -98,7 +98,7 @@
             (cb (platform/<-clj res) nil)
             (try (cb nil (to-model (raml-document-parser/parse-ast res {})))
                  (catch #?(:clj Exception :cljs js/Error) ex
-                   (cb (platform/<-clj ex) nil)))))))
+                        (cb (platform/<-clj ex) nil)))))))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
     (go (let [res (<! (yaml-parser/parse-string uri string options))]
@@ -236,17 +236,27 @@
 
 (defn find-element* [model id]
   (cond
-    (map? model) (if (= id (or (:id model) (get model "@id")))
-                   model
-                   (->> (vals model)
-                        (map (fn [m] (find-element* m id)))
-                        (filter some?)
-                        first))
-    (coll? model) (->> model
-                       (map (fn [m] (find-element* m id)))
-                       (filter some?)
-                       first)
-    :else         nil))
+    ;; we prefer elements in declarations if present
+    (and (map? model)
+         (:declares model)
+         (some #(= id (:id %))
+               (:declares model)))  (->> (:declares model)
+                                       (filter #(= id (:id %)))
+                                       first)
+
+    (map? model)                     (if (= id (or (:id model) (get model "@id")))
+                                       model
+                                       (->> (vals model)
+                                            (map (fn [m] (find-element* m id)))
+                                            (filter some?)
+                                            first))
+
+    (coll? model)                     (->> model
+                                           (map (fn [m] (find-element* m id)))
+                                           (filter some?)
+                                           first)
+
+    :else                             nil))
 
 (defn to-model
   ([res]

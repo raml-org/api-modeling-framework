@@ -70,7 +70,6 @@
 (defmethod parse-ast "#%RAML 1.0" [node context]
   (let [location (syntax/<-location node)
         context (assoc context :base-uri location)
-        _ (debug "Parsing RAML Document at " location)
         fragments (or (:fragments context) (atom {}))
         compute-fragments (make-compute-fragments fragments)
         ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored
@@ -87,35 +86,38 @@
                                   (mapv (fn [annotation]
                                           [(document/name annotation) annotation]))
                                   (into {}))
+        working-declarations library-declarations
+        ;; we parse traits and types and add the information into the context
+        types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :fragments fragments
+                                                                 :references working-declarations
+                                                                 :document-parser parse-ast
+                                                                 :parsed-location location})
+        working-declarations (merge working-declarations types)
         doc-annotations (domain-parser/process-annotations (syntax/<-data node) {:base-uri location
+                                                                                 :references working-declarations
                                                                                  :location (str location "#")
                                                                                  :parsed-location (str location "#")})
         annotations (merge library-declarations doc-annotations)
-        ;; we parse traits and types and add the information into the context
         traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
                                                                    :fragments fragments
-                                                                   :references library-declarations
+                                                                   :references working-declarations
                                                                    :document-parser parse-ast
                                                                    :annotations annotations
                                                                    :parsed-location (str location "#")})
-        types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
-                                                                 :fragments fragments
-                                                                 :references library-declarations
-                                                                 :annotations annotations
-                                                                 :document-parser parse-ast
-                                                                 :parsed-location location})
-        declarations (merge traits types)
+        working-declarations (merge working-declarations traits)
         encoded (domain-parser/parse-ast (syntax/<-data node) {:location (str location "#")
                                                                :fragments fragments
                                                                :parsed-location (str location "#")
                                                                :annotations annotations
-                                                               :references (merge declarations library-declarations)
+                                                               :references working-declarations
                                                                :document-parser parse-ast
                                                                :is-fragment false})]
     (-> (document/map->ParsedDocument {:id location
                                        :location location
                                        :encodes encoded
-                                       :declares (concat (vals declarations)
+                                       :declares (concat (vals types)
+                                                         (vals traits)
                                                          (vals doc-annotations))
                                        :references (compute-fragments
                                                     (concat (vals @fragments)
@@ -138,33 +140,36 @@
                                   (mapv (fn [annotation]
                                           [(document/name annotation) annotation]))
                                   (into {}))
+        working-declarations library-declarations
+        ;; we parse traits and types and add the information into the context
+        types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
+                                                                 :fragments fragments
+                                                                 :alias-chain alias-chain
+                                                                 :references working-declarations
+                                                                 :document-parser parse-ast
+                                                                 :parsed-location location})
+        working-declarations (merge working-declarations types)
         doc-annotations (domain-parser/process-annotations (syntax/<-data node) {:base-uri location
                                                                                  :location (str location "#")
                                                                                  :parsed-location (str location "#/annotations")
-                                                                                 :references library-declarations})
+                                                                                 :references working-declarations})
         annotations (merge libraries-annotation doc-annotations)
-        ;; we parse traits and types and add the information into the context
         traits (domain-parser/process-traits (syntax/<-data node) {:location (str location "#")
                                                                    :fragments fragments
-                                                                   :references library-declarations
+                                                                   :references working-declarations
                                                                    :alias-chain alias-chain
                                                                    :document-parser parse-ast
                                                                    :annotations annotations
                                                                    :parsed-location (str location "#")})
-        types (domain-parser/process-types (syntax/<-data node) {:location (str location "#")
-                                                                 :fragments fragments
-                                                                 :alias-chain alias-chain
-                                                                 :references library-declarations
-                                                                 :annotations annotations
-                                                                 :document-parser parse-ast
-                                                                 :parsed-location location})
-        declarations (merge traits types)
+
         usage (:usage (syntax/<-data node))]
     (-> (document/map->ParsedModule (utils/clean-nils
                                      {:id location
                                       :location location
                                       :description usage
-                                      :declares (concat (vals declarations) (vals doc-annotations))
+                                      :declares (concat (vals types)
+                                                        (vals traits)
+                                                        (vals doc-annotations))
                                       :references (compute-fragments
                                                    (concat (vals @fragments)
                                                            (flatten (vals libraries))))

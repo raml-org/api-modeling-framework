@@ -195,8 +195,10 @@
     (map? data) (->> data
                      (map (fn [[k v]]
                             [(v/anon-shapes-ns (safe-str k)) (annotation->jsonld v)]))
-                     (into {}))
+                     (into {})
+                     clean-nils)
     (coll? data) (mapv #(annotation->jsonld %) data)
+    (nil? data)  nil
     :else        {"@value" data}))
 
 (defn jsonld->annotation [data]

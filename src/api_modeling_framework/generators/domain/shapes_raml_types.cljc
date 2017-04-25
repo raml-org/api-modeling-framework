@@ -174,7 +174,8 @@
       (if (utils/object-no-properties? base)
         (first types)
         (assoc  base :type (first types)))
-      {:type types})))
+      {:type "union"
+       :anyOf types})))
 
 (defmethod parse-shape :raml-expression [shape _] (-> shape (get (v/shapes-ns "ramlTypeExpression")) first (get "@value")))
 

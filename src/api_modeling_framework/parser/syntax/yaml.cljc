@@ -63,7 +63,7 @@
 
 #?(:cljs (defn parse-string
            ([uri string options]
-            (let [ch (chan)]
+             (let [ch (chan)]
               (JS_YAML/parseYamlString uri string (clj->js options) (fn [e result]
                                                                       (go (try (if e
                                                                                  (>! ch (ex-info (str e) e))
