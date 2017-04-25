@@ -112,7 +112,7 @@
 (defn parse-shape [node {:keys [parsed-location] :as context}]
   (let [properties (->> (:properties node [])
                         (mapv (fn [[k v]]
-                               (let [property-name (utils/safe-str k)
+                                (let [property-name (utils/safe-str k)
                                      property-name (final-property-name property-name v)
                                      parsed-location (utils/path-join parsed-location (str "/property/" property-name))
                                      parsed-property-target (parse-type v (assoc context :parsed-location parsed-location))
@@ -216,7 +216,6 @@
 (defn check-reference
   "Checks if a provided string points to one of the types defined at the APIDocumentation level"
   [type-string {:keys [references parsed-location base-uri] :as context}]
-
   (if-let [type-reference (utils/type-reference? type-string references)]
     (let [label (or (-> type-reference :name)
                     (if (satisfies? domain/Type type-reference) (-> type-reference domain/shape :name) nil)

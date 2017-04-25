@@ -70,7 +70,6 @@
 (defmethod parse-ast "#%RAML 1.0" [node context]
   (let [location (syntax/<-location node)
         context (assoc context :base-uri location)
-        _ (debug "Parsing RAML Document at " location)
         fragments (or (:fragments context) (atom {}))
         compute-fragments (make-compute-fragments fragments)
         ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored

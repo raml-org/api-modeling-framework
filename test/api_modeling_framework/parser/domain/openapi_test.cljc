@@ -182,7 +182,6 @@
                                                 :type-hint :type
                                                 :location "/response"})
         generated (openapi-generator/to-openapi parsed {})]
-    (prn generated)
     (is (= input generated))))
 
 (deftest parser-raml-enum
