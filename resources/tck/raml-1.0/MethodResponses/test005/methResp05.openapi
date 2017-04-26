@@ -1,0 +1,76 @@
+{
+  "definitions": {
+    "TestType": {
+      "x-merge": {
+        "source": {
+          "properties": {
+            "username": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "username"
+          ],
+          "type": "object"
+        },
+        "with": {
+          "$ref": "#/definitions/TypeBase"
+        }
+      }
+    },
+    "TypeBase": {
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "account": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "info": {
+    "title": "test",
+    "version": ""
+  },
+  "paths": {
+    "/test": {
+      "post": {
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "x-merge": {
+                "source": {
+                  "properties": {
+                    "additionalField": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "with": {
+                  "$ref": "#/definitions/TestType"
+                }
+              }
+            },
+            "x-media-type": "application/json"
+          }
+        }
+      }
+    }
+  },
+  "swagger": "2.0"
+}

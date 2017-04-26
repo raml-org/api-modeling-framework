@@ -108,7 +108,10 @@
                                                             :jsonld (str raml-10-tests "/MethodResponses/test001/methResp01.jsonld")}
                                                   :test002 {:raml (str raml-10-tests "/MethodResponses/test002/methResp02.raml")
                                                             :openapi (str raml-10-tests "/MethodResponses/test002/methResp02.openapi")
-                                                            :jsonld (str raml-10-tests "/MethodResponses/test002/methResp02.jsonld")}}
+                                                            :jsonld (str raml-10-tests "/MethodResponses/test002/methResp02.jsonld")}
+                                                  :test005 {:raml (str raml-10-tests "/MethodResponses/test005/methResp05.raml")
+                                                            :openapi (str raml-10-tests "/MethodResponses/test005/methResp05.openapi")
+                                                            :jsonld (str raml-10-tests "/MethodResponses/test005/methResp05.jsonld")}}
 
                                }})
 
@@ -266,6 +269,8 @@
                                                                   (core/document-model parsed-model)
                                                                   {:source-maps? false
                                                                    :full-graph? false}))))
+            ;;_ (println "RAW GENERATED")
+            ;;_ (println raw-generated-data)
             doc-generated (<! (to-data-structure generated-file-name  type raw-generated-data))]
         (is (same-structure? (ensure-not-nil (clean-ids (platform/decode-json generated-jsonld)))
                              (ensure-not-nil (clean-ids target))))

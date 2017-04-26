@@ -113,25 +113,26 @@
   (let [properties (->> (:properties node [])
                         (mapv (fn [[k v]]
                                 (let [property-name (utils/safe-str k)
-                                     property-name (final-property-name property-name v)
-                                     parsed-location (utils/path-join parsed-location (str "/property/" property-name))
-                                     parsed-property-target (parse-type v (assoc context :parsed-location parsed-location))
-                                     property-shape (cond
-                                                      (utils/scalar-shape? parsed-property-target) (scalar-shape->property-shape parsed-property-target)
-                                                      (utils/array-shape? parsed-property-target)  (array-shape->property-shape parsed-property-target)
-                                                      (utils/nil-shape? parsed-property-target)    (utils/nil-shape->property-shape)
-                                                      :else (node-shape->property-shape parsed-property-target))
-                                     required (required-property? property-name v)
-                                     ;; common properties
-                                     property-shape (-> property-shape
-                                                        (assoc "@id" parsed-location)
-                                                        (assoc "@type" [(v/sh-ns "PropertyShape") (v/sh-ns "Shape")])
-                                                        (assoc (v/sh-ns "path") [{"@id" (v/anon-shapes-ns property-name)}])
-                                                        (assoc (v/shapes-ns "propertyLabel") [{"@value" property-name}])
-                                                        ;; mandatory prop?
-                                                        (assoc (v/sh-ns "minCount") [(if required {"@value" 1} {"@value" 0})])
-                                                        utils/clean-nils)]
-                                 (parse-type-constraints v property-shape)))))
+                                      required (required-property? property-name v)
+                                      property-name (final-property-name property-name v)
+                                      parsed-location (utils/path-join parsed-location (str "/property/" property-name))
+                                      parsed-property-target (parse-type v (assoc context :parsed-location parsed-location))
+                                      property-shape (cond
+                                                       (utils/scalar-shape? parsed-property-target) (scalar-shape->property-shape parsed-property-target)
+                                                       (utils/array-shape? parsed-property-target)  (array-shape->property-shape parsed-property-target)
+                                                       (utils/nil-shape? parsed-property-target)    (utils/nil-shape->property-shape)
+                                                       :else (node-shape->property-shape parsed-property-target))
+
+                                      ;; common properties
+                                      property-shape (-> property-shape
+                                                         (assoc "@id" parsed-location)
+                                                         (assoc "@type" [(v/sh-ns "PropertyShape") (v/sh-ns "Shape")])
+                                                         (assoc (v/sh-ns "path") [{"@id" (v/anon-shapes-ns property-name)}])
+                                                         (assoc (v/shapes-ns "propertyLabel") [{"@value" property-name}])
+                                                         ;; mandatory prop?
+                                                         (assoc (v/sh-ns "minCount") [(if required {"@value" 1} {"@value" 0})])
+                                                         utils/clean-nils)]
+                                  (parse-type-constraints v property-shape)))))
         open-shape (:additionalProperties node)]
     (->> {"@type" [(v/sh-ns "NodeShape") (v/sh-ns "Shape")]
           "@id" parsed-location
