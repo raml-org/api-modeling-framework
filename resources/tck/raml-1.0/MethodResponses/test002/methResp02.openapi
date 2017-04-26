@@ -1,0 +1,19 @@
+{
+  "info": {
+    "title": "test",
+    "version": ""
+  },
+  "paths": {
+    "/test": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "",
+            "x-media-type": "application/json"
+          }
+        }
+      }
+    }
+  },
+  "swagger": "2.0"
+}

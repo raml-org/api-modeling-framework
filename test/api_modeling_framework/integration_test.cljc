@@ -514,7 +514,7 @@
          (go (let [parser (core/->RAMLParser)
                    generator (core/->OpenAPIGenerator)
                    jsonld-generator (core/->APIModelGenerator)
-                   model (<! (cb->chan (partial core/parse-file parser "resources/tck/raml-1.0/MethodResponses/test001/methResp01.raml")))
+                   model (<! (cb->chan (partial core/parse-file parser "resources/tck/raml-1.0/MethodResponses/test002/methResp02.raml")))
                    _ (is (not (error? model)))
                    output-model (core/document-model model)
                    _ (is (not (error? output-model)))
