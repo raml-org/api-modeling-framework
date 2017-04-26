@@ -1,0 +1,84 @@
+{
+  "@id": "resources/tck/raml-1.0/MethodResponses/test002/methResp02.raml",
+  "@type": [
+    "http://raml.org/vocabularies/document#Document",
+    "http://raml.org/vocabularies/document#Fragment",
+    "http://raml.org/vocabularies/document#Module",
+    "http://raml.org/vocabularies/document#Unit"
+  ],
+  "http://raml.org/vocabularies/document#encodes": [
+    {
+      "@type": [
+        "http://raml.org/vocabularies/http#APIDocumentation",
+        "http://raml.org/vocabularies/document#DomainElement"
+      ],
+      "@id": "resources/tck/raml-1.0/MethodResponses/test002/methResp02.raml#/api-documentation",
+      "http://schema.org/name": [
+        {
+          "@value": "test"
+        }
+      ],
+      "http://raml.org/vocabularies/http#endpoint": [
+        {
+          "@type": [
+            "http://raml.org/vocabularies/http#EndPoint",
+            "http://raml.org/vocabularies/document#DomainElement"
+          ],
+          "@id": "resources/tck/raml-1.0/MethodResponses/test002/methResp02.raml#/api-documentation/end-points/0",
+          "http://raml.org/vocabularies/http#path": [
+            {
+              "@value": "/test"
+            }
+          ],
+          "http://www.w3.org/ns/hydra/core#supportedOperation": [
+            {
+              "@type": [
+                "http://www.w3.org/ns/hydra/core#Operation",
+                "http://raml.org/vocabularies/document#DomainElement"
+              ],
+              "@id": "resources/tck/raml-1.0/MethodResponses/test002/methResp02.raml#/api-documentation/end-points/0/get",
+              "http://www.w3.org/ns/hydra/core#method": [
+                {
+                  "@value": "get"
+                }
+              ],
+              "http://www.w3.org/ns/hydra/core#returns": [
+                {
+                  "@type": [
+                    "http://raml.org/vocabularies/http#Response",
+                    "http://raml.org/vocabularies/document#DomainElement"
+                  ],
+                  "@id": "resources/tck/raml-1.0/MethodResponses/test002/methResp02.raml#/api-documentation/end-points/0/get/200",
+                  "http://schema.org/name": [
+                    {
+                      "@value": "200"
+                    }
+                  ],
+                  "http://www.w3.org/ns/hydra/core#statusCode": [
+                    {
+                      "@value": "200"
+                    }
+                  ],
+                  "http://raml.org/vocabularies/http#payload": [
+                    {
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "@id": "resources/tck/raml-1.0/MethodResponses/test002/methResp02.raml#/api-documentation/end-points/0/get/200/body/application%2Fjson",
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "application/json"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

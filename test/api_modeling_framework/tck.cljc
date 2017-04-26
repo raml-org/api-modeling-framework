@@ -105,7 +105,10 @@
 
                                :method-responses {:test001 {:raml (str raml-10-tests "/MethodResponses/test001/methResp01.raml")
                                                             :openapi (str raml-10-tests "/MethodResponses/test001/methResp01.openapi")
-                                                            :jsonld (str raml-10-tests "/MethodResponses/test001/methResp01.jsonld")}}
+                                                            :jsonld (str raml-10-tests "/MethodResponses/test001/methResp01.jsonld")}
+                                                  :test002 {:raml (str raml-10-tests "/MethodResponses/test002/methResp02.raml")
+                                                            :openapi (str raml-10-tests "/MethodResponses/test002/methResp02.openapi")
+                                                            :jsonld (str raml-10-tests "/MethodResponses/test002/methResp02.jsonld")}}
 
                                }})
 
