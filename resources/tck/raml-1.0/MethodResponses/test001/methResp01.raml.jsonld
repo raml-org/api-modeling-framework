@@ -1,0 +1,11 @@
+#%RAML 1.0
+title: test
+types:
+  TestType:
+    displayName: TestType
+    properties:
+      field: string
+/test:
+  get:
+    responses:
+      200:
