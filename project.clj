@@ -1,4 +1,4 @@
-(defproject api-modeling-framework "0.1.1-SNAPSHOT"
+(defproject api-modeling-framework "0.1.2-SNAPSHOT"
 
   :description "API and domain modeling tools for RAML, OpenAPI (Swagger) and RDF"
 
@@ -9,14 +9,13 @@
 
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.293"]
-                 [io.swagger/swagger-parser "1.0.21"]
                  [org.clojure/core.async "0.3.442"]
                  [cheshire "5.6.3"]
                  [instaparse "1.4.2"]
                  [com.lucasbradstreet/instaparse-cljs "1.4.1.2"]
                  [com.cemerick/url "0.1.1"]
                  [com.taoensso/timbre "4.8.0"]
-                 [clj-yaml "0.4.0" :exclusions [[org.yaml/snakeyaml]]]
+                 [org.yaml/snakeyaml "1.12"]
                  ;; dev only
                  [difform "1.1.2"]]
 
