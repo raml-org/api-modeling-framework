@@ -11,7 +11,7 @@
 (defn from-jsonld-dispatch-fn [model]
   (cond
     (nil? model)                                              nil
-    (utils/has-class? model v/document:AbstractDomainElement) v/document:AbstractDomainElement
+    ;(utils/has-class? model v/document:AbstractDomainElement) v/document:AbstractDomainElement
     (utils/has-class? model v/http:APIDocumentation)          v/http:APIDocumentation
     (utils/has-class? model v/document:DomainPropertySchema)  v/document:DomainPropertySchema
     (utils/has-class? model v/document:DomainProperty)        v/document:DomainProperty

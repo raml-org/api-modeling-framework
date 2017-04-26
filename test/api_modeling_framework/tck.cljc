@@ -102,6 +102,11 @@
                                                        :openapi (str raml-10-tests "/Annotations/test001/apiValid.openapi")
                                                        :jsonld (str raml-10-tests "/Annotations/test001/apiValid.jsonld")}
                                              }
+
+                               :method-responses {:test001 {:raml (str raml-10-tests "/MethodResponses/test001/methResp01.raml")
+                                                            :openapi (str raml-10-tests "/MethodResponses/test001/methResp01.openapi")
+                                                            :jsonld (str raml-10-tests "/MethodResponses/test001/methResp01.jsonld")}}
+
                                }})
 
 
@@ -268,6 +273,7 @@
   (go (doseq [[from to]  ;[[:openapi :raml]]
               conversions
               ]
+        (println "\n\nCHECKING CONVERISON " from " -> " to "\n\n")
         (let [source (get files from)
               target (get files to)
               target (->> (target-file files to from)

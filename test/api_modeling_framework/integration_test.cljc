@@ -509,6 +509,31 @@
 
 (comment
 
+  (deftest integration-test-tck
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->OpenAPIGenerator)
+                   jsonld-generator (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/tck/raml-1.0/MethodResponses/test001/methResp01.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-openapi(<! (cb->chan (partial core/generate-string generator "resources/api.raml"
+                                                        output-model
+                                                        {})))
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/api.raml"
+                                                        output-model
+                                                        {:source-maps? false})))
+                   ;;output (platform/decode-json output-jsonld)
+                   ]
+               (println "OPENAPI")
+               (println output-openapi)
+               (println "JSONLD")
+               (println output-jsonld)
+               ;;(clojure.pprint/pprint yaml-data)
+               ;;(clojure.pprint/pprint output)
+               (done)))))
+
   (deftest integration-test-raml->open-api
     (async done
            (go (let [parser (core/->RAMLParser)

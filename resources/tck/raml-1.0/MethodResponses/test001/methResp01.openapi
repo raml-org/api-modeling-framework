@@ -1,0 +1,31 @@
+{
+  "definitions": {
+    "TestType": {
+      "properties": {
+        "field": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "field"
+      ],
+      "type": "object"
+    }
+  },
+  "info": {
+    "title": "test",
+    "version": ""
+  },
+  "paths": {
+    "/test": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "swagger": "2.0"
+}
