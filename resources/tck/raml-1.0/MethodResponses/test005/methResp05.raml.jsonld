@@ -1,0 +1,40 @@
+#%RAML 1.0
+title: test
+types:
+   account:
+     displayName: account
+     properties:
+       id:
+         type: string
+         required: false
+       username:
+         type: string
+         required: false
+   TypeBase:
+     displayName: TypeBase
+     properties:
+       id: string
+      #example:
+      #  id: userId
+   TestType:
+     displayName: TestType
+     type: TypeBase
+     properties:
+       username: string
+      #example:
+      #  id: userId
+      #  username: name
+/test:
+  post:
+    responses:
+      201:
+        body:
+          application/json:
+            type: TestType
+            properties:
+              additionalField:
+                type: string
+                required: false
+            #example:
+            #  username: base
+            #  id: any text

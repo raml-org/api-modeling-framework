@@ -1,0 +1,337 @@
+{
+  "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml",
+  "@type": [
+    "http://raml.org/vocabularies/document#Document",
+    "http://raml.org/vocabularies/document#Fragment",
+    "http://raml.org/vocabularies/document#Module",
+    "http://raml.org/vocabularies/document#Unit"
+  ],
+  "http://raml.org/vocabularies/document#declares": [
+    {
+      "@type": [
+        "http://www.w3.org/ns/shacl#NodeShape",
+        "http://www.w3.org/ns/shacl#Shape"
+      ],
+      "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/account",
+      "http://www.w3.org/ns/shacl#property": [
+        {
+          "http://www.w3.org/ns/shacl#maxCount": [
+            {
+              "@value": 1
+            }
+          ],
+          "http://www.w3.org/ns/shacl#dataType": [
+            {
+              "@id": "http://www.w3.org/2001/XMLSchema#string"
+            }
+          ],
+          "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/account/property/username",
+          "@type": [
+            "http://www.w3.org/ns/shacl#PropertyShape",
+            "http://www.w3.org/ns/shacl#Shape"
+          ],
+          "http://www.w3.org/ns/shacl#path": [
+            {
+              "@id": "http://raml.org/vocabularies/shapes/anon#username"
+            }
+          ],
+          "http://raml.org/vocabularies/shapes#propertyLabel": [
+            {
+              "@value": "username"
+            }
+          ],
+          "http://www.w3.org/ns/shacl#minCount": [
+            {
+              "@value": 0
+            }
+          ]
+        },
+        {
+          "http://www.w3.org/ns/shacl#maxCount": [
+            {
+              "@value": 1
+            }
+          ],
+          "http://www.w3.org/ns/shacl#dataType": [
+            {
+              "@id": "http://www.w3.org/2001/XMLSchema#string"
+            }
+          ],
+          "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/account/property/id",
+          "@type": [
+            "http://www.w3.org/ns/shacl#PropertyShape",
+            "http://www.w3.org/ns/shacl#Shape"
+          ],
+          "http://www.w3.org/ns/shacl#path": [
+            {
+              "@id": "http://raml.org/vocabularies/shapes/anon#id"
+            }
+          ],
+          "http://raml.org/vocabularies/shapes#propertyLabel": [
+            {
+              "@value": "id"
+            }
+          ],
+          "http://www.w3.org/ns/shacl#minCount": [
+            {
+              "@value": 0
+            }
+          ]
+        }
+      ],
+      "http://schema.org/name": [
+        {
+          "@value": "account"
+        }
+      ]
+    },
+    {
+      "@type": [
+        "http://www.w3.org/ns/shacl#NodeShape",
+        "http://www.w3.org/ns/shacl#Shape"
+      ],
+      "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/TypeBase",
+      "http://www.w3.org/ns/shacl#property": [
+        {
+          "http://www.w3.org/ns/shacl#maxCount": [
+            {
+              "@value": 1
+            }
+          ],
+          "http://www.w3.org/ns/shacl#dataType": [
+            {
+              "@id": "http://www.w3.org/2001/XMLSchema#string"
+            }
+          ],
+          "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/TypeBase/property/id",
+          "@type": [
+            "http://www.w3.org/ns/shacl#PropertyShape",
+            "http://www.w3.org/ns/shacl#Shape"
+          ],
+          "http://www.w3.org/ns/shacl#path": [
+            {
+              "@id": "http://raml.org/vocabularies/shapes/anon#id"
+            }
+          ],
+          "http://raml.org/vocabularies/shapes#propertyLabel": [
+            {
+              "@value": "id"
+            }
+          ],
+          "http://www.w3.org/ns/shacl#minCount": [
+            {
+              "@value": 1
+            }
+          ]
+        }
+      ],
+      "http://schema.org/name": [
+        {
+          "@value": "TypeBase"
+        }
+      ]
+    },
+    {
+      "@type": [
+        "http://www.w3.org/ns/shacl#NodeShape",
+        "http://www.w3.org/ns/shacl#Shape"
+      ],
+      "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/TestType",
+      "http://www.w3.org/ns/shacl#property": [
+        {
+          "http://www.w3.org/ns/shacl#maxCount": [
+            {
+              "@value": 1
+            }
+          ],
+          "http://www.w3.org/ns/shacl#dataType": [
+            {
+              "@id": "http://www.w3.org/2001/XMLSchema#string"
+            }
+          ],
+          "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/TestType/property/username",
+          "@type": [
+            "http://www.w3.org/ns/shacl#PropertyShape",
+            "http://www.w3.org/ns/shacl#Shape"
+          ],
+          "http://www.w3.org/ns/shacl#path": [
+            {
+              "@id": "http://raml.org/vocabularies/shapes/anon#username"
+            }
+          ],
+          "http://raml.org/vocabularies/shapes#propertyLabel": [
+            {
+              "@value": "username"
+            }
+          ],
+          "http://www.w3.org/ns/shacl#minCount": [
+            {
+              "@value": 1
+            }
+          ]
+        }
+      ],
+      "http://raml.org/vocabularies/shapes#inherits": [
+        {
+          "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/TestType/type",
+          "http://schema.org/name": [
+            {
+              "@value": "TypeBase"
+            }
+          ],
+          "@type": [
+            "http://raml.org/vocabularies/shapes#NodeShape",
+            "http://www.w3.org/ns/shacl#Shape"
+          ],
+          "http://raml.org/vocabularies/shapes#inherits": [
+            {
+              "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/TypeBase"
+            }
+          ]
+        }
+      ],
+      "http://schema.org/name": [
+        {
+          "@value": "TestType"
+        }
+      ]
+    }
+  ],
+  "http://raml.org/vocabularies/document#encodes": [
+    {
+      "@type": [
+        "http://raml.org/vocabularies/http#APIDocumentation",
+        "http://raml.org/vocabularies/document#DomainElement"
+      ],
+      "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/api-documentation",
+      "http://schema.org/name": [
+        {
+          "@value": "test"
+        }
+      ],
+      "http://raml.org/vocabularies/http#endpoint": [
+        {
+          "@type": [
+            "http://raml.org/vocabularies/http#EndPoint",
+            "http://raml.org/vocabularies/document#DomainElement"
+          ],
+          "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/api-documentation/end-points/0",
+          "http://raml.org/vocabularies/http#path": [
+            {
+              "@value": "/test"
+            }
+          ],
+          "http://www.w3.org/ns/hydra/core#supportedOperation": [
+            {
+              "@type": [
+                "http://www.w3.org/ns/hydra/core#Operation",
+                "http://raml.org/vocabularies/document#DomainElement"
+              ],
+              "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/api-documentation/end-points/0/post",
+              "http://www.w3.org/ns/hydra/core#method": [
+                {
+                  "@value": "post"
+                }
+              ],
+              "http://www.w3.org/ns/hydra/core#returns": [
+                {
+                  "@type": [
+                    "http://raml.org/vocabularies/http#Response",
+                    "http://raml.org/vocabularies/document#DomainElement"
+                  ],
+                  "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/api-documentation/end-points/0/post/201",
+                  "http://schema.org/name": [
+                    {
+                      "@value": "201"
+                    }
+                  ],
+                  "http://www.w3.org/ns/hydra/core#statusCode": [
+                    {
+                      "@value": "201"
+                    }
+                  ],
+                  "http://raml.org/vocabularies/http#payload": [
+                    {
+                      "@type": [
+                        "http://raml.org/vocabularies/http#Payload",
+                        "http://raml.org/vocabularies/document#DomainElement"
+                      ],
+                      "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/api-documentation/end-points/0/post/201/body/application%2Fjson",
+                      "http://raml.org/vocabularies/http#schema": [
+                        {
+                          "@type": [
+                            "http://www.w3.org/ns/shacl#NodeShape",
+                            "http://www.w3.org/ns/shacl#Shape"
+                          ],
+                          "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/api-documentation/end-points/0/post/201/body/application%2Fjson/shape",
+                          "http://www.w3.org/ns/shacl#property": [
+                            {
+                              "http://www.w3.org/ns/shacl#maxCount": [
+                                {
+                                  "@value": 1
+                                }
+                              ],
+                              "http://www.w3.org/ns/shacl#dataType": [
+                                {
+                                  "@id": "http://www.w3.org/2001/XMLSchema#string"
+                                }
+                              ],
+                              "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/api-documentation/end-points/0/post/201/body/application%2Fjson/shape/property/additionalField",
+                              "@type": [
+                                "http://www.w3.org/ns/shacl#PropertyShape",
+                                "http://www.w3.org/ns/shacl#Shape"
+                              ],
+                              "http://www.w3.org/ns/shacl#path": [
+                                {
+                                  "@id": "http://raml.org/vocabularies/shapes/anon#additionalField"
+                                }
+                              ],
+                              "http://raml.org/vocabularies/shapes#propertyLabel": [
+                                {
+                                  "@value": "additionalField"
+                                }
+                              ],
+                              "http://www.w3.org/ns/shacl#minCount": [
+                                {
+                                  "@value": 0
+                                }
+                              ]
+                            }
+                          ],
+                          "http://raml.org/vocabularies/shapes#inherits": [
+                            {
+                              "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/api-documentation/end-points/0/post/201/body/application%2Fjson/shape/type",
+                              "http://schema.org/name": [
+                                {
+                                  "@value": "TestType"
+                                }
+                              ],
+                              "@type": [
+                                "http://raml.org/vocabularies/shapes#NodeShape",
+                                "http://www.w3.org/ns/shacl#Shape"
+                              ],
+                              "http://raml.org/vocabularies/shapes#inherits": [
+                                {
+                                  "@id": "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml#/definitions/TestType"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "http://raml.org/vocabularies/http#mediaType": [
+                        {
+                          "@value": "application/json"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
