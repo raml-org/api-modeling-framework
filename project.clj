@@ -19,6 +19,8 @@
                  ;; dev only
                  [difform "1.1.2"]]
 
+  :aot [api-modeling-framework.model.domain]
+
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-npm "0.6.2"]
             [lein-doo "0.1.7"]]
@@ -27,7 +29,10 @@
                        [json-to-ast "2.0.0-alpha1.2"]]}
 
   :profiles {:build {:source-paths ["build"]
-                     :main api-modeling-framework.build}}
+                     :main api-modeling-framework.build}
+             :precomp {:aot [api-modeling-framework.model.domain] }
+             :java-compile {:source-paths []
+                            :java-source-paths ["java/src"]}}
 
   :aliases {"node" ["with-profile" "build" "run" "node"]
             "web" ["with-profile" "build" "run" "web"]

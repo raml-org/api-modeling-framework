@@ -32,8 +32,8 @@
   CommonAPIProperties
   (host [this] host)
   (scheme [this] scheme)
-  (accepts [this] accepts)
-  (content-type [this] content-type)
+  (accepts [this] (or accepts []))
+  (content-type [this] (or content-type []))
   HeadersHolder
   (headers [this] (or headers []))
   ParametersHolder
