@@ -11,8 +11,9 @@ import {Type} from "../core/domain/Type";
 import {AMF} from "../../index";
 
 // Parsing
-let apiFile = "file:///Users/antoniogarrote/Development/api-modelling-framework/resources/other-examples/world-music-api/api.raml";
-AMF.RAMLParser.parseFile(apiFile, {}, (err, model) => {
+let apiFile = "http://test.com/something/api.raml";
+let cacheDirs = {'cacheDirs': {"http://test.com/something":"/Users/antoniogarrote/Development/api-modelling-framework/resources/other-examples/world-music-api"}}
+AMF.RAMLParser.parseFile(apiFile, cacheDirs, (err, model) => {
    try {
       console.log("BACK FROM PARSING");
       console.log(err == null);

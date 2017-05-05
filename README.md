@@ -131,6 +131,10 @@ The output NPM package will be generated at `output/node`.
 The programming guide the Java Bindings can be found [here](doc/java.md).
 Javadoc for the bindings can be consulted [here](https://raml-org.github.io/api-modeling-framework/doc/java/apidocs/index.html).
 
+### JS Bindings
+
+The programming guide the JS Bindings can be found [here](doc/js.md).
+
 ### API Modeling Framework Clojurescript/Web library
 
 ``` shell

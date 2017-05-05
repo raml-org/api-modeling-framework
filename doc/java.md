@@ -25,7 +25,7 @@ After Maven has finished you should have an additional jar in the `target/amf-ja
 
 Parsers can be found in the `org.raml.amf.parsers` package of the project. They can be build using the factories in `org.raml.amf.AMF`
 
-``` java
+```java
 DocumentModel model = AMF.RAMLParser().parseFile(new URL("http://test.com/worldmusic/api.raml"));
 ```
 
@@ -35,7 +35,7 @@ Parsers can accept options, including a hash-map of URLs to local directories th
 
 For instance, in the next snippet all remote references to the URLs prefixed by `http://test.com/worldmusic` will be resolved looking into the local directory `/Users/antoniogarrote/world-music-api`.
 
-``` java
+```java
 HashMap<String,String> cacheDirs = new HashMap<>();
 cacheDirs.put("http://test.com/worldmusic","/Users/antoniogarrote/vocabs/world-music-api");
 ParsingOptions options = new ParsingOptions().setCacheDirs(cacheDirs);
@@ -52,7 +52,7 @@ No matter what is the actual Document Model class, the returned model will also 
 
 These references can be listed using the `references` method, and new instances of `DocumentModel` can be built for these references using the `modelForReference` method:
 
-``` java
+```java
 for (URL ref : model.references()) {
   DocumentModel refModel = model.modelForReference(ref);
   System.out.println("Found a reference model: " + refModel);
@@ -63,7 +63,7 @@ for (URL ref : model.references()) {
 
 To run the resolution algorithm and combine all the documents from the Document Model into a single Domain Model description, the method `resolve` can be invoked.
 
-``` java
+```java
 DocumentModel resolvedModel = model.resolve();
 ```
 
@@ -75,7 +75,7 @@ Fragments return the encoded Domain Model element using the `encodes` method fro
 Modules returns the list of declared Domain Model elements using the `declares` method from the `org.raml.amf.core.document.DeclaresDomainModel` interface.
 Documents can use both methods to retrieve the top level encoded element and the list of declared elements in the root element.
 
-``` java
+```java
 if (model instanceof EncodesDomainModel) {
   System.out.println(model.encodes());
 }
@@ -93,7 +93,7 @@ if (targetModel instanceof DeclaresDomainModel) {
 The Domain Model includes Java bean classes for all elements in the AMF Domain Model.
 These getters and setters can be used to navigate and mutate the model. Please, refer to the [documentation](https://raml-org.github.io/api-modeling-framework/doc/java/apidocs/index.html) for more details.
 
-``` java
+```java
 APIDocumentation api = (APIDocumentation) model.encodes();
 
 for (EndPoint endpoint : api.getEndpoints()) {
@@ -107,7 +107,7 @@ AMF includes generators capable of serialising the AMF model back into one of th
 Factory methods for each generator can be found in the `org.raml.amf.AMF` class.
 
 
-``` java
+```java
 // Generating RAML
 // Generate can accept just the model
 String generated = AMF.RAMLGenerator().generateString(targetModel);
@@ -133,5 +133,5 @@ System.out.println(generated);
 ```
 
 Two options are available when generating JSON-LD documents.
-`setFullGraph` will nest the JSON-LD graphs for the referenced documents in the model to be serialised, otherwise only URIs will be generated.
-`setSourceMapGeneration` enables or disables the generation of source maps JSON-LD information in the output.
+- `setFullGraph` will nest the JSON-LD graphs for the referenced documents in the model to be serialised, otherwise only URIs will be generated.
+- `setSourceMapGeneration` enables or disables the generation of source maps JSON-LD information in the output.
