@@ -16,3 +16,5 @@ pom.xml.asc
 package.json
 .idea/
 output/
+bindings/js/**/*.js
+bindings/js/**/*.js.map
