@@ -98,6 +98,18 @@
   (generate-string-sync [this uri model options])
   (generate-file-sync [this uri model options]))
 
+#?(:cljs (defprotocol DomainBuilder
+           (^:export build [this constructor args])
+           (^:export update [this instance prop value])))
+
+#?(:cljs (defrecord ^:export JSDomainBuilder []
+             DomainBuilder
+           (build [this constructorFn id]
+             (constructorFn {:id id}))
+           (update [this instance prop value]
+             (assoc instance prop value))))
+
+
 (defn cb->sync [f]
   #?(:cljs (throw (js/Error "Synchronous version not supported"))
      :clj (<!! (let [c (chan)]
