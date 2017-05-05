@@ -26,8 +26,8 @@
     </properties>
     <build>
         <sourceDirectory>src</sourceDirectory>
-        <directory>../target</directory>
-        <outputDirectory>../target/classes</outputDirectory>
+        <directory>../../target</directory>
+        <outputDirectory>../../target/classes</outputDirectory>
         <plugins/>
     </build>
     <dependencyManagement>
@@ -39,7 +39,7 @@
             <artifactId>api-modeling-framework</artifactId>
             <version>0.1.2-SNAPSHOT</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../target/api-modeling-framework-0.1.2-SNAPSHOT-standalone.jar</systemPath>
+            <systemPath>${project.basedir}/../../target/api-modeling-framework-0.1.2-SNAPSHOT-standalone.jar</systemPath>
         </dependency>
     </dependencies>
     <reporting>
