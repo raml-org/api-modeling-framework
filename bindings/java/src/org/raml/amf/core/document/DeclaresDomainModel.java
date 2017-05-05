@@ -7,6 +7,7 @@ import java.util.List;
 /**
  * Created by antoniogarrote on 04/05/2017.
  */
+
 public interface DeclaresDomainModel {
     /**
      * Declared DomainElements that can be re-used from other documents.

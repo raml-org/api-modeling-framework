@@ -11,7 +11,9 @@ import java.util.List;
  * Created by antoniogarrote on 04/05/2017.
  */
 
-
+/**
+ * HTTP request information reuqired by an API Operation
+ */
 public class Request extends GenericOperationUnit {
 
     static {

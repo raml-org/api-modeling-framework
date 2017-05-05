@@ -5,6 +5,9 @@ package org.raml.amf.generators;
  */
 
 
+/**
+ * Serialises the AMF model as an OpenAPI JSON document
+ */
 public class OpenAPIGenerator extends BaseGenerator {
 
     @Override

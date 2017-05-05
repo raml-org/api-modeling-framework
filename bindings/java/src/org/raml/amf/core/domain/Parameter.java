@@ -7,6 +7,10 @@ import org.raml.amf.utils.Clojure;
 /**
  * Created by antoniogarrote on 04/05/2017.
  */
+
+/**
+ * HTTP parameter other than a header. It can be located in the domain, path or query
+ */
 public class Parameter extends GenericParameter {
 
     static {

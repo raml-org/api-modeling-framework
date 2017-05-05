@@ -95,7 +95,7 @@ public abstract class BaseParser {
      * @return The parsed Model
      * @throws ParsingException
      */
-    public DocumentModel parseFile(String text, URL url, ParsingOptions options) throws ParsingException {
+    public DocumentModel parseString(String text, URL url, ParsingOptions options) throws ParsingException {
         Clojure.require(Clojure.API_MODELING_FRAMEWORK_CORE);
         IFn parserFn = Clojure.var(Clojure.API_MODELING_FRAMEWORK_CORE, parserConstructor());
         Object parser = parserFn.invoke();

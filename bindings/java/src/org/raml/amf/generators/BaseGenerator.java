@@ -23,6 +23,7 @@ public abstract class BaseGenerator {
      * Serialises the model and stores it in the provided file path and options
      * @param path Path where the model will be serialised
      * @param model DocumentModel to be serialised
+     * @param options Generation options
      */
     public void generateFile(File path, DocumentModel model, GenerationOptions options) throws GenerationException {
         String location = path.getAbsolutePath().toString();
@@ -85,9 +86,9 @@ public abstract class BaseGenerator {
     protected String generateStringInternal(String location, DocumentModel model, GenerationOptions options) throws GenerationException {
         IFn parserFn = Clojure.var(Clojure.API_MODELING_FRAMEWORK_CORE, generatorConstructor());
         Object generator = parserFn.invoke();
-        IFn parseFileSync = Clojure.var(Clojure.API_MODELING_FRAMEWORK_CORE, "generate-string-sync");
+        IFn generateStringSync = Clojure.var(Clojure.API_MODELING_FRAMEWORK_CORE, "generate-string-sync");
         try {
-            Object result = parseFileSync.invoke(generator, location, model.clojureModel(), options.build());
+            Object result = generateStringSync.invoke(generator, location, model.clojureModel(), options.build());
             if (result instanceof Exception) {
                 throw new GenerationException((Exception) result);
             } else {

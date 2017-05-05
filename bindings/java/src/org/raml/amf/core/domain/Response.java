@@ -31,7 +31,7 @@ public class Response extends GenericOperationUnit {
     }
 
     /**
-     * Status code for the response
+     * HTTP status code for the response
      * @return
      */
     public String getStatusCode() {

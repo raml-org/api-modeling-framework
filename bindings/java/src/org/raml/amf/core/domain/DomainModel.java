@@ -13,6 +13,10 @@ import java.util.List;
 /**
  * Created by antoniogarrote on 04/05/2017.
  */
+
+/**
+ * Base class for all Domain Model elements
+ */
 public class DomainModel extends Model {
 
     static {
@@ -48,10 +52,18 @@ public class DomainModel extends Model {
         }
     }
 
+    /**
+     * Returns the unique URI identifier the Domain Element in the AMF graph
+     * @return
+     */
     public String getId() {
         return (String) wrappedNode().id();
     }
 
+    /**
+     * Returns a human readable string identifying the Domain Element
+     * @return
+     */
     public String getName() {
         return (String) wrappedNode().name();
     }
@@ -60,6 +72,10 @@ public class DomainModel extends Model {
         this.rawModel = Clojure.setKw(this.rawModel, "name", name);
     }
 
+    /**
+     * If true, the Domain Element is abstract and should be used to be extended by other Domain Elements
+     * @return
+     */
     public Boolean getAbstract() {
         return (Boolean) Clojure.getKw(this.rawModel, "abstract") || false;
     }
@@ -76,6 +92,10 @@ public class DomainModel extends Model {
         this.rawModel = Clojure.setKw(this.rawModel, "description", description);
     }
 
+    /**
+     * Optional list of source maps with lexical information associated to the Domain Element
+     * @return
+     */
     public List<SourceMap> getSourceMaps() {
         List operations =  (List) this.wrappedNode().sources();
         List<DocumentSourceMap> tmp = Clojure.toJavaList(operations);
@@ -97,6 +117,10 @@ public class DomainModel extends Model {
         this.rawModel = Clojure.setKw(this.rawModel, "sources", Clojure.list(raws));
     }
 
+    /**
+     * List of Domain Elements this element extends
+     * @return
+     */
     public List<DomainModel> getExtends() {
         List operations =  (List) Clojure.getKw(this.rawModel, "extends");
         List<Object> tmp = Clojure.toJavaList(operations);

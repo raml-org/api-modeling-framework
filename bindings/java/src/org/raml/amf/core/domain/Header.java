@@ -8,6 +8,9 @@ import org.raml.amf.utils.Clojure;
  */
 
 
+/**
+ * Parameter representing a HTTP header
+ */
 public class Header extends GenericParameter {
 
     static {
