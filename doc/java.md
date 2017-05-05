@@ -13,7 +13,7 @@ $ lein uberjar
 ```
 After Leiningen has finished you should have a standalone jar for AMF and all its dependencies in the `target/api-modeling-framework-0.1.2-SNAPSHOT-standalone.jar` location. Version might be different from the one at the moment of writing this documentation.
 
-Once the jar for AMF has been generated, we can generate the Java bindings jar. For that change to the `java` directory in the AMF project and use maven:
+Once the jar for AMF has been generated, we can generate the Java bindings jar. For that change to the `bindings/java` directory in the AMF project and use maven:
 
 ``` bash
 mvn package
