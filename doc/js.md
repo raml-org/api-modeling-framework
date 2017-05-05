@@ -129,7 +129,7 @@ api.setEndPoints(afterBreakPoints);
 endpoints = api.getEndPoints();
 const after = endpoints.length;
 
-console.log("Should be true " + (after = before + 1));
+console.log("Should be true " + (after == before + 1));
 ```
 ## Serialisation
 
