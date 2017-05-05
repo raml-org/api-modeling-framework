@@ -134,6 +134,7 @@ Javadoc for the bindings can be consulted [here](https://raml-org.github.io/api-
 ### JS Bindings
 
 The programming guide the JS Bindings can be found [here](doc/js.md).
+Documentation for the bindings can be consulted [here](https://raml-org.github.io/api-modeling-framework/doc/js/apidocs/index.html).
 
 ### API Modeling Framework Clojurescript/Web library
 
