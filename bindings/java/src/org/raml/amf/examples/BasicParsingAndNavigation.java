@@ -78,7 +78,7 @@ public class BasicParsingAndNavigation {
 
         APIDocumentation api = (APIDocumentation) model.encodes();
 
-        System.out.println("API DOCUMENTATION " + api);
+        System.out.println("API DOCUMENTATION " + api.getName());
 
         System.out.println("ENDPOINTS " + api.getEndpoints());
         for (EndPoint endpoint : api.getEndpoints()) {

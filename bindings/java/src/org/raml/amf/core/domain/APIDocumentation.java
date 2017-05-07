@@ -72,6 +72,18 @@ public class APIDocumentation extends DomainModel {
         this.rawModel = Clojure.setKw(this.rawModel, "host", host);
     }
 
+    public String getVersion() {
+        Object res = this.wrapped().version();
+        if (res != null)
+            return (String) res;
+        else
+            return null;
+    }
+
+    public void setVersion(String host) {
+        this.rawModel = Clojure.setKw(this.rawModel, "version", host);
+    }
+
     /**
      * URI Scheme for the paths in the API
      * @return
@@ -102,6 +114,52 @@ public class APIDocumentation extends DomainModel {
 
     public void setContentTypes(List<String> contentTypes) {
         this.rawModel = Clojure.setKw(this.wrapped(), "content-type", Clojure.list(contentTypes));
+    }
+
+    /**
+     * List of HTTP headers in this unit
+     * @return
+     */
+    public List<Header> getHeaders() {
+        List headers =  (List) this.wrapped().headers();
+        List<api_modeling_framework.model.domain.ParsedParameter> tmp = Clojure.toJavaList(headers);
+        ArrayList<Header> eps = new ArrayList<>();
+        for(api_modeling_framework.model.domain.ParsedParameter x : tmp) {
+            Header parsed = new Header(x);
+            eps.add(parsed);
+        }
+
+        return eps;
+    }
+
+    public void setHeaders(List<Header> headers) {
+        ArrayList<Object> raws = new ArrayList<>();
+        for(Header x : headers) {
+            raws.add(x.clojureModel());
+        }
+
+        this.rawModel = Clojure.setKw(this.rawModel, "headers", Clojure.list(raws));
+    }
+
+    public List<Parameter> getParameters() {
+        List parameters =  (List) this.wrapped().parameters();
+        List<api_modeling_framework.model.domain.ParsedParameter> tmp = Clojure.toJavaList(parameters);
+        ArrayList<Parameter> eps = new ArrayList<>();
+        for(api_modeling_framework.model.domain.ParsedParameter x : tmp) {
+            Parameter parsed = new Parameter(x);
+            eps.add(parsed);
+        }
+
+        return eps;
+    }
+
+    public void setParameters(List<Parameter> parameters) {
+        ArrayList<Object> raws = new ArrayList<>();
+        for(Parameter x : parameters) {
+            raws.add(x.clojureModel());
+        }
+
+        this.rawModel = Clojure.setKw(this.rawModel, "parameters", Clojure.list(raws));
     }
 
     /**
