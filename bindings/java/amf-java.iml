@@ -17,5 +17,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="api-modeling-framework-0.1.2-SNAPSHOT-standalone" level="project" />
   </component>
 </module>

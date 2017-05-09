@@ -123,6 +123,18 @@
   ;; copied from package_files/index.js
   (rm "output/node/js/amf.js"))
 
+(defn build-js-bindings []
+  (println "** Building Target: js-bindings\n")
+  (build "bindings" cljsbuild)
+
+  (println "* copy package index file")
+  (cp "build/package_files/index.js" "output/bindings/index.js")
+
+  (println "generating npm package")
+  (-> (npm-package)
+      (json/generate-string {:pretty true})
+      (->> (spit "output/bindings/package.json"))))
+
 
 (defn build-web []
   (println "** Building Target: web\n")
@@ -133,6 +145,7 @@
     (condp = (first args)
       "web"              (build-web)
       "node"             (build-node)
+      "js-bindings"      (build-js-bindings)
       (do (println "Unknown task")
           (System/exit 2)))
     (catch Exception ex

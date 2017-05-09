@@ -36,6 +36,7 @@
 
   :aliases {"node" ["with-profile" "build" "run" "node"]
             "web" ["with-profile" "build" "run" "web"]
+            "js-bindings" ["with-profile" "build" "run" "js-bindings"]
             "test-js" ["doo" "node" "test" "once"]}
 
   :cljsbuild {:builds {
@@ -58,6 +59,21 @@
                                             :asset-path "/js"
                                             ;:optimizations :whitespace
                                             :optimizations :advanced
+                                            :foreign-libs [{:file "js/js-support-bundle.js"
+                                                            :provides ["api_modeling_framework.js-support"]}]
+                                            :externs ["js/externs.js"]
+                                            :pretty-print true}}
+
+                       :bindings {:source-paths ["src"]
+                                 :figwheel true
+                                 :compiler {:main api-modeling-framework.core
+
+                                            :output-dir "output/bindings/"
+                                            :output-to "output/bindings/amf.js"
+                                            :optimizations :simple,
+                                            :target :nodejs
+
+                                            :asset-path "/js"
                                             :foreign-libs [{:file "js/js-support-bundle.js"
                                                             :provides ["api_modeling_framework.js-support"]}]
                                             :externs ["js/externs.js"]
