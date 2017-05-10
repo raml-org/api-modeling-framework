@@ -86,16 +86,16 @@
                                (map domain/method))))
     (is (= 1 (-> operations first domain/request domain/headers count)))
     (is (= "api-key" (-> operations first domain/request domain/headers first document/name)))
-    (is (= (v/xsd-ns "string") (-> operations first domain/request domain/headers first domain/shape (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))
+    (is (= (v/xsd-ns "string") (-> operations first domain/request domain/headers first domain/shape (utils/extract-jsonld (v/sh-ns "datatype") #(get % "@id")))))
     (is (= "header" (-> operations first domain/request domain/headers first domain/parameter-kind)))
     (is (= 2) (-> operations first domain/request domain/parameters count))
     (is (= ["petId" "race"] (->> operations first domain/request domain/parameters (map document/name))))
     (is (= ["path" "query"] (->> operations first domain/request domain/parameters (map domain/parameter-kind))))
     (is (= [(v/xsd-ns "string") (v/xsd-ns "string")] (->> operations first domain/request domain/parameters
                                                           (map #(utils/extract-jsonld (domain/shape %)
-                                                                                      (v/sh-ns "dataType")
+                                                                                      (v/sh-ns "datatype")
                                                                                       (fn [t] (get t "@id")))))))
-    (is (= (v/xsd-ns "string") (-> operations first domain/request domain/payloads first domain/schema domain/shape (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))))
+    (is (= (v/xsd-ns "string") (-> operations first domain/request domain/payloads first domain/schema domain/shape (utils/extract-jsonld (v/sh-ns "datatype") #(get % "@id")))))))
 
 
 (deftest parse-ast-response

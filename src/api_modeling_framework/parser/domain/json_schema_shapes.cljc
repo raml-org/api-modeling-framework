@@ -40,18 +40,24 @@
   {;; Object properties vs arrays, only one is allowed if it is an object (or scalar)
    (v/sh-ns "maxCount")  [{"@value" 1}]
    ;; instead of node, we have a datatype here
-   (v/sh-ns "dataType")  (get shape (v/sh-ns "dataType"))})
+   (v/sh-ns "datatype")  (get shape (v/sh-ns "datatype"))})
 
 (defn array-shape->property-shape [shape]
   (let [items (get shape (v/shapes-ns "item"))
+        items (map (fn [shape]
+                     (if (utils/scalar-shape? shape)
+                       {(v/sh-ns "datatype")  (get shape (v/sh-ns "datatype"))}
+                       {(v/sh-ns "node")     [shape]}))
+                   items)
+
+
         range (if (= 1 (count items))
                 (first items)
                 {(v/sh-ns "or") {"@list" items}})]
-    {;; we mark it for our own purposes, for example being able to detect
-     ;; it easily without checking cardinality
-     (v/shapes-ns "ordered") [{"@value" true}]
-     ;; range of the prop
-     (v/sh-ns "node")        [range]}))
+    (merge {;; we mark it for our own purposes, for example being able to detect
+            ;; it easily without checking cardinality
+            (v/shapes-ns "ordered") [{"@value" true}]}
+           range)))
 
 (defn node-shape->property-shape [shape]
   {;; Object properties vs arrays, only one is allowed if it is an object
@@ -106,7 +112,7 @@
 (defn parse-scalar [parsed-location scalar-type]
   (-> {"@id" parsed-location
        "@type" [(v/shapes-ns "Scalar") (v/sh-ns "Shape")]
-       (v/sh-ns "dataType") (if (= "shapes:any" scalar-type)
+       (v/sh-ns "datatype") (if (= "shapes:any" scalar-type)
                               nil
                               [{"@id" scalar-type}])}
       utils/clean-nils))

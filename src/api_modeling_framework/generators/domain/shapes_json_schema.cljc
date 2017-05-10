@@ -79,8 +79,8 @@
                                      required (utils/extract-jsonld-literal property (v/sh-ns "minCount") #(if (= % 0) false true))
                                      range (cond
                                              (utils/nil-range? property)     "null"
-                                             (utils/scalar-range? property)  (parse-shape (utils/property-shape->scalar-shape property) context)
                                              (utils/array-range? property)   (parse-shape (utils/property-shape->array-shape property) context)
+                                             (utils/scalar-range? property)  (parse-shape (utils/property-shape->scalar-shape property) context)
                                              :else                           (parse-shape (utils/property-shape->node-shape property) context))
                                      range (if (string? range) {:type range} range)]
                                  (when required (swap! required-props #(concat % [label])))
@@ -102,7 +102,7 @@
 
 (defmethod parse-shape (v/shapes-ns "Scalar") [shape context]
   (let [sh-type (-> shape
-                    (get (v/sh-ns "dataType"))
+                    (get (v/sh-ns "datatype"))
                     first
                     (get "@id"))
         raml-type (condp = sh-type

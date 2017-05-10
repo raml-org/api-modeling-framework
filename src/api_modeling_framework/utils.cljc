@@ -257,11 +257,11 @@
 
 
 (defn scalar-range? [property]
-  (some? (get property (v/sh-ns "dataType"))))
+  (some? (get property (v/sh-ns "datatype"))))
 
 (defn property-shape->scalar-shape [property]
   {"@type" [(v/shapes-ns "Scalar")]
-   (v/sh-ns "dataType") (get property (v/sh-ns "dataType"))
+   (v/sh-ns "datatype") (get property (v/sh-ns "datatype"))
    (v/sh-ns "in") (get property (v/sh-ns "in"))})
 
 (defn array-range? [property]
@@ -284,12 +284,12 @@
    "@type" [(v/shapes-ns "NilValueShape") (v/sh-ns "Shape")]})
 
 (defn property-shape->array-shape [property]
-  (let [items (-> property
-                  (get (v/sh-ns "node") [])
-                  first)
-        items (if (some? (get items (v/sh-ns "or")))
-                (-> items (get (v/sh-ns "or")) (get "@list"))
-                [items])]
+  (let [items (cond
+                (some? (get property (v/sh-ns "node")))     [(get property (v/sh-ns "node"))]
+                (some? (get property (v/sh-ns "datatype"))) [{"@type" [(v/shapes-ns "Scalar")]
+                                                              (v/sh-ns "datatype") (get property (v/sh-ns "datatype"))}]
+                (some? (get property (v/sh-ns "or")))       (-> property (get (v/sh-ns "or")) (get "@list"))
+                :else [])]
     {"@type" [(v/shapes-ns "Array")]
      (v/sh-ns "in") (get property (v/sh-ns "in"))
      (v/shapes-ns "item") items}))
