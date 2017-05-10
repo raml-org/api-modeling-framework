@@ -80,7 +80,7 @@
                                                                     "@value": 1
                                                                 }
                                                             ],
-                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                            "http://www.w3.org/ns/shacl#datatype": [
                                                                 {
                                                                     "@id": "http://www.w3.org/2001/XMLSchema#float"
                                                                 }
@@ -112,7 +112,7 @@
                                                                     "@value": 1
                                                                 }
                                                             ],
-                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                            "http://www.w3.org/ns/shacl#datatype": [
                                                                 {
                                                                     "@id": "http://www.w3.org/2001/XMLSchema#float"
                                                                 }
@@ -144,7 +144,7 @@
                                                                     "@value": 1
                                                                 }
                                                             ],
-                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                            "http://www.w3.org/ns/shacl#datatype": [
                                                                 {
                                                                     "@id": "http://www.w3.org/2001/XMLSchema#string"
                                                                 }
@@ -176,7 +176,7 @@
                                                                     "@value": 1
                                                                 }
                                                             ],
-                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                            "http://www.w3.org/ns/shacl#datatype": [
                                                                 {
                                                                     "@id": "http://www.w3.org/2001/XMLSchema#string"
                                                                 }
@@ -287,7 +287,7 @@
                                                                     "@value": 1
                                                                 }
                                                             ],
-                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                            "http://www.w3.org/ns/shacl#datatype": [
                                                                 {
                                                                     "@id": "http://www.w3.org/2001/XMLSchema#float"
                                                                 }
@@ -319,7 +319,7 @@
                                                                     "@value": 1
                                                                 }
                                                             ],
-                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                            "http://www.w3.org/ns/shacl#datatype": [
                                                                 {
                                                                     "@id": "http://www.w3.org/2001/XMLSchema#float"
                                                                 }
@@ -351,7 +351,7 @@
                                                                     "@value": 1
                                                                 }
                                                             ],
-                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                            "http://www.w3.org/ns/shacl#datatype": [
                                                                 {
                                                                     "@id": "http://www.w3.org/2001/XMLSchema#string"
                                                                 }
@@ -383,7 +383,7 @@
                                                                     "@value": 1
                                                                 }
                                                             ],
-                                                            "http://www.w3.org/ns/shacl#dataType": [
+                                                            "http://www.w3.org/ns/shacl#datatype": [
                                                                 {
                                                                     "@id": "http://www.w3.org/2001/XMLSchema#string"
                                                                 }

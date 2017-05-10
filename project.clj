@@ -16,6 +16,7 @@
                  [com.cemerick/url "0.1.1"]
                  [com.taoensso/timbre "4.8.0"]
                  [org.yaml/snakeyaml "1.12"]
+                 [org.topbraid/shacl "0.0.2-SNAPSHOT"]
                  ;; dev only
                  [difform "1.1.2"]]
 
