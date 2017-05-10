@@ -9,8 +9,6 @@
 import {DocumentModel} from "./DocumentModel";
 import {EncodesDomainModel} from "./EncodesDomainModel";
 import {DomainModel} from "../domain/DomainModel";
-require("api-modeling-framework");
-
 
 /**
  * AMF Fragments encode a single DomainElement that can be referenced and re-used in other documents.

@@ -11,3 +11,5 @@ JS_REST.location = function () { };
 var JS_AST = function () { };
 
 var AMF_LOADING_EVENT = function () { };
+var api_modeling_framework = {};
+api_modeling_framework.core = {};

@@ -3,13 +3,13 @@
  */
 
 import {BaseGenerator} from "./BaseGenerator";
-const amf = require("api-modeling-framework");
+import {Clojure} from "../Clojure";
 
 /**
  * Serialised the AMF model as a RAML YAML document
  */
 export class RAMLGenerator extends BaseGenerator {
     protected generator(): any {
-        return new amf.__GT_RAMLGenerator();
+        return new Clojure.amf.__GT_RAMLGenerator();
     }
 }

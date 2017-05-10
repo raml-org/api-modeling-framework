@@ -36,7 +36,8 @@
 
   :aliases {"node" ["with-profile" "build" "run" "node"]
             "web" ["with-profile" "build" "run" "web"]
-            "js-bindings" ["with-profile" "build" "run" "js-bindings"]
+            "js-bindings-web" ["with-profile" "build" "run" "js-bindings-web"]
+            "js-bindings-node" ["with-profile" "build" "run" "js-bindings-node"]
             "test-js" ["doo" "node" "test" "once"]}
 
   :cljsbuild {:builds {

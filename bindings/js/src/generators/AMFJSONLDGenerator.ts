@@ -3,13 +3,13 @@
  */
 
 import {BaseGenerator} from "./BaseGenerator";
-const amf = require("api-modeling-framework");
+import {Clojure} from "../Clojure";
 
 /**
  * Generator that exports the AMF model as a JSON-LD document
  */
 export class AMFJSONDGenerator extends BaseGenerator {
     protected generator(): any {
-        return new amf.__GT_APIModelGenerator();
+        return new Clojure.amf.__GT_APIModelGenerator();
     }
 }

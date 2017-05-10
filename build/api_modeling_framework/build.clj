@@ -26,13 +26,22 @@
    :repository repository
    :dependencies npm-dependencies})
 
+
 ;; Commands
 (defn sh! [& args]
   (println "==> " (string/join " " args))
   (let [{:keys [err out exit]} (apply jsh/sh args)]
+    (println out)
     (if (not= exit 0)
       (throw (Exception. err))
       (clojure.string/split-lines out))))
+
+(defn pipe! [args output]
+  (println "==> " (string/join " " args) " > " output)
+  (let [{:keys [err out exit]} (apply jsh/sh args)]
+    (if (not= exit 0)
+      (throw (Exception. err))
+      (spit output out))))
 
 (defn mkdir [path]
   (sh! "mkdir" "-p" path))
@@ -55,6 +64,9 @@
 (defn cp [from to]
   (sh! "cp" "-rf" from to))
 
+(defn mv [from to]
+  (sh! "mv" from to))
+
 (defn pwd [] (first (sh! "pwd")))
 
 (defn ln [source target]
@@ -70,7 +82,18 @@
 (defn npm-install [path]
   (sh! "npm" "--prefix" path "install"))
 
+(defn gulp [path task]
+  (sh! "./bindings/js/node_modules/.bin/gulp" "--gulpfile" path task))
+
 (defn local-gulp [from] (str from "/node_modules/.bin/gulp"))
+
+(defn npm-publish-link [package path node_modules_target]
+  (let [target-package (str node_modules_target "/" package)]
+    (sh! "rm" "-f" target-package)
+    (sh! "ln" "-s" path target-package)))
+
+(defn npm-link-package [package]
+  (sh! "npm" "link" "package"))
 
 (defn tsc [bin project]
   (sh! bin "-p" project))
@@ -123,17 +146,63 @@
   ;; copied from package_files/index.js
   (rm "output/node/js/amf.js"))
 
-(defn build-js-bindings []
-  (println "** Building Target: js-bindings\n")
+(defn compile-js-bindings []
+  (npm-install "bindings/js")
+  (gulp "./bindings/js/gulpfile.js" "typings")
+  (gulp "./bindings/js/gulpfile.js" "compile"))
+
+(defn build-js-bindings-web []
+  (println "** Building Target: js-bindings-web\n")
   (build "bindings" cljsbuild)
 
   (println "* copy package index file")
-  (cp "build/package_files/index.js" "output/bindings/index.js")
+  (let [deps ["global.cljs = cljs;"
+              "global.api_modeling_framework = api_modeling_framework;"]
+        data (slurp "output/bindings/amf.js")
+        data (reduce (fn [acc l] (str acc "\n" l)) data deps)]
+    (spit "output/bindings/index.js" data))
 
   (println "generating npm package")
   (-> (npm-package)
       (json/generate-string {:pretty true})
-      (->> (spit "output/bindings/package.json"))))
+      (->> (spit "output/bindings/package.json")))
+
+  (mkdir "bindings/js/node_modules")
+  (println "linking generating package")
+  (npm-publish-link "api-modeling-framework" "output/bindings" "bindings/js/node_modules")
+
+  (println "Building bindings")
+  (sh! "npm" "link" "output/node")
+  (compile-js-bindings)
+
+  (println "Running browserify")
+  (pipe! ["browserify" "bindings/js/index.js" "-s" "amf"  "--ignore-missing"] "amf_bindings.js")
+
+
+
+  (println "Cleaning bindings output")
+  (rm "output/bindings")
+  (rm "bindings/js/node_modules")
+
+  (println "Copying output")
+  (sh! "mv" "amf_bindings.js" "output/amf_bindings.js"))
+
+
+(defn build-js-bindings-node []
+  (println "** Building Target: js-bindings-node\n")
+
+  (build-node)
+
+  (println "linking generating package")
+  (mkdir "bindings/js/node_modules")
+  (npm-publish-link "api-modeling-framework" "output/node" "bindings/js/node_modules")
+
+  (compile-js-bindings)
+
+  (println "Copying output")
+  (rm "output/amf-js")
+  (rm "bindings/js/node_modules")
+  (cp "bindings/js" "output/amf-js"))
 
 
 (defn build-web []
@@ -145,7 +214,8 @@
     (condp = (first args)
       "web"              (build-web)
       "node"             (build-node)
-      "js-bindings"      (build-js-bindings)
+      "js-bindings-web"  (build-js-bindings-web)
+      "js-bindings-node" (build-js-bindings-node)
       (do (println "Unknown task")
           (System/exit 2)))
     (catch Exception ex

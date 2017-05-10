@@ -3,14 +3,13 @@
  */
 
 import {BaseParser} from "./BaseParser";
-
-const amf = require("api-modeling-framework");
+import {Clojure} from "../Clojure";
 
 /**
  * Wrapper class for the AMF RAML parser, processes RAML specification documents and generate the DocumentModel out of them
  */
 export class RAMLParser extends BaseParser {
     protected parser(): any {
-        return new amf.__GT_RAMLParser();
+        return new Clojure.amf.__GT_RAMLParser();
     }
 }
