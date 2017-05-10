@@ -59,10 +59,10 @@
   (let [c (chan)
         shape-jsonld (encode-json shape-jsonld)
         payload-jsonld (encode-json payload-jsonld)
-        _ (println "SHAPE_JSONLD")
-        _ (println shape-jsonld)
-        _ (println "DATA_JSONLD")
-        _ (println payload-jsonld)
+        ;;_ (println "SHAPE_JSONLD")
+        ;;_ (println shape-jsonld)
+        ;;_ (println "DATA_JSONLD")
+        ;;_ (println payload-jsonld)
         result (-> (Validator/validate  payload-jsonld "application/ld+json"
                                         shape-jsonld "application/ld+json")
                    decode-json)]

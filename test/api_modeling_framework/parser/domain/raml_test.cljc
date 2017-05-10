@@ -242,7 +242,6 @@
       (let [shape (raml-parser/parse-ast raml-type {:parsed-location "/response"
                                                     :type-hint :type
                                                     :location "/response"})]
-        (prn shape)
         (is (= raml-type (raml-genenerator/to-raml shape {})))))))
 
 (deftest parser-raml-type-expressions
