@@ -86,10 +86,10 @@
         ;;_ (println shape-jsonld)
         ;;_ (println "DATA_JSONLD")
         ;;_ (println payload-jsonld)
-        validated (.validate js/SHACL payload-jsonld "application/ld+json"
-                             shape-jsonld "application/ld+json"
-                             (fn [e r]
-                               (go (if (some? e)
-                                     (>! c {:err (js->clj e)})
-                                     (>! c (decode-json r))))))]
+        validated (js/SHACL payload-jsonld "application/ld+json"
+                            shape-jsonld "application/ld+json"
+                            (fn [e r]
+                              (go (if (some? e)
+                                    (>! c {:err (js->clj e)})
+                                    (>! c (decode-json r))))))]
     c))

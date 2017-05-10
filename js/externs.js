@@ -11,3 +11,4 @@ JS_REST.location = function () { };
 var JS_AST = function () { };
 
 var AMF_LOADING_EVENT = function () { };
+var SHACL = function () { _ };

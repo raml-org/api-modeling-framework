@@ -6,7 +6,7 @@
 ;; we cannot use it directly in the code because it interfers
 (def fs (node/require "fs"))
 
-(aset js/global "SHACL" (node/require "shacl"))
+;;(aset js/global "SHACL" (aget (node/require "shacl") "validate"))
 (aset js/global "NODE_FS" fs)
 
 ;; Let's load node platform dependencies from the local JS platform file.
