@@ -9,6 +9,9 @@ import {EndPoint} from "../core/domain/EndPoint";
 import {Module} from "../core/document/Module";
 import {Type} from "../core/domain/Type";
 import {AMF} from "../../index";
+import {NodeShape} from "../core/domain/shapes/NodeShape";
+import {ScalarShape} from "../core/domain/shapes/ScalarShape";
+import {ArrayShape} from "../core/domain/shapes/ArrayShape";
 
 // Parsing
 let apiFile = "http://test.com/something/api.raml";
@@ -90,7 +93,30 @@ AMF.RAMLParser.parseFile(apiFile, cacheDirs, (err, model) => {
       // types
       let types = declared.filter(d => d instanceof Type) as Type[];
       console.log(types.length === 3);
-      types.forEach(t => console.log(t.getShape() != null));
+      types.forEach(t => {
+         let shape = t.getShape();
+         console.log(shape != null);
+         if (shape instanceof NodeShape) {
+            console.log(shape.getId());
+            shape.getPropertyShapes().forEach(p => {
+               console.log(p.getPath() != null);
+               console.log(p.getMinCount() != null);
+               if (p.getDatatype()) {
+                  console.log(p.getDatatype() != null);
+               } else if(p.getNode() != null) {
+                  console.log(p.getNode() != null);
+               } else {
+                  throw new Error("Erroneous PropertyShape");
+               }
+            });
+         } else if (shape instanceof ScalarShape) {
+
+         } else if (shape instanceof ArrayShape) {
+
+         } else {
+            console.log(shape.constructor);
+         }
+      });
 
       // Generations
       AMF.RAMLGenerator.generateString(model, null, null, (e, r) => console.log(r != null));

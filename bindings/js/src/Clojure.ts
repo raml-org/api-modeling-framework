@@ -2,7 +2,12 @@
  * Created by antoniogarrote on 05/05/2017.
  */
 
+declare var global: any
+declare var require: any
+
+
 require("api-modeling-framework");
+
 const cljscore = global['cljs'].core;
 
 export class Clojure {
@@ -18,9 +23,9 @@ export class Clojure {
         return cljscore.js__GT_clj(o);
     }
 
-    public static cljsMap<T>(xs: any, f:(x: any) => T): T[] {
+    public static cljsMap<T>(xs: any, f: (x: any) => T): T[] {
         const acc: T[] = [];
-        while(! cljscore.empty_QMARK_(xs)) {
+        while (!cljscore.empty_QMARK_(xs)) {
             const first = cljscore.first(xs);
             xs = cljscore.rest(xs);
             acc.push(f(first));

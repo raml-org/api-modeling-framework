@@ -5,11 +5,11 @@
 /**
  * Parsing options for parsing
  */
-interface ParsingOptions {
+export interface ParsingOptions {
 
     /**
      * Sets a mapping from URL prefixes for references to local directories to resolve references in the syntax
      * @param uriToDirs
      */
-    cacheDirs?: {[url: string]: string};
+    cacheDirs?: { [url: string]: string };
 }

@@ -2,9 +2,10 @@
  * Created by antoniogarrote on 05/05/2017.
  */
 
-import {DocumentModel} from "../core/document/DocumentModel";
-import {URL} from "../../index";
-import {Clojure} from "../Clojure";
+import { DocumentModel } from "../core/document/DocumentModel";
+import { URL } from "../../index";
+import { Clojure } from "../Clojure";
+import { ParsingOptions } from "./ParsingOptions";
 
 /**
  * Basic interface for all AMF parsers. It allows to parse syntax files and syntax text and generate the AMF Model out
@@ -19,7 +20,7 @@ export abstract class BaseParser {
      * @param cb Callback that will receive either the parsed model or error
      * @return The parsed model
      */
-    public parseFile(url: URL, options: ParsingOptions = {}, cb: (err?: Error, model?: DocumentModel) => void)  {
+    public parseFile(url: URL, options: ParsingOptions = {}, cb: (err?: Error, model?: DocumentModel) => void) {
         Clojure.amf.parse_file(this.parser(), url, Clojure.jsToCljs(options), (err, model) => {
             if (err) {
                 cb(err)
@@ -37,8 +38,8 @@ export abstract class BaseParser {
      * @param cb callback that will receive either the parsed model or error
      * @return The parsed Model
      */
-    public parseString(text: string, url: URL, options: ParsingOptions = {}, cb: (err?: Error, model?: DocumentModel) => void)  {
-        Clojure.amf.parse_string(this.parser(), url, Clojure.jsToCljs(options), (err, model) => {
+    public parseString(text: string, url: URL, options: ParsingOptions = {}, cb: (err?: Error, model?: DocumentModel) => void) {
+        Clojure.amf.parse_string(this.parser(), url, text, Clojure.jsToCljs(options), (err, model) => {
             if (err) {
                 cb(err)
             } else {

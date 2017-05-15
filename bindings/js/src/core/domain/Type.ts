@@ -4,11 +4,12 @@
 
 import {DomainModel} from "./DomainModel";
 import {Clojure} from "../../Clojure";
+import {Shape} from "./shapes/Shape";
 
 export type JSONLD = Object
 
 /**
- * Data Shape that describing a set of constraints over an operation unit payload
+ * Type information including a shape describing a set of constraints over an operation unit payload
  */
 export class Type extends DomainModel {
 
@@ -16,7 +17,7 @@ export class Type extends DomainModel {
      * JSON-LD data structure containing a SHACL shape that can be used to validate payloads for this operation unit
      * @return
      */
-    public getShape(): JSONLD | undefined {
+    public getJSONLDShape(): JSONLD | undefined {
         return Clojure.cljsToJs(Clojure.amf_domain.shape(this.rawModel));
     }
 
@@ -24,10 +25,25 @@ export class Type extends DomainModel {
      * Sets the SHACL shape for the payloads of this operation unit
      * @param shaclShape valid SHACL shape encoded as JSON-LD string
      */
-    public setShape(shape: JSONLD | undefined) {
+    public setJSONLDShape(shape: JSONLD | undefined) {
         this.rawModel = Clojure.amf.update(DomainModel.domain_builder, this.rawModel, Clojure.kw("shape"), Clojure.jsToCljs(shape));
     }
 
+
+    /**
+     * Shape object for this type
+     * @returns {Shape}
+     */
+    public getShape(): Shape | undefined {
+        let jsonld = this.getJSONLDShape();
+        if (jsonld != null) {
+            return Shape.fromRawModel(jsonld);
+        }
+    }
+
+    public setShape(shape: Shape | undefined) {
+        this.setJSONLDShape(shape.clojureModel());
+    }
 
     public static build(id: string): Type {
         return new Type(Clojure.amf.build(
