@@ -7,8 +7,7 @@
                     "type": "object",
                     "properties": {
                         "age": {
-                            "type": "number",
-                            "x-rdf-type": "xsd:integer"
+                            "type": "number"
                         }
                     },
                     "required": ["age"],

@@ -235,6 +235,8 @@
 (defn hash-path [id]
   (str "#" (-> id (string/split #"#") last)))
 
+(defn or-shape? [shape] (some? (get shape (v/sh-ns "or"))))
+
 (defn scalar-shape? [shape]
   (has-class? shape (v/shapes-ns "Scalar")))
 
@@ -283,16 +285,33 @@
   {"@id" parsed-location
    "@type" [(v/shapes-ns "NilValueShape") (v/sh-ns "Shape")]})
 
+(defn shacl-or-elements [xs]
+  (let [xs-list (get xs (v/sh-ns "or") [])
+        xs-list (if (map? xs-list) xs-list (first xs-list))
+        elements (get xs-list "@list" [])]
+    elements))
+
+(defn ->shacl-or [xs]
+  {(v/sh-ns "or") {"@list" xs}})
+
+
 (defn property-shape->array-shape [property]
   (let [items (cond
-                (some? (get property (v/sh-ns "node")))     [(get property (v/sh-ns "node"))]
-                (some? (get property (v/sh-ns "datatype"))) [{"@type" [(v/shapes-ns "Scalar")]
-                                                              (v/sh-ns "datatype") (get property (v/sh-ns "datatype"))}]
-                (some? (get property (v/sh-ns "or")))       (-> property (get (v/sh-ns "or")) (get "@list"))
+                (some? (get property (v/shapes-ns "is-number"))) [(assoc property "@type" [(v/shapes-ns "Scalar")])]
+                (some? (get property (v/sh-ns "or")))            (-> property (get (v/sh-ns "or")) (get "@list"))
+                (some? (get property (v/sh-ns "node")))          [(get property (v/sh-ns "node"))]
+                (some? (get property (v/sh-ns "datatype")))      [{"@type" [(v/shapes-ns "Scalar")]
+                                                                 (v/sh-ns "datatype") (get property (v/sh-ns "datatype"))}]
                 :else [])]
     {"@type" [(v/shapes-ns "Array")]
      (v/sh-ns "in") (get property (v/sh-ns "in"))
      (v/shapes-ns "item") items}))
+
+(defn property-shape->union-shape [property]
+  (if (some? (get property (v/shapes-ns "is-number")))
+    (assoc property "@type" [(v/shapes-ns "Scalar")])
+    ;; @todo non supported yet
+    property))
 
 (defn property-shape->node-shape [property]
   (-> property (get (v/sh-ns "node") []) first))

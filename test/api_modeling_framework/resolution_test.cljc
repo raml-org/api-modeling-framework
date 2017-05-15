@@ -65,7 +65,7 @@
     (is (= ["200" "400"] (-> generated-openapi :paths (get (keyword "/users")) :get :responses keys)))
     (is (= ["http"] (-> generated-openapi :paths (get (keyword "/users")) :post :schemes)))
     (is (= ["201" "400"] (-> generated-openapi :paths (get (keyword "/users")) :post :responses keys)))
-    (is (= {:name "start", :required true, :in "query", :type "number"} (-> generated-openapi :paths (get (keyword "/users")) :post :parameters first)))
+    (is (= {:name "start", :required true, :in "query", :type "number" :x-rdf-type "xsd:float"} (-> generated-openapi :paths (get (keyword "/users")) :post :parameters first)))
 
     ;; testing generted JSON-LED
     (is (= "/users" (-> generated-jsonld (get v/http:endpoint) first (get v/http:path) first (get "@value"))))

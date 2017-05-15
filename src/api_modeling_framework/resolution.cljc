@@ -40,6 +40,26 @@
         (utils/property-shape? elem)       #(-> % (get (v/sh-ns "path") []) first (get "@id"))
         :else                              nil))))
 
+(defn shapes? [x]
+  (and (coll? x)
+       (> (count x) 1)
+       (some? (get (first x) "@type"))))
+
+(defn merge-shapes [shapes]
+  ;; make sure that we don't get duplicated type information about the type when merging
+  ;; @todo review this when adding unions
+  (reduce (fn [acc next-shape]
+            (cond
+              (utils/or-shape? next-shape) (merge (dissoc acc (v/sh-ns "datatype"))
+                                                  next-shape)
+              (utils/or-shape? acc)        (merge (-> acc
+                                                      (dissoc (v/sh-ns "or"))
+                                                      (dissoc (v/shapes-ns "is-number")))
+                                                  next-shape)
+              :else                         (merge acc next-shape)))
+          (first shapes)
+          (rest shapes)))
+
 (defn group
   ([coll]
    (let [grouping-fn (should-group? coll)]
@@ -60,7 +80,10 @@
     ;; group and merge
     (let [grouped (group node declaration)
           res (->> grouped
-                   (map (fn [[_ elems]] (merge-group elems))))]
+                   (map (fn [[_ elems]]
+                          (if (shapes? elems)
+                            (merge-shapes elems)
+                            (merge-group elems)))))]
       res)
     ;; merge by value-set
     (->> (concat node declaration) set (into []))))

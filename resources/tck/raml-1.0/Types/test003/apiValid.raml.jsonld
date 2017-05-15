@@ -13,7 +13,7 @@ types:
     displayName: AnotherType
     type: SomeType
     properties:
-      age: integer
+      age: number
     additionalProperties: false
 
   ComplexType:

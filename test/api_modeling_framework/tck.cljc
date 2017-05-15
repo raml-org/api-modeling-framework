@@ -162,12 +162,15 @@
             (println "ERROR IN STRUCTURAL COMPARISON")
             (println "\nGENERATED:")
             ;;(clojure.pprint/pprint a)
-            (clojure.pprint/pprint (clean-noise a))
+            #?(:clj (clojure.pprint/pprint (clean-noise a))
+               :cljs (prn (clean-noise a)))
             (println "\nTARGET:")
             ;;(clojure.pprint/pprint b)
-            (clojure.pprint/pprint (clean-noise b))
+            #?(:clj (clojure.pprint/pprint (clean-noise b))
+               :cljs (prn (clean-noise b)))
             (println "\nDIFF:\n")
-            (clojure.pprint/pprint (data/diff (clean-noise a) (clean-noise b)))
+            #?(:clj (clojure.pprint/pprint (data/diff (clean-noise a) (clean-noise b)))
+               :cljs (prn (data/diff (clean-noise a) (clean-noise b))))
             (println "--")
             #?(:clj (difform/difform a b))
             (println "--")
@@ -256,6 +259,8 @@
                                                     (core/document-model parsed-model)
                                                     {:source-maps? false
                                                      :full-graph? false})))
+            ;;_ (println "RAW JSONLD GENERATED")
+            ;;_ (println generated-jsonld)
             _ (is (not (error? parsed-model)))
             ;; target data structure
             target-file-name (target-file files type type)
@@ -316,6 +321,8 @@
             parsed-model (<! (cb->chan (partial core/parse-file parser source {:source-maps? false :full-graph true})))
             domain-model (core/domain-model parsed-model)
             generated (<! (cb->chan (partial core/generate-string generator target domain-model {:source-maps? false :full-graph false})))]
+        ;;(println "GENERATED")
+        ;;(println generated)
         (is (same-structure? (ensure-not-nil (clean-ids (<! (to-data-structure target :jsonld generated))))
                              (ensure-not-nil (clean-ids target-data))))))))
 

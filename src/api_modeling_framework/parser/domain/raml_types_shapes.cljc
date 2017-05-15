@@ -92,12 +92,20 @@
    ;; instead of node, we have a datatype here
    (v/sh-ns "datatype")  (get shape (v/sh-ns "datatype"))})
 
+(defn or-shape->property-shape [shape]
+  (let [elements (utils/shacl-or-elements shape)
+        elements (map #(dissoc % "@type") elements)]
+    (-> shape
+        (merge (utils/->shacl-or elements))
+        (dissoc "@type")
+        (assoc (v/sh-ns "maxCount")  [{"@value" 1}]))))
+
 (defn array-shape->property-shape [shape]
   (let [items (get shape (v/shapes-ns "item"))
         items (map (fn [shape]
-                     (if (utils/scalar-shape? shape)
-                       {(v/sh-ns "datatype")  (get shape (v/sh-ns "datatype"))}
-                       {(v/sh-ns "node")     [shape]}))
+                     (cond (utils/or-shape? shape)     shape
+                           (utils/scalar-shape? shape) {(v/sh-ns "datatype")  (get shape (v/sh-ns "datatype"))}
+                           :else                       {(v/sh-ns "node")     [shape]}))
                    items)
 
 
@@ -124,6 +132,7 @@
                                       parsed-location (utils/path-join parsed-location (str "/property/" property-name))
                                       parsed-property-target (parse-type v (assoc context :parsed-location parsed-location))
                                       property-shape (cond
+                                                       (utils/or-shape? parsed-property-target)     (or-shape->property-shape parsed-property-target)
                                                        (utils/scalar-shape? parsed-property-target) (scalar-shape->property-shape parsed-property-target)
                                                        (utils/array-shape? parsed-property-target)  (array-shape->property-shape parsed-property-target)
                                                        (utils/nil-shape? parsed-property-target)    (utils/nil-shape->property-shape)
@@ -175,12 +184,19 @@
          (parse-type-constraints node))))
 
 (defn parse-scalar [parsed-location scalar-type]
-  (-> {"@id" parsed-location
-       "@type" [(v/shapes-ns "Scalar") (v/sh-ns "Shape")]
-       (v/sh-ns "datatype") (if (= "shapes:any" scalar-type)
-                              nil
-                              [{"@id" scalar-type}])}
-      utils/clean-nils))
+  (if (= scalar-type "number")
+    {(v/sh-ns "or") {"@list" [(parse-scalar (utils/path-join parse-scalar "or/integer")
+                                            "integer")
+                              (parse-scalar (utils/path-join parse-scalar "or/float")
+                                            "float")]}
+     "@type" [(v/shapes-ns "Scalar") (v/sh-ns "Shape")]
+     (v/shapes-ns "is-number") [{"@value" true}]}
+    (-> {"@id" parsed-location
+         "@type" [(v/shapes-ns "Scalar") (v/sh-ns "Shape")]
+         (v/sh-ns "datatype") (if (= "shapes:any" scalar-type)
+                                nil
+                                [{"@id" scalar-type}])}
+        utils/clean-nils)))
 
 (defn parse-json-node [parsed-location text]
   {"@id" parsed-location
@@ -268,7 +284,10 @@
   (cond
     ;; scalars
     (= type-ref "string")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "string")))
-    (= type-ref "number")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
+    (= type-ref "number")  (parse-type-constraints node (-> (utils/->shacl-or
+                                                             [(parse-scalar (utils/path-join parsed-location "or/float") (v/xsd-ns "float"))
+                                                              (parse-scalar (utils/path-join parsed-location "or/integer") (v/xsd-ns "integer"))])
+                                                            (assoc (v/shapes-ns "is-number") [{"@value" true}])))
     (= type-ref "integer")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "integer")))
     (= type-ref "float")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
     (= type-ref "boolean") (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "boolean")))

@@ -42,12 +42,21 @@
    ;; instead of node, we have a datatype here
    (v/sh-ns "datatype")  (get shape (v/sh-ns "datatype"))})
 
+(defn or-shape->property-shape [shape]
+  (let [elements (utils/shacl-or-elements shape)
+        elements (map #(dissoc % "@type") elements)]
+    (-> shape
+        (merge (utils/->shacl-or elements))
+        (dissoc "@type")
+        (assoc (v/sh-ns "maxCount")  [{"@value" 1}]))))
+
 (defn array-shape->property-shape [shape]
   (let [items (get shape (v/shapes-ns "item"))
         items (map (fn [shape]
-                     (if (utils/scalar-shape? shape)
-                       {(v/sh-ns "datatype")  (get shape (v/sh-ns "datatype"))}
-                       {(v/sh-ns "node")     [shape]}))
+                     (cond
+                       (utils/or-shape? shape)     shape
+                       (utils/scalar-shape? shape) {(v/sh-ns "datatype")  (get shape (v/sh-ns "datatype"))}
+                       :else                       {(v/sh-ns "node")     [shape]}))
                    items)
 
 
@@ -72,6 +81,7 @@
                                (let [parsed-location (str parsed-location "/property/" (utils/safe-str k))
                                      parsed-property-target (parse-type v (assoc context :parsed-location parsed-location))
                                      property-shape (cond
+                                                      (utils/or-shape? parsed-property-target)     (or-shape->property-shape parsed-property-target)
                                                       (utils/scalar-shape? parsed-property-target) (scalar-shape->property-shape parsed-property-target)
                                                       (utils/array-shape? parsed-property-target)  (array-shape->property-shape parsed-property-target)
                                                       (utils/nil-shape? parsed-property-target)    (utils/nil-shape->property-shape)
@@ -244,7 +254,12 @@
 
                                           "xsd:integer" (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "integer")))
 
-                                          nil (parse-type-constraints node  (parse-scalar parsed-location (v/xsd-ns "float"))))
+                                          nil (parse-type-constraints node  {(v/sh-ns "or") {"@list" [(parse-scalar (utils/path-join parsed-location "or/integer")
+                                                                                                                    (v/xsd-ns "integer"))
+                                                                                                      (parse-scalar (utils/path-join parsed-location "or/float")
+                                                                                                                    (v/xsd-ns "float"))]}
+                                                                             "@type" [(v/shapes-ns "Scalar") (v/sh-ns "Shape")]
+                                                                             (v/shapes-ns "is-number") [{"@value" true}]}))
 
                               "file"    (parse-type-constraints node (parse-file node context))
 

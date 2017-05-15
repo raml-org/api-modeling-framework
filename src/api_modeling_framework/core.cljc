@@ -3,6 +3,7 @@
   #?(:clj (:require [clojure.core.async :refer [<! >! <!! go chan] :as async]
                     [api-modeling-framework.model.syntax :as syntax]
                     [api-modeling-framework.model.document :as document]
+                    [api-modeling-framework.data :as data]
                     [api-modeling-framework.resolution :as resolution]
                     [api-modeling-framework.parser.syntax.yaml :as yaml-parser]
                     [api-modeling-framework.parser.syntax.json :as json-parser]
@@ -21,6 +22,7 @@
                     [clojure.walk :refer [keywordize-keys stringify-keys]]
                     [taoensso.timbre :as timbre :refer [debug]]))
   #?(:cljs (:require [cljs.core.async :refer [<! >! chan] :as async]
+                     [api-modeling-framework.data :as data]
                      [api-modeling-framework.model.syntax :as syntax]
                      [api-modeling-framework.model.document :as document]
                      [api-modeling-framework.resolution :as resolution]
@@ -73,6 +75,17 @@
   (^:export find-element [this level id] "Finds a domain element in the model data, returning the element wrapped in a fragment")
   (^:export raw [this] "Returns the raw text for the model")
   (^:export lexical-info-for-unit [model unit-id] "Finds lexical information for a particular unit for a particular syntax (\"raml\", \"openapi\")"))
+
+(defprotocol DataProtocol
+  (^:export validate [this schema schema-type payload cb]))
+
+(defrecord ^:export DataValidator []
+  DataProtocol
+  (validate [this schema schema-type payload cb]
+    (go (let [res (<! (data/validate schema schema-type payload))]
+          (if (some? (:err res))
+            (cb (new #?(:clj Exception :cljs js/Error) (platform/<-clj (:err res))) nil)
+            (cb nil (platform/<-clj res)))))))
 
 (defprotocol Parser
   (^:export parse-file-sync

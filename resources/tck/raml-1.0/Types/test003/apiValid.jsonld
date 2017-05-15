@@ -22,7 +22,7 @@
                     "@id": "file:///Users/antoniogarrote/Development/api-modeling-framework/resources/tck/raml-1.0/Types/test003/apiValid.raml/types#/definitions/SomeType/property/name",
                     "http://www.w3.org/ns/shacl#path": [
                         {
-                            "@id": "http://raml.org/vocabularies/shapes#anon/age"
+                            "@id": "http://raml.org/vocabularies/shapes#anon/name"
                         }
                     ],
                     "http://raml.org/vocabularies/shapes#propertyLabel": [
@@ -40,6 +40,7 @@
                             "@value": 1
                         }
                     ],
+
                     "http://www.w3.org/ns/shacl#datatype": [
                         {
                             "@id": "http://www.w3.org/2001/XMLSchema#string"
@@ -96,11 +97,24 @@
                             "@value": 1
                         }
                     ],
-                    "http://www.w3.org/ns/shacl#datatype": [
+                    "http://raml.org/vocabularies/shapes#is-number": [
                         {
-                            "@id": "http://www.w3.org/2001/XMLSchema#integer"
+                            "@value": true
                         }
-                    ]
+                    ],
+                    "http://www.w3.org/ns/shacl#or":
+                     {"@list":
+                      [{"http://www.w3.org/ns/shacl#datatype": [
+                          {
+                              "@id": "http://www.w3.org/2001/XMLSchema#integer"
+                          }
+                      ]},
+                       {"http://www.w3.org/ns/shacl#datatype": [
+                           {
+                               "@id": "http://www.w3.org/2001/XMLSchema#float"
+                           }
+                       ]}]
+                     }
                 }
             ],
             "http://raml.org/vocabularies/shapes#inherits": [

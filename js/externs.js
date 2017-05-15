@@ -15,4 +15,4 @@ var AMF_LOADING_EVENT = function () { };
 var api_modeling_framework = {};
 api_modeling_framework.core = {};
 
-var SHACL = function () { _ };
+var SHACL = function () { };

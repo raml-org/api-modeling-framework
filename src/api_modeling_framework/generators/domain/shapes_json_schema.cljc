@@ -29,6 +29,7 @@
 (defn parse-shape-dispatcher-fn [shape ctx]
   (cond
     (nil? shape)                                           nil
+    (utils/or-shape? shape)                                (v/sh-ns "or")
     (some? (get shape (v/shapes-ns "inherits")))           :inheritance
     (utils/has-class? shape (v/shapes-ns "NilValueShape")) (v/shapes-ns "NilValueShape")
     (utils/has-class? shape (v/shapes-ns "JSONSchema"))    (v/shapes-ns "JSONSchema")
@@ -78,8 +79,9 @@
                                (let [label (utils/extract-jsonld-literal property (v/shapes-ns "propertyLabel"))
                                      required (utils/extract-jsonld-literal property (v/sh-ns "minCount") #(if (= % 0) false true))
                                      range (cond
-                                             (utils/nil-range? property)     "null"
                                              (utils/array-range? property)   (parse-shape (utils/property-shape->array-shape property) context)
+                                             (utils/or-shape? property)      (parse-shape (utils/property-shape->union-shape property) context)
+                                             (utils/nil-range? property)     "null"
                                              (utils/scalar-range? property)  (parse-shape (utils/property-shape->scalar-shape property) context)
                                              :else                           (parse-shape (utils/property-shape->node-shape property) context))
                                      range (if (string? range) {:type range} range)]
@@ -101,29 +103,32 @@
                         :items sh-items-type} shape)))
 
 (defmethod parse-shape (v/shapes-ns "Scalar") [shape context]
-  (let [sh-type (-> shape
-                    (get (v/sh-ns "datatype"))
-                    first
-                    (get "@id"))
-        raml-type (condp = sh-type
-                    (v/xsd-ns "string")           {:type "string"}
-                    (v/xsd-ns "float")            {:type "number"}
-                    (v/xsd-ns "integer")          {:type "number"
-                                                   :x-rdf-type "xsd:integer"}
-                    (v/xsd-ns "boolean")          {:type "boolean"}
-                    (v/shapes-ns "null")          {:type "null"}
-                    (v/xsd-ns "time")             {:type "string"
-                                                   :x-rdf-type "xsd:time"}
-                    (v/xsd-ns "dateTime")         {:type "string"
-                                                   :x-rdf-type "xsd:dateTime"}
-                    (v/shapes-ns "datetime-only") {:type "string"
-                                                   :x-rdf-type "shapes:datetime-only"}
-                    (v/xsd-ns "date")             {:type "string"
-                                                   :x-rdf-type "xsd:date"}
-                    (v/shapes-ns "any")           {:type "string"
-                                                   :x-rdf-type "shapes:any"}
-                    (throw (new #?(:clj Exception :cljs js/Error) (str "Unknown scalar data type " sh-type))))]
-    (parse-constraints raml-type shape)))
+  (if (some? (get shape (v/shapes-ns "is-number")))
+    {:type "number"}
+    (let [sh-type (-> shape
+                      (get (v/sh-ns "datatype"))
+                      first
+                      (get "@id"))
+          raml-type (condp = sh-type
+                      (v/xsd-ns "string")           {:type "string"}
+                      (v/xsd-ns "float")            {:type "number"
+                                                     :x-rdf-type "xsd:float"}
+                      (v/xsd-ns "integer")          {:type "number"
+                                                     :x-rdf-type "xsd:integer"}
+                      (v/xsd-ns "boolean")          {:type "boolean"}
+                      (v/shapes-ns "null")          {:type "null"}
+                      (v/xsd-ns "time")             {:type "string"
+                                                     :x-rdf-type "xsd:time"}
+                      (v/xsd-ns "dateTime")         {:type "string"
+                                                     :x-rdf-type "xsd:dateTime"}
+                      (v/shapes-ns "datetime-only") {:type "string"
+                                                     :x-rdf-type "shapes:datetime-only"}
+                      (v/xsd-ns "date")             {:type "string"
+                                                     :x-rdf-type "xsd:date"}
+                      (v/shapes-ns "any")           {:type "string"
+                                                     :x-rdf-type "shapes:any"}
+                      (throw (new #?(:clj Exception :cljs js/Error) (str "Unknown scalar data type " sh-type))))]
+      (parse-constraints raml-type shape))))
 
 (defmethod parse-shape (v/shapes-ns "JSONSchema") [shape context]
   (let [value (utils/extract-jsonld-literal shape (v/shapes-ns "schemaRaw"))]
@@ -180,6 +185,11 @@
       (common/ref-shape? type-id context) (ref-shape type-id context)
       (include-shape? type-id context)    (include-shape type-id context)
       :else                               (parse-shape type context))))
+
+(defmethod parse-shape (v/sh-ns "or") [shape context]
+  ;; @todo support unions
+  (-> {:type "number"}
+      (parse-constraints shape)))
 
 (defmethod parse-shape :raml-expression [shape _] (-> shape (get (v/shapes-ns "ramlTypeExpression")) first (get "@value")))
 

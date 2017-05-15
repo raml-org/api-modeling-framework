@@ -93,11 +93,24 @@
                           "@value": 1
                         }
                       ],
-                      "http://www.w3.org/ns/shacl#datatype": [
-                        {
-                          "@id": "http://www.w3.org/2001/XMLSchema#float"
-                        }
-                      ],
+                        "http://raml.org/vocabularies/shapes#is-number": [
+                            {
+                                "@value": true
+                            }
+                        ],
+                        "http://www.w3.org/ns/shacl#or":
+                        {"@list":
+                         [{"http://www.w3.org/ns/shacl#datatype": [
+                             {
+                                 "@id": "http://www.w3.org/2001/XMLSchema#integer"
+                             }
+                         ]},
+                          {"http://www.w3.org/ns/shacl#datatype": [
+                              {
+                                  "@id": "http://www.w3.org/2001/XMLSchema#float"
+                              }
+                          ]}]
+                        },
                       "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait1/200/application%2Fjson/property/traitProperty2",
                       "@type": [
                         "http://www.w3.org/ns/shacl#PropertyShape",
@@ -218,11 +231,24 @@
                           "@value": 1
                         }
                       ],
-                      "http://www.w3.org/ns/shacl#datatype": [
-                        {
-                          "@id": "http://www.w3.org/2001/XMLSchema#float"
-                        }
-                      ],
+                        "http://raml.org/vocabularies/shapes#is-number": [
+                            {
+                                "@value": true
+                            }
+                        ],
+                        "http://www.w3.org/ns/shacl#or":
+                        {"@list":
+                         [{"http://www.w3.org/ns/shacl#datatype": [
+                             {
+                                 "@id": "http://www.w3.org/2001/XMLSchema#integer"
+                             }
+                         ]},
+                          {"http://www.w3.org/ns/shacl#datatype": [
+                              {
+                                  "@id": "http://www.w3.org/2001/XMLSchema#float"
+                              }
+                          ]}]
+                        },
                       "@id": "resources/tck/raml-1.0/Traits/test001/apiValid.raml#/x-traits/Trait2/200/application%2Fjson/property/traitProperty1",
                       "@type": [
                         "http://www.w3.org/ns/shacl#PropertyShape",

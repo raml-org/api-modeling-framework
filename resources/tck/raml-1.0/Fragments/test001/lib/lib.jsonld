@@ -26,18 +26,9 @@
                             "@value": "objProp1"
                         }
                     ],
-                    "http://raml.org/vocabularies/shapes#range": [
+                    "http://www.w3.org/ns/shacl#datatype": [
                         {
-                            "@id": "file://./resources/tck/raml-1.0/Fragments/test001/lib/lib.raml/types#/definitions/ObjectType/shape/scalar-shape",
-                            "@type": [
-                                "http://www.w3.org/ns/shacl#Shape",
-                                "http://raml.org/vocabularies/shapes#Scalar"
-                            ],
-                            "http://www.w3.org/ns/shacl#datatype": [
-                                {
-                                    "@id": "http://www.w3.org/2001/XMLSchema#string"
-                                }
-                            ]
+                            "@id": "http://www.w3.org/2001/XMLSchema#string"
                         }
                     ],
                     "http://www.w3.org/ns/shacl#minCount": [
@@ -56,20 +47,24 @@
                             "@value": "objProp2"
                         }
                     ],
-                    "http://raml.org/vocabularies/shapes#range": [
+                    "http://raml.org/vocabularies/shapes#is-number": [
                         {
-                            "@id": "file://./resources/tck/raml-1.0/Fragments/test001/lib/lib.raml/types#/definitions/ObjectType/shape/scalar-shape",
-                            "@type": [
-                                "http://www.w3.org/ns/shacl#Shape",
-                                "http://raml.org/vocabularies/shapes#Scalar"
-                            ],
-                            "http://www.w3.org/ns/shacl#datatype": [
-                                {
-                                    "@id": "http://www.w3.org/2001/XMLSchema#float"
-                                }
-                            ]
+                            "@value": true
                         }
                     ],
+                    "http://www.w3.org/ns/shacl#or":
+                     {"@list":
+                      [{"http://www.w3.org/ns/shacl#datatype": [
+                          {
+                              "@id": "http://www.w3.org/2001/XMLSchema#integer"
+                          }
+                      ]},
+                       {"http://www.w3.org/ns/shacl#datatype": [
+                           {
+                               "@id": "http://www.w3.org/2001/XMLSchema#float"
+                           }
+                       ]}]
+                     },
                     "http://www.w3.org/ns/shacl#minCount": [
                         {
                             "@value": 1

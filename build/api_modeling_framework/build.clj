@@ -167,25 +167,26 @@
       (json/generate-string {:pretty true})
       (->> (spit "output/bindings/package.json")))
 
-  (mkdir "bindings/js/node_modules")
-  (println "linking generating package")
-  (npm-publish-link "api-modeling-framework" "output/bindings" "bindings/js/node_modules")
-
-  (println "Building bindings")
-  (sh! "npm" "link" "output/node")
-  (compile-js-bindings)
-
-  (println "Running browserify")
-  (pipe! ["browserify" "bindings/js/index.js" "-s" "amf"  "--ignore-missing"] "amf_bindings.js")
-
-
-
-  (println "Cleaning bindings output")
-  (rm "output/bindings")
-  (rm "bindings/js/node_modules")
-
-  (println "Copying output")
-  (sh! "mv" "amf_bindings.js" "output/amf_bindings.js"))
+  ;;(mkdir "bindings/js/node_modules")
+  ;;(println "linking generating package")
+  ;;(npm-publish-link "api-modeling-framework" "output/bindings" "bindings/js/node_modules")
+  ;;
+  ;;(println "Building bindings")
+  ;;(sh! "npm" "link" "output/node")
+  ;;(compile-js-bindings)
+  ;;
+  ;;(println "Running browserify")
+  ;;(pipe! ["browserify" "bindings/js/index.js" "-s" "amf"  "--ignore-missing"] "amf_bindings.js")
+  ;;
+  ;;
+  ;;
+  ;;(println "Cleaning bindings output")
+  ;;(rm "output/bindings")
+  ;;(rm "bindings/js/node_modules")
+  ;;
+  ;;(println "Copying output")
+  ;;(sh! "mv" "amf_bindings.js" "output/amf_bindings.js")
+  )
 
 
 (defn build-js-bindings-node []

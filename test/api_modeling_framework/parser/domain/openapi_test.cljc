@@ -123,14 +123,13 @@
 
 (deftest parser-ast-type-scalars
   (let [int-type {:type "number"}
+        float-type {:type "number" :x-rdf-type "xsd:float"}
         string-type {:type "string"}
         time-only-type {:type "string"
                         :x-rdf-type "xsd:time"}
         any-type {:type "string"
                   :x-rdf-type "shapes:any"}]
-    (openapi-parser/parse-ast int-type {:parsed-location "/response"
-                                        :location "/response"})
-    (doseq [json-schema-type [int-type string-type time-only-type any-type]]
+    (doseq [json-schema-type [int-type float-type string-type time-only-type any-type]]
       (let [shape (openapi-parser/parse-ast json-schema-type {:parsed-location "/response"
                                                               :location "/response"})]
         (is (= json-schema-type (openapi-generator/to-openapi shape {})))))))
@@ -159,13 +158,16 @@
                      :items {:type "string"}}
         object-type-1 {:type "object"
                        :properties {:a int-type
-                                    :b string-type}
+                                    ;;:b string-type
+                                    }
                        :additionalProperties false}
         object-type-2 {:type "object"
                        :properties {:a int-type
                                     :b string-type}
                        :required ["a"]}]
-    (doseq [raml-type [object-type-1 object-type-2]]
+    (doseq [raml-type [int-type
+                       object-type-1
+                       object-type-2]]
       (let [shape (openapi-parser/parse-ast raml-type {:parsed-location "/response"
                                                        :location "/response"})]
         (is (= raml-type (openapi-generator/to-openapi shape {})))))))
