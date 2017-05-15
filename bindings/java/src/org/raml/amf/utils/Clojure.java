@@ -49,9 +49,28 @@ public class Clojure {
         return getFn.invoke(target, kw(name));
     }
 
+    public static PersistentArrayMap emptyMap() {
+        return PersistentArrayMap.EMPTY;
+    }
+
     public static Object setKw(Object target, String name, Object value) {
         IFn setFn= var(CLOJURE_CORE, "assoc");
         return setFn.invoke(target, kw(name), value);
+    }
+
+    public static Object get(Object target, String name) {
+        IFn getFn= var(CLOJURE_CORE, "get");
+        return getFn.invoke(target, name);
+    }
+
+    public static Object set(Object target, String name, Object value) {
+        IFn setFn= var(CLOJURE_CORE, "assoc");
+        return setFn.invoke(target, name, value);
+    }
+
+    public static Object remove(Object target, String name) {
+        IFn setFn= var(CLOJURE_CORE, "dissoc");
+        return setFn.invoke(target, name);
     }
 
     public static IPersistentVector list(List list) {

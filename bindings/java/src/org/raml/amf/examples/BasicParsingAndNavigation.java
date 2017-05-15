@@ -8,6 +8,10 @@ import org.raml.amf.core.document.Module;
 import org.raml.amf.core.domain.APIDocumentation;
 import org.raml.amf.core.domain.DomainModel;
 import org.raml.amf.core.domain.EndPoint;
+import org.raml.amf.core.domain.Type;
+import org.raml.amf.core.domain.shapes.NodeShape;
+import org.raml.amf.core.domain.shapes.PropertyShape;
+import org.raml.amf.core.domain.shapes.Shape;
 import org.raml.amf.core.exceptions.InvalidModelException;
 import org.raml.amf.core.exceptions.ResolutionException;
 import org.raml.amf.core.exceptions.UnknownModelReferenceException;
@@ -66,11 +70,41 @@ public class BasicParsingAndNavigation {
         DocumentModel targetModel = model.modelForReference(targetRef);
         System.out.println("TARGET LOCATION: " + targetModel.location());
         System.out.println("TARGET MODEL CLASS " + targetModel.getClass());
-        List<DomainModel> declarations = ((Module) targetModel).declares();
+        Module module = null;
+        for(URL ref : model.references()) {
+            DocumentModel doc = model.modelForReference(ref);
+            if (doc instanceof Module) {
+                module = (Module) doc;
+                break;
+            }
+        }
+        List<DomainModel> declarations = module.declares();
         System.out.println("DECLARATIONS:");
+
+        System.out.println("SHAPES:");
+        int shapesFound = 0;
         for(DomainModel decl : declarations) {
             System.out.println(decl);
+            if (decl instanceof Type) {
+                shapesFound++;
+                Shape shape = ((Type) decl).getShape();
+                System.out.println("SHAPE " + shape.getId());
+                if (shape instanceof NodeShape) {
+                    List<PropertyShape> properties = ((NodeShape) shape).getPropertyShapes();
+                    for (PropertyShape prop : properties) {
+                        if (prop.getDatatype() != null) {
+                            System.out.println("DATATYPE " + prop.getDatatype());
+                        } else if(prop.getNode() != null) {
+                            System.out.println("NESTED SHAPE " + prop.getNode().getId());
+                        } else {
+                            // throw new RuntimeException("Property shape without data type or nested shape");
+                        }
+                    }
+                }
+            }
         }
+        System.out.println("NUMBER OF SHAPES? " + shapesFound);
+
 
         Object foundModel = targetModel.findDomainElement("/Users/antoniogarrote/Development/api-modelling-framework/resources/other-examples/world-music-api/libraries/api.lib.raml#/definitions/Cat");
         System.out.println("FOUND?");

@@ -2,6 +2,7 @@ package org.raml.amf.core.domain;
 
 import api_modeling_framework.model.domain.ParsedType;
 import clojure.lang.IFn;
+import org.raml.amf.core.domain.shapes.Shape;
 import org.raml.amf.utils.Clojure;
 
 /**
@@ -34,7 +35,7 @@ public class Type extends DomainModel {
      * JSON-LD string containing a SHACL shape that can be used to validate payloads for this operation unit
      * @return
      */
-    public String getShape() {
+    public String getShapeJSONLD() {
         IFn generateStringFn = Clojure.var(Clojure.CHESHIRE_CORE, "generate-string");
         return (String) generateStringFn.invoke(this.wrapped().shape());
     }
@@ -43,9 +44,25 @@ public class Type extends DomainModel {
      * Sets the SHACL shape for the payloads of this operation unit
      * @param shaclShape valid SHACL shape encoded as JSON-LD string
      */
-    public void setShape(String shaclShape) {
+    public void setShapeJSONLD(String shaclShape) {
         IFn parseStringFn = Clojure.var(Clojure.CHESHIRE_CORE, "parse-string");
         this.rawModel = Clojure.setKw(this.rawModel, "shape", parseStringFn.invoke(shaclShape));
+    }
+
+    /**
+     * SHACL shape that can be used to validate payloads for this operation unit
+     * @return
+     */
+    public Shape getShape() {
+        return Shape.fromRawModel(this.wrapped().shape());
+    }
+
+    /**
+     * Sets the SHACL shape for the payloads of this operation unit
+     * @param shape valid SHACL shape
+     */
+    public void setShape(Shape shape){
+        this.rawModel = Clojure.setKw(this.rawModel, "shape", shape.clojureModel());
     }
 
     public ParsedType wrapped() {

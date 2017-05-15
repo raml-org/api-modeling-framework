@@ -41,6 +41,13 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/../../target/api-modeling-framework-0.1.2-SNAPSHOT-standalone.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>org.topbraid</groupId>
+            <artifactId>shacl</artifactId>
+            <version>0.0.2-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../target/shacl-0.0.2-SNAPSHOT.jar</systemPath>
+        </dependency>
     </dependencies>
     <reporting>
         <plugins>

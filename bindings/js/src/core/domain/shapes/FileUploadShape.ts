@@ -10,7 +10,7 @@ export class FileUploadShape extends Shape {
         return this.getValues<string>(`${SHAPES_NS}fileType`);
     }
 
-    public setSchemaRaw(fileTypes: string[] | null) {
+    public setFileType(fileTypes: string[] | null) {
         this.setValues(`${SHAPES_NS}fileType`, fileTypes);
     }
 
