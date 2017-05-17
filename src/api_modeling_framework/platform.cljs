@@ -14,6 +14,10 @@
       (instance? (aget js/global "Error") x)
       (some? (:error x))))
 
+(defn ->int [s]
+  (try (js/parseInt s)
+       (catch js/Error e s)))
+
 (comment
   (defn <?? [c]
     (let [returned (<!! c)]

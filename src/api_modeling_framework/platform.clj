@@ -8,6 +8,10 @@
   (or (instance? Exception x)
       (some? (:error x))))
 
+(defn ->int [s]
+  (try (Integer/parseInt s)
+       (catch Exception e s)))
+
 (comment
   (defn <?? [c]
     (let [returned (<!! c)]

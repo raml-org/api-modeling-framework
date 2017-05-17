@@ -1,0 +1,13 @@
+#%RAML 1.0 DataType
+
+properties:
+  elements:
+    type: array
+    items: string
+    minItems: 3
+    maxItems: 5
+  from_enum:
+    type: string
+    enum:
+      - a
+      - b

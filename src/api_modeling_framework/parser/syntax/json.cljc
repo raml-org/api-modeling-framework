@@ -18,10 +18,6 @@
     "Swagger Library" "Swagger Library"
     "Swagger Fragment"))
 
-(defn ->int [s]
-  #?(:cljs (js/parseInt s)
-     :clj  (Integer/parseInt s)))
-
 
 (defn next-token [tokens]
   (let [token (first tokens)
@@ -37,7 +33,7 @@
                                 next-object (get object token)]
                             (recur (rest tokens) next-object))
     (coll? object)        (let [token (next-token tokens)
-                                index (->int token)
+                                index (platform/->int token)
                                 next-object (nth object index)]
                             (recur (rest tokens) next-object))
     :else                 nil))

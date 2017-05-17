@@ -32,6 +32,9 @@
                     :else                       (-> ref document/id (string/split #"/") last))]
     (utils/safe-str type-name)))
 
+(defn array-shape? [shape]
+  (utils/has-class? shape (v/shapes-ns "Array")))
+
 (defn parse-shape-dispatcher-fn [shape ctx]
   (cond
     (utils/or-shape? shape)                                (v/sh-ns "or")
@@ -39,12 +42,13 @@
     (some? (get shape (v/shapes-ns "inherits")))           :inheritance
     (utils/has-class? shape (v/shapes-ns "NilValueShape")) (v/shapes-ns "NilValueShape")
     (utils/has-class? shape (v/shapes-ns "Scalar"))        (v/shapes-ns "Scalar")
-    (utils/has-class? shape (v/shapes-ns "Array"))         (v/shapes-ns "Array")
+    (array-shape? shape)                                   (v/shapes-ns "Array")
     (utils/has-class? shape (v/shapes-ns "JSONSchema"))    (v/shapes-ns "JSONSchema")
     (utils/has-class? shape (v/shapes-ns "XMLSchema"))     (v/shapes-ns "XMLSchema")
     (utils/has-class? shape (v/sh-ns "NodeShape"))         (v/sh-ns "NodeShape")
     (utils/has-class? shape (v/shapes-ns "FileUpload"))    (v/shapes-ns "FileUpload")
     :else nil))
+
 
 (defmulti parse-shape (fn [shape ctx] (parse-shape-dispatcher-fn shape ctx)))
 
@@ -63,10 +67,14 @@
               (condp = p
                 (v/sh-ns "minLength")       #(assoc % :minLength (get (first v) "@value"))
                 (v/sh-ns "maxLength")       #(assoc % :maxLength (get (first v) "@value"))
+                (v/sh-ns "minCount")      (if (array-shape? shape) #(assoc % :minItems (get (first v) "@value")) identity)
+                (v/sh-ns "maxCount")      (if (array-shape? shape) #(assoc % :maxItems (get (first v) "@value")) identity)
                 (v/sh-ns "pattern")         #(assoc % :pattern   (get (first v) "@value"))
                 (v/sh-ns "closed")          #(assoc % :additionalProperties (not (utils/->bool (get (first v) "@value"))))
                 (v/shapes-ns "uniqueItems") #(assoc % :uniqueItems (get (first v) "@value"))
-                (v/sh-ns "in")              #(assoc % :enum (map utils/jsonld->annotation v))
+                (v/sh-ns "minExclusive")       #(assoc % :minimum (get (first v) "@value"))
+                (v/shapes-ns "multipleOf")     #(assoc % :multipleOf (get (first v) "@value"))
+                (v/sh-ns "in")              #(assoc % :enum (map utils/jsonld->annotation (get v "@list" [])))
                 identity)))
        (reduce (fn [acc p] (p acc)) raml-type)
        (parse-generic-keywords shape)
@@ -102,7 +110,8 @@
 
 (defmethod parse-shape (v/shapes-ns "Scalar") [shape context]
   (if (some? (get shape (v/shapes-ns "is-number")))
-    {:type "number"}
+    (-> (parse-constraints {:type "number"} shape)
+        simplify)
     (let [sh-type (-> shape
                       (get (v/sh-ns "datatype"))
                       first

@@ -88,6 +88,54 @@
                (is (= "safe" (-> output (get (keyword "/albums")) :get :responses :200 (get (keyword "(behaviour)")) :name)))
                (done)))))
 
+(deftest integration-test-shape-raml->raml
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->RAMLGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/shape1.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-string (<! (cb->chan (partial core/generate-string generator "resources/shape1_out.raml"
+                                                        output-model
+                                                        {})))
+                   _ (is (not (error? output-string)))
+                   output (purge-ast (syntax/<-data (<! (yaml-parser/parse-string "resources/world-music-api/wip.raml" output-string))))]
+               (is (= "17" (-> output :properties :age :minimum)))
+               (done)))))
+
+(deftest integration-test-array-shape-raml->jsonld
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/shape2.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-string (<! (cb->chan (partial core/generate-string generator "resources/shape1_out.jsonld"
+                                                        output-model
+                                                        {})))
+                   _ (is (not (error? output-string)))
+                   output (platform/decode-json output-string)
+                   ]
+               (is (= 3 (-> output
+                            (get "http://raml.org/vocabularies/document#encodes")
+                            first
+                            (get "http://www.w3.org/ns/shacl#property")
+                            first
+                            (get "http://www.w3.org/ns/shacl#minCount")
+                            first
+                            (get "@value"))))
+               (is (= 5 (-> output
+                            (get "http://raml.org/vocabularies/document#encodes")
+                            first
+                            (get "http://www.w3.org/ns/shacl#property")
+                            first
+                            (get "http://www.w3.org/ns/shacl#maxCount")
+                            first
+                            (get "@value"))))
+               (done)))))
+
 (deftest integration-test-raml->api-model
   (async done
          (go (let [parser (core/->RAMLParser)
@@ -321,10 +369,10 @@
                            right-value-literal (or (= :not-found (get node "@value" :not-found))
                                                    (and (not (coll? (get node "@value")))
                                                         (not (map? (get node "@value")))))]
-                       ;(println "ID: " (get node "@id") " => " (keys node))
-                       ;(when (= ["@value"] (keys node))
-                       ;  (do (println "VALUE: " (get node "@value") " => " (keys node))
-                       ;      (prn node)))
+                       ;;(println "ID: " (get node "@id") " => " (keys node))
+                       ;;(when (= ["@value"] (keys node))
+                       ;;  (do (println "VALUE: " (get node "@value") " => " (keys node))
+                       ;;      (prn node)))
                        (reduce (fn [acc [k v]]
                                  (and acc (valid-jsonld v)))
                                (and right-id right-class right-value right-value-literal)
@@ -575,6 +623,7 @@
                ;;(is (-> yaml-data (get (keyword "/pets")) some?))
                ;;(is (-> yaml-data (get (keyword "/pets/{petId}")) some?))
                (done)))))
+
 
 
 

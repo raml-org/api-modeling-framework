@@ -4,6 +4,7 @@
             [api-modeling-framework.model.domain :as domain]
             [api-modeling-framework.model.document :as document]
             [api-modeling-framework.model.syntax :as syntax]
+            [api-modeling-framework.platform :as platform]
             [clojure.string :as string]
             [taoensso.timbre :as timbre
              #?(:clj :refer :cljs :refer-macros)
@@ -23,15 +24,17 @@
   (->> node
        (mapv (fn [[p v]]
               (condp = p
-                :minLength  #(assoc % (v/sh-ns "minLength") [{"@value" v}])
-                :maxLength  #(assoc % (v/sh-ns "maxLength") [{"@value" v}])
+                :minLength  #(assoc % (v/sh-ns "minLength") [{"@value" (platform/->int v)}])
+                :maxLength  #(assoc % (v/sh-ns "maxLength") [{"@value" (platform/->int v)}])
+                :minItems  (if (utils/array-shape? shape) #(assoc % (v/sh-ns "minCount") [{"@value" (platform/->int v)}]) identity)
+                :maxItems  (if (utils/array-shape? shape) #(assoc % (v/sh-ns "maxCount") [{"@value" (platform/->int v)}]) identity)
                 :pattern    #(assoc % (v/sh-ns "pattern")   [{"@value" v}])
                 :format     #(assoc % (v/shapes-ns "format") [{"@value" v}])
                 :additionalProperties #(assoc % (v/sh-ns "closed") [{"@value" (not (utils/->bool v))}])
                 :x-uniqueItems #(assoc % (v/shapes-ns "uniqueItems") [{"@value" v}])
-                :multipleOf #(assoc % (v/shapes-ns "multipleOf") [{"@value" v}])
-                :minimum    #(assoc % (v/sh-ns "minExclusive") [{"@value" v}])
-                :enum       #(assoc % (v/sh-ns "in") (->> v (mapv utils/annotation->jsonld)))
+                :multipleOf #(assoc % (v/shapes-ns "multipleOf") [{"@value" (platform/->int v)}])
+                :minimum    #(assoc % (v/sh-ns "minExclusive") [{"@value" (platform/->int v)}])
+                :enum       #(assoc % (v/sh-ns "in") {"@list" (->> v (mapv utils/annotation->jsonld))})
                 identity)))
        (reduce (fn [acc p] (p acc)) shape)
        (parse-generic-keywords node)))
@@ -52,6 +55,8 @@
 
 (defn array-shape->property-shape [shape]
   (let [items (get shape (v/shapes-ns "item"))
+        min-count (utils/find-value shape (v/sh-ns "minCount"))
+        max-count (utils/find-value shape (v/sh-ns "maxCount"))
         items (map (fn [shape]
                      (cond
                        (utils/or-shape? shape)     shape
@@ -63,10 +68,13 @@
         range (if (= 1 (count items))
                 (first items)
                 {(v/sh-ns "or") {"@list" items}})]
-    (merge {;; we mark it for our own purposes, for example being able to detect
-            ;; it easily without checking cardinality
-            (v/shapes-ns "ordered") [{"@value" true}]}
-           range)))
+    (-> {;; we mark it for our own purposes, for example being able to detect
+         ;; it easily without checking cardinality
+         (v/shapes-ns "ordered") [{"@value" true}]
+         (v/sh-ns "minCount") (if (some? min-count) [{"@value" min-count}] nil)
+         (v/sh-ns "maxCount") (if (some? max-count) [{"@value" max-count}] nil)}
+        (utils/clean-nils)
+        (merge range))))
 
 (defn node-shape->property-shape [shape]
   {;; Object properties vs arrays, only one is allowed if it is an object
@@ -86,14 +94,16 @@
                                                       (utils/array-shape? parsed-property-target)  (array-shape->property-shape parsed-property-target)
                                                       (utils/nil-shape? parsed-property-target)    (utils/nil-shape->property-shape)
                                                       :else (node-shape->property-shape parsed-property-target))
+                                     property-shape (if (nil? (utils/find-value property-shape (v/sh-ns "minCount")))
+                                                      ;; mandatory prop?
+                                                      (assoc property-shape (v/sh-ns "minCount") [(if (required-set (utils/safe-str k)) {"@value" 1} {"@value" 0})])
+                                                      property-shape)
                                      ;; common properties
                                      property-shape (-> property-shape
                                                         (assoc "@id" parsed-location)
                                                         (assoc "@type" [(v/sh-ns "PropertyShape") (v/sh-ns "Shape")])
                                                         (assoc (v/sh-ns "path") [{"@id" (v/anon-shapes-ns (utils/safe-str k))}])
                                                         (assoc (v/shapes-ns "propertyLabel") [{"@value" (utils/safe-str k)}])
-                                                        ;; mandatory prop?
-                                                        (assoc (v/sh-ns "minCount") [(if (required-set (utils/safe-str k)) {"@value" 1} {"@value" 0})])
                                                         utils/clean-nils)]
                                  (parse-type-constraints v property-shape)))))
         open-shape (:additionalProperties node)]
