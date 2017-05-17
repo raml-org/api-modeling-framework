@@ -281,6 +281,15 @@
         generated (raml-genenerator/to-raml parsed {})]
     (is (= input generated))))
 
+(deftest parser-min-length
+  (let [input {:properties {:name {:type "string"
+                                   :minLength 1}}}
+        parsed (raml-parser/parse-ast input {:parsed-location "/response"
+                                             :type-hint :type
+                                             :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= input generated))))
+
 (deftest parser-raml-enum
   (let [input {:enum [ ".json" ".xml" ]
                :type "string"

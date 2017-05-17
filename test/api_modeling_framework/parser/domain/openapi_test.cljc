@@ -186,6 +186,16 @@
         generated (openapi-generator/to-openapi parsed {})]
     (is (= input generated))))
 
+(deftest parser-min-length
+  (let [input {:type "object"
+               :properties {:name {:type "string"
+                                   :minLength 1}}}
+        parsed (openapi-parser/parse-ast input {:parsed-location "/response"
+                                             :type-hint :type
+                                             :location "/response"})
+        generated (openapi-generator/to-openapi parsed {})]
+    (is (= input generated))))
+
 (deftest parser-raml-enum
   (let [input {:enum [ ".json" ".xml" ]
                :type "string"

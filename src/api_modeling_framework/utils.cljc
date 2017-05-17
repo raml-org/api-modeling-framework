@@ -86,17 +86,23 @@
 
 
 (defn find-value [m property]
-  (-> m (get property) first (get "@value")))
+  (-> [(get m property)] flatten first (get "@value")))
 
 (defn find-link [m property]
-  (-> m (get property) first (get "@id")))
+  (-> [(get m property)] flatten  first (get "@id")))
 
 
 (defn find-values [m property]
-  (-> m (get property) (->> (map #(get % "@value")))))
+  (-> [(get m property)] flatten (->> (filter some?) (map #(get % "@value")))))
 
 (defn find-links [m property]
-  (-> m (get property) (->> (map #(get % "@id")))))
+  (-> [(get m property)] flatten (->> (filter some?) (map #(get % "@id")))))
+
+(defn find-nodes [m property]
+  (-> [(get m property)] flatten (->> (filter some?))))
+
+(defn find-node [m property]
+  (first (find-nodes m property)))
 
 (defn clean-nils [jsonld]
   (->> jsonld
@@ -136,12 +142,16 @@
       []
       (map (fn [v] {"@value" (safe-value v)}) values))))
 
+(defn map-nodes [m property f]
+  (mapv f (find-nodes m property)))
+
 (defn assoc-object [t m target property mapping]
-  (if (some? (property m))
-    (if-let [value (mapping (property m))]
-      (assoc t target [value])
-      t)
-    t))
+  (let [result (->> [(property m)] flatten (filter some?) first)]
+    (if (some? result)
+      (if-let [value (mapping result)]
+        (assoc t target [value])
+        t)
+      t)))
 
 (defn assoc-objects [t m target property mapping]
   (if (some? (property m))
@@ -226,7 +236,6 @@
 (defn ensure-not-blank [x]
   (if (and (string? x) (= x "")) nil x))
 
-
 (defn same-doc? [id1 id2]
   (let [id1 (first (string/split id1 #"#"))
         id2 (first (string/split id2 #"#"))]
@@ -262,9 +271,8 @@
   (some? (get property (v/sh-ns "datatype"))))
 
 (defn property-shape->scalar-shape [property]
-  {"@type" [(v/shapes-ns "Scalar")]
-   (v/sh-ns "datatype") (get property (v/sh-ns "datatype"))
-   (v/sh-ns "in") (get property (v/sh-ns "in"))})
+  (-> property
+      (assoc "@type" [(v/shapes-ns "Scalar")])))
 
 (defn array-range? [property]
   (= {"@value" true} (-> property (get (v/shapes-ns "ordered") []) first)))

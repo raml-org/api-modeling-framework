@@ -283,7 +283,7 @@
                              (ensure-not-nil (clean-ids doc-target)))))))
 
 (defn check-conversions [files]
-  (go (doseq [[from to]  ;[[:openapi :raml]]
+  (go (doseq [[from to]  ;;[[:jsonld :raml]]
               conversions
               ]
         (println "\n\nCHECKING CONVERISON " from " -> " to "\n\n")
@@ -302,7 +302,8 @@
                                                target
                                                (core/document-model parsed-model)
                                                {:source-maps? false
-                                                :full-graph? false})))]
+                                                :full-graph? false})))
+              ]
           (is (same-structure? (ensure-not-nil (clean-ids (<! (to-data-structure (target-file files to from) to generated))))
                                (ensure-not-nil (clean-ids target))))))))
 
