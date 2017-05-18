@@ -8,7 +8,7 @@ MuleSoft provides a [playground website](https://mulesoft-labs.github.io/amf-pla
 
 The API Modeling Framework (AMF) allows users to formally describe different kind of APIs, parse and generate instances of those APIS as sets of modular documents and to store those connected descriptions into a single unified data graph.
 
-![Overview](https://raml-org.github.io/api-modeling-framework/images/diagram.png)
+![Overview](https://raw.githubusercontent.com/raml-org/api-modeling-framework/gh-pages/images/diagram.png)
 
 ## Status
 
@@ -32,7 +32,7 @@ Changes to the current interfaces and vocabularies are to be expected, as well a
 
 AMF can be used as a tool to parse RAML and OAS documents, generating a common data model stored in a data graph as the output.
 
-![Translation](https://raml-org.github.io/api-modeling-framework/images/translation.png)
+![Translation](https://raw.githubusercontent.com/raml-org/api-modeling-framework/gh-pages/images/translation.png)
 
 This model can be queried and manipulated, and then serialised back into documents using RAML or OAS syntaxes.
 Additional syntaxes like JSON-LD are also supported by the library.
