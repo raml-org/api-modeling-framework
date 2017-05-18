@@ -87,10 +87,12 @@
             schema (assoc schema targetObejctsOf {"@id" to-validate})
             ;;_ (println "SCHEMA")
             ;;_ (prn schema)
+            ;;_ #?(:cljs (println (.stringify js/JSON (clj->js schema))) :clj true)
             payload (parse-payload payload)
             payload {to-validate payload}
             ;;_ (println "DATA")
             ;;_ (prn payload)
+            ;;_ #?(:cljs (println (.stringify js/JSON (clj->js payload))) :clj true)
             report (<! (platform/validate schema payload))]
         {:conforms (conforms? report)
          :validation-results (validation-results report)})))

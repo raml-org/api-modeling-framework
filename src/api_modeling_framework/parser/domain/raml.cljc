@@ -220,15 +220,14 @@
 
 (defn parse-nested-resources [extracted-resources parent-path location parsed-location context]
   (->> extracted-resources ;; this comes from utils/extract-nested-resources it returns a map with {:path :resource} keys
-       (mapv (fn [i {:keys [path resource]}]
+       (mapv (fn [{:keys [path resource]}]
                (let [context (-> context
                                  (assoc :parent-path (str parent-path path))
                                  (assoc :location (utils/path-join location (url/url-encode path)))
-                                 (assoc :parsed-location (utils/path-join parsed-location "end-points" i))
+                                 (assoc :parsed-location (utils/path-join parsed-location "end-points" (url/url-encode path)))
                                  (assoc :resource-path path)
                                  (assoc :path path))]
-                 (parse-ast resource (assoc context :type-hint :resource))))
-             (range 0 (count extracted-resources)))
+                 (parse-ast resource (assoc context :type-hint :resource)))))
        flatten))
 
 (defn nested-resources-tags [is-fragment resource-id resource-path location parent-id nested-resources]

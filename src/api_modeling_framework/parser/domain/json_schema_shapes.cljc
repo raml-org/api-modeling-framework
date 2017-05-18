@@ -30,7 +30,6 @@
                 :maxItems  (if (utils/array-shape? shape) #(assoc % (v/sh-ns "maxCount") [{"@value" (platform/->int v)}]) identity)
                 :pattern    #(assoc % (v/sh-ns "pattern")   [{"@value" v}])
                 :format     #(assoc % (v/shapes-ns "format") [{"@value" v}])
-                :additionalProperties #(assoc % (v/sh-ns "closed") [{"@value" (not (utils/->bool v))}])
                 :x-uniqueItems #(assoc % (v/shapes-ns "uniqueItems") [{"@value" v}])
                 :multipleOf #(assoc % (v/shapes-ns "multipleOf") [{"@value" (platform/->int v)}])
                 :minimum    #(assoc % (v/sh-ns "minExclusive") [{"@value" (platform/->int v)}])

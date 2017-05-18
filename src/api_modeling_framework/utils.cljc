@@ -17,7 +17,7 @@
         #?(:clj (instance? Boolean x)
            :cljs (or (= "true" (str x))
                      (= "false" (str x)))) (if (= "true" (str x)) true false)
-        (string? x)                        (if (= (string/lower-case x) "true") true)
+        (string? x)                        (if (= (string/lower-case x) "true") true false)
         :else                              true))
 
 (defn trace-keys [x] (prn (keys x)) x)

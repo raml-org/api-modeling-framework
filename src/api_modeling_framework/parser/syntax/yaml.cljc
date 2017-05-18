@@ -55,6 +55,8 @@
    :clj (defn parse-file
           ([uri options]
            (go (try (let [parsed (yaml/parse-file uri (assoc options :keywordize true))
+                          _ (println "PARSING FILE!!")
+                          _ (prn parsed)
                           data (get parsed (keyword "@data"))
                           data (<! (resolve-libraries uri data options))]
                       (assoc parsed (keyword "@data") data))

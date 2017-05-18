@@ -88,14 +88,16 @@
                   "@value": 1
                 }
               ],
-              "http://www.w3.org/ns/shacl#in": [
-                {
-                  "@value": "W"
-                },
-                {
-                  "@value": "A"
-                }
-              ]
+              "http://www.w3.org/ns/shacl#in": {
+                "@list": [
+                  {
+                    "@value": "W"
+                  },
+                  {
+                    "@value": "A"
+                  }
+                ]
+              }
             }
           ]
         }
