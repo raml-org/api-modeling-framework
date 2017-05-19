@@ -1,4 +1,4 @@
-(defproject api-modeling-framework "0.1.2-SNAPSHOT"
+(defproject api-modeling-framework "0.1.3-SNAPSHOT"
 
   :description "API and domain modeling tools for RAML, OpenAPI (Swagger) and RDF"
 
