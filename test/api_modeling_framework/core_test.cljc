@@ -14,9 +14,9 @@
          (go
            (let [parser (core/->RAMLParser)
                  model (<! (cb->chan (partial core/parse-file parser "resources/world-music-api/wip.raml")))
-                 id #?(:cljs "file://resources/world-music-api/wip.raml#/api-documentation/end-points/0/post/body"
-                       :clj "resources/world-music-api/wip.raml#/api-documentation/end-points/0/post/body")
-                 info(core/lexical-info-for-unit model id)]
+                 id #?(:cljs "file://resources/world-music-api/wip.raml#/api-documentation/end-points/%2Falbums/post/body"
+                       :clj "resources/world-music-api/wip.raml#/api-documentation/end-points/%2Falbums/post/body")
+                 info (core/lexical-info-for-unit model id)]
              (is (some? info))
              (done)))))
 
