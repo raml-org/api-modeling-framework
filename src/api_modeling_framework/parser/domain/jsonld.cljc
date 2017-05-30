@@ -18,6 +18,7 @@
     (utils/has-class? model v/document:Tag)                   v/document:Tag
     (utils/has-class? model v/document:SourceMap)             v/document:SourceMap
     (utils/has-class? model v/document:Tag)                   v/document:Tag
+    (utils/has-class? model v/http:Parameter)                 v/http:Parameter
     (utils/has-class? model v/http:EndPoint)                  v/http:EndPoint
     (utils/has-class? model v/hydra:Operation)                v/hydra:Operation
     (utils/has-class? model v/http:Response)                  v/http:Response
@@ -26,7 +27,7 @@
     (utils/has-class? model (v/shapes-ns "Shape"))            v/sh:Shape
     (utils/has-class? model (v/shapes-ns "NodeShape"))        v/sh:Shape
     (utils/has-class? model v/http:Payload)                   v/http:Payload
-    (utils/has-class? model v/http:Parameter)                 v/http:Parameter
+
     (utils/has-class? model v/document:IncludeRelationship)   v/document:IncludeRelationship
     (utils/has-class? model v/document:ExtendRelationship)    v/document:ExtendRelationship
     :else                                            :unknown))
@@ -224,23 +225,21 @@
 
 (defmethod from-jsonld v/document:DomainPropertySchema [m]
   (debug "Parsing " v/document:DomainPropertySchema  " " (get m "@id"))
-  (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+  (let [parsed-sources (utils/map-nodes m v/document:source from-jsonld)]
     (domain/map->ParsedDomainPropertySchema {:id (get m "@id")
                                              :name (utils/find-value m v/sorg:name)
                                              :description (utils/find-value m v/sorg:description)
-                                             :sources sources
+                                             :sources parsed-sources
                                              :domain (utils/find-values m v/document:domain)
                                              :range (first (utils/map-nodes m v/document:range from-jsonld))})))
 
 (defmethod from-jsonld v/document:DomainProperty [m]
   (debug "Parsing " v/document:DomainProperty  " " (get m "@id"))
-  (let [sources (get m v/document:source)
-        parsed-sources (map from-jsonld sources)]
+  (let [parsed-sources (utils/map-nodes m v/document:source from-jsonld)]
     (domain/map->ParsedDomainProperty {:id (get m "@id")
                                        :name (utils/find-value m v/sorg:name)
                                        :description (utils/find-value m v/sorg:description)
-                                       :sources sources
+                                       :sources parsed-sources
                                        :object (utils/find-node m v/document:object)})))
 
 (defmethod from-jsonld nil [m]

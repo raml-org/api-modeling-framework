@@ -140,6 +140,7 @@
     (cb->sync (partial parse-file this uri options)))
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
+    (raml-document-parser/reset-cache)
     (go (let [res (<! (yaml-parser/parse-file uri options))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
@@ -152,6 +153,7 @@
     (cb->sync (partial parse-string this uri string options)))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
+    (raml-document-parser/reset-cache)
     (go (let [res (<! (yaml-parser/parse-string uri string options))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)

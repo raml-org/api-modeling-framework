@@ -145,7 +145,7 @@
                                (assoc acc annotation-name (domain/map->ParsedDomainPropertySchema (utils/clean-nils
                                                                                                    {:id schema-id
                                                                                                     :name annotation-name
-                                                                                                    :sources (generate-is-annotation-sources annotation-name schema-id parsed-location)
+                                                                                                    :sources (common/generate-is-annotation-sources annotation-name schema-id (utils/path-join parsed-location annotation-name))
                                                                                                     :domain domain
                                                                                                     :range (infer-annotation-schema model (assoc context :parsed-location schema-id))}))))))
         (->> (domain/map->ParsedDomainProperty {:id schema-id

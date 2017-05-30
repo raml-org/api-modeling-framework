@@ -23,6 +23,7 @@
   (is (nil? (resolution/should-group? :blah))))
 
 (deftest generate-fragments
+  (raml-parser/reset-cache)
   (let [location "file://path/to/resource.raml"
         input {(keyword "@location") location
                (keyword "@fragment") "#%RAML 1.0"

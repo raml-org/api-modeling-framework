@@ -137,7 +137,8 @@
                             utils/safe-str
                             (string/replace #"\(" "")
                             (string/replace #"\)" ""))
-        annotation (get annotations annotation-name)]
+        annotation (or (get annotations annotation-name)
+                       (get annotations (keyword annotation-name)))]
     (if (nil? annotation)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find annotation " p)))
       (->> (domain/map->ParsedDomainProperty {:id (document/id annotation)
@@ -307,7 +308,7 @@
                             (utils/safe-str annotation-name) (->> (domain/map->ParsedDomainPropertySchema {:id id
                                                                                                            :name name
                                                                                                            :description description
-                                                                                                           :sources (common/generate-is-annotation-sources annotation-name id parsed-location)
+                                                                                                           :sources (common/generate-is-annotation-sources annotation-name id (utils/path-join parsed-location annotation-name))
                                                                                                            :domain allowed-targets
                                                                                                            :range range})
                                                                   (clean-ast-tokens)

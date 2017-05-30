@@ -558,26 +558,51 @@
 (comment
 
   (deftest integration-test-tck
-  (async done
+    (async done
          (go (let [parser (core/->RAMLParser)
-                   generator (core/->OpenAPIGenerator)
                    jsonld-generator (core/->APIModelGenerator)
-                   model (<! (cb->chan (partial core/parse-file parser "resources/tck/raml-1.0/MethodResponses/test005/methResp05.raml")))
+                   model (<! (cb->chan (partial core/parse-file parser "resources/raml-domain.raml")))
                    _ (is (not (error? model)))
                    output-model (core/document-model model)
                    _ (is (not (error? output-model)))
-                   output-openapi(<! (cb->chan (partial core/generate-string generator "resources/api.raml"
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/banking-api/http/api.jsonld"
                                                         output-model
-                                                        {})))
-                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/api.raml"
+                                                        {:source-maps? false})))
+                   ;;output (platform/decode-json output-jsonld)
+                   parsed (<! (cb->chan (partial core/parse-string (core/->APIModelParser) "resources/blah.raml" output-jsonld)))
+                   parsed-raml (<! (cb->chan (partial core/generate-string (core/->RAMLGenerator) "resources/blah.raml" (core/document-model parsed) {})))
+                   ]
+               (println "JSONLD")
+               (println output-jsonld)
+               (println "RAML")
+               (println parsed-raml)
+               ;;(clojure.pprint/pprint yaml-data)
+               ;;(clojure.pprint/pprint output)
+               (done)))))
+
+  (deftest integration-test-tck
+    (async done
+         (go (let [parser (core/->RAMLParser)
+                   generator (core/->OpenAPIGenerator)
+                   jsonld-generator (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "/Users/antoniogarrote/Development/raml/banking-domain/index.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-openapi (<! (cb->chan (partial core/generate-string generator "resources/banking-api-2/http/api.json"
+                                                         output-model
+                                                         {})))
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/banking-api-2/http/api.jsonld"
                                                         output-model
                                                         {:source-maps? false})))
                    ;;output (platform/decode-json output-jsonld)
                    ]
-               (println "OPENAPI")
-               (println output-openapi)
+               ;;(println "OPENAPI")
+               ;;(println output-openapi)
                (println "JSONLD")
                (println output-jsonld)
+               (doseq [ref (core/references model)]
+                 (prn ref))
                ;;(clojure.pprint/pprint yaml-data)
                ;;(clojure.pprint/pprint output)
                (done)))))
