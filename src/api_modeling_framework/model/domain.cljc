@@ -185,14 +185,16 @@
 
 
 (defprotocol Type
-  (shape [this] "Constraints for the data type"))
+  (shape [this] "Constraints for the data type")
+  (domain-class [this] "Domain class associated to this type"))
 
 
-(defrecord ParsedType [id abstract sources name extends description shape additional-properties]
+(defrecord ParsedType [id abstract sources name extends description shape domain additional-properties]
   DomainElement
   (abstract [this] abstract)
   Type
   (shape [this] shape)
+  (domain-class [this] domain)
   document/Node
   (id [this] id)
   (name [this] name)

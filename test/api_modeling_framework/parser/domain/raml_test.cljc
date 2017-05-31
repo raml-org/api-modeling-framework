@@ -300,6 +300,35 @@
         generated (raml-genenerator/to-raml parsed {})]
     (is (= input generated))))
 
+(deftest parser-raml-union
+  (let [input {:anyOf [{:properties {:a "string"}}
+                       {:properties {:b "string"}}]}
+        parsed (raml-parser/parse-ast input {:parsed-location "/response"
+                                             :type-hint :type
+                                             :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= 2 (-> parsed domain/shape (get (v/sh-ns "or")) (get "@list") count)))
+    (is (= input generated))))
+
+
+(deftest parser-multiple-inheritance
+  (let [input {:type [{:properties {:a "string"}}
+                      {:properties {:b "string"}}]}
+        parsed (raml-parser/parse-ast input {:parsed-location "/response"
+                                             :type-hint :type
+                                             :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= 2 (-> parsed domain/shape (get (v/shapes-ns "inherits")) count)))
+    (is (= input generated))))
+
+(deftest parser-number-type
+  (let [input "number"
+        parsed (raml-parser/parse-ast input {:parsed-location "/response"
+                                             :type-hint :type
+                                             :location "/response"})
+        generated (raml-genenerator/to-raml parsed {})]
+    (is (= input generated))))
+
 (deftest parse-ast-includes
   (let [fragments (atom {})
         node {:displayName "Users"
@@ -327,7 +356,6 @@
                                                       :parsed-location "/test#"
                                                       })
         test-annotation (get result "testAnnotation")]
-
     (is (some? test-annotation))
 
     (is (some? (-> test-annotation

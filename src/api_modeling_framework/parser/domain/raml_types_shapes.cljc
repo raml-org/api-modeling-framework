@@ -227,8 +227,8 @@
   (let [types (:anyOf node)
         types (mapv #(parse-type % context) types)]
     {"@id" parsed-location
-     "@type" [(v/shapes-ns "NodeShape") (v/sh-ns "Shape")]
-     (v/shapes-ns "inherits") types}))
+     "@type" [(v/shapes-ns "UnionShape") (v/sh-ns "Shape")]
+     (v/sh-ns "or") {"@list" types}}))
 
 (defn check-inheritance
   [node {:keys [location parsed-location] :as context}]
@@ -238,10 +238,13 @@
                 (some? (:items node))      (parse-type (assoc node :type "array") context)
                 :else {"@id"  parsed-location
                        "@type" [(v/shapes-ns "NodeShape") (v/sh-ns "Shape")]})
-        base-type (parse-type (:type node) (-> context
-                                               (assoc :parsed-location (utils/path-join parsed-location "type"))
-                                               (assoc :location location)))]
-    (assoc child (v/shapes-ns "inherits") [base-type])))
+        types (flatten [(:type node)])
+        base-types (mapv (fn [type i] (parse-type type  (-> context
+                                                           (assoc :parsed-location (utils/path-join parsed-location (str "type/" i)))
+                                                           (assoc :location location))))
+                         types
+                         (range 0 (count types)))]
+    (assoc child (v/shapes-ns "inherits") base-types)))
 
 (defn check-inclusion [node {:keys [parse-ast parsed-location] :as context}]
   (let [parsed (parse-ast node context)
@@ -299,6 +302,7 @@
     (= type-ref "number")  (parse-type-constraints node (-> (utils/->shacl-or
                                                              [(parse-scalar (utils/path-join parsed-location "or/float") (v/xsd-ns "float"))
                                                               (parse-scalar (utils/path-join parsed-location "or/integer") (v/xsd-ns "integer"))])
+                                                            (assoc "@type" [(v/shapes-ns "Scalar") (v/sh-ns "Shape")])
                                                             (assoc (v/shapes-ns "is-number") [{"@value" true}])))
     (= type-ref "integer")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "integer")))
     (= type-ref "float")  (parse-type-constraints node (parse-scalar parsed-location (v/xsd-ns "float")))
@@ -396,6 +400,8 @@
 
           (map? node)                  (let [type-ref (or (:type node) (:schema node) (or default-type "object"))]
                                          (cond
+                                           ;; unions here
+                                           (some? (:anyOf node))        (parse-union node context)
                                            ;; it is scalar, an array, regular object or JSON/XML types
                                            (well-known-type? type-ref)  (parse-well-known-type-string type-ref node context)
                                            ;; it is a link to something that is not a well known type: type expression, referference

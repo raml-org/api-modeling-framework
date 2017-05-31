@@ -15,7 +15,8 @@
          (some? (:properties type))) (dissoc type :type)
 
     (and (map? type)
-         (= [:type] (keys type)))    (:type type)
+         (and (= [:type] (keys type))
+              (string? (:type type))))  (:type type)
 
     :else                            type))
 
@@ -187,14 +188,19 @@
       (if (utils/object-no-properties? base)
         (first types)
         (assoc  base :type (first types)))
-      {:type "union"
-       :anyOf types})))
+      (assoc base :type types))))
 
-(defmethod parse-shape (v/sh-ns "or") [shape context]
-  ;; @todo support unions
+(defn parse-number [shape context]
   (-> {:type "number"}
       (parse-constraints shape)
       simplify))
+
+(defn parse-union [shape context]
+  {:anyOf (map #(parse-shape % context) (-> shape (get (v/sh-ns "or")) (get "@list")))})
+
+(defmethod parse-shape (v/sh-ns "or") [shape context]
+  (cond (utils/has-class? shape (v/shapes-ns "Scalar"))  (parse-number shape context)
+        :else                                            (parse-union shape context)))
 
 (defmethod parse-shape :raml-expression [shape _] (-> shape (get (v/shapes-ns "ramlTypeExpression")) first (get "@value")))
 

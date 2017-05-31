@@ -337,7 +337,8 @@
 
 (defn link-format? [node]
   (and (map? node)
-       (or (= [:type] (keys node))
+       (or (and (= [:type] (keys node))
+                (string? (:type node)))
            (= [:schema] (keys node))
            (= [:$ref] (keys node)))))
 

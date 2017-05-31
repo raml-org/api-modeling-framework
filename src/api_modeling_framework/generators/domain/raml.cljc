@@ -327,7 +327,8 @@
                                                                                 out-type
                                                                                 {:type out-type})]
                                                                  (common/with-amf-info model context "TypeDeclaration" out-type))
-                                             (map? out-type)  (if (= [:type] (keys out-type)) ;; If only type, we don't need the extra inheritance
+                                             (map? out-type)  (if (and (= [:type] (keys out-type))
+                                                                       (string? (:type out-type))) ;; If only type, we don't need the extra inheritance
                                                                 (:type out-type)
                                                                 out-type)
                                              :else out-type))))
