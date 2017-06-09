@@ -32,6 +32,18 @@
   ([] "http://raml.org/vocabularies/shapes/anon#")
   ([s] (str (anon-shapes-ns) s)))
 
+(defn owl-ns
+  ([] "http://www.w3.org/2002/07/owl#")
+  ([s] (str (xsd-ns) s)))
+
+(defn rdfs-ns
+  ([] "http://www.w3.org/2000/01/rdf-schema#")
+  ([s] (str (xsd-ns) s)))
+
+(def rdfs:subclassOf (rdfs-ns "subClassOf"))
+(def owl:Class (owl-ns "Class"))
+(def owl:Thing (owl-ns "Thing"))
+
 (def document:Document (document-ns "Document"))
 (def document:Fragment (document-ns "Fragment"))
 (def document:Module (document-ns "Module"))

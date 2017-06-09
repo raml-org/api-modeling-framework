@@ -555,6 +555,40 @@
                ;;(clojure.pprint/pprint output)
                (done)))))
 
+(deftest integration-vocabulary-1
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   model (<! (cb->chan (partial core/parse-file parser "file://resources/extensions/raml_doc.raml")))
+                   output-model (core/document-model model)
+                   classes (domain/classes (document/vocabulary output-model))
+                   properties (domain/properties (document/vocabulary output-model))
+                   base (domain/base (document/vocabulary output-model))]
+               (is (= "http://raml.org/vocabularies/document#" base))
+               (is (= 11 (count classes)))
+               (doseq [k classes]
+                 (is (string/starts-with? (document/id k) base)))
+               (doseq [p properties]
+                 (is (string/starts-with? (document/id p) base)))
+               (is (= 7 (count properties)))
+               (done)))))
+
+(deftest integration-vocabulary-2
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   model (<! (cb->chan (partial core/parse-file parser "file://resources/extensions/async.raml")))
+                   output-model (core/document-model model)
+                   classes (domain/classes (document/vocabulary output-model))
+                   properties (domain/properties (document/vocabulary output-model))
+                   base (domain/base (document/vocabulary output-model))]
+               (is (= "http://raml.org/vocabularies/async#" base))
+               (is (= 3 (count classes)))
+               (doseq [k classes]
+                 (is (some? (document/id k))))
+               (doseq [p properties]
+                 (is (some? (document/id p))))
+               (is (= 14 (count properties)))
+               (done)))))
+
 (comment
 
   (deftest integration-test-tck

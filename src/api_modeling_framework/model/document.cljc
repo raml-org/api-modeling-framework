@@ -342,6 +342,10 @@
   "Units containing abstract fragments that can be referenced from other fragments"
   (declares [this] "Fragments that are exposed for other units to refer"))
 
+(defprotocol Vocabulary
+  "Vocabulary description"
+  (vocabulary [this] "Vocabulary parsed from the RAML vocabulary description"))
+
 (defprotocol Unit
   "Any parseable unit, it should be backed by a source URI"
   (resolved [this] "Has this model being resolved")
@@ -409,3 +413,19 @@
   (resolved [this] (or resolved false))
   Fragment
   (encodes [this] encodes))
+
+(defrecord ParsedVocabulary [location vocabulary references document-type raw]
+  Node
+  (id [this] location)
+  (name [this] location)
+  (description [this] nil)
+  (sources [this] (generate-document-sources location document-type))
+  (valid? [this] true)
+  (extends [this] [])
+  (additional-properties [this] [])
+  Unit
+  (location [this] location)
+  (references [this] (or references []))
+  (resolved [this] (or vocabulary false))
+  Vocabulary
+  (vocabulary [this] vocabulary))

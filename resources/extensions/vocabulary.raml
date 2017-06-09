@@ -1,0 +1,27 @@
+#%RAML 1.0 Library
+
+usage: Building blocks for RAML vocabularies
+
+annotationTypes:
+  base:
+    description: |
+      Provides a URI prefix when defining terms using annotations
+  external:
+    description: |
+      An external vocabulary not specified in RAML. It will not be processed by the parser.
+      It will only be used to compute URIs for the terms, using it as a prefix.
+    type: object
+  uses:
+    description: Vocabularies used in the specification file
+    type: object
+  term:
+    description: A term from a vocabulary annotating an element of the specification
+  mapping:
+    description: |
+      Mapping from specification elements to terms in vocabulary. It can be explicit
+      where a the mapping is provided by the user, or implicit, where the processor
+      will try to associate the term based in the literal value of the specification element.
+    type:
+      properties:
+        implicit: boolean
+        explicit: object

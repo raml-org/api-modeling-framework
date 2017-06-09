@@ -54,31 +54,40 @@
                                  (let [library (parse-ast library context)]
                                    (assoc acc alias library)))
                                {}))
-        declares (reduce (fn [acc [alias library]]
-                           (merge acc
-                                  (->> (document/declares library)
-                                       (map (fn [declare]
-                                              (let [is-type-tag (-> declare (document/find-tag document/is-type-tag) first)
-                                                    is-trait-tag (-> declare (document/find-tag document/is-trait-tag) first)
-                                                    is-annotation-tag (-> declare (document/find-tag document/is-annotation-tag) first)
-                                                    declaration-alias (cond
-                                                                        (some? is-type-tag) (-> is-type-tag (document/value))
-                                                                        (some? is-trait-tag) (-> is-trait-tag (document/value))
-                                                                        (some? is-annotation-tag) (-> is-annotation-tag (document/value))
-                                                                        :else nil)]
-                                                (if (some? declaration-alias)
-                                                  [(keyword (utils/alias-chain (str (utils/safe-str alias) "." (utils/safe-str declaration-alias)) context))
-                                                   ;; we provide the full URI for the dependency
-                                                   ;; we cannot use just the hash reference as in other
-                                                   ;; declarations, because we need to resolve it remotely
-                                                   declare]
-                                                  nil))))
-                                       (filter some?)
-                                       (into {}))))
-                         {}
-                         libraries)]
+        vocabularies (->> libraries
+                          (filter (fn [[alias library]] (satisfies? document/Vocabulary library)))
+                          (reduce (fn [acc [alias library]]
+                                    (let [base (-> library document/vocabulary domain/base)]
+                                      (assoc acc alias base)))
+                                  {}))
+        libraries (->> libraries
+                       (filter (fn [[alias library]] (satisfies? document/Module library))) )
+        declares (->> libraries
+                      (reduce (fn [acc [alias library]]
+                                (merge acc
+                                       (->> (document/declares library)
+                                            (map (fn [declare]
+                                                   (let [is-type-tag (-> declare (document/find-tag document/is-type-tag) first)
+                                                         is-trait-tag (-> declare (document/find-tag document/is-trait-tag) first)
+                                                         is-annotation-tag (-> declare (document/find-tag document/is-annotation-tag) first)
+                                                         declaration-alias (cond
+                                                                             (some? is-type-tag) (-> is-type-tag (document/value))
+                                                                             (some? is-trait-tag) (-> is-trait-tag (document/value))
+                                                                             (some? is-annotation-tag) (-> is-annotation-tag (document/value))
+                                                                             :else nil)]
+                                                     (if (some? declaration-alias)
+                                                       [(keyword (utils/alias-chain (str (utils/safe-str alias) "." (utils/safe-str declaration-alias)) context))
+                                                        ;; we provide the full URI for the dependency
+                                                        ;; we cannot use just the hash reference as in other
+                                                        ;; declarations, because we need to resolve it remotely
+                                                        declare]
+                                                       nil))))
+                                            (filter some?)
+                                            (into {}))))
+                              {}))]
     {:libraries libraries
-     :library-declarations declares}))
+     :library-declarations declares
+     :vocabularies vocabularies}))
 
 
 (defn process-uses-tags [node {:keys [location parsed-location]}]
@@ -256,6 +265,31 @@
             (assoc :raw (get node (keyword "@raw")))))))
   ([node context] (parse-fragment node context "#%RAML 1.0 Fragment")))
 
+(defn parse-vocabulary [node context fragment-type]
+  (let [location (syntax/<-location node)
+        document-tags (document/generate-document-sources location fragment-type)
+        vocabulary-data(syntax/<-data node)
+        usage (:usage vocabulary-data)
+        {:keys [vocabularies]} (process-libraries node {:location (str location "#")
+                                                        :document-parser parse-ast
+                                                        :parsed-location (str location "#/libraries")})
+        externals (common/ast-get vocabulary-data :external {})
+        vocabularies (->>  (merge vocabularies externals)
+                           (map (fn [[k v]] [(utils/safe-str k) (utils/safe-str v)]))
+                           (into {}))]
+    (-> (document/map->ParsedVocabulary {:id location
+                                         :location location
+                                         :description usage
+                                         :sources document-tags
+                                         :references []
+                                         :vocabulary (domain-parser/parse-ast vocabulary-data
+                                                                              (merge context
+                                                                                     {:location (str location "#")
+                                                                                      :document-parser parse-ast
+                                                                                      :type-hint :vocabulary
+                                                                                      :vocabularies vocabularies
+                                                                                      :is-fragment false}))}))))
+
 (defn make-abstract-trait [domain]
   (let [encoded (document/encodes domain)
         encoded (-> encoded
@@ -268,6 +302,9 @@
            (satisfies? domain/DomainElement model))
     (assoc model :abstract (get data (keyword "(abstract)") false))
     model))
+
+(defmethod parse-ast "#%RAML 1.0 Vocabulary" [node context]
+  (parse-vocabulary node context "#%RAML 1.0 Vocabulary"))
 
 (defmethod parse-ast "#%RAML 1.0 DataType" [node context]
   (parse-fragment node context "#%RAML 1.0 DataType"))

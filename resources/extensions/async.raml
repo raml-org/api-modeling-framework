@@ -1,0 +1,104 @@
+#%RAML 1.0 Vocabulary
+
+base: "http://raml.org/vocabularies/async#"
+
+usage: Extensions for describing eventd APIs in RAML
+
+uses:
+  raml-doc: ./raml_doc.raml
+
+external:
+  schema-org: "http://schema.org/"
+  raml-http: "http://raml.org/vocabularies/http#"
+
+classTerms:
+
+  AsyncAPIDocumentation:
+    description: Entry point for the description of an Asynchronous API as a set of bindings
+    extends: raml-doc.RootDomainElement
+    properties:
+      - schema-org.name
+      - broker
+      - bindings
+      - stream
+    syntax:
+      properties:
+        title:
+          term: schema-org.name
+          mandatory: false
+        streams:
+          term: stream
+          hash: raml-http.path
+        broker:
+          mandatory: true
+        baseUri:
+          mandatory: true
+
+  Bindings:
+    description: Configuration options to bind the API streams to a particular transport
+    properties:
+      - rabbitExchange
+      - rabbitTopic
+      - baseUri
+    syntax:
+      rabbit_exchange: rabbitExchange
+      rabbit_topic: rabbitTopic
+
+  Stream:
+    description: A source or sink of events
+    properties:
+      - schema-org.description
+      - event
+      - source
+      - sink
+      - raml-http.path
+      - raml-http.parameter
+    syntax:
+      description: schema-org.description
+      event:
+        hash: raml-http.mediaType
+        mandatory: true
+      uriParameters:
+        term: raml-http.parameter
+        hash: schema-org.name
+
+propertyTerms:
+
+  baseUri:
+    description: Base URI for the location of the different streams
+    range: string
+
+  broker:
+    description: kind of broker used for the bindings of this async API
+    range: string
+
+  bindings:
+    description: set of binding properties for a particular transport
+    range: Bindings
+
+  rabbitExchange:
+    description: identifier for a RabbitMQ exchange
+
+  stream:
+    description: list of streams in the api
+    range: Stream
+
+  source:
+    description: source of events for a stream
+    range: Bindings
+
+  sink:
+    description: sink of events for a stream
+    range: Bindings
+
+  endpoint:
+    description: logical identifier for the stream, independent of the bindings
+    range: raml-http.EndPoint
+
+  rabbitTopic:
+    description: URI pattern like identifier for a RabbitMQ topic
+    range: string
+
+  event:
+    description: Data shape describing the event associated to the stream
+    range: raml-http.Payload

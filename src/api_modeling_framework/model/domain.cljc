@@ -246,3 +246,56 @@
   (valid? [this] true)
   (extends [this] (or extends []))
   (additional-properties [this] (or additional-properties [])))
+
+(defprotocol Vocabulary
+  (base [this] "Base URI for the terms in the vocabulary")
+  (classes [this] "Class terms declared in the vocabulary")
+  (properties [this] "Property terms declared in the vocabulary"))
+
+(defrecord ParsedVocabulary [base description classes properties]
+  DomainElement
+  (abstract [this] false)
+  document/Node
+  (id [this] base)
+  (name [this] nil)
+  (description [this] description)
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] [])
+  (additional-properties [this] [])
+  Vocabulary
+  (base [this] base)
+  (classes [this] classes)
+  (properties [this] properties))
+
+(defrecord ParsedClassTerm [id name extends description]
+  DomainElement
+  (abstract [this] false)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] extends)
+  (additional-properties [this] []))
+
+(defprotocol PropertyTerm
+  (property-type [this] "Type of property object or datatype"))
+
+(defrecord ParsedPropertyTerm [id name extends description range property-type domain]
+  DomainElement
+  (abstract [this] false)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] extends)
+  (additional-properties [this] [])
+  DomainPropertySchema
+  (domain [this] (or domain []))
+  (range [this] range)
+  PropertyTerm
+  (property-type [this] property-type))

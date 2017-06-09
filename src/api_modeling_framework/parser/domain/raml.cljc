@@ -5,6 +5,7 @@
             [api-modeling-framework.model.domain :as domain]
             [api-modeling-framework.parser.domain.common :as common]
             [api-modeling-framework.parser.domain.json-schema-shapes :as json-schema-shapes]
+            [api-modeling-framework.parser.domain.vocabulary :as vocabulary-parser]
             [api-modeling-framework.parser.domain.raml-types-shapes :as shapes]
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.platform :as platform]
@@ -36,6 +37,9 @@
 
 (def properties-map
   {
+   :base #{:vocabulary}
+   :classTerms #{:vocabulary}
+   :propertyTerms #{:vocabulary}
    :annotationTypes #{:root}
    :baseUri #{:root}
    :baseUriParameters #{:root}
@@ -778,5 +782,8 @@
     (if (map? result)
       (assoc result :location location)
       result)))
+
+(defmethod parse-ast :vocabulary [node context]
+  (vocabulary-parser/parse node context))
 
 (defmethod parse-ast :undefined [_ _] nil)
