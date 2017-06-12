@@ -555,6 +555,8 @@
                ;;(clojure.pprint/pprint output)
                (done)))))
 
+
+
 (deftest integration-vocabulary-1
   (async done
          (go (let [parser (core/->RAMLParser)
@@ -562,7 +564,11 @@
                    output-model (core/document-model model)
                    classes (domain/classes (document/vocabulary output-model))
                    properties (domain/properties (document/vocabulary output-model))
-                   base (domain/base (document/vocabulary output-model))]
+                   base (domain/base (document/vocabulary output-model))
+                   generator (core/->RAMLGenerator)
+                   raml-string(<! (cb->chan (partial core/generate-string generator "resources/extendsions/raml_doc.raml"
+                                                     output-model
+                                                     {})))]
                (is (= "http://raml.org/vocabularies/document#" base))
                (is (= 11 (count classes)))
                (doseq [k classes]
@@ -570,8 +576,8 @@
                (doseq [p properties]
                  (is (string/starts-with? (document/id p) base)))
                (is (= 7 (count properties)))
+               (is (string? raml-string))
                (done)))))
-
 (deftest integration-vocabulary-2
   (async done
          (go (let [parser (core/->RAMLParser)
@@ -579,7 +585,11 @@
                    output-model (core/document-model model)
                    classes (domain/classes (document/vocabulary output-model))
                    properties (domain/properties (document/vocabulary output-model))
-                   base (domain/base (document/vocabulary output-model))]
+                   base (domain/base (document/vocabulary output-model))
+                   generator (core/->RAMLGenerator)
+                   raml-string(<! (cb->chan (partial core/generate-string generator "resources/extendsions/async.raml"
+                                                     output-model
+                                                     {})))]
                (is (= "http://raml.org/vocabularies/async#" base))
                (is (= 3 (count classes)))
                (doseq [k classes]
@@ -587,7 +597,10 @@
                (doseq [p properties]
                  (is (some? (document/id p))))
                (is (= 14 (count properties)))
+               (is (string? raml-string))
+               (is (string? raml-string))
                (done)))))
+
 
 (comment
 

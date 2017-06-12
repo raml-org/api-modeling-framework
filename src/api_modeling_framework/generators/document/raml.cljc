@@ -29,6 +29,8 @@
   (cond
     (nil? model)                                  model
 
+    (satisfies? document/Vocabulary model)        :vocabulary
+
     (and (satisfies? document/Fragment model)
          (satisfies? document/Module model))      :document
 
@@ -38,7 +40,6 @@
 
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
-
 
 (defmethod to-raml :document [model ctx]
   (debug "Generating Document at " (document/location model))
@@ -165,3 +166,35 @@
                             :traits traits}
                            (utils/clean-nils))
      (keyword "@fragment") "#%RAML 1.0 Library"}))
+
+(defmethod to-raml :vocabulary [model ctx]
+  (let [fragments (->> (document/references model)
+                       (reduce (fn [acc fragment]
+                                 (assoc acc (document/location fragment) fragment))
+                               {}))
+        uses (->> (common/model->uses model)
+                  (mapv (fn [[alias location]]
+                          [alias (get fragments location)]))
+                  (into {}))
+        uses (common/process-anonymous-libraries uses model)
+        context (-> ctx
+                    (assoc :fragments fragments)
+                    (assoc :expanded-fragments (atom {}))
+                    (assoc :document-generator to-raml))
+        uses (->> uses
+                  (mapv (fn [[alias fragment]]
+                          [(keyword alias) (to-raml fragment context)]))
+                  (into {}))
+        vocabularies (->> uses
+                          (filter (fn [alias library] (and (satisfies? document/Vocabulary library)
+                                                          (some? (domain/base library)))))
+                          (mapv (fn [alias library] [alias (domain/base library)]))
+                          (into {}))
+        externals (document/externals model)
+        ctx (assoc ctx :vocabularies (merge externals vocabularies))
+        vocabulary (domain-generator/to-raml (document/vocabulary model) ctx)
+        vocabulary (assoc vocabulary :uses uses)
+        vocabulary (assoc vocabulary :externals externals)]
+    {(keyword "@location") (document/location model)
+     (keyword "@data") (utils/clean-nils vocabulary)
+     (keyword "@fragment") "#%RAML 1.0 Vocabulary"}))

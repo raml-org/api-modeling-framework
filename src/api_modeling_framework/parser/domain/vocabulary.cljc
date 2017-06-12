@@ -105,4 +105,4 @@
                                    :description usage
                                    :classes (mapv #(dissoc % :properites) classes)
                                    :properties (concat properties
-                                                       domain-referenced-properties)})))
+                                                           domain-referenced-properties)})))

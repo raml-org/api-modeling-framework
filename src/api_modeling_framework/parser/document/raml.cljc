@@ -60,9 +60,9 @@
                                     (let [base (-> library document/vocabulary domain/base)]
                                       (assoc acc alias base)))
                                   {}))
-        libraries (->> libraries
-                       (filter (fn [[alias library]] (satisfies? document/Module library))) )
+        vocabularies {}
         declares (->> libraries
+                      (filter (fn [[alias library]] (satisfies? document/Module library)))
                       (reduce (fn [acc [alias library]]
                                 (merge acc
                                        (->> (document/declares library)
@@ -270,25 +270,28 @@
         document-tags (document/generate-document-sources location fragment-type)
         vocabulary-data(syntax/<-data node)
         usage (:usage vocabulary-data)
-        {:keys [vocabularies]} (process-libraries node {:location (str location "#")
-                                                        :document-parser parse-ast
-                                                        :parsed-location (str location "#/libraries")})
+        uses-tags (process-uses-tags node context)
+        {:keys [vocabularies libraries]} (process-libraries node {:location (str location "#")
+                                                                  :document-parser parse-ast
+                                                                  :parsed-location (str location "#/libraries")})
         externals (common/ast-get vocabulary-data :external {})
         vocabularies (->>  (merge vocabularies externals)
                            (map (fn [[k v]] [(utils/safe-str k) (utils/safe-str v)]))
                            (into {}))]
     (-> (document/map->ParsedVocabulary {:id location
-                                         :location location
-                                         :description usage
-                                         :sources document-tags
-                                         :references []
-                                         :vocabulary (domain-parser/parse-ast vocabulary-data
-                                                                              (merge context
-                                                                                     {:location (str location "#")
-                                                                                      :document-parser parse-ast
-                                                                                      :type-hint :vocabulary
-                                                                                      :vocabularies vocabularies
-                                                                                      :is-fragment false}))}))))
+                                             :location location
+                                             :description usage
+                                             :sources (concat uses-tags document-tags)
+                                             :references (flatten (vals libraries))
+                                             :externals externals
+                                             :vocabulary (domain-parser/parse-ast vocabulary-data
+                                                                                  (merge context
+                                                                                         {:location (str location "#")
+                                                                                          :document-parser parse-ast
+                                                                                          :type-hint :vocabulary
+                                                                                          :vocabularies vocabularies
+                                                                                          :is-fragment false}))})
+                (assoc :raw (get node (keyword "@raw"))))))
 
 (defn make-abstract-trait [domain]
   (let [encoded (document/encodes domain)

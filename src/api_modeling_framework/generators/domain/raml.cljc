@@ -6,6 +6,7 @@
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.generators.domain.utils :refer [send]]
             [api-modeling-framework.generators.domain.common :as common]
+            [api-modeling-framework.generators.domain.vocabulary :as vocab-generator]
             [clojure.string :as string]
             [cemerick.url :as url]
             [clojure.walk :refer [keywordize-keys]]
@@ -16,6 +17,8 @@
 (defn to-raml-dispatch-fn [model ctx]
   (cond
     (nil? model)                                    model
+
+    (satisfies? domain/Vocabulary model)            domain/Vocabulary
 
     (satisfies? domain/DomainPropertySchema model)  domain/DomainPropertySchema
 
@@ -166,6 +169,9 @@
                              (not (satisfies? domain/Type ref)))))
        (map (fn [ref] [(or (:name ref) (:id ref)) (to-raml! ref ctx)]))
        (into {})))
+
+(defmethod to-raml domain/Vocabulary [model ctx]
+  (vocab-generator/generate model ctx))
 
 (defmethod to-raml domain/APIDocumentation [model ctx]
   (debug "Generating RAML root node")

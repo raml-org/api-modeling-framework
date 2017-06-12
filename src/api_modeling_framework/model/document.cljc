@@ -344,7 +344,8 @@
 
 (defprotocol Vocabulary
   "Vocabulary description"
-  (vocabulary [this] "Vocabulary parsed from the RAML vocabulary description"))
+  (vocabulary [this] "Vocabulary parsed from the RAML vocabulary description")
+  (externals [this] "External vocabularies used by this vocabulary"))
 
 (defprotocol Unit
   "Any parseable unit, it should be backed by a source URI"
@@ -414,7 +415,7 @@
   Fragment
   (encodes [this] encodes))
 
-(defrecord ParsedVocabulary [location vocabulary references document-type raw]
+(defrecord ParsedVocabulary [location vocabulary externals references document-type raw]
   Node
   (id [this] location)
   (name [this] location)
@@ -426,6 +427,7 @@
   Unit
   (location [this] location)
   (references [this] (or references []))
-  (resolved [this] (or vocabulary false))
+  (resolved [this] (or resolved false))
   Vocabulary
-  (vocabulary [this] vocabulary))
+  (vocabulary [this] vocabulary)
+  (externals [this] (or externals [])))
