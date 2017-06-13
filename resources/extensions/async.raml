@@ -22,20 +22,21 @@ classTerms:
       - bindings
       - stream
     syntax:
-      properties:
-        title:
-          term: schema-org.name
-          mandatory: false
-        streams:
-          term: stream
-          hash: raml-http.path
-        broker:
-          mandatory: true
-        baseUri:
-          mandatory: true
+      title:
+        term: schema-org.name
+        mandatory: false
+      streams:
+        body: true
+        term: stream
+        hash: raml-http.path
+      broker:
+        mandatory: true
+      baseUri:
+        mandatory: true
 
   Bindings:
     description: Configuration options to bind the API streams to a particular transport
+    extends: raml-doc.DomainElement
     properties:
       - rabbitExchange
       - rabbitTopic
@@ -46,6 +47,7 @@ classTerms:
 
   Stream:
     description: A source or sink of events
+    extends: raml-doc.DomainElement
     properties:
       - schema-org.description
       - event

@@ -551,8 +551,6 @@
                             :properties
                             count)))
                (is (some? (-> yaml-data :uses :lib)))
-               ;;(clojure.pprint/pprint yaml-data)
-               ;;(clojure.pprint/pprint output)
                (done)))))
 
 
@@ -578,10 +576,12 @@
                (is (= 7 (count properties)))
                (is (string? raml-string))
                (done)))))
+
 (deftest integration-vocabulary-2
   (async done
          (go (let [parser (core/->RAMLParser)
                    model (<! (cb->chan (partial core/parse-file parser "file://resources/extensions/async.raml")))
+                   _ (println model)
                    output-model (core/document-model model)
                    classes (domain/classes (document/vocabulary output-model))
                    properties (domain/properties (document/vocabulary output-model))
@@ -593,11 +593,12 @@
                (is (= "http://raml.org/vocabularies/async#" base))
                (is (= 3 (count classes)))
                (doseq [k classes]
-                 (is (some? (document/id k))))
+                 (is (some? (document/id k)))
+                 (doseq [rule (domain/syntax-rules k)]
+                   (is (not (nil? (domain/property-id rule))))))
                (doseq [p properties]
                  (is (some? (document/id p))))
                (is (= 14 (count properties)))
-               (is (string? raml-string))
                (is (string? raml-string))
                (done)))))
 

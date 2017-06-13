@@ -268,7 +268,13 @@
   (classes [this] classes)
   (properties [this] properties))
 
-(defrecord ParsedClassTerm [id name extends description]
+(defprotocol Grammar
+  "A collection of syntax rules for a domain entity defining a syntax"
+  (syntax-rules [this] "List of syntax rules"))
+
+(defrecord ParsedClassTerm [id name extends description syntax-rules]
+  Grammar
+  (syntax-rules [this] syntax-rules)
   DomainElement
   (abstract [this] false)
   document/Node
@@ -299,3 +305,18 @@
   (range [this] range)
   PropertyTerm
   (property-type [this] property-type))
+
+(defprotocol SyntaxRule
+  "Syntax information for a Vocabulary term"
+  (property-id [this] "Property targeting this syntax rule")
+  (mandatory [this] "Is the property mandatory in the node?")
+  (hash [this] "Instead of expect a node or a collection of node, expect a hash using this property-id value as the key")
+  (collection [this] "Is the property value allowed to be a collection of nodes?"))
+
+
+(defrecord ParsedSyntaxRule [property-id mandatory hash collection]
+  SyntaxRule
+  (property-id [this] property-id)
+  (mandatory [this] mandatory)
+  (hash [this] hash)
+  (collection [this] collection))

@@ -15,6 +15,52 @@
         (str base suffix))
       (str prefix safe-name))))
 
+(defn parse-syntax-term-id [alias syntax-rule {:keys [base] :as context}]
+  (if (not (map? syntax-rule))
+    (term-id base syntax-rule context)
+    (let [term (common/ast-get syntax-rule :term alias)]
+      (term-id base term context))))
+
+(defn parse-syntax-term-mandatory [syntax-rule context]
+  (if (not (map? syntax-rule)) true
+      (common/ast-get syntax-rule :mandatory true)))
+
+(defn parse-syntax-term-hash [syntax-rule {:keys [base] :as context}]
+  (if (not (map? syntax-rule)) nil
+      (let [hash (common/ast-get syntax-rule :hash)]
+        (if (some? hash)
+          (term-id base hash context)
+          nil))))
+
+(defn parse-syntax-term-collection [syntax-rule {:keys [base] :as context}]
+  (if (string? syntax-rule) false
+      (common/ast-get syntax-rule :collection false)))
+
+
+(defn parse-syntax [node {:keys [base] :as context}]
+  (let [explicit-rules (->> (common/ast-get node :syntax [])
+                            (mapv (fn [[k syntax-rule]]
+                                    (domain/map->ParsedSyntaxRule
+                                     {:property-id (parse-syntax-term-id k syntax-rule context)
+                                      :mandatory (parse-syntax-term-mandatory syntax-rule context)
+                                      :hash (parse-syntax-term-hash syntax-rule context)
+                                      :collection (parse-syntax-term-collection syntax-rule context)}))))
+        explicit-rules-map (->> explicit-rules
+                                (mapv (fn [rule] [(domain/property-id rule) true]))
+                                (into {}))
+        implicit-rules (->> (common/ast-get node :properties [])
+                            (ensure-list)
+                            (mapv (fn [prop]
+                                    [prop (term-id base prop context)]))
+                            (filter (fn [[prop prop-id]] (nil? (get explicit-rules-map prop-id))))
+                            (mapv (fn [[prop prop-id]]
+                                    (domain/map->ParsedSyntaxRule
+                                     {:property-id prop-id
+                                      :mandatory true
+                                      :hash nil
+                                      :collection false}))))]
+    (concat explicit-rules implicit-rules)))
+
 (defn parse-base [node {:keys [location]}] (common/ast-get node :base location))
 
 (defn parse-usage [node _] (common/ast-get node :usage))
@@ -32,7 +78,8 @@
                                 :description (common/ast-get node :description)
                                 :properties (->> (common/ast-get node :properties [])
                                                  (ensure-list)
-                                                 (mapv #(term-id base % context)))}))
+                                                 (mapv #(term-id base % context)))
+                                :syntax-rules (parse-syntax node context)}))
 
 (defn parse-classes [node context]
   (->> (common/ast-get node :classTerms [])
@@ -54,6 +101,7 @@
     "integer" (v/xsd-ns "integer")
     "float"   (v/xsd-ns "float")
     "boolean" (v/xsd-ns "boolean")
+    "uri"     (v/xsd-ns "anyURI")
     (cond
       (string? range) (term-id base range context)
       :else           nil)))
@@ -64,6 +112,7 @@
     "integer" "datatype"
     "float"   "datatype"
     "boolean" "datatype"
+    "uri"     "object"
     nil       "object"
     "object"))
 

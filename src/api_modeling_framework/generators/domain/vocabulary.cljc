@@ -27,6 +27,7 @@
     (v/xsd-ns "integer") "integer"
     (v/xsd-ns "float") "float"
     (v/xsd-ns "boolean") "boolean"
+    (v/xsd-ns "anyURI") "anyURI"
     (cond
       (string? range) (id-term range context)
       :else           nil)))

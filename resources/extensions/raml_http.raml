@@ -1,0 +1,229 @@
+#%RAML 1.0 Vocabulary
+
+base: "http://raml.org/vocabularies/http#"
+
+usage: HTTP APIs vocabulary for AMF
+
+use:
+  raml-doc: "./raml_doc.raml"
+
+external:
+  schema-org: "http://schema.org/"
+  hydra: "http://www.w3.org/ns/hydra/core#"
+  shacl: "http://www.w3.org/ns/shacl#"
+
+classTerms:
+
+  schema-org.WebAPI:
+    displayName: Web API
+    description: Top level element describing a HTTP API
+    extends: raml-doc.RootDomainElement
+    properties:
+      - schema-org.name
+      - schema-org.description
+      - host
+      - scheme
+      - basePath
+      - accepts
+      - contentType
+      - schema-org.termsOfService
+      - schema-org.version
+      - schema-org.provider
+      - schema-org.license
+      - schema-org.documentation
+      - endpoint
+
+  Provider:
+    extends: raml-doc.DomainElement
+    description: |
+      The service provider, service operator, or service performer; the goods producer.
+      Another party (a seller) may offer those services or goods on behalf of the provider.
+      A provider may also serve as the seller.
+    properties:
+      - schema-org.url
+      - schema-org.name
+      - schema-org.email
+
+  License:
+    extends: raml-doc.DomainElement
+    description: License for the API
+    properties:
+      - schema-org.url
+      - schema-org.name
+
+  Documentation:
+    extends: raml-doc.DomainElement
+    description: Documentation associated to the API, stored externally.
+    properties:
+      - schema-org.url
+      - schema-org.description
+
+  EndPoint:
+    extends: raml-doc.DomainElement
+    displayName: End Point
+    description: EndPoint in the API holding a number of executable operations
+    properties:
+      - path
+      - hydra.supportedOperation
+
+  hydra.Operation:
+    extends: raml-doc.DomainElement
+    description: Action that can be executed using a particular HTTP invocation
+
+  hydra.Request:
+    extends: raml-doc.DomainElement
+    description: Request information for an operation
+    properties:
+      - parameter
+
+  hydra.Response:
+    extends: raml-doc.DomainElement
+    description: Response information for an operation
+    properties:
+      - statusCode
+      - parameter
+
+  Parameter:
+    extends: raml-doc.DomainElement
+    description: Piece of data required or returned by an Operation
+    properties:
+      - hydra.required
+      - paramBinding
+
+  Payload:
+    extends: raml-doc.DomainElement
+    description: Encoded payload for a particular media-type
+    properties:
+      - mediaType
+      - schema
+
+propertyTerms:
+
+  schema-org.name:
+    displayName: name
+    description: The name of an domain entity
+    range: string
+
+  schema-org.description:
+    displayName: description
+    description: The description of an domain entity
+    range: string
+
+  host:
+    displayName: host
+    description: Host for the API
+    range: string
+
+  scheme:
+    displayName: scheme
+    description: URI scheme for the API protocol
+    range: string
+
+  basePath:
+    displayName: base path
+    description: Base path for end-points in the API
+    range: string
+
+  accepts:
+    displayName: accepts
+    description: Media-types accepted in a API request
+    range: string
+
+  contentType:
+    displayName: content type
+    description: Media types returned by a API response
+    range: string
+
+  schema-org.termsOfService:
+    displayName: terms of service
+    description: Terms and conditions when using the API
+    range: string
+
+  schema-org.version:
+    displayName: version
+    description: Version of the api
+    range: string
+
+  schema-org.provider:
+    displayName: provider
+    description: The API provider
+    range: Provider
+
+  schema-org.url:
+    displayName: url
+    description: URL for a resource associated to a domain entity
+    range: uri
+
+  schema-org.email:
+    displayName: email
+    description: Electronic email address
+    range: string
+
+  schema-org.license:
+    displayName: license
+    description: License for the API
+    range: string
+
+  schema-org.documentation:
+    displayName: documentation
+    description: Documentation associated to the API
+    range: Documentation
+
+  endpoint:
+    name: end-points
+    description: End points defined in the api
+    range: EndPoint
+
+  path:
+    name: path
+    description: Path template for an endpoint
+    range: License
+
+  hydra.supportedOperation:
+    name: supported operations
+    description: Operations supported by an endpoint
+    range: hydra.Operation
+
+  hydra.method:
+    name: method
+    description: HTTP method required to invoke the operation
+    range: string
+
+  hydra.expects:
+    name: expects
+    description: Request information required by the operation
+    range: Request
+
+  hydra.returns:
+    name: returns
+    description: Response data returned by the operation
+    range: Response
+
+  statusCode:
+    description: HTTP status code returned by a response
+    range: string
+
+  parameter:
+    description: Type of data required or returned by an operation
+    range: Parameter
+
+  payload:
+    description: Payload for a Request/Response
+    range: Payload
+
+  hydra.required:
+    description: I this parameter required?
+    range: boolean
+
+  paramBinding:
+    description: Location of the parameter in the request or response
+    range:
+      enum: ["header", "query"]
+
+  mediaType:
+    description: Media type for a payload
+    range: string
+
+  schema:
+    description: Link to the schema information for this payload
+    range: shacl.Shape
