@@ -108,13 +108,13 @@
 (defn fragment-info [file options]
   (with-open [rdr (java.io.BufferedReader. (uri->reader file options))]
     (let [first-line (first (line-seq rdr))]
-      (if (string/starts-with? first-line "#%RAML")
+      (if (string/starts-with? first-line "#%")
         first-line
         nil))))
 
 (defn fragment-info-string [s]
   (let [first-line (first (line-seq (java.io.BufferedReader. (java.io.StringReader. s))))]
-    (if (string/starts-with? first-line "#%RAML")
+    (if (string/starts-with? first-line "#%")
       first-line
       nil)))
 

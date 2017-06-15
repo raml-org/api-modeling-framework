@@ -12,6 +12,8 @@
   (cond
     (nil? model)                                 model
 
+    (satisfies? document/Vocabulary model)       :vocabulary
+
     (and (satisfies? document/Fragment model)
          (satisfies? document/Module model))     :document
 
@@ -60,6 +62,16 @@
         "@type" [v/document:Module
                  v/document:Unit]
         v/document:declares (mapv #(to-jsonld % source-maps?) (document/declares m))
+        v/document:references (mapv #(to-jsonld % source-maps?) (document/references m))}
+       (with-source-maps source-maps? m)
+       (utils/clean-nils)))
+
+(defmethod to-jsonld :vocabulary [m source-maps?]
+  (debug "Generating Vocabulary")
+  (->> {"@id" (document/id m)
+        "@type" [v/document:Vocabulary]
+        v/meta:vocabulary [(domain-generator/to-jsonld (document/vocabulary m) {:source-maps? source-maps?})]
+        v/meta:external (mapv (fn [x] {"@id" x}) (or (vals (document/externals m)) []))
         v/document:references (mapv #(to-jsonld % source-maps?) (document/references m))}
        (with-source-maps source-maps? m)
        (utils/clean-nils)))

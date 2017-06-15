@@ -36,14 +36,20 @@
   (if (string? syntax-rule) false
       (common/ast-get syntax-rule :collection false)))
 
+(defn parse-syntax-term-declaration [syntax-rule {:keys [base] :as context}]
+  (if (string? syntax-rule) false
+      (common/ast-get syntax-rule :declaration false)))
+
 
 (defn parse-syntax [node {:keys [base] :as context}]
   (let [explicit-rules (->> (common/ast-get node :syntax [])
                             (mapv (fn [[k syntax-rule]]
                                     (domain/map->ParsedSyntaxRule
                                      {:property-id (parse-syntax-term-id k syntax-rule context)
+                                      :syntax-label (utils/safe-str k)
                                       :mandatory (parse-syntax-term-mandatory syntax-rule context)
                                       :hash (parse-syntax-term-hash syntax-rule context)
+                                      :declaration (parse-syntax-term-declaration syntax-rule context)
                                       :collection (parse-syntax-term-collection syntax-rule context)}))))
         explicit-rules-map (->> explicit-rules
                                 (mapv (fn [rule] [(domain/property-id rule) true]))
@@ -56,6 +62,7 @@
                             (mapv (fn [[prop prop-id]]
                                     (domain/map->ParsedSyntaxRule
                                      {:property-id prop-id
+                                      :syntax-label (utils/safe-str prop)
                                       :mandatory true
                                       :hash nil
                                       :collection false}))))]
@@ -64,6 +71,10 @@
 (defn parse-base [node {:keys [location]}] (common/ast-get node :base location))
 
 (defn parse-usage [node _] (common/ast-get node :usage))
+
+(defn parse-dialect [node _] (common/ast-get node :dialect))
+
+(defn parse-version [node _] (common/ast-get node :version))
 
 (defn parse-extends [node {:keys [base] :as context}]
   (-> node
@@ -104,7 +115,7 @@
     "uri"     (v/xsd-ns "anyURI")
     (cond
       (string? range) (term-id base range context)
-      :else           nil)))
+      :else  (v/xsd-ns "string"))))
 
 (defn parse-property-type [range]
   (condp = range
@@ -113,7 +124,7 @@
     "float"   "datatype"
     "boolean" "datatype"
     "uri"     "object"
-    nil       "object"
+    nil       "datatype"
     "object"))
 
 (defn parse-property [[id node] {:keys [base domains-map] :as context}]
@@ -144,6 +155,8 @@
 
 (defn parse [node context]
   (let [base (parse-base node context)
+        dialect (parse-dialect node context)
+        version (parse-version node context)
         context (assoc context :base base)
         usage (parse-usage node context)
         classes (parse-classes node context)
@@ -151,6 +164,8 @@
         properties (parse-properties node context)
         domain-referenced-properties (parse-domain-referenced-properties properties context)]
     (domain/map->ParsedVocabulary {:base base
+                                   :dialect dialect
+                                   :version version
                                    :description usage
                                    :classes (mapv #(dissoc % :properites) classes)
                                    :properties (concat properties

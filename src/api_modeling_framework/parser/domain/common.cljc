@@ -1,5 +1,7 @@
 (ns api-modeling-framework.parser.domain.common
   (:require [api-modeling-framework.model.document :as document]
+            [api-modeling-framework.model.domain :as domain]
+            [api-modeling-framework.model.vocabulary :as vocabulary]
             [api-modeling-framework.utils :as utils]
             [clojure.string :as string]))
 
@@ -66,3 +68,20 @@
                                       (into {}))
     (coll? x)                    (mapv purge-ast x)
     :else                        (ast-value x)))
+
+(defn find-vocabulary-property [syntax-rule vocabulary]
+  (let [found-property (->> (domain/properties vocabulary)
+                            (filter (fn [property] (= (document/id property) (domain/property-id syntax-rule))))
+                            first)]
+    (if (some? found-property)
+      found-property
+      (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find  syntax information for " (domain/property-id syntax-rule)))))))
+
+(defn declaration-property? [rule vocabulary]
+  (let [property (find-vocabulary-property rule vocabulary)]
+    (if (some? property)
+      (->> (flatten [(document/extends property)])
+           (filter #(= % vocabulary/document:declaration-property))
+           first
+           some?)
+      false)))

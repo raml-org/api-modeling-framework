@@ -12,13 +12,7 @@
   (is (= (utils/safe-str (keyword "application/json")) "application/json")))
 
 
-(defn cb->chan [f]
-  (let [c (chan)]
-    (f (fn [e o]
-         (go (if (some? e)
-               (>! c {:error e})
-               (>! c o)))))
-    c))
+(def cb->chan utils/cb->chan)
 
 (defn error? [x]
   (if (and (map? x)

@@ -12,6 +12,16 @@
   (cond
     (nil? model)                                    nil
 
+    (satisfies? domain/Vocabulary model)            :Vocabulary
+
+    (satisfies? domain/Grammar model)               :ClassTerm
+
+    (satisfies? domain/PropertyTerm model)          :PropertyTerm
+
+    (satisfies? domain/SyntaxRule model)            :SyntaxRule
+
+    (satisfies? domain/DomainInstance model)        :DomainInstance
+
     (satisfies? domain/DomainPropertySchema model)  :DomainPropertySchema
 
     (satisfies? domain/DomainProperty model)        :DomainProperty
@@ -216,6 +226,58 @@
        "@type" [v/document:DomainProperty]}
       (with-node-properties m context)
       (utils/assoc-object m v/document:object domain/object identity)
+      (utils/clean-nils)))
+
+(defmethod to-jsonld :DomainInstance [m context]
+  (debug "Generating DomainInstance" (document/id m))
+  (if (some? (domain/shape m))
+    (domain/shape m)
+    (loop [domain-instance  {"@id" (document/id m)
+                             "@type" [(domain/domain-class m)]}
+           properties (or (domain/domain-properties m) [])]
+      (if (empty? properties)
+        domain-instance
+        (let [next-prop (first properties)
+              all-objects (or (domain/object next-prop) [])
+              first-object (first all-objects)
+              parsed-values (cond
+                              (map? first-object)      (mapv #(to-jsonld % context) all-objects)
+                              :else                    all-objects)]
+          (recur (assoc domain-instance (document/id next-prop) parsed-values)
+                 (rest properties)))))))
+
+(defmethod to-jsonld :Vocabulary [m context]
+  (-> {"@id" (domain/base m)
+       "@type" [(v/owl-ns "Ontology") (v/meta-ns "Vocabulary")]}
+      (utils/assoc-value m v/meta:version domain/vocabulary-version)
+      (utils/assoc-value m v/meta:dialect domain/dialect)
+      (utils/assoc-objects m v/meta:classes domain/classes (fn [x] (to-jsonld x context)))
+      (utils/assoc-objects m v/meta:properties domain/properties (fn [x] (to-jsonld x context)))
+      (utils/clean-nils)))
+
+(defmethod to-jsonld :ClassTerm [m context]
+  (-> {"@id" (document/id m)
+       "@type" [(v/owl-ns "Class")]}
+      (utils/assoc-objects m (v/meta-ns "syntax") domain/syntax-rules (fn [x] (to-jsonld x context)))
+      (with-node-properties m context)
+      (utils/clean-nils)))
+
+(defmethod to-jsonld :PropertyTerm [m context]
+  (-> {"@id" (document/id m)
+       "@type" (if (= "object" (domain/property-type m)) [(v/owl-ns "ObjectProperty")] [(v/owl-ns "DatatypeProperty")])}
+      (utils/assoc-objects m (v/rdfs-ns "domain") domain/domain (fn [x] {"@id" x}))
+      (utils/assoc-object m (v/rdfs-ns "range") domain/range (fn [x] {"@id" x}))
+      (with-node-properties m context)
+      (utils/clean-nils)))
+
+(defmethod to-jsonld :SyntaxRule [m context]
+  (-> {"@id" (utils/path-join (domain/property-id m) "rule")
+       "@type" [(v/meta-ns "SyntaxRule")]}
+      (utils/assoc-object m (v/meta-ns "propertyRule") domain/property-id (fn [x] {"@id" x}))
+      (utils/assoc-value m (v/meta-ns "syntaxLabel") domain/syntax-label)
+      (utils/assoc-value m (v/meta-ns "mandatory") domain/mandatory)
+      (utils/assoc-object m (v/meta-ns "syntaxHash") domain/hash (fn [x] {"@id" x}))
+      (utils/assoc-value m (v/meta-ns "syntaxCollection") domain/collection)
       (utils/clean-nils)))
 
 (defmethod to-jsonld nil [_ _] nil)

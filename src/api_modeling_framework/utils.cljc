@@ -1,8 +1,19 @@
 (ns api-modeling-framework.utils
+  #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
   (:require [api-modeling-framework.model.document :as document]
             [api-modeling-framework.model.vocabulary :as v]
+            #?(:cljs [cljs.core.async :refer [<! >! chan]])
+            #?(:clj [clojure.core.async :refer [go <! >! chan]])
             [clojure.string :as string]
             [taoensso.timbre :as timbre #?(:clj :refer :cljs :refer-macros) [log]]))
+
+(defn cb->chan [f]
+  (let [c (chan)]
+    (f (fn [e o]
+         (go (if (some? e)
+               (>! c {:error e})
+               (>! c o)))))
+    c))
 
 (defn safe-str [x]
   (cond

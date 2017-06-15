@@ -2,6 +2,10 @@
 
 base: "http://raml.org/vocabularies/http#"
 
+dialect: "RAML"
+
+version: "1.0"
+
 usage: HTTP APIs vocabulary for AMF
 
 use:
@@ -87,8 +91,10 @@ classTerms:
     extends: raml-doc.DomainElement
     description: Piece of data required or returned by an Operation
     properties:
+      - schema-org.name
       - hydra.required
       - paramBinding
+      - schema
 
   Payload:
     extends: raml-doc.DomainElement
@@ -217,8 +223,7 @@ propertyTerms:
 
   paramBinding:
     description: Location of the parameter in the request or response
-    range:
-      enum: ["header", "query"]
+    range: string
 
   mediaType:
     description: Media type for a payload

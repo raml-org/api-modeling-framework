@@ -39,6 +39,7 @@
 
     (and (nil? (syntax/<-location node))
          (nil? (syntax/<-fragment node)))       (do
+                                                  (prn node)
                                                   (throw
                                                    (new #?(:clj Exception :cljs js/Error)
                                                         (str "Unsupported RAML parsing unit, missing @location or @fragment information"))))
@@ -60,7 +61,6 @@
                                     (let [base (-> library document/vocabulary domain/base)]
                                       (assoc acc alias base)))
                                   {}))
-        vocabularies {}
         declares (->> libraries
                       (filter (fn [[alias library]] (satisfies? document/Module library)))
                       (reduce (fn [acc [alias library]]
@@ -279,19 +279,19 @@
                            (map (fn [[k v]] [(utils/safe-str k) (utils/safe-str v)]))
                            (into {}))]
     (-> (document/map->ParsedVocabulary {:id location
-                                             :location location
-                                             :description usage
-                                             :sources (concat uses-tags document-tags)
-                                             :references (flatten (vals libraries))
-                                             :externals externals
-                                             :vocabulary (domain-parser/parse-ast vocabulary-data
-                                                                                  (merge context
-                                                                                         {:location (str location "#")
-                                                                                          :document-parser parse-ast
-                                                                                          :type-hint :vocabulary
-                                                                                          :vocabularies vocabularies
-                                                                                          :is-fragment false}))})
-                (assoc :raw (get node (keyword "@raw"))))))
+                                         :location location
+                                         :description usage
+                                         :sources (concat uses-tags document-tags)
+                                         :references (flatten (vals libraries))
+                                         :externals externals
+                                         :vocabulary (domain-parser/parse-ast vocabulary-data
+                                                                              (merge context
+                                                                                     {:location (str location "#")
+                                                                                      :document-parser parse-ast
+                                                                                      :type-hint :vocabulary
+                                                                                      :vocabularies vocabularies
+                                                                                      :is-fragment false}))})
+        (assoc :raw (get node (keyword "@raw"))))))
 
 (defn make-abstract-trait [domain]
   (let [encoded (document/encodes domain)

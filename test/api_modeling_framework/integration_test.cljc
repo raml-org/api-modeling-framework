@@ -581,17 +581,20 @@
   (async done
          (go (let [parser (core/->RAMLParser)
                    model (<! (cb->chan (partial core/parse-file parser "file://resources/extensions/async.raml")))
-                   _ (println model)
                    output-model (core/document-model model)
                    classes (domain/classes (document/vocabulary output-model))
                    properties (domain/properties (document/vocabulary output-model))
                    base (domain/base (document/vocabulary output-model))
                    generator (core/->RAMLGenerator)
-                   raml-string(<! (cb->chan (partial core/generate-string generator "resources/extendsions/async.raml"
+                   raml-string(<! (cb->chan (partial core/generate-string generator "resources/extensions/async.raml"
                                                      output-model
-                                                     {})))]
+                                                     {})))
+                   jsonld-generator (core/->APIModelGenerator)
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/extensions/async.jsonld"
+                                                        output-model
+                                                        {:source-maps? false})))]
                (is (= "http://raml.org/vocabularies/async#" base))
-               (is (= 3 (count classes)))
+               (is (= 4 (count classes)))
                (doseq [k classes]
                  (is (some? (document/id k)))
                  (doseq [rule (domain/syntax-rules k)]
@@ -602,8 +605,55 @@
                (is (string? raml-string))
                (done)))))
 
+(deftest integration-vocabulary-instance-1
+  (async done
+         (go (let [parser (core/->MetaParser)
+                   jsonld-generator (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/async_api1.raml" {:vocabularies ["resources/extensions/async.raml"]})))
+                   output-model (core/document-model model)
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/async_api1.jsonld"
+                                                        output-model
+                                                        {:source-maps? false})))]
+               (clojure.pprint/pprint output-model)
+               (println output-jsonld)
+               (done)))))
 
 (comment
+
+(deftest raml-async-api-test
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   model (<! (cb->chan (partial core/parse-file parser "../raml-async/vocabulary/raml_async.raml")))
+                   output-model (core/document-model model)
+                   ;;classes (domain/classes (document/vocabulary output-model))
+                   ;;properties (domain/properties (document/vocabulary output-model))
+                   ;;base (domain/base (document/vocabulary output-model))
+                   generator (core/->RAMLGenerator)
+                   raml-string(<! (cb->chan (partial core/generate-string generator "resources/extensions/async.raml"
+                                                     output-model
+                                                     {})))
+                   jsonld-generator (core/->APIModelGenerator)
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/extensions/async.jsonld"
+                                                        output-model
+                                                        {:source-maps? false})))
+
+                   meta-parser (core/->MetaParser)
+                   meta-model (<! (cb->chan (partial core/parse-file meta-parser "../raml-async/example/loans_api.raml"
+                                                     {:vocabularies ["../raml-async/vocabulary/raml_async.raml"]})))
+                   _ (prn meta-model)
+                   meta-output-model (core/document-model meta-model)
+                   meta-output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/loans_api.jsonld"
+                                                             meta-output-model
+                                                             {:source-maps? false})))]
+               (println "\n\n\n")
+               (println output-jsonld)
+               (println "\n\n\n")
+               (println raml-string)
+               (println "\n\n\n")
+               (println meta-output-jsonld)
+               ;;(println "\n\n\n")
+               ;;(println meta-output-model)
+               (done)))))
 
   (deftest integration-test-tck
     (async done

@@ -88,5 +88,6 @@
         classes (generate-classes model ctx)]
     {:base (domain/base model)
      :usage (document/description model)
+     :version (domain/vocabulary-version model)
      :propertyTerms (into {} properties)
      :classTerms (into {} classes)}))

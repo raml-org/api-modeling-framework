@@ -185,8 +185,7 @@
 
 
 (defprotocol Type
-  (shape [this] "Constraints for the data type")
-  (domain-class [this] "Domain class associated to this type"))
+  (shape [this] "Constraints for the data type"))
 
 
 (defrecord ParsedType [id abstract sources name extends description shape domain additional-properties]
@@ -194,7 +193,6 @@
   (abstract [this] abstract)
   Type
   (shape [this] shape)
-  (domain-class [this] domain)
   document/Node
   (id [this] id)
   (name [this] name)
@@ -248,11 +246,13 @@
   (additional-properties [this] (or additional-properties [])))
 
 (defprotocol Vocabulary
+  (dialect [this] "Preamble identifier for this dialect")
+  (vocabulary-version [this] "Version of the vocabulary")
   (base [this] "Base URI for the terms in the vocabulary")
   (classes [this] "Class terms declared in the vocabulary")
   (properties [this] "Property terms declared in the vocabulary"))
 
-(defrecord ParsedVocabulary [base description classes properties]
+(defrecord ParsedVocabulary [base dialect version description classes properties]
   DomainElement
   (abstract [this] false)
   document/Node
@@ -264,6 +264,8 @@
   (extends [this] [])
   (additional-properties [this] [])
   Vocabulary
+  (dialect [this] dialect)
+  (vocabulary-version [this] version)
   (base [this] base)
   (classes [this] classes)
   (properties [this] properties))
@@ -308,15 +310,43 @@
 
 (defprotocol SyntaxRule
   "Syntax information for a Vocabulary term"
+  (syntax-label [this] "Textual string used in the syntax of the language for the property")
   (property-id [this] "Property targeting this syntax rule")
   (mandatory [this] "Is the property mandatory in the node?")
   (hash [this] "Instead of expect a node or a collection of node, expect a hash using this property-id value as the key")
-  (collection [this] "Is the property value allowed to be a collection of nodes?"))
+  (collection [this] "Is the property value allowed to be a collection of nodes?")
+  (declaration [this] "Is this property a declaration"))
 
 
-(defrecord ParsedSyntaxRule [property-id mandatory hash collection]
+(defrecord ParsedSyntaxRule [syntax-label property-id mandatory hash collection declaration]
   SyntaxRule
+  (syntax-label [this] syntax-label)
   (property-id [this] property-id)
   (mandatory [this] mandatory)
   (hash [this] hash)
-  (collection [this] collection))
+  (collection [this] collection)
+  (declaration [this] declaration))
+
+
+(defprotocol DomainInstance
+  "An instance for a vocabulary class"
+  (domain-class [this] "Class for the instance")
+  (domain-properties [this] "Properties for the instance"))
+
+
+(defrecord ParsedDomainInstance [id name extends description additional-properties shape domain-class domain-properties]
+  DomainElement
+  (abstract [this] false)
+  document/Node
+  (id [this] id)
+  (name [this] name)
+  (description [this] description)
+  (sources [this] [])
+  (valid? [this] true)
+  (extends [this] extends)
+  (additional-properties [this] [])
+  Type
+  (shape [this] shape)
+  DomainInstance
+  (domain-class [this] domain-class)
+  (domain-properties [this] domain-properties))

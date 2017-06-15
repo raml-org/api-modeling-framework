@@ -3,11 +3,14 @@
   #?(:clj (:require [clojure.core.async :refer [<! >! <!! go chan] :as async]
                     [api-modeling-framework.model.syntax :as syntax]
                     [api-modeling-framework.model.document :as document]
+                    [api-modeling-framework.model.domain :as domain]
+                    [api-modeling-framework.model.vocabulary :as vocabulary]
                     [api-modeling-framework.data :as data]
                     [api-modeling-framework.resolution :as resolution]
                     [api-modeling-framework.parser.syntax.yaml :as yaml-parser]
                     [api-modeling-framework.parser.syntax.json :as json-parser]
                     [api-modeling-framework.parser.syntax.jsonld :as jsonld-parser]
+                    [api-modeling-framework.parser.document.meta :as meta-document-parser]
                     [api-modeling-framework.parser.document.raml :as raml-document-parser]
                     [api-modeling-framework.parser.document.openapi :as openapi-document-parser]
                     [api-modeling-framework.parser.document.jsonld :as jsonld-document-parser]
@@ -17,6 +20,7 @@
                     [api-modeling-framework.generators.document.raml :as raml-document-generator]
                     [api-modeling-framework.generators.document.openapi :as openapi-document-generator]
                     [api-modeling-framework.generators.document.jsonld :as jsonld-document-generator]
+                    [api-modeling-framework.utils :as utils]
                     [clojure.string :as string]
                     [api-modeling-framework.platform :as platform]
                     [clojure.walk :refer [keywordize-keys stringify-keys]]
@@ -25,10 +29,13 @@
                      [api-modeling-framework.data :as data]
                      [api-modeling-framework.model.syntax :as syntax]
                      [api-modeling-framework.model.document :as document]
+                     [api-modeling-framework.model.domain :as domain]
+                     [api-modeling-framework.model.vocabulary :as vocabulary]
                      [api-modeling-framework.resolution :as resolution]
                      [api-modeling-framework.parser.syntax.yaml :as yaml-parser]
                      [api-modeling-framework.parser.syntax.json :as json-parser]
                      [api-modeling-framework.parser.syntax.jsonld :as jsonld-parser]
+                     [api-modeling-framework.parser.document.meta :as meta-document-parser]
                      [api-modeling-framework.parser.document.raml :as raml-document-parser]
                      [api-modeling-framework.parser.document.openapi :as openapi-document-parser]
                      [api-modeling-framework.parser.document.jsonld :as jsonld-document-parser]
@@ -38,6 +45,7 @@
                      [api-modeling-framework.generators.document.raml :as raml-document-generator]
                      [api-modeling-framework.generators.document.openapi :as openapi-document-generator]
                      [api-modeling-framework.generators.document.jsonld :as jsonld-document-generator]
+                     [api-modeling-framework.utils :as utils]
                      [api-modeling-framework.platform :as platform]
                      [clojure.walk :refer [keywordize-keys stringify-keys]]
                      [clojure.string :as string]
@@ -218,6 +226,74 @@
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 
+(defn parse-vocabulary [vocabulary-path context]
+  (go (let [c (chan)
+            parser (->RAMLParser)
+            model (<! (utils/cb->chan (partial parse-file parser vocabulary-path)))
+            vocabulary-model (document-model model)]
+        (if (satisfies? document/Vocabulary vocabulary-model)
+          (reduce (fn [vocabulary-model reference]
+                    (if (satisfies? document/Vocabulary reference)
+                      (let [reference (document/vocabulary reference)
+                            properties (domain/properties reference)
+                            classes (->> (domain/classes reference)
+                                         (filter (fn [class-term]
+                                                   (not= (vocabulary/document-ns "RootDomainElement")
+                                                         (first (flatten [(document/extends class-term)]))))))
+                            old-classes (domain/classes vocabulary-model)
+                            old-properties (domain/properties vocabulary-model)]
+                        (-> vocabulary-model
+                            (assoc :classes (concat old-classes classes))
+                            (assoc :properties (concat old-properties properties))))
+                      vocabulary-model))
+                  (document/vocabulary vocabulary-model)
+                  (document/references vocabulary-model))
+          nil))))
+
+(defn parse-vocabularies [{:keys [vocabularies] :as context}]
+  (go (let [vocabularies (or vocabularies [])]
+        (debug "Parsing " (count vocabularies) " vocabularies")
+        (loop [parsed-vocabularies []
+               vocabularies (or vocabularies [])]
+          (if (empty? vocabularies)
+            parsed-vocabularies
+            (recur (let [parsed-vocabulary (<! (parse-vocabulary (first vocabularies) context))]
+                     (if (nil? parsed-vocabulary)
+                       parsed-vocabularies
+                       (conj parsed-vocabularies parsed-vocabulary)))
+                   (rest vocabularies)))))))
+
+(defrecord ^:export MetaParser []
+  Parser
+  (parse-file-sync [this uri]
+    (cb->sync (partial parse-file this uri)))
+  (parse-file-sync [this uri options]
+    (cb->sync (partial parse-file this uri options)))
+  (parse-file [this uri cb] (parse-file this uri {} cb))
+  (parse-file [this uri options cb]
+    (debug "Parsing Model file with vocabularies info")
+    (go (let [vocabularies (<! (parse-vocabularies options))
+              res (<! (yaml-parser/parse-file uri options))]
+          (if (platform/error? res)
+            (cb (platform/<-clj res) nil)
+            (try (cb nil (to-model (meta-document-parser/parse-ast res (assoc options :vocabularies vocabularies))))
+                 (catch #?(:clj Exception :cljs js/Error) ex
+                   (cb (platform/<-clj ex) nil)))))))
+  (parse-string-sync [this uri string]
+    (cb->sync (partial parse-string this uri string)))
+  (parse-string-sync [this uri string options]
+    (cb->sync (partial parse-string this uri string options)))
+  (parse-string [this uri string cb] (parse-string this uri string {} cb))
+  (parse-string [this uri string options cb]
+    (debug "Parsing Model file from string with vocabularies info")
+    (go (let [vocabularies (<! (parse-vocabularies options))
+              res (<! (yaml-parser/parse-string uri string))]
+          (if (platform/error? res)
+            (cb (platform/<-clj res) nil)
+            (try (cb nil (to-model (meta-document-parser/parse-ast res (assoc options :vocabularies vocabularies))))
+                 (catch #?(:clj Exception :cljs js/Error) ex
+                   (cb (platform/<-clj ex) nil))))))))
+
 (defrecord ^:export APIModelGenerator []
   Generator
   (generate-string-sync [this uri model options] (cb->sync (partial generate-string this uri model options)))
@@ -245,8 +321,8 @@
 
 (defn to-raml-fragment-header [fragment]
   (cond (string? fragment) fragment
-        (= fragment :fragment) "#% RAML 1.0"
-        :else                  "#% RAML 1.0"))
+        (= fragment :fragment) "#%RAML 1.0"
+        :else                  "#%RAML 1.0"))
 
 (defrecord ^:export RAMLGenerator []
   Generator

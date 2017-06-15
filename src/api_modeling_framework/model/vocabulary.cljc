@@ -1,5 +1,9 @@
 (ns api-modeling-framework.model.vocabulary)
 
+(defn meta-ns
+  ([] "http://raml.org/vocabularies/meta#")
+  ([s] (str (meta-ns) s)))
+
 (defn document-ns
   ([] "http://raml.org/vocabularies/document#")
   ([s] (str (document-ns) s)))
@@ -34,7 +38,7 @@
 
 (defn owl-ns
   ([] "http://www.w3.org/2002/07/owl#")
-  ([s] (str (xsd-ns) s)))
+  ([s] (str (owl-ns) s)))
 
 (defn rdfs-ns
   ([] "http://www.w3.org/2000/01/rdf-schema#")
@@ -43,6 +47,8 @@
 (def rdfs:subclassOf (rdfs-ns "subClassOf"))
 (def owl:Class (owl-ns "Class"))
 (def owl:Thing (owl-ns "Thing"))
+
+(def document:Vocabulary (document-ns "Vocabulary"))
 
 (def document:Document (document-ns "Document"))
 (def document:Fragment (document-ns "Fragment"))
@@ -69,6 +75,7 @@
 (def document:arguments (document-ns "arguments"))
 (def document:fragment-node (document-ns "fragmentNode"))
 (def document:additional-properties (document-ns "additionalProperties"))
+(def document:declaration-property (document-ns "declarationProperty"))
 
 (def document:abstract (document-ns "abstractDomainElement"))
 
@@ -120,3 +127,11 @@
 
 (def document:DomainProperty (document-ns "DomainProperty"))
 (def document:object (document-ns "object"))
+
+(def meta:version (meta-ns "version"))
+(def meta:dialect (meta-ns "dialect"))
+(def meta:classes (meta-ns "classes"))
+(def meta:properties (meta-ns "properties"))
+
+(def meta:vocabulary (meta-ns "vocabulary"))
+(def meta:external (meta-ns "external"))

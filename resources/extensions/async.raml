@@ -2,14 +2,19 @@
 
 base: "http://raml.org/vocabularies/async#"
 
+dialect: "RAML Async"
+
+version: "0.1"
+
 usage: Extensions for describing eventd APIs in RAML
 
 uses:
   raml-doc: ./raml_doc.raml
+  raml-http: ./raml_http.raml
 
 external:
   schema-org: "http://schema.org/"
-  raml-http: "http://raml.org/vocabularies/http#"
+  hydra: "http://www.w3.org/ns/hydra/core#"
 
 classTerms:
 
@@ -31,8 +36,6 @@ classTerms:
         hash: raml-http.path
       broker:
         mandatory: true
-      baseUri:
-        mandatory: true
 
   Bindings:
     description: Configuration options to bind the API streams to a particular transport
@@ -44,6 +47,9 @@ classTerms:
     syntax:
       rabbit_exchange: rabbitExchange
       rabbit_topic: rabbitTopic
+      base_uri:
+        term: baseUri
+        mandatory: true
 
   Stream:
     description: A source or sink of events
@@ -60,9 +66,21 @@ classTerms:
       event:
         hash: raml-http.mediaType
         mandatory: true
-      uriParameters:
+      uri_parameters:
         term: raml-http.parameter
         hash: schema-org.name
+
+    # we overwrite the syntax here
+    raml-http.Parameter:
+      syntax:
+        name: schema-org.name
+        required: hydra.required
+        schema: raml-http.schema
+
+  raml-http.Payload:
+    syntax:
+      schema: raml-http.schema
+
 
 propertyTerms:
 
