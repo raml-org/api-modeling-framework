@@ -42,7 +42,7 @@
 
 (defn rdfs-ns
   ([] "http://www.w3.org/2000/01/rdf-schema#")
-  ([s] (str (xsd-ns) s)))
+  ([s] (str (rdfs-ns) s)))
 
 (def rdfs:subclassOf (rdfs-ns "subClassOf"))
 (def owl:Class (owl-ns "Class"))
