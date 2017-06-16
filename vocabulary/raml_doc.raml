@@ -1,0 +1,127 @@
+#%RAML 1.0 Vocabulary
+
+base: "http://raml.org/vocabularies/document#"
+
+dialect: "RAML"
+
+version: "1.0"
+
+usage: Document Model vocabulary for AMF
+
+classTerms:
+
+  DomainElement:
+    displayName: Domain Element
+    description: Base class for any element describing a domain model. Domain Elements are encoded into fragments
+    properties:
+      - source
+
+  RootDomainElement:
+    displayName: Root Domain Element
+    description: Domain element that is the entrypoint for a domain description. Domain elements encoded in Documents must be RootDomainElements.
+    extends: DomainElement
+
+  SourceMap:
+    displayName: Source Map
+    description: |
+      SourceMaps include tags with syntax specific information obtained when parsing a particular specification syntax like RAML or OpenAPI.
+      It can be used to re-generate the document from the RDF model with a similar syntax
+    properties:
+      - location
+      - tag
+
+  Tag:
+    properties:
+      - tagValue
+
+  Unit:
+    displayName: Unit
+    description: |
+      Base class for every single document model unit. After parsing a document the parser generate parsing Units.
+      Units encode the domain elements and can reference other units to re-use descriptions.
+    properties:
+      - references
+
+  Fragment:
+    displayName: Fragment
+    description: A Fragment is a parsing Unit that encodes a DomainElement
+    extends: Unit
+    properties:
+      - encodes
+
+  Module:
+    displayName: Module
+    description: |
+      A Module is a parsing Unit that declares DomainElements that can be referenced from the DomainElements in other parsing Units.
+      It main purpose is to expose the declared references so they can be re-used
+    extends: Unit
+    properties:
+      - declares
+
+  Document:
+    displayName: Document
+    description: |
+      A Document is a parsing Unit that encodes a stand-alone DomainElement and can include references to other DomainElements that reference from the encoded DomainElement.
+      Since it encodes a DomainElement, but also declares references, it behaves like a Fragment and a Module at the same time.
+      The main difference is that the Document encoded DomainElement is stand-alone and that the references declared are supposed to be private not for re-use from other Units
+    extends: [Fragment, Module]
+
+  Relationship:
+    displayName: Relationship
+    description: |
+      Reified relationship between two DomainElements.
+      The type of the relationship provide the semantics about thow the referenced and referencer elements must be combined when generating the domain model from the document model.
+    extends: DomainElement
+
+  ExtendRelationship:
+    displayName: Extend Relationship
+    description: ExtendRelationship are resolved when generating the domain model for the document model by merging recursively the referenced DomainElement with the referencer DomainElement
+    extends: Relationship
+
+  IncludeRelationship:
+    displayName: Include Relationship
+    description: IncludeRelationship are resolved when generating the domain model from the document model by replacing the relationship node with the referenced DomainElement in the resulting model
+    extends: Relationship
+
+propertyTerms:
+
+  references:
+    displayName: references
+    description: |
+      The references relationship makes public that some DomainElement within this Unit includes a DomainElement within other unit. It can be used to track references between units at the document level.
+    range: DomainElement
+
+  encodes:
+    displayName: encodes
+    description: The encodes relationship links a parsing Unit with the DomainElement from a particular domain the unit contains.
+    range: DomainElement
+
+  declares:
+    displayName: declares
+    description: |
+      The declares relationship exposes a DomainElement as a re-usable unit that can be referenced from other units.
+      URIs for the declared DomainElement are considered to be stable and safe to reference from other DomainElements.
+    range: DomainElement
+
+  source:
+    displayName: source
+    description: Indicates that this parsing Unit has SourceMaps
+    range: SourceMap
+
+  location:
+    displayName: location
+    description: Dereferencable location of a particular element in the model
+    range: object
+
+  tag:
+    displayName: tag
+    description: Tags for a SourceMap
+    range: Tag
+
+  tagValue:
+    displayName: tag value
+    description: |
+      Value for the tag.
+      It is private to the parser/generator tool that build the model.
+      We make no assumptions about the type of the range
+    range: object
