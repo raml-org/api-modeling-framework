@@ -615,3 +615,267 @@ Semantics (closed world, all files)
 <types.raml#Class1Data> a sh:NodeShape ;
   sh:property <types.raml#NewClass1Data/property_1> .
 ```
+
+## Syntax
+
+Vocabularies can be used not only to describe the semantics of a domain and serialise these semantics as an OWL ontology, they can also be used to describe a syntax for the concepts contained in the ontology.
+This syntax rules can be used as a grammar to automatically generate a parser for the ontology.
+
+### Dialect settings
+
+file: dialect.raml
+
+``` yaml
+#%RAML 1.0 Vocabulary
+
+dialect: MyDialect
+
+version: 0.1
+```
+
+Vocabulary files require mandatory `dialect` and `version` properties in order to generate the parser for the associated dialect. They will be used to define the syntactical RAML declaration for the dialect.
+This is an example of a valid dialect file for example vocabulary shown before.
+
+file: dialect_example.raml
+
+``` yaml
+#%MyDialect 0.1
+```
+
+### Top level element
+
+In order to be able to parse a file, a top level file must be chosen from the vocabulary. Only one of the described classes in the vocabulary can extend `raml-doc.RootDomainElement`. It will be used as the top level node of the document:
+
+``` yaml
+#%RAML 1.0 Vocabulary
+
+dialect: MyDialect
+
+version: 0.1
+
+base: "http://mycorp.org/vocab#"
+
+uses:
+  raml-doc: ./raml_doc.raml
+
+
+classTerms:
+
+  MyClass:
+    extends: raml-doc.RootDomainElement
+```
+
+### Default mapping
+
+By default, every `Class` in the vocabulary has an associated syntactical mapping.
+In this default mapping every property declared in a class defines a property syntax rule using the compact URI for the property as the label for an optional property.
+Locally defined properties are mapped, as a consequence, as plain strings.
+Undeclared properties have an associated range of 'any' by default.
+
+File: dialect.raml
+
+``` yaml
+#%RAML 1.0 Vocabulary
+
+base: "http://mycorp.org/vocab#"
+
+uses:
+  raml-doc: ./raml_doc.raml
+
+external:
+  schema-org: "http://schema.org/"
+
+dialect: MyDialect
+
+version: 0.1
+
+classTerms:
+
+  MyClass:
+    extends: raml-doc.RootDomainElement
+    properties:
+      - myprop:
+      - schema-org.name:
+
+propertyTerms
+
+   myprop:
+     range: string
+
+```
+
+file: dialect_example.raml
+
+``` yaml
+#%MyDialect 0.1
+
+myprop: random prop string
+
+schema-org.name: My Class name
+```
+
+Semantics (open world) dialect_example.raml
+
+``` turtle
+<dialect_example.raml#/> a <http://mycorp.org/vocab#MyClass> ;
+  <http://mycorp.org/vocab#myprop> "random prop string" ;
+  <http://schema.org/name> "My Class name" .
+```
+
+Semantics (closed world) dialect_example.raml
+
+``` turtle
+```
+
+### Property syntax
+
+Certain constraints can be imposed over the syntax properties using a `syntax` mapping from property labels to syntactical rules.
+
+The syntactical rules available are the following:
+
+- `term`: property in the vocabulary for the syntactical property
+- `mandatory`: is the property mandatory in the dialect node? (default false)
+- `declaration`: the values for this property in the dialect are a mapping from object identifier to node values
+- `collection`: the values for this property can be a single value or a list of values (default false)
+- `hash`: the values for this property is a mapping from value of the `hash`property to node values, only one hash property can be defined by type of node
+
+In the following example we show how to use the `declaration` property to nest nodes by identifier name:
+
+File: dialect.raml
+
+``` yaml
+#%RAML 1.0 Vocabulary
+
+base: "http://mycorp.org/vocab#"
+
+uses:
+  raml-doc: ./raml_doc.raml
+
+dialect: MyDialect
+
+version: 0.1
+
+classTerms:
+
+  A:
+    extends: raml-doc.RootDomainElement
+    properties:
+      - myprop:
+    syntax:
+      myprop:
+        declaration: true
+
+  B:
+    properties:
+      - other
+
+
+propertyTerms
+
+   myprop:
+     range: B
+
+   other:
+     range: string
+```
+
+
+``` yaml
+#%MyDialect 0.1
+
+myprop:
+  a:
+    other: prop a
+  b:
+    other: prop b
+```
+
+``` turtle
+<dialect.raml#/> a <http://mycorp.org/vocab#A>
+                 <http://mycorp.org/vocab#myprop> <dialect.raml#/a> ;
+                 <http://mycorp.org/vocab#myprop> <dialect.raml#/b> .
+
+<dialect.raml#/a>  a <http://mycorp.org/vocab#B>
+                   <http://mycorp.org/vocab#other> "prop a" .
+<dialect.raml#/b>  a <http://mycorp.org/vocab#B>
+                   <http://mycorp.org/vocab#other> "prop b" .
+```
+
+This is an example of how to use the `hash` property declaration:
+
+
+File: dialect.raml
+
+``` yaml
+#%RAML 1.0 Vocabulary
+
+base: "http://mycorp.org/vocab#"
+
+uses:
+  raml-doc: ./raml_doc.raml
+
+dialect: MyDialect
+
+version: 0.1
+
+classTerms:
+
+  A:
+    extends: raml-doc.RootDomainElement
+    properties:
+      - myprop:
+    syntax:
+      myprop:
+        hash: other
+
+  B:
+    properties:
+      - other
+      - additional
+
+
+propertyTerms
+
+   myprop:
+     range: B
+
+   other:
+     range: string
+
+   additional:
+     range: string
+```
+
+
+``` yaml
+#%MyDialect 0.1
+
+myprop:
+  "prop 1":
+    additional: a
+  "prop 2":
+    additional: b
+```
+
+``` turtle
+<dialect.raml#/>  a <http://mycorp.org/vocab#A>;
+                  <http://mycorp.org/vocab#myprop> <dialect.raml#/prop%20a> ;
+                  <http://mycorp.org/vocab#myprop> <dialect.raml#/prop%20b> .
+
+<dialect.raml#/prop%20a>  a <http://mycorp.org/vocab#B>
+                          <http://mycorp.org/vocab#myprop> "prop a" .
+                          <http://mycorp.org/vocab#additional> "a" .
+
+<dialect.raml#/prop%20b>  a <http://mycorp.org/vocab#B>
+                          <http://mycorp.org/vocab#myprop> "prop b" ;
+                          <http://mycorp.org/vocab#additional> "b" .
+```
+
+
+### Parsing data shapes
+
+If the range of the vocabulary property is `shacl:Shape` the syntax parser will automatically parse a SHACL data shape for the assocaited syntax in the dialect
+
+### Declaring properties in the RAML Document
+
+If one property inherits from `raml-doc:declarationProperty` it can be used by the top level node to declare domain elements in the RAML Document resource.
