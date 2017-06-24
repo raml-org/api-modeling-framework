@@ -19,7 +19,7 @@
 
 (deftest parse-ast-root
   (let [node {:title "GithHub API"
-              :baseUri "api.github.com"
+              :baseUri "api.github.com:340"
               :baseUriParameters {:bucketName
                                   {:description "The name of the bucket"}}
               :version "v3"
@@ -31,7 +31,7 @@
                                             :parsed-location "file://path/to/resource.raml#"
                                             :is-fragment false})]
     (is (satisfies? domain/APIDocumentation parsed))
-    (is (= "api.github.com" (domain/host parsed)))
+    (is (= "api.github.com:340" (domain/host parsed)))
     (is (= ["http" "https"] (domain/scheme parsed)))
     (is (nil? (domain/base-path parsed)))
     (is (= ["application/json" "application/xml"] (domain/content-type parsed)))

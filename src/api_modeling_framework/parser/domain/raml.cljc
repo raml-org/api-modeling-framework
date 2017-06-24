@@ -203,7 +203,8 @@
 (defn base-uri->host [base-uri]
   (when (some? base-uri)
     (let [base-uri (if (string/index-of base-uri "://") base-uri (str "http://" base-uri))
-          {:keys [host]} (url/url base-uri)]
+          {:keys [host port]} (url/url base-uri)
+          host (if (= -1 port) host (str host ":" port))]
       host)))
 
 (defn base-uri->basepath [base-uri]
