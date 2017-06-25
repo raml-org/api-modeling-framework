@@ -655,6 +655,34 @@
                ;;(println meta-output-model)
                (done)))))
 
+(def ex (atom nil))
+(deftest integration-query
+    (async done
+         (go (let [parser (core/->RAMLParser)
+                   jsonld-generator (core/->APIModelGenerator)
+                   model (<! (cb->chan (partial core/parse-file parser "../../demos/banking/raml/api.raml")))
+                   _ (is (not (error? model)))
+                   output-model (core/document-model model)
+                   _ (is (not (error? output-model)))
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/banking-api/http/api.jsonld"
+                                                        output-model
+                                                        {:source-maps? false})))
+                   ;;output (platform/decode-json output-jsonld)
+                   parsed (<! (cb->chan (partial core/parse-string (core/->APIModelParser) "resources/blah.raml" output-jsonld)))
+                   parsed-raml (<! (cb->chan (partial core/generate-string (core/->RAMLGenerator) "resources/blah.raml" (core/document-model parsed) {})))
+                   ]
+               (swap! ex (fn [old] model))
+               (println "JSONLD")
+               (println output-jsonld)
+               (println "RAML")
+               (println parsed-raml)
+               ;;(clojure.pprint/pprint yaml-data)
+               ;;(clojure.pprint/pprint output)
+               (done)))))
+
+(clojure.pprint/pprint (core/document-model @ex))
+
+
   (deftest integration-test-tck
     (async done
          (go (let [parser (core/->RAMLParser)

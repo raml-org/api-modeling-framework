@@ -50,13 +50,15 @@
 
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
 
+(defn generate-annotation [annotation]
+  [(str "(" (document/name annotation) ")")
+   (->  annotation domain/object utils/jsonld->annotation)])
 
 (defn with-annotations [model ctx generated]
   (if (map? generated)
     (let [annotations (document/additional-properties model)
           annotations-map (->> annotations
-                               (map (fn [annotation]
-                                      [(str "(" (document/name annotation) ")") (->  annotation domain/object utils/jsonld->annotation)]))
+                               (map generate-annotation)
                                (into {}))]
       (merge generated
              annotations-map))
@@ -140,9 +142,14 @@
                                              (= false (domain/required parameter)))
                                       (let [parsed-type (if (map? parsed-type) parsed-type {:type parsed-type})]
                                         (assoc parsed-type :required (domain/required parameter)))
-                                      parsed-type)]
-                    [(keyword (document/name parameter))
-                     parsed-type])))
+                                      parsed-type)
+                        annotations (document/additional-properties parameter)]
+                    (if (and (some? annotations)
+                             (not (empty? annotations)))
+                      (let [parsed (if (map? parsed-type) parsed-type {:type parsed-type})]
+                        [(keyword (document/name parameter)) (with-annotations parameter context parsed)])
+                      [(keyword (document/name parameter))
+                       parsed-type]))))
            (into {}))))
 
 (defn merge-children-resources

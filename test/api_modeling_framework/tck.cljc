@@ -336,7 +336,7 @@
 (deftest tck-tests
   (async done
          (go
-           (doseq [[test-name files] (focus :all (enumerate-tests))]
+           (doseq [[test-name files] (focus [:annotations :test001] (enumerate-tests))]
              (println "- Testing " test-name)
              (<! (check-syntax :raml files))
              (<! (check-syntax :openapi files))

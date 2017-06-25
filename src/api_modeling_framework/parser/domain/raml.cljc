@@ -136,7 +136,7 @@
 (defn annotation? [x] (and (string/starts-with? (utils/safe-str x) "(")
                            (string/ends-with? (utils/safe-str x) ")")))
 
-(defn parse-annotation-ast [p model {:keys [annotations location]}]
+(defn parse-annotation-ast [p model {:keys [annotations parsed-location]}]
   (let [annotation-name (-> p
                             utils/safe-str
                             (string/replace #"\(" "")
@@ -145,8 +145,9 @@
                        (get annotations (keyword annotation-name)))]
     (if (nil? annotation)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find annotation " p)))
-      (->> (domain/map->ParsedDomainProperty {:id (document/id annotation)
+      (->> (domain/map->ParsedDomainProperty {:id (utils/path-join parsed-location (str "annotation/" annotation-name))
                                               :name annotation-name
+                                              :predicate (document/id annotation)
                                               :object (utils/annotation->jsonld (common/purge-ast model))})
            (clean-ast-tokens)
            (common/with-location-meta-from model)))))
@@ -185,10 +186,11 @@
                          node-parsed-source-map (generate-parse-node-sources location parsed-location)
                          required (shapes/required-property? property-name property-value)
                          property-name (shapes/final-property-name property-name property-value)
-                         property-shape (shapes/parse-type property-value (-> context
-                                                                          (assoc :location location)
-                                                                          (assoc :parsed-location parsed-location)
-                                                                          (assoc :parse-ast parse-ast)))
+                         context (-> context
+                                     (assoc :location location)
+                                     (assoc :parsed-location parsed-location)
+                                     (assoc :parse-ast parse-ast))
+                         property-shape (shapes/parse-type property-value context)
                          properties {:id parsed-location
                                      :name (utils/safe-str property-name)
                                      :sources node-parsed-source-map

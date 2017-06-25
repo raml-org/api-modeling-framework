@@ -127,6 +127,7 @@
 
 (def document:DomainProperty (document-ns "DomainProperty"))
 (def document:object (document-ns "object"))
+(def document:predicate (document-ns "predicate"))
 
 (def meta:version (meta-ns "version"))
 (def meta:dialect (meta-ns "dialect"))

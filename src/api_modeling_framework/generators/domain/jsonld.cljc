@@ -226,6 +226,7 @@
        "@type" [v/document:DomainProperty]}
       (with-node-properties m context)
       (utils/assoc-object m v/document:object domain/object identity)
+      (utils/assoc-object m v/document:predicate domain/predicate (fn [node-uri] {"@id" node-uri}))
       (utils/clean-nils)))
 
 (defmethod to-jsonld :DomainInstance [m context]

@@ -252,7 +252,7 @@
         parsed (openapi-parser/with-annotations node context model)]
     (is (= "testHarness" (-> @annotations (get "testHarness") :name)))
     (is (= {"@value" "usersTest"} (-> parsed document/additional-properties first domain/object)))
-    (is (= "http://base-uri#/x-annotationTypes/testHarness" (-> parsed document/additional-properties first document/id)))))
+    (is (= "http://base-uri#/x-annotationTypes/testHarness" (-> parsed document/additional-properties first domain/predicate)))))
 
 (deftest to-openapi-Annotations
   (let [base-uri "file://path/to/resource.openapi"
@@ -283,7 +283,7 @@
 
     (is (= "#/x-annotationTypes/testHarness" (-> parsed-operation
                                                  document/additional-properties
-                                                 first document/id)))
+                                                 first domain/predicate)))
     (is (= ["http://www.w3.org/ns/hydra/core#Operation"]
            (-> @annotations (get "testHarness") domain/domain)))
 

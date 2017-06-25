@@ -73,10 +73,12 @@
   (additional-properties [this] (or additional-properties [])))
 
 (defprotocol DomainProperty
+  (predicate [this] "id of the domain property schema")
   (object [this] "Value of the domain property"))
 
-(defrecord ParsedDomainProperty [id name description sources extends object]
+(defrecord ParsedDomainProperty [id name description sources extends predicate object]
   DomainProperty
+  (predicate [this] predicate)
   (object [this] object)
   document/Node
   (id [this] id)

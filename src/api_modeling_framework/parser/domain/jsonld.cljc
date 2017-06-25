@@ -240,6 +240,7 @@
                                        :name (utils/find-value m v/sorg:name)
                                        :description (utils/find-value m v/sorg:description)
                                        :sources parsed-sources
+                                       :predicate (utils/find-node m v/document:predicate)
                                        :object (utils/find-node m v/document:object)})))
 
 (defmethod from-jsonld nil [m]

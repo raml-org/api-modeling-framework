@@ -100,7 +100,8 @@
                             (range 0 (count objects)))]
     (if (= 0 (count parsed-object))
       nil
-      (domain/map->ParsedDomainProperty {:id (document/id property)
+      (domain/map->ParsedDomainProperty {:id (utils/path-join parsed-location (str "property/" label))
+                                         :predicate (document/id property)
                                          :object parsed-object}))))
 
 (defn parse-hash-property [node syntax-rule vocabulary {:keys [parsed-location] :as context}]

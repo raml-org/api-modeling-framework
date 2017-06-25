@@ -148,8 +148,9 @@
                                                                                                     :sources (common/generate-is-annotation-sources annotation-name schema-id (utils/path-join parsed-location annotation-name))
                                                                                                     :domain domain
                                                                                                     :range (infer-annotation-schema model (assoc context :parsed-location schema-id))}))))))
-        (->> (domain/map->ParsedDomainProperty {:id schema-id
+        (->> (domain/map->ParsedDomainProperty {:id (utils/path-join parsed-location (str "annotation/" (url/url-encode annotation-name)))
                                                 :name annotation-name
+                                                :predicate schema-id
                                                 :object (utils/annotation->jsonld model)})
              (common/with-location-meta-from model))))))
 
