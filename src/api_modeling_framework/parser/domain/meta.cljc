@@ -33,6 +33,7 @@
     (if (> (count props) 0)
       (->> (keys node)
            (filter not-annotation?)
+           (filter #(not= (utils/safe-str %) "uses"))
            (mapv (fn [prop] (some? (get props (utils/safe-str prop)))))
            (reduce (fn [acc v] (and acc v)) true))
       false)))
@@ -58,7 +59,9 @@
 (defn parse-datatype [range  object]
   (condp = range
     "string" (if (string? object) object (datatype-error "string" object))
-    "integer" (if (number? object) object (datatype-error "number" object))
+    (v/xsd-ns "integer") (platform/->int object)
+    "integer" (platform/->int object)
+    (v/xsd-ns "float") (if (number? object) object (datatype-error "number" object))
     "float" (if (number? object) object (datatype-error "number" object))
     "boolean" (if (or (= true object) (= false object)) object (datatype-error "boolean" object))
     object))

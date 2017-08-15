@@ -114,7 +114,7 @@
          {:id location
           :encodes (domain-parser/parse-ast vocabulary (syntax/<-data node) context)
           :declares (vals declarations)
-          :document-type (str "#%" (domain/dialect vocabulary) " " (domain/version vocabulary))}))))
+          :document-type (str "#%" (domain/dialect vocabulary) " " (domain/vocabulary-version vocabulary))}))))
 
 (defn parse-fragment [vocabulary node context]
   ;;(domain-parser/parse-ast vocabulary node context)
@@ -130,7 +130,7 @@
   (let [found-vocabulary (->> vocabularies
                               (filter (fn [vocabulary]
                                         (and (not (nil? (string/index-of fragment (domain/dialect vocabulary))))
-                                             (not (nil? (string/index-of fragment (domain/version vocabulary)))))))
+                                             (not (nil? (string/index-of fragment (domain/vocabulary-version vocabulary)))))))
                               first)]
     (if (nil? found-vocabulary)
       (throw (new #?(:clj Exception :cljs js/Error)
@@ -139,7 +139,7 @@
 
 (defn parse-doc-type [vocabulary fragment]
   (let [fragment (string/replace fragment " " "")
-        parts (string/split fragment (re-pattern (domain/version vocabulary)))
+        parts (string/split fragment (re-pattern (domain/vocabulary-version vocabulary)))
         suffix (if (= 2 (count parts))
                  (last parts)
                  nil)]

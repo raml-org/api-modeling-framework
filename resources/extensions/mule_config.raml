@@ -1,0 +1,56 @@
+#%RAML 1.0 Vocabulary
+
+base: "http://mulesoft.com/vocabularies/muleconfig#"
+
+dialect: ConfigurationProperties
+
+version: 1.0
+
+usage: This vocabulary defines the vision of how configuration values can be injected/customized in a mule artifact (application, domain, policy, etc). Specific features will be targeted to an specific runtime release.
+
+use:
+  raml-doc: "./raml_doc.raml"
+
+external:
+  schema-org: "http://schema.org/"
+
+classTerms:
+
+  MuleConfig:
+    displayName: Mule Configuration
+    description: Set of properties for a Mule application
+    extends: raml-doc.RootDomainElement
+    properties:
+      - schema-org.name
+      - schema-org.description
+      - timeouts
+    syntax:
+      displayName: schema-org.name
+      description: schema-org.description
+
+  Timeouts:
+    displayName: Timeouts Configuration
+    description: Different types of timeouts for a Mule application
+    extends: raml-doc.DomainElement
+    properties:
+      - http-request-timeout
+      - http-listener-timeout
+    syntax:
+      httpRequestTimeout:
+        term: http-request-timeout
+        mandatory: true
+      httpListenerTimeout:
+        term: http-listener-timeout
+        default: 100
+
+propertyTerms:
+
+  http-request-timeout:
+    displayName: HTTP External Requests Timeout
+    description: The timeout to use for HTTP requests made to external services
+    range: integer
+
+  http-listener-timeout:
+    displayName: HTTP client timeout
+    description: The timeout to use by HTTP clients
+    range: integer

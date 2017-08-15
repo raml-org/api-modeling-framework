@@ -35,7 +35,7 @@
 
 (defmethod to-jsonld :document [m source-maps?]
   (debug "Generating Document")
-  (->> {"@id" (document/id m)
+  (->> {"@id" (or (:id m) (document/id m))
         "@type" [v/document:Document
                  v/document:Fragment
                  v/document:Module

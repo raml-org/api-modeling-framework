@@ -244,7 +244,7 @@
               parsed-values (cond
                               (map? first-object)      (mapv #(to-jsonld % context) all-objects)
                               :else                    all-objects)]
-          (recur (assoc domain-instance (document/id next-prop) parsed-values)
+          (recur (assoc domain-instance (domain/predicate next-prop) parsed-values)
                  (rest properties)))))))
 
 (defmethod to-jsonld :Vocabulary [m context]

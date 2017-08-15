@@ -655,6 +655,42 @@
                ;;(println meta-output-model)
                (done)))))
 
+(deftest mule-config-test
+  (async done
+         (go (let [parser (core/->RAMLParser)
+                   model (<! (cb->chan (partial core/parse-file parser "resources/extensions/mule_config.raml")))
+                   output-model (core/document-model model)
+                   ;;classes (domain/classes (document/vocabulary output-model))
+                   ;;properties (domain/properties (document/vocabulary output-model))
+                   ;;base (domain/base (document/vocabulary output-model))
+                   generator (core/->RAMLGenerator)
+                   raml-string(<! (cb->chan (partial core/generate-string generator "resources/extensions/raml_mule_config.raml"
+                                                     output-model
+                                                     {})))
+                   jsonld-generator (core/->APIModelGenerator)
+                   output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/extensions/mule_config.jsonld"
+                                                        output-model
+                                                        {:source-maps? false})))
+
+                   meta-parser (core/->MetaParser)
+                   meta-model (<! (cb->chan (partial core/parse-file meta-parser "resources/extensions/config1.raml"
+                                                     {:vocabularies ["resources/extensions/mule_config.raml"]})))
+                   _ (prn meta-model)
+                   meta-output-model (core/document-model meta-model)
+                   meta-output-jsonld (<! (cb->chan (partial core/generate-string jsonld-generator "resources/extensions/config1.jsonld"
+                                                             meta-output-model
+                                                             {:source-maps? false})))]
+               (println "\n\n\n")
+               (println output-jsonld)
+               (println "\n\n\n")
+               (println raml-string)
+               (println "\n\n\n")
+               (println meta-output-jsonld)
+               ;;(println "\n\n\n")
+               ;;(println meta-output-model)
+               (done)))))
+
+
 (def ex (atom nil))
 (deftest integration-query
     (async done
