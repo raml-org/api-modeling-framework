@@ -1,4 +1,4 @@
-#%RAML 1.0 Vocabulary
+#%RAML Vocabulary 0.1
 
 base: "http://raml.org/vocabularies/http#"
 
@@ -8,8 +8,8 @@ version: "1.0"
 
 usage: HTTP APIs vocabulary for AMF
 
-use:
-  raml-doc: "./raml_doc.raml"
+uses:
+   raml-doc: "./raml_doc.raml"
 
 external:
   schema-org: "http://schema.org/"
@@ -17,7 +17,7 @@ external:
   shacl: "http://www.w3.org/ns/shacl#"
 
 classTerms:
-
+  shacl.Shape:
   schema-org.WebAPI:
     displayName: Web API
     description: Top level element describing a HTTP API
@@ -200,12 +200,12 @@ propertyTerms:
   hydra.expects:
     name: expects
     description: Request information required by the operation
-    range: Request
+    range: hydra.Request
 
   hydra.returns:
     name: returns
     description: Response data returned by the operation
-    range: Response
+    range: hydra.Response
 
   statusCode:
     description: HTTP status code returned by a response
