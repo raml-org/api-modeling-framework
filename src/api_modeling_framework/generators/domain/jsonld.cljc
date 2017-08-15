@@ -3,10 +3,7 @@
             [api-modeling-framework.model.document :as document]
             [api-modeling-framework.model.domain :as domain]
             [api-modeling-framework.utils :as utils]
-            [api-modeling-framework.platform :as platform]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [api-modeling-framework.platform :as platform]))
 
 (defn to-jsonld-dispatch-fn [model context]
   (cond
@@ -84,7 +81,7 @@
 
 
 (defmethod to-jsonld :APIDocumentation [m context]
-  (debug "Generating APIDocumentation " (document/id m))
+  (utils/debug "Generating APIDocumentation " (document/id m))
   (-> {"@type" [v/http:APIDocumentation
                 v/document:DomainElement]}
       (with-node-properties m context)
@@ -102,7 +99,7 @@
       (utils/clean-nils)))
 
 (defmethod to-jsonld :EndPoint [m context]
-  (debug "Generating EndPoint " (document/id m))
+  (utils/debug "Generating EndPoint " (document/id m))
   (-> {"@type" [v/http:EndPoint
                 v/document:DomainElement]}
        (with-node-properties m context)
@@ -113,7 +110,7 @@
        utils/clean-nils))
 
 (defmethod to-jsonld :Operation [m context]
-  (debug "Generating Operation " (document/id m))
+  (utils/debug "Generating Operation " (document/id m))
   (-> {"@type" [v/hydra:Operation
                 v/document:DomainElement]}
       (with-node-properties m context)
@@ -127,7 +124,7 @@
       utils/clean-nils))
 
 (defmethod to-jsonld :Response [m context]
-  (debug "Generating Response " (document/id m))
+  (utils/debug "Generating Response " (document/id m))
   (-> {"@type" [v/http:Response
                 v/document:DomainElement]}
       (with-node-properties m context)
@@ -136,7 +133,7 @@
       utils/clean-nils))
 
 (defmethod to-jsonld :Request [m context]
-  (debug "Generating Request " (document/id m))
+  (utils/debug "Generating Request " (document/id m))
   (let [headers (map #(to-jsonld % context) (or (domain/headers m) []))
         request (-> {"@type" [v/http:Request
                               v/document:DomainElement]}
@@ -151,7 +148,7 @@
       (assoc request v/http:parameter all-params))))
 
 (defmethod to-jsonld :Parameter [m context]
-  (debug "Generating Parameter " (document/id m))
+  (utils/debug "Generating Parameter " (document/id m))
   (-> {"@type" [v/http:Parameter
                 v/document:DomainElement]}
       (with-node-properties m context)
@@ -161,7 +158,7 @@
       utils/clean-nils))
 
 (defmethod to-jsonld :Payload [m context]
-  (debug "Generating Payload " (document/id m))
+  (utils/debug "Generating Payload " (document/id m))
   (-> {"@type" [v/http:Payload
                 v/document:DomainElement]}
       (with-node-properties m context)
@@ -170,14 +167,14 @@
       utils/clean-nils))
 
 (defmethod to-jsonld :Type [m context]
-  (debug "Generating Type " (document/id m))
+  (utils/debug "Generating Type " (document/id m))
   (let [shape (domain/shape m)]
     (if (nil?  (get shape v/sorg:name))
       (utils/assoc-value shape m v/sorg:name document/name)
       shape)))
 
 (defmethod to-jsonld :Extends [m context]
-  (debug "Generating Extends " (document/id m))
+  (utils/debug "Generating Extends " (document/id m))
   (-> {"@id" (document/id m)
        "@type" [v/document:ExtendRelationship]}
       (with-node-properties m context)
@@ -187,7 +184,7 @@
       ))
 
 (defmethod to-jsonld :Includes [m context]
-  (debug "Generating Includes " (document/id m))
+  (utils/debug "Generating Includes " (document/id m))
   (-> {"@id" (document/id m)
        "@type" [v/document:IncludeRelationship]}
       (with-node-properties m context)
@@ -195,7 +192,7 @@
       (utils/assoc-value m v/document:label document/label)))
 
 (defmethod to-jsonld :SourceMap [m {:keys [source-maps?]}]
-  (debug "Generating SourceMap" (document/id m))
+  (utils/debug "Generating SourceMap" (document/id m))
   (->> {"@id" (document/id m)
         "@type" [v/document:SourceMap]
         v/document:location [{"@id" (document/source m)}]
@@ -203,7 +200,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :Tag [m {:keys [source-maps?]}]
-  (debug "Generating Tag" (document/id m))
+  (utils/debug "Generating Tag" (document/id m))
   (->> {"@id" (document/id m)
         "@type" [v/document:Tag]
         v/document:tag-id [{"@value" (document/tag-id m)}]
@@ -211,7 +208,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :DomainPropertySchema [m context]
-  (debug "Generating DomainPropertySchema" (document/id m))
+  (utils/debug "Generating DomainPropertySchema" (document/id m))
   (-> {"@id" (document/id m)
        "@type" [v/document:DomainPropertySchema]}
       (with-node-properties m context)
@@ -221,7 +218,7 @@
 
 
 (defmethod to-jsonld :DomainProperty [m context]
-  (debug "Generating DomainProperty" (document/id m))
+  (utils/debug "Generating DomainProperty" (document/id m))
   (-> {"@id" (document/id m)
        "@type" [v/document:DomainProperty]}
       (with-node-properties m context)
@@ -230,7 +227,7 @@
       (utils/clean-nils)))
 
 (defmethod to-jsonld :DomainInstance [m context]
-  (debug "Generating DomainInstance" (document/id m))
+  (utils/debug "Generating DomainInstance" (document/id m))
   (if (some? (domain/shape m))
     (domain/shape m)
     (loop [domain-instance  {"@id" (document/id m)

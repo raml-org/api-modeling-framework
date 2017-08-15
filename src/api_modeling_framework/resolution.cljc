@@ -3,10 +3,7 @@
             [api-modeling-framework.model.document :as document]
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.model.vocabulary :as v]
-            [clojure.string :as string]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.string :as string]))
 
 (defn ensure-encoded-fragment [x]
   (try (document/encodes x)
@@ -154,7 +151,7 @@
                      :else                                       :unknown)]
     dispatched))
 
-(defmulti resolve (fn [model ctx] (resolve-dispatch-fn model ctx)))
+(defmulti resolve-domain-element (fn [model ctx] (resolve-dispatch-fn model ctx)))
 
 (defn extended-included-fragment [x fragments]
   (if-let [extends (first (document/extends x))]
@@ -172,7 +169,7 @@
 
 (defn ensure-applied-fragment [x {:keys [fragments] :as ctx}]
   (if-let [fragment (extended-included-fragment x fragments)]
-    (resolve (merge-declaration (assoc x :extends nil) fragment) ctx)
+    (resolve-domain-element (merge-declaration (assoc x :extends nil) fragment) ctx)
     x))
 
 (defn compute-path [model ctx]
@@ -202,7 +199,7 @@
     (->> (concat headers base-headers)
          (reduce (fn [acc h] (assoc acc (document/name h) h)) {})
          vals
-         (mapv #(resolve % ctx)))))
+         (mapv #(resolve-domain-element % ctx)))))
 
 (defn compute-accepts [model ctx]
   (let [api-documentation (get ctx domain/APIDocumentation)
@@ -238,13 +235,13 @@
          (mapv (fn [shape] [(get shape "@id") shape]))
          (into {}))))
 
-(defmethod resolve :Document [model ctx]
-  (debug "Resolving Document " (document/id model))
+(defmethod resolve-domain-element :Document [model ctx]
+  (utils/debug "Resolving Document " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         fragments (->> (document/references model)
                        (mapv (fn [fragment]
                                [(document/location fragment) (ensure-encoded-fragment
-                                                              (resolve fragment ctx))]))
+                                                              (resolve-domain-element fragment ctx))]))
                        (into {}))
         library-declarations (->> (document/references model)
                                   (filter #(satisfies? document/Module %))
@@ -256,7 +253,7 @@
                                   library-declarations)
                           (mapv (fn [declaration]
                                   [(document/id declaration) (ensure-encoded-fragment
-                                                              (resolve declaration (-> ctx
+                                                              (resolve-domain-element declaration (-> ctx
                                                                                        (assoc :fragments fragments)
                                                                                        (assoc :document model)
                                                                                        (assoc :types types-fragments)
@@ -264,20 +261,20 @@
                           (into {}))]
     (-> model
         (assoc :resolved true)
-        (assoc :encodes (resolve (document/encodes model) (-> ctx
+        (assoc :encodes (resolve-domain-element (document/encodes model) (-> ctx
                                                               (assoc :document model)
                                                               (assoc :declarations declarations)
                                                               (assoc :fragments fragments)
                                                               (assoc :types (compute-types (vals fragments) (vals declarations)))))))))
 
 
-(defmethod resolve document/Fragment [model ctx]
-  (debug "Resolving Fragment " (document/id model))
+(defmethod resolve-domain-element document/Fragment [model ctx]
+  (utils/debug "Resolving Fragment " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         fragments (->> (document/references model)
                        (mapv (fn [fragment]
                                [(document/location fragment) (ensure-encoded-fragment
-                                                              (resolve fragment ctx))]))
+                                                              (resolve-domain-element fragment ctx))]))
                        (into {}))
         library-declarations (->> (document/references model)
                                   (filter #(satisfies? document/Module %))
@@ -286,17 +283,17 @@
                                   (apply concat))]
     (-> model
         (assoc :resolved true)
-        (assoc :encodes (resolve (document/encodes model) (-> ctx
+        (assoc :encodes (resolve-domain-element (document/encodes model) (-> ctx
                                                               (assoc :document model)
                                                               (assoc :fragments fragments)
                                                               (assoc :declarations library-declarations)
                                                               (assoc :types (compute-types fragments []))))))))
 
 
-(defmethod resolve domain/APIDocumentation [model ctx]
-  (debug "Resolving APIDocumentation " (document/id model))
+(defmethod resolve-domain-element domain/APIDocumentation [model ctx]
+  (utils/debug "Resolving APIDocumentation " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
-        endpoints (mapv #(resolve % (-> ctx (assoc domain/APIDocumentation model))) (domain/endpoints model))]
+        endpoints (mapv #(resolve-domain-element % (-> ctx (assoc domain/APIDocumentation model))) (domain/endpoints model))]
     (domain/map->ParsedAPIDocumentation
      (-> {:id (document/id model)
           :name (document/name model)
@@ -305,14 +302,14 @@
           :endpoints endpoints}
          utils/clean-nils))))
 
-(defmethod resolve domain/EndPoint [model ctx]
-  (debug "Resolving EndPoint " (document/id model))
+(defmethod resolve-domain-element domain/EndPoint [model ctx]
+  (utils/debug "Resolving EndPoint " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         traits (or (document/extends model) [])
         operations (->> (domain/supported-operations model)
                         (mapv #(let [op-traits (:extends %)]
                                  (assoc % :extends (concat op-traits traits))))
-                        (mapv #(resolve % (-> ctx (assoc domain/EndPoint model)))))]
+                        (mapv #(resolve-domain-element % (-> ctx (assoc domain/EndPoint model)))))]
     (domain/map->ParsedEndPoint
      (-> {:id (document/id model)
           :name (document/name model)
@@ -320,19 +317,19 @@
           :supported-operations operations}
          utils/clean-nils))))
 
-(defmethod resolve domain/Operation [model ctx]
-  (debug "Resolving Operation " (document/id model))
+(defmethod resolve-domain-element domain/Operation [model ctx]
+  (utils/debug "Resolving Operation " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx domain/Operation model)
         ;; we need to merge traits before resolving the resulting structure
-        traits (mapv #(resolve % ctx) (document/extends model))
+        traits (mapv #(resolve-domain-element % ctx) (document/extends model))
         model (reduce (fn [acc trait]
                         (merge-declaration acc trait))
                       model traits)
         ;; reset the ctx after merging traits
         ctx (assoc ctx domain/Operation model)
-        request (resolve (domain/request model) ctx)
-        responses (mapv #(resolve % ctx) (domain/responses model))]
+        request (resolve-domain-element (domain/request model) ctx)
+        responses (mapv #(resolve-domain-element % ctx) (domain/responses model))]
     (domain/map->ParsedOperation
      (-> {:id (document/id model)
           :name (document/name model)
@@ -344,13 +341,13 @@
           :content-type (compute-content-type model ctx)}
          utils/clean-nils))))
 
-(defmethod resolve :Request [model ctx]
-  (debug "Resolving Request " (document/id model))
+(defmethod resolve-domain-element :Request [model ctx]
+  (utils/debug "Resolving Request " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx :Request model)
-        parameters (mapv #(resolve % ctx) (domain/parameters model))
+        parameters (mapv #(resolve-domain-element % ctx) (domain/parameters model))
         headers (compute-headers model ctx)
-        payloads (map #(resolve % ctx) (domain/payloads model))]
+        payloads (map #(resolve-domain-element % ctx) (domain/payloads model))]
     (domain/map->ParsedRequest
      (-> {:id (document/id model)
           :name (document/name model)
@@ -359,8 +356,8 @@
           :payloads payloads}
          utils/clean-nils))))
 
-(defmethod resolve domain/Parameter [model ctx]
-  (debug "Resolving Parameter " (document/id model))
+(defmethod resolve-domain-element domain/Parameter [model ctx]
+  (utils/debug "Resolving Parameter " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx domain/Parameter model)
         shape (domain/shape model)] ;; @todo we need to compute the canonical form of the shape
@@ -369,23 +366,23 @@
           :name (document/name model)
           :parameter-kind (domain/parameter-kind model)
           :required (domain/required model)
-          :shape (resolve shape ctx)}
+          :shape (resolve-domain-element shape ctx)}
          utils/clean-nils))))
 
-(defmethod resolve domain/Type [model ctx]
-  (debug "Resolving Type " (document/id model))
+(defmethod resolve-domain-element domain/Type [model ctx]
+  (utils/debug "Resolving Type " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         shape (domain/shape model)] ;; @todo we need to compute the canonical form of the shape
     (domain/map->ParsedType
      (-> {:id (document/id model)
           :name (document/name model)
-          :shape (resolve shape ctx)}))))
+          :shape (resolve-domain-element shape ctx)}))))
 
-(defmethod resolve domain/Response [model ctx]
-  (debug "Resolving Response " (document/id model))
+(defmethod resolve-domain-element domain/Response [model ctx]
+  (utils/debug "Resolving Response " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx domain/Response model)
-        payloads (map #(resolve % ctx) (domain/payloads model))]
+        payloads (map #(resolve-domain-element % ctx) (domain/payloads model))]
     (domain/map->ParsedResponse
      (-> {:id (document/id model)
           :name (document/name model)
@@ -394,7 +391,7 @@
           :headers (compute-headers model ctx)}
          utils/clean-nils))))
 
-(defmethod resolve domain/Payload [model ctx]
+(defmethod resolve-domain-element domain/Payload [model ctx]
   (let [model (ensure-applied-fragment model ctx)
         ctx (assoc ctx domain/Parameter model)
         schema (domain/schema model)]
@@ -402,11 +399,11 @@
      (-> {:id (document/id model)
           :name (document/name model)
           :media-type (domain/media-type model)
-          :schema (resolve schema ctx)}
+          :schema (resolve-domain-element schema ctx)}
          utils/clean-nils))))
 
-(defmethod resolve document/Includes [model {:keys [fragments declarations] :as ctx}]
-  (debug "Resolving Includes " (document/id model))
+(defmethod resolve-domain-element document/Includes [model {:keys [fragments declarations] :as ctx}]
+  (utils/debug "Resolving Includes " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         fragment-target (document/target model)
         fragment (get fragments fragment-target)
@@ -414,10 +411,10 @@
         fragment (or fragment declaration)]
     (if (nil? fragment)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " (document/target model) " in include relationship " (document/id model))))
-      (resolve fragment ctx))))
+      (resolve-domain-element fragment ctx))))
 
-(defmethod resolve document/Extends [model {:keys [declarations fragments] :as ctx}]
-  (debug "Resolving Extends " (document/id model))
+(defmethod resolve-domain-element document/Extends [model {:keys [declarations fragments] :as ctx}]
+  (utils/debug "Resolving Extends " (document/id model))
   (let [model (ensure-applied-fragment model ctx)
         ;; fragment can be in a declaration, for example a trait
         fragment-extended (get declarations (document/target model))
@@ -426,14 +423,14 @@
         fragment (or fragment-extended fragment-extended-included)]
     (if (nil? fragment)
       (throw (new #?(:clj Exception :cljs js/Error) (str "Cannot find fragment " (document/target model) " in extend relationship " (document/id model))))
-      (resolve fragment ctx))))
+      (resolve-domain-element fragment ctx))))
 
-(defmethod resolve nil [_ _]
-  (debug "Resolving nil value ")
+(defmethod resolve-domain-element nil [_ _]
+  (utils/debug "Resolving nil value ")
   nil)
 
-(defmethod resolve :unknown [m _]
-  (debug "Resolving nil value")m)
+(defmethod resolve-domain-element :unknown [m _]
+  (utils/debug "Resolving nil value")m)
 
 (defn scalar-type? [type] (->> type
                                (get type "@type")
@@ -527,6 +524,6 @@
     ;;(println "\n\n")
     final))
 
-(defmethod resolve :Type [m ctx]
-  (debug "Resolving type " (get m "@id"))
+(defmethod resolve-domain-element :Type [m ctx]
+  (utils/debug "Resolving type " (get m "@id"))
   (resolve-type m ctx))

@@ -1,62 +1,30 @@
 (ns api-modeling-framework.core
-  #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
-  #?(:clj (:require [clojure.core.async :refer [<! >! <!! go chan] :as async]
-                    [api-modeling-framework.model.syntax :as syntax]
-                    [api-modeling-framework.model.document :as document]
-                    [api-modeling-framework.model.domain :as domain]
-                    [api-modeling-framework.model.vocabulary :as vocabulary]
-                    [api-modeling-framework.data :as data]
-                    [api-modeling-framework.resolution :as resolution]
-                    [api-modeling-framework.parser.syntax.yaml :as yaml-parser]
-                    [api-modeling-framework.parser.syntax.json :as json-parser]
-                    [api-modeling-framework.parser.syntax.jsonld :as jsonld-parser]
-                    [api-modeling-framework.parser.document.meta :as meta-document-parser]
-                    [api-modeling-framework.parser.document.raml :as raml-document-parser]
-                    [api-modeling-framework.parser.document.openapi :as openapi-document-parser]
-                    [api-modeling-framework.parser.document.jsonld :as jsonld-document-parser]
-                    [api-modeling-framework.generators.syntax.yaml :as yaml-generator]
-                    [api-modeling-framework.generators.syntax.json :as json-generator]
-                    [api-modeling-framework.generators.syntax.jsonld :as jsonld-generator]
-                    [api-modeling-framework.generators.document.raml :as raml-document-generator]
-                    [api-modeling-framework.generators.document.openapi :as openapi-document-generator]
-                    [api-modeling-framework.generators.document.jsonld :as jsonld-document-generator]
-                    [api-modeling-framework.utils :as utils]
-                    [clojure.string :as string]
-                    [api-modeling-framework.platform :as platform]
-                    [clojure.walk :refer [keywordize-keys stringify-keys]]
-                    [taoensso.timbre :as timbre :refer [debug]]))
-  #?(:cljs (:require [cljs.core.async :refer [<! >! chan] :as async]
-                     [api-modeling-framework.data :as data]
-                     [api-modeling-framework.model.syntax :as syntax]
-                     [api-modeling-framework.model.document :as document]
-                     [api-modeling-framework.model.domain :as domain]
-                     [api-modeling-framework.model.vocabulary :as vocabulary]
-                     [api-modeling-framework.resolution :as resolution]
-                     [api-modeling-framework.parser.syntax.yaml :as yaml-parser]
-                     [api-modeling-framework.parser.syntax.json :as json-parser]
-                     [api-modeling-framework.parser.syntax.jsonld :as jsonld-parser]
-                     [api-modeling-framework.parser.document.meta :as meta-document-parser]
-                     [api-modeling-framework.parser.document.raml :as raml-document-parser]
-                     [api-modeling-framework.parser.document.openapi :as openapi-document-parser]
-                     [api-modeling-framework.parser.document.jsonld :as jsonld-document-parser]
-                     [api-modeling-framework.generators.syntax.yaml :as yaml-generator]
-                     [api-modeling-framework.generators.syntax.json :as json-generator]
-                     [api-modeling-framework.generators.syntax.jsonld :as jsonld-generator]
-                     [api-modeling-framework.generators.document.raml :as raml-document-generator]
-                     [api-modeling-framework.generators.document.openapi :as openapi-document-generator]
-                     [api-modeling-framework.generators.document.jsonld :as jsonld-document-generator]
-                     [api-modeling-framework.utils :as utils]
-                     [api-modeling-framework.platform :as platform]
-                     [clojure.walk :refer [keywordize-keys stringify-keys]]
-                     [clojure.string :as string]
-                     [taoensso.timbre :as timbre :refer-macros [debug]])))
+  (:require [clojure.core.async :refer [<! >! <!! go chan] :as async]
+            [api-modeling-framework.model.syntax :as syntax]
+            [api-modeling-framework.model.document :as document]
+            [api-modeling-framework.model.domain :as domain]
+            [api-modeling-framework.model.vocabulary :as vocabulary]
+            [api-modeling-framework.data :as data]
+            [api-modeling-framework.resolution :as resolution]
+            [api-modeling-framework.parser.syntax.yaml :as yaml-parser]
+            [api-modeling-framework.parser.syntax.json :as json-parser]
+            [api-modeling-framework.parser.syntax.jsonld :as jsonld-parser]
+            [api-modeling-framework.parser.document.meta :as meta-document-parser]
+            [api-modeling-framework.parser.document.raml :as raml-document-parser]
+            [api-modeling-framework.parser.document.openapi :as openapi-document-parser]
+            [api-modeling-framework.parser.document.jsonld :as jsonld-document-parser]
+            [api-modeling-framework.generators.syntax.yaml :as yaml-generator]
+            [api-modeling-framework.generators.syntax.json :as json-generator]
+            [api-modeling-framework.generators.syntax.jsonld :as jsonld-generator]
+            [api-modeling-framework.generators.document.raml :as raml-document-generator]
+            [api-modeling-framework.generators.document.openapi :as openapi-document-generator]
+            [api-modeling-framework.generators.document.jsonld :as jsonld-document-generator]
+            [api-modeling-framework.utils :as utils]
+            [clojure.string :as string]
+            [api-modeling-framework.platform :as platform]
+            [clojure.walk :refer [keywordize-keys stringify-keys]]))
 
 (defn -registerInterface [] nil)
-
-#?(:cljs (set! *main-cli-fn* -registerInterface))
-
-#?(:cljs (defn ^:export fromClj [x] (clj->js x)))
-#?(:cljs (defn ^:export toClj [x] (js->clj x)))
 
 (declare to-model)
 
@@ -119,26 +87,13 @@
   (generate-string-sync [this uri model options])
   (generate-file-sync [this uri model options]))
 
-#?(:cljs (defprotocol DomainBuilder
-           (^:export build [this constructor args])
-           (^:export update [this instance prop value])))
-
-#?(:cljs (defrecord ^:export JSDomainBuilder []
-             DomainBuilder
-           (build [this constructorFn id]
-             (constructorFn {:id id}))
-           (update [this instance prop value]
-             (assoc instance prop value))))
-
-
 (defn cb->sync [f]
-  #?(:cljs (throw (js/Error "Synchronous version not supported"))
-     :clj (<!! (let [c (chan)]
-                 (f (fn [e res]
-                      (go (if (some? e)
-                            (>! c e)
-                            (>! c res)))))
-                 c))))
+  (<!! (let [c (chan)]
+         (f (fn [e res]
+              (go (if (some? e)
+                    (>! c e)
+                    (>! c res)))))
+         c)))
 
 (defrecord ^:export RAMLParser []
   Parser
@@ -205,7 +160,6 @@
     (cb->sync (partial parse-file this uri options)))
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
-    (debug "Parsing APIModel file")
     (go (let [res (<! (jsonld-parser/parse-file uri))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
@@ -218,7 +172,7 @@
     (cb->sync (partial parse-string this uri string options)))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
-    (debug "Parsing APIModel string")
+    (utils/debug "Parsing APIModel string")
     (go (let [res (<! (jsonld-parser/parse-string uri string))]
           (if (platform/error? res)
             (cb (platform/<-clj res) nil)
@@ -252,7 +206,7 @@
 
 (defn parse-vocabularies [{:keys [vocabularies] :as context}]
   (go (let [vocabularies (or vocabularies [])]
-        (debug "Parsing " (count vocabularies) " vocabularies")
+        (utils/debug "Parsing " (count vocabularies) " vocabularies")
         (loop [parsed-vocabularies []
                vocabularies (or vocabularies [])]
           (if (empty? vocabularies)
@@ -271,7 +225,7 @@
     (cb->sync (partial parse-file this uri options)))
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
-    (debug "Parsing Model file with vocabularies info")
+    (utils/debug "Parsing Model file with vocabularies info")
     (go (let [vocabularies (<! (parse-vocabularies options))
               res (<! (yaml-parser/parse-file uri options))]
           (if (platform/error? res)
@@ -285,7 +239,7 @@
     (cb->sync (partial parse-string this uri string options)))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
-    (debug "Parsing Model file from string with vocabularies info")
+    (utils/debug "Parsing Model file from string with vocabularies info")
     (go (let [vocabularies (<! (parse-vocabularies options))
               res (<! (yaml-parser/parse-string uri string))]
           (if (platform/error? res)
@@ -299,7 +253,7 @@
   (generate-string-sync [this uri model options] (cb->sync (partial generate-string this uri model options)))
   (generate-file-sync [this uri model options] (cb->sync (partial generate-file this uri model options)))
   (generate-string [this uri model options cb]
-    (debug "Generating APIModel string")
+    (utils/debug "Generating APIModel string")
     (go (try (let [options (keywordize-keys options)
                    res (-> model
                            (pre-process-model)
@@ -309,7 +263,7 @@
              (catch #?(:clj Exception :cljs js/Error) ex
                (cb (platform/<-clj ex) nil)))))
   (generate-file [this uri model options cb]
-    (debug "Generating APIModel file")
+    (utils/debug "Generating APIModel file")
     (go (let [options (keywordize-keys options)
               res (-> model
                       (pre-process-model)
@@ -329,7 +283,7 @@
   (generate-string-sync [this uri model options] (cb->sync (partial generate-string this uri model options)))
   (generate-file-sync [this uri model options] (cb->sync (partial generate-file this uri model options)))
   (generate-string [this uri model options cb]
-    (debug "Generating RAML string")
+    (utils/debug "Generating RAML string")
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                                    {:location uri
                                                     :syntax :raml}))
@@ -342,7 +296,7 @@
             (catch #?(:clj Exception :cljs js/Error) ex
               (cb (platform/<-clj ex) nil)))))
   (generate-file [this uri model options cb]
-    (debug "Generating RAML file")
+    (utils/debug "Generating RAML file")
     (go (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                               {:location uri
                                                :syntax :raml}))
@@ -360,7 +314,7 @@
   (generate-string-sync [this uri model options] (cb->sync (partial generate-string this uri model options)))
   (generate-file-sync [this uri model options] (cb->sync (partial generate-file this uri model options)))
   (generate-string [this uri model options cb]
-    (debug "Generating OpenAPI string")
+    (utils/debug "Generating OpenAPI string")
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                                    {:location uri
                                                     :syntax :openapi}))
@@ -373,7 +327,7 @@
              (catch #?(:clj Exception :cljs js/Error) ex
                (cb (platform/<-clj ex) nil)))))
   (generate-file [this uri model options cb]
-    (debug "Generating OpenAPI file")
+    (utils/debug "Generating OpenAPI file")
     (go (let [options (keywordize-keys (merge (or (platform/->clj options) {})
                                               {:location uri
                                                :syntax :openapi}))
@@ -456,7 +410,7 @@
          (domain-model [_]
            (if (some? @domain-cache)
              @domain-cache
-             (let [res (resolution/resolve res {})]
+             (let [res (resolution/resolve-domain-element res {})]
                (reset! domain-cache res)
                res)))
 

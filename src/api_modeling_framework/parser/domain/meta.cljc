@@ -10,10 +10,7 @@
             [cemerick.url :as url]
             [clojure.string :as string]
             [clojure.walk :refer [keywordize-keys]]
-            [clojure.set :as set]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.set :as set]))
 
 
 (declare parse-ast)
@@ -78,7 +75,7 @@
     (throw (new #?(:clj Exception :cljs js/Error) (str "Collection of values not allowed for property  " (domain/syntax-label property) " missing in value " object)))))
 
 (defn parse-property [node syntax-rule vocabulary {:keys [parsed-location] :as context}]
-  (debug "Parsing instance of property " (domain/property-id syntax-rule))
+  (utils/debug "Parsing instance of property " (domain/property-id syntax-rule))
   (let [label (domain/syntax-label syntax-rule)
         object (common/ast-get node (keyword label))
         property (common/find-vocabulary-property syntax-rule vocabulary)
@@ -108,7 +105,7 @@
                                          :object parsed-object}))))
 
 (defn parse-hash-property [node syntax-rule vocabulary {:keys [parsed-location] :as context}]
-  (debug "Parsing instance of hash-property " (domain/property-id syntax-rule))
+  (utils/debug "Parsing instance of hash-property " (domain/property-id syntax-rule))
   (let [property (common/find-vocabulary-property syntax-rule vocabulary)
         hash-property (domain/hash syntax-rule)
         parsed-objects (mapv (fn [[hash-value object]]
@@ -121,7 +118,7 @@
                                         :object parsed-objects})]))
 
 (defn parse-declaration-property [node syntax-rule vocabulary {:keys [parsed-location] :as context}]
-  (debug "Parsing instance of declaration-property " (domain/property-id syntax-rule))
+  (utils/debug "Parsing instance of declaration-property " (domain/property-id syntax-rule))
   (let [label (domain/syntax-label syntax-rule)
         property (common/find-vocabulary-property syntax-rule vocabulary)
         parsed-objects (mapv (fn [[declaration-value object]]
@@ -140,7 +137,7 @@
        (filterv #(not (common/declaration-property? % vocabulary)))))
 
 (defn parse-class [node class-term vocabulary {:keys [parsed-location hash-property references] :as context}]
-  (debug "Parsing instance of class " (document/id class-term))
+  (utils/debug "Parsing instance of class " (document/id class-term))
   (if (= (document/id class-term) (v/sh-ns "Shape"))
     (domain/map->ParsedDomainInstance {:id parsed-location
                                        :domain-class (v/sh-ns "Shape")

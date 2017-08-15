@@ -3,10 +3,7 @@
             [api-modeling-framework.model.document :as document]
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.generators.domain.common :as common]
-            [clojure.string :as string]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.string :as string]))
 
 (defn ref-shape [shape ctx]
   (let [ref (common/ref-shape? shape ctx)

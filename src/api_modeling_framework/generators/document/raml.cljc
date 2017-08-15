@@ -5,10 +5,7 @@
             [api-modeling-framework.generators.domain.raml :as domain-generator]
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.generators.domain.common :as common]
-            [clojure.string :as string]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.string :as string]))
 
 (defn guess-fragment-from-element [model]
   (cond
@@ -42,7 +39,7 @@
 (defmulti to-raml (fn [model ctx] (to-raml-dispatch-fn model ctx)))
 
 (defmethod to-raml :document [model ctx]
-  (debug "Generating Document at " (document/location model))
+  (utils/debug "Generating Document at " (document/location model))
   (let [ctx (assoc ctx :syntax :raml)
         fragments (->> (document/references model)
                        (reduce (fn [acc fragment]
@@ -78,7 +75,7 @@
      (keyword "@fragment") "#%RAML 1.0"}))
 
 (defmethod to-raml :fragment [model ctx]
-  (debug "Generating Fragment at " (document/location model))
+  (utils/debug "Generating Fragment at " (document/location model))
   (let [ctx (assoc ctx :syntax :raml)
         fragments (if (:fragments ctx)
                     (:fragments ctx)
@@ -128,7 +125,7 @@
                        (keyword "@fragment") fragment-type})))
 
 (defmethod to-raml :library [model ctx]
-  (debug "Generating Library at " (document/location model))
+  (utils/debug "Generating Library at " (document/location model))
   (let [ctx (assoc ctx :syntax :raml)
         declares (document/declares model)
         fragments (->> (document/references model)

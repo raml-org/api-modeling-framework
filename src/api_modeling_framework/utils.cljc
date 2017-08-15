@@ -4,8 +4,7 @@
             [api-modeling-framework.model.vocabulary :as v]
             #?(:cljs [cljs.core.async :refer [<! >! chan]])
             #?(:clj [clojure.core.async :refer [go <! >! chan]])
-            [clojure.string :as string]
-            [taoensso.timbre :as timbre #?(:clj :refer :cljs :refer-macros) [log]]))
+            [clojure.string :as string]))
 
 (defn cb->chan [f]
   (let [c (chan)]
@@ -425,3 +424,5 @@
     (v/sh-ns "Shape") "Schema"
     ;; If there's no OpenAPI node name, let's use raml
     (domain-uri->node-name node-name)))
+
+(defn debug [& xs] "")

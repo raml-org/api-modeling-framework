@@ -5,10 +5,7 @@
             [api-modeling-framework.model.document :as document]
             [api-modeling-framework.model.syntax :as syntax]
             [api-modeling-framework.platform :as platform]
-            [clojure.string :as string]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.string :as string]))
 
 (declare parse-type)
 

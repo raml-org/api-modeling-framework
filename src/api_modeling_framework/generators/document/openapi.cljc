@@ -5,10 +5,7 @@
             [api-modeling-framework.model.domain :as domain]
             [api-modeling-framework.generators.domain.openapi :as domain-generator]
             [api-modeling-framework.generators.domain.common :as common]
-            [api-modeling-framework.utils :as utils]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [api-modeling-framework.utils :as utils]))
 
 (defn to-openapi-dispatch-fn [model ctx]
   (cond
@@ -36,7 +33,7 @@
 
 
 (defmethod to-openapi :document [model ctx]
-  (debug "Generating Document at " (document/location model))
+  (utils/debug "Generating Document at " (document/location model))
   (let [ctx (assoc ctx :syntax :openapi)
         fragments (->> (document/references model)
                        (reduce (fn [acc fragment]
@@ -70,7 +67,7 @@
      syntax/at-fragment "OpenAPI"}))
 
 (defmethod to-openapi :fragment [model ctx]
-  (debug "Generating Fragment at " (document/location model))
+  (utils/debug "Generating Fragment at " (document/location model))
   (let [ctx (assoc ctx :syntax :openapi)
         fragments (if (:fragments ctx)
                     (:fragments ctx)
@@ -106,11 +103,11 @@
      syntax/at-data fragment}))
 
 (defmethod to-openapi :unknown [model ctx]
-  (debug "Unknown document fragment trying domain model generator")
+  (utils/debug "Unknown document fragment trying domain model generator")
   (domain-generator/to-openapi model ctx))
 
 (defmethod to-openapi :library [model ctx]
-  (debug "Generating Document at " (document/location model))
+  (utils/debug "Generating Document at " (document/location model))
   (let [ctx (assoc ctx :syntax :openapi)
         declares (document/declares model)
         fragments (->> (document/references model)

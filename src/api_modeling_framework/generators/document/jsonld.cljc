@@ -3,10 +3,7 @@
             [api-modeling-framework.model.document :as document]
             [api-modeling-framework.model.domain :as domain]
             [api-modeling-framework.generators.domain.jsonld :as domain-generator]
-            [api-modeling-framework.utils :as utils]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [api-modeling-framework.utils :as utils]))
 
 (defn to-jsonld-dispatch-fn [model source-maps?]
   (cond
@@ -34,7 +31,7 @@
     generated))
 
 (defmethod to-jsonld :document [m source-maps?]
-  (debug "Generating Document")
+  (utils/debug "Generating Document")
   (->> {"@id" (or (:id m) (document/id m))
         "@type" [v/document:Document
                  v/document:Fragment
@@ -47,7 +44,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :fragment [m source-maps?]
-  (debug "Generating Fragment")
+  (utils/debug "Generating Fragment")
   (->> {"@id" (document/id m)
         "@type" [v/document:Fragment
                  v/document:Unit]
@@ -57,7 +54,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :library [m source-maps?]
-  (debug "Generating Library")
+  (utils/debug "Generating Library")
   (->> {"@id" (document/id m)
         "@type" [v/document:Module
                  v/document:Unit]
@@ -67,7 +64,7 @@
        (utils/clean-nils)))
 
 (defmethod to-jsonld :vocabulary [m source-maps?]
-  (debug "Generating Vocabulary")
+  (utils/debug "Generating Vocabulary")
   (->> {"@id" (document/id m)
         "@type" [v/document:Vocabulary]
         v/meta:vocabulary [(domain-generator/to-jsonld (document/vocabulary m) {:source-maps? source-maps?})]

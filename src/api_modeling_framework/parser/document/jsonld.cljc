@@ -4,10 +4,7 @@
             [api-modeling-framework.model.document :as document]
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.parser.domain.jsonld :as domain-parser]
-            [api-modeling-framework.parser.document.common :refer [get-one]]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [api-modeling-framework.parser.document.common :refer [get-one]]))
 
 
 (defn from-jsonld-dispatch-fn [model]
@@ -24,7 +21,7 @@
 
 
 (defmethod from-jsonld v/document:Document [m]
-  (debug "Parsing " v/document:Document)
+  (utils/debug "Parsing " v/document:Document)
   (let [encodes (domain-parser/from-jsonld (get-one m v/document:encodes))
         declares (map domain-parser/from-jsonld (get m v/document:declares []))
         references (mapv from-jsonld (get m v/document:references []))
@@ -40,7 +37,7 @@
                                    :document-type document-type})))
 
 (defmethod from-jsonld v/document:Fragment [m]
-  (debug "Parsing " v/document:Fragment  " " (get m "@id"))
+  (utils/debug "Parsing " v/document:Fragment  " " (get m "@id"))
   (let [references (mapv from-jsonld (get m v/document:references []))
         declared-references (->> references
                                  (map (fn [ref] (document/declares ref)))
@@ -64,7 +61,7 @@
                                    :document-type document-type})))
 
 (defmethod from-jsonld v/document:Module [m]
-  (debug "Parsing " v/document:Module)
+  (utils/debug "Parsing " v/document:Module)
   (let [declares (map domain-parser/from-jsonld (get m v/document:declares []))
         references (mapv from-jsonld (get m v/document:references []))
         location (get m "@id")
@@ -79,9 +76,9 @@
 
 
 (defmethod from-jsonld :unknown [m]
-  (debug "Parsing " :unknown)
+  (utils/debug "Parsing " :unknown)
   (domain-parser/from-jsonld m))
 
 (defmethod from-jsonld nil [_]
-  (debug "Parsing " nil)
+  (utils/debug "Parsing " nil)
   nil)

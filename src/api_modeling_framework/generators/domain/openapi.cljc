@@ -7,10 +7,7 @@
             [api-modeling-framework.generators.domain.common :as common]
             [api-modeling-framework.generators.domain.utils :refer [send <-domain]]
             [clojure.walk :refer [keywordize-keys]]
-            [clojure.string :as string]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.string :as string]))
 
 (defn to-openapi-dispatch-fn [model ctx]
   (cond
@@ -129,8 +126,8 @@
       (dissoc :operationId)))
 
 (defmethod to-openapi domain/APIDocumentation [model ctx]
-  (debug "Generating Swagger")
-  (debug "Generating Info")
+  (utils/debug "Generating Swagger")
+  (utils/debug "Generating Info")
   (let [info (-> {:title (document/name model)
                   :description (document/description model)
                   :version (domain/version model)
@@ -176,7 +173,7 @@
     (keyword (str "x-method-" (utils/safe-str x)))))
 
 (defmethod to-openapi domain/EndPoint [model ctx]
-  (debug "Generating resource " (document/id model))
+  (utils/debug "Generating resource " (document/id model))
   (let [operations (domain/supported-operations model)
         parameters (unparse-params model ctx)
         end-point (->> operations
@@ -220,7 +217,7 @@
            (filter some?)))))
 
 (defmethod to-openapi domain/Operation [model ctx]
-  (debug "Generating operation " (document/id model))
+  (utils/debug "Generating operation " (document/id model))
   (let [tags (->> (document/find-tag model document/api-tag-tag)
                   (map #(document/value %)))
         produces (domain/content-type model)
@@ -276,7 +273,7 @@
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Response [model ctx]
-  (debug "Generating response " (document/name model))
+  (utils/debug "Generating response " (document/name model))
   (let [;; unparse-bodies generates body params, we need to adapt the result
         ;; picking the components we need for the main payload in the response
         ;; and the different x-response-payloads
@@ -305,7 +302,7 @@
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Parameter [model ctx]
-  (debug "Generating parameter " (document/name model))
+  (utils/debug "Generating parameter " (document/name model))
   (let [base {:description (document/description model)
               :name (or (document/name model) "")
               :required (domain/required model)
@@ -315,7 +312,7 @@
         utils/clean-nils)))
 
 (defmethod to-openapi domain/Type [model context]
-  (debug "Generating type")
+  (utils/debug "Generating type")
   (common/with-amf-info
     model
     context "TypeDeclaration"
@@ -342,7 +339,7 @@
       :else             {:$ref fragment-target})))
 
 (defmethod to-openapi domain/DomainPropertySchema [model ctx]
-  (debug "Generating DomainPropertySchema")
+  (utils/debug "Generating DomainPropertySchema")
   (let [range (to-openapi! (domain/range model) ctx)
         name  (document/name model)
         domain (->> model domain/domain (map utils/domain-uri->openapi-node-name))
@@ -355,5 +352,5 @@
          (utils/clean-nils))))
 
 (defmethod to-openapi nil [_ _]
-  (debug "Generating nil")
+  (utils/debug "Generating nil")
   nil)

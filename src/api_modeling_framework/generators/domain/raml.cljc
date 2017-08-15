@@ -9,9 +9,7 @@
             [api-modeling-framework.generators.domain.vocabulary :as vocab-generator]
             [clojure.string :as string]
             [cemerick.url :as url]
-            [clojure.walk :refer [keywordize-keys]]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros) [debug]]))
+            [clojure.walk :refer [keywordize-keys]]))
 
 
 (defn to-raml-dispatch-fn [model ctx]
@@ -181,7 +179,7 @@
   (vocab-generator/generate model ctx))
 
 (defmethod to-raml domain/APIDocumentation [model ctx]
-  (debug "Generating RAML root node")
+  (utils/debug "Generating RAML root node")
   (let [all-resources (domain/endpoints model)
         ctx (assoc ctx :all-resources all-resources)
         children-resources (find-children-resources (document/id model) all-resources)
@@ -213,7 +211,7 @@
         utils/clean-nils)))
 
 (defmethod to-raml domain/EndPoint [model {:keys [all-resources] :as ctx}]
-  (debug "Generating resource " (document/id model))
+  (utils/debug "Generating resource " (document/id model))
   (let [children-resources (find-children-resources (document/id model) all-resources)
         operations (->> (or (domain/supported-operations model) [])
                         (map (fn [op]
@@ -296,7 +294,7 @@
         nil)))
 
 (defmethod to-raml domain/Operation [model context]
-  (debug "Generating operation " (document/id model))
+  (utils/debug "Generating operation " (document/id model))
   (let [request (to-raml! (domain/request model) context)]
     (-> {:displayName (if (:is-trait context) nil (document/name model))
          :description (document/description model)
@@ -309,7 +307,7 @@
         utils/clean-nils)))
 
 (defmethod to-raml domain/Response [model context]
-  (debug "Generating response " (document/name model))
+  (utils/debug "Generating response " (document/name model))
   (let [bodies (project-bodies (domain/payloads model) context)]
     (->> {:description (document/description model)
           :headers (unparse-parameters (domain/headers model) context)
@@ -319,7 +317,7 @@
 
 
 (defmethod to-raml :Request [model context]
-  (debug "Generating request " (document/name model))
+  (utils/debug "Generating request " (document/name model))
   (let [bodies (project-bodies (domain/payloads model) context)]
     (->> {:queryParameters (unparse-query-parameters model context)
           :body bodies
@@ -328,7 +326,7 @@
          utils/clean-nils)))
 
 (defmethod to-raml domain/Type [model {:keys [generate-amf-info] :as context}]
-  (debug "Generating type")
+  (utils/debug "Generating type")
   (cond
     (and (not (:resolve-types context))
          (common/type-reference? model)) (common/type-reference-name model)
@@ -350,7 +348,7 @@
 (defmethod to-raml document/Includes [model {:keys [fragments expanded-fragments references document-generator type-hint]
                                              :as context
                                              :or {expanded-fragments (atom {})}}]
-  (debug "Generating Includes")
+  (utils/debug "Generating Includes")
   (let [target (document/target model)
         fragment (get fragments target)
         reference (->> references (filter (fn [ref] (= (document/id ref) target))) first)]
@@ -376,7 +374,7 @@
                                                            (str "Cannot find fragment " target " for generation"))))))
 
 (defmethod to-raml domain/DomainPropertySchema [model ctx]
-  (debug "Generating DomainPropertySchema")
+  (utils/debug "Generating DomainPropertySchema")
   (let [range (to-raml! (domain/range model) ctx)
         range (if (string? range) {:type range} range)
         name  (document/name model)
@@ -390,5 +388,5 @@
          (utils/clean-nils))))
 
 (defmethod to-raml nil [_ _]
-  (debug "Generating nil")
+  (utils/debug "Generating nil")
   nil)

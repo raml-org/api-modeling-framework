@@ -8,19 +8,19 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/core.async "0.3.443"]
                  [org.clojure/clojurescript "1.9.293"]
-                 [org.clojure/core.async "0.3.442"]
                  [cheshire "5.6.3"]
                  [instaparse "1.4.2"]
                  [com.lucasbradstreet/instaparse-cljs "1.4.1.2"]
                  [com.cemerick/url "0.1.1"]
-                 [com.taoensso/timbre "4.8.0"]
                  [org.yaml/snakeyaml "1.12"]
-                 [org.topbraid/shacl "0.0.2-SNAPSHOT"]
+                 [org.topbraid/shacl "1.0.0"]
                  ;; dev only
                  [difform "1.1.2"]]
 
-  :aot [api-modeling-framework.model.domain]
+  :main api-modeling-framework.run
+  :aot :all
 
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-npm "0.6.2"]

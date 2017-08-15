@@ -6,10 +6,7 @@
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.platform :as platform]
             [instaparse.core :as insta]
-            [clojure.string :as string]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.string :as string]))
 
 (declare parse-type)
 

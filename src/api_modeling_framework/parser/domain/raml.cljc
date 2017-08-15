@@ -12,10 +12,7 @@
             [cemerick.url :as url]
             [clojure.string :as string]
             [clojure.walk :refer [keywordize-keys]]
-            [clojure.set :as set]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.set :as set]))
 
 (def raml-types-properties-map
   {
@@ -261,7 +258,7 @@
                                        (document/->NestedResourceChildrenTag source-map-id nested-id)))
                                    (range 0 (count nested-ids))
                                    nested-ids)]
-    (debug "Parsed " (count nested-children-tags) " child resource tags for resource " location)
+    (utils/debug "Parsed " (count nested-children-tags) " child resource tags for resource " location)
     (flatten [(document/->DocumentSourceMap (utils/path-join resource-id "/source-map/0") location [node-parsed-tag] [])
               (document/->DocumentSourceMap (utils/path-join resource-id "/source-map/1") location [node-parent-tag] [])
               (mapv (fn [i child-tag]
@@ -293,7 +290,7 @@
 
 
 (defn process-annotations [node {:keys [base-uri location parsed-location] :as context}]
-  (debug "Processing " (count (:annotationTypes node {})) " annotations")
+  (utils/debug "Processing " (count (:annotationTypes node {})) " annotations")
   (let [location (utils/path-join location "/x-annotationTypes")
         nested-context (-> context (assoc :location location) (assoc :parsed-location (str base-uri "#")))]
     (->> (:annotationTypes node {})
@@ -323,7 +320,7 @@
                  {}))))
 
 (defn process-traits [node {:keys [location parsed-location] :as context}]
-  (debug "Processing " (count (:traits node [])) "traits")
+  (utils/debug "Processing " (count (:traits node [])) "traits")
   (let [location (utils/path-join location "/traits")
         ;; this must be 'x-traits' so the generated path matches the position
         ;; in JSON-LD documents
@@ -331,7 +328,7 @@
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
     (->> (:traits node {})
          (reduce (fn [acc [trait-name trait-node]]
-                   (debug (str "Processing trait " trait-name))
+                   (utils/debug (str "Processing trait " trait-name))
                    (let [location-meta (meta trait-node)
                          fragment-name (url/url-encode (utils/safe-str trait-name))
                          trait-fragment (parse-ast trait-node (-> nested-context
@@ -357,7 +354,7 @@
         path-label (if (some? (:types node)) "types" "schemas")
         location (utils/path-join parsed-location "/" path-label)
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
-    (debug "Processing " (count types) " types")
+    (utils/debug "Processing " (count types) " types")
     (let [;; we will mark the positions of references in the types node
           ahead-references (->> types
                                 (map (fn [[type-name _]]
@@ -368,7 +365,7 @@
           working-references (atom (merge references ahead-references))]
       (->> types
            (reduce (fn [acc [type-name type-node]]
-                     (debug (str "Processing type " type-name))
+                     (utils/debug (str "Processing type " type-name))
                      (let [location-meta (meta type-node)
                            type-node (common/purge-ast type-node)
                            type-node (if (syntax/fragment? type-node)
@@ -413,7 +410,7 @@
        flatten))
 
 (defmethod parse-ast :root [node {:keys [location parsed-location is-fragment references] :as context :or {references {}}}]
-  (debug "Parsing RAML root")
+  (utils/debug "Parsing RAML root")
   (let [parsed-location (utils/path-join parsed-location "/api-documentation")
         location (str location "/")
         ;; we generated all the descendants, flattening the hierarchy of nested resources
@@ -493,7 +490,7 @@
 ;; parent-path points to this resource concatenated path
 ;; resource-path is the value in the RAML spec that can be only the last segment of the path
 (defmethod parse-ast :resource [node {:keys [location parsed-location is-fragment resource-path parent-path parent-id references] :as context}]
-  (debug "Parsing resource " location)
+  (utils/debug "Parsing resource " location)
   (let [resource-id parsed-location
         traits (parse-traits resource-id node references (assoc context :parsed-location resource-id))
         nested-resources (-> node
@@ -597,7 +594,7 @@
        (common/with-location-meta-from node)))))
 
 (defmethod parse-ast :method [node {:keys [location parsed-location is-fragment method references] :as context}]
-  (debug "Parsing method " method)
+  (utils/debug "Parsing method " method)
   (let [method-id (utils/path-join parsed-location method)
         location (utils/path-join location method)
         next-context (-> context
@@ -625,7 +622,7 @@
      (common/with-location-meta-from node))))
 
 (defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment] :as context}]
-  (debug "Parsing responses")
+  (utils/debug "Parsing responses")
   (->> node
        (mapv (fn [[key response]]
                (parse-ast response (-> context
@@ -634,7 +631,7 @@
                                        (assoc :status-code key)))))))
 
 (defmethod parse-ast :response [node {:keys [location parsed-location is-fragment status-code] :as context}]
-  (debug "Parsing response " status-code)
+  (utils/debug "Parsing response " status-code)
   (let [response-id (utils/path-join parsed-location (utils/safe-str status-code))
         sources (generate-parse-node-sources location response-id)
         location (utils/path-join location status-code)
@@ -657,7 +654,7 @@
      (common/with-location-meta-from node))))
 
 (defmethod parse-ast :body-media-type [node {:keys [location parsed-location is-fragment] :as context}]
-  (debug "Parsing body media-type")
+  (utils/debug "Parsing body media-type")
   (->> node
        (mapv (fn [[media-type body]]
                (let [location (utils/path-join location (url/url-encode (utils/safe-str media-type)))
@@ -686,7 +683,7 @@
                                                                   (assoc :type-hint :type)))}))))))
 
 (defmethod parse-ast :type [node {:keys [location parsed-location is-fragment references] :as context}]
-  (debug "Parsing type")
+  (utils/debug "Parsing type")
   (let [node (common/purge-ast node)
         ;; the node can be the string of a type reference if that's the case,
         ;; we build a {:type TypeReference} node to process it
@@ -713,7 +710,7 @@
 (defmethod parse-ast :fragment [node {:keys [location parsed-location is-fragment fragments type-hint document-parser]
                                       :or {fragments (atom {})}
                                       :as context}]
-  (debug "Parsing included fragment " (syntax/<-location node))
+  (utils/debug "Parsing included fragment " (syntax/<-location node))
   (let [fragment-location (syntax/<-location node)]
     (let [parsed-fragment (document-parser node context)
           encoded-element (document/encodes parsed-fragment)

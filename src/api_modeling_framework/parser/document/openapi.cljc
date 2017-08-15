@@ -9,10 +9,7 @@
             [api-modeling-framework.parser.domain.openapi :as domain-parser]
             [api-modeling-framework.parser.document.common :refer [make-compute-fragments]]
             [cemerick.url :as url]
-            [clojure.string :as string]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [clojure.string :as string]))
 
 (defn check-abstract [encoded node]
   (let [abstract (get node :x-abstract-node nil)]
@@ -79,7 +76,7 @@
       [(document/->DocumentSourceMap source-map-id location tags [])])))
 
 (defn process-annotations [node {:keys [base-uri location parsed-location] :as context}]
-  (debug "Processing " (count (:x-annotationTypes node {})) " annotations")
+  (utils/debug "Processing " (count (:x-annotationTypes node {})) " annotations")
   (let [location (utils/path-join location "/x-annotationTypes")
         nested-context (-> context (assoc :location location) (assoc :parsed-location (str base-uri "#")))]
     (->> (:x-annotationTypes node {})
@@ -110,7 +107,7 @@
 (defmethod parse-ast :root [node context]
   (let [location (syntax/<-location node)
         context (assoc context :base-uri location)
-        _ (debug "Parsing OpenAPI Document at " location)
+        _ (utils/debug "Parsing OpenAPI Document at " location)
         fragments (or (:fragments context) (atom {}))
         compute-fragments (make-compute-fragments fragments)
         {:keys [libraries library-declarations]} (process-libraries node context)
@@ -173,7 +170,7 @@
 
 (defmethod parse-ast :library [node context]
   (let [location (syntax/<-location node)
-        _ (debug "Parsing OpenAPI Library at " location)
+        _ (utils/debug "Parsing OpenAPI Library at " location)
         fragments (or (:fragments context) (atom {}))
         compute-fragments (make-compute-fragments fragments)
         {:keys [libraries library-declarations]} (process-libraries node context)
@@ -228,7 +225,7 @@
   (let [context (or context {})
         location (syntax/<-location node)
         context (assoc context :base-uri location)
-        _ (debug "Parsing OpenAPI Fragment at " location)
+        _ (utils/debug "Parsing OpenAPI Fragment at " location)
         fragments (or (:fragments context) (atom {}))
         compute-fragments (make-compute-fragments fragments)
         {:keys [libraries library-declarations]} (process-libraries node context)

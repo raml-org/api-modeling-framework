@@ -8,9 +8,7 @@
             [api-modeling-framework.parser.domain.common :as common]
             [api-modeling-framework.parser.document.common :refer [make-compute-fragments]]
             [api-modeling-framework.utils :as utils]
-            [cemerick.url :as url]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros) [debug]]))
+            [cemerick.url :as url]))
 
 
 (defn ahead-references [declarations parsed-location]
@@ -36,7 +34,7 @@
                          {:keys [parsed-location
                                  declaration-properties-ranges-map
                                  working-references] :as context}]
-  (debug (str "Processing declaration " declaration-name))
+  (utils/debug (str "Processing declaration " declaration-name))
   (let [location-meta        (meta declaration-node)
         declaration-node     (common/purge-ast declaration-node)
         declaration-node     (if (syntax/fragment? declaration-node)
@@ -89,7 +87,7 @@
                                              :declaration-type declaration-type})
                                      (common/ast-get (syntax/<-data node) declaration-type)))))
           declarations (apply concat declarations)]
-      (debug "Processing " (count declarations) " declarations")
+      (utils/debug "Processing " (count declarations) " declarations")
       (let [;; we will mark the positions of references in the declarations node
             ahead-references (ahead-references declarations parsed-location)
             working-references (atom (merge references ahead-references))]

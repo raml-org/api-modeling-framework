@@ -8,10 +8,7 @@
             [api-modeling-framework.utils :as utils]
             [api-modeling-framework.model.vocabulary :as v]
             [clojure.set :as set]
-            [cemerick.url :as url]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros)
-             [debug]]))
+            [cemerick.url :as url]))
 
 
 (def properties-map
@@ -203,13 +200,13 @@
     [(document/->DocumentSourceMap (str parsed-location "/source-map") location [is-trait-tag] [])]))
 
 (defn process-traits [node {:keys [location parsed-location] :as context}]
-  (debug "Processing " (count (:x-traits node [])) "traits")
+  (utils/debug "Processing " (count (:x-traits node [])) "traits")
   (let [location (str location "/traits")
         parsed-location (str parsed-location "/x-traits")
         nested-context (-> context (assoc :location location) (assoc :parsed-location parsed-location))]
     (->> (:x-traits node {})
          (reduce (fn [acc [trait-name trait-node]]
-                   (debug (str "Processing trait " trait-name))
+                   (utils/debug (str "Processing trait " trait-name))
                    (let [location-meta (meta trait-name)
                          fragment-name (url/url-encode (utils/safe-str trait-name))
                          references (get nested-context :references {})
@@ -233,7 +230,7 @@
                  {}))))
 
 (defn process-types [node {:keys [location alias-chain references] :as context}]
-  (debug "Processing " (count (:definitions node [])) " types")
+  (utils/debug "Processing " (count (:definitions node [])) " types")
   (let [;; we will mark the positions of references in the types node
         ahead-references (->> (:definitions node {})
                               (map (fn [[type-name _]]
@@ -243,7 +240,7 @@
         context (assoc context :references (merge references ahead-references))]
     (->> (:definitions node {})
                         (reduce (fn [acc [type-name type-node]]
-                                  (debug (str "Processing type " type-name))
+                                  (utils/debug (str "Processing type " type-name))
                                   (let [location-meta (meta type-node)
                                         type-id (common/type-reference location (url/url-encode (utils/safe-str type-name)))
                                         type-fragment (parse-ast type-node (-> context
@@ -321,7 +318,7 @@
        (mapv (fn [properties] (domain/map->ParsedParameter properties)))))
 
 (defmethod parse-ast :swagger [node {:keys [location parsed-location is-fragment] :as context}]
-  (debug "Parsing swagger")
+  (utils/debug "Parsing swagger")
   (let [parsed-location (str parsed-location "/api-documentation")
         location (str location "/")
         trait-tags (find-extend-tags (-> context
@@ -369,7 +366,7 @@
          (common/with-location-meta-from node))))
 
 (defmethod parse-ast :info [node {:keys [location parsed-location is-fragment]}]
-  (debug "Parsing info")
+  (utils/debug "Parsing info")
   (let [location (str location "info")]
     ;; @todo
     ;; Info is nested in API, how do we deal with annotations
@@ -383,7 +380,7 @@
                                          :terms-of-service (:termsOfService node)})))
 
 (defmethod parse-ast :paths [node {:keys [location parsed-location is-fragment] :as context}]
-  (debug "Parsing paths")
+  (utils/debug "Parsing paths")
   ;; @todo
   ;; Paths is nested in API, how do we deal with annotations
   ;; in info, we cannot assign them to the APIDocumentation.
@@ -437,7 +434,7 @@
           traits)))
 
 (defmethod parse-ast :path-item [node {:keys [location parsed-location is-fragment path paths-sources references] :as context}]
-  (debug "Parsing path-item")
+  (utils/debug "Parsing path-item")
   (when (nil? path)
     (throw (new #?(:clj Exception :cljs js/Error) "Cannot parse path-item object without contextual path information")))
   (let [location (str location "/" (url/url-encode path))
@@ -572,7 +569,7 @@
 
 
 (defmethod parse-ast :operation [node {:keys [location parsed-location is-fragment method references] :as context}]
-  (debug "Parsing method " method)
+  (utils/debug "Parsing method " method)
   (let [method (method-name method)
         location (str location "/" method)
         parsed-location (str location "/" method)
@@ -605,7 +602,7 @@
          (common/with-location-meta-from node))))
 
 (defmethod parse-ast :responses [node {:keys [location parsed-location is-fragment x-response-bodies-with-media-types] :as context}]
-  (debug "Parsing responses")
+  (utils/debug "Parsing responses")
   (->> node
        (mapv (fn [[key response]]
                (parse-ast response (-> context
@@ -617,7 +614,7 @@
        (filter some?)))
 
 (defmethod parse-ast :response [node {:keys [location parsed-location is-fragment response-key produces] :as context}]
-  (debug "Parsing response " response-key)
+  (utils/debug "Parsing response " response-key)
   (if (node :x-generated)
     ;; generated response, don't process
     nil
@@ -666,7 +663,7 @@
 
 
 (defmethod parse-ast :type [node {:keys [location parsed-location is-fragment] :as context}]
-  (debug "Parsing type")
+  (utils/debug "Parsing type")
   (let [shape (shapes/parse-type node (-> context
                                           (assoc :parsed-location parsed-location)
                                           (assoc :parse-ast parse-ast)))
@@ -741,5 +738,5 @@
       (parse-included-fragment fragment-location fragment nil context))))
 
 (defmethod parse-ast :undefined [_ _]
-  (debug "Parsing undefined")
+  (utils/debug "Parsing undefined")
   nil)

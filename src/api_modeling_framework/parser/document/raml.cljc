@@ -6,9 +6,7 @@
             [api-modeling-framework.parser.domain.raml :as domain-parser]
             [api-modeling-framework.parser.domain.common :as common]
             [api-modeling-framework.parser.document.common :refer [make-compute-fragments]]
-            [api-modeling-framework.utils :as utils]
-            [taoensso.timbre :as timbre
-             #?(:clj :refer :cljs :refer-macros) [debug]]))
+            [api-modeling-framework.utils :as utils]))
 
 
 (def DOC_CACHE (atom {}))
@@ -161,7 +159,7 @@
   (with-cache node
     #(let [location (syntax/<-location node)
           context (assoc context :base-uri location)
-          _ (debug "Parsing RAML Library at " location)
+          _ (utils/debug "Parsing RAML Library at " location)
           fragments (or (:fragments context) (atom {}))
           compute-fragments (make-compute-fragments fragments)
           {:keys [libraries library-declarations]} (process-libraries node (dissoc context :alias-chain))
@@ -215,7 +213,7 @@
      #(let [context (or context {})
             location (syntax/<-location node)
             context (assoc context :base-uri location)
-            _ (debug "Parsing " fragment-type " Fragment at " location)
+            _ (utils/debug "Parsing " fragment-type " Fragment at " location)
             fragments (or (:fragments context) (atom {}))
             compute-fragments (make-compute-fragments fragments)
             ;; library declarations are needed to parse the model encoded into the RAML file but it will not be stored
