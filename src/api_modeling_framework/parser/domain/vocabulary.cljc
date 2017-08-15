@@ -5,15 +5,26 @@
             [api-modeling-framework.model.domain :as domain]
             [clojure.string :as string]))
 
-(defn ensure-list [x] (flatten [x]))
+(defn ensure-list [x] (if (some? x) (flatten [x]) x))
+
+(defn ensure-boolean [x]
+  (cond
+    (= x "true") true
+    (= x "false") false
+    (= x true) true
+    (= x false) false
+    (nil? x) nil
+    :else nil))
 
 (defn term-id [prefix name {:keys [vocabularies]}]
-  (let [safe-name (utils/safe-str name)]
-    (if (string/index-of safe-name ".")
-      (let [[prefix suffix] (string/split safe-name #"\.")
-            base (get vocabularies prefix)]
-        (str base suffix))
-      (str prefix safe-name))))
+  (if (nil? name)
+    nil
+    (let [safe-name (utils/safe-str name)]
+      (if (string/index-of safe-name ".")
+        (let [[prefix suffix] (string/split safe-name #"\.")
+              base (get vocabularies prefix)]
+          (str base suffix))
+        (str prefix safe-name)))))
 
 (defn parse-syntax-term-id [alias syntax-rule {:keys [base] :as context}]
   (if (not (map? syntax-rule))
@@ -135,6 +146,10 @@
                                      :description (common/ast-get node :description)
                                      :range (parse-property-range (common/ast-get node :range) context)
                                      :property-type (parse-property-type (common/ast-get node :range))
+                                     :same-as (term-id base (common/ast-get node :same-as) context)
+                                     :inverse-of (term-id base (common/ast-get node :inverse-of) context)
+                                     :transitive (ensure-boolean (common/ast-get node :transitive))
+                                     :property-chain (mapv #(term-id base % context) (ensure-list (common/ast-get node :property-chain)))
                                      :domain (get domains-map id nil)})))
 
 (defn parse-properties [node context]

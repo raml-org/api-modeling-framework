@@ -276,9 +276,15 @@
   "A collection of syntax rules for a domain entity defining a syntax"
   (syntax-rules [this] "List of syntax rules"))
 
-(defrecord ParsedClassTerm [id name extends description syntax-rules]
+(defprotocol VocabularyTerm
+  "Common owl properties for all vocabulary terms"
+  (same-as [this] "owl:sameAs"))
+
+(defrecord ParsedClassTerm [id name extends description syntax-rules same-as]
   Grammar
   (syntax-rules [this] syntax-rules)
+  VocabularyTerm
+  (same-as [this] same-as)
   DomainElement
   (abstract [this] false)
   document/Node
@@ -291,11 +297,16 @@
   (additional-properties [this] []))
 
 (defprotocol PropertyTerm
-  (property-type [this] "Type of property object or datatype"))
+  (property-type [this] "Type of property object or datatype")
+  (inverse-of [this] "owl:inverseOf")
+  (transitive [this] "owl:TranstitiveProperty")
+  (property-chain [this] "owl:propertyChainAxiom"))
 
-(defrecord ParsedPropertyTerm [id name extends description range property-type domain]
+(defrecord ParsedPropertyTerm [id name extends description range property-type domain same-as inverse-of transitive property-chain]
   DomainElement
   (abstract [this] false)
+  VocabularyTerm
+  (same-as [this] same-as)
   document/Node
   (id [this] id)
   (name [this] name)
@@ -308,7 +319,10 @@
   (domain [this] (or domain []))
   (range [this] range)
   PropertyTerm
-  (property-type [this] property-type))
+  (property-type [this] property-type)
+  (inverse-of [this] inverse-of)
+  (transitive [this] transitive)
+  (property-chain [this] property-chain))
 
 (defprotocol SyntaxRule
   "Syntax information for a Vocabulary term"

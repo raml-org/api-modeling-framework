@@ -8,7 +8,7 @@ version: "1.0"
 
 usage: HTTP APIs vocabulary for AMF
 
-use:
+uses:
   raml-doc: "./raml_doc.raml"
 
 external:
@@ -200,12 +200,12 @@ propertyTerms:
   hydra.expects:
     name: expects
     description: Request information required by the operation
-    range: Request
+    range: hydra.Request
 
   hydra.returns:
     name: returns
     description: Response data returned by the operation
-    range: Response
+    range: hydra.Response
 
   statusCode:
     description: HTTP status code returned by a response

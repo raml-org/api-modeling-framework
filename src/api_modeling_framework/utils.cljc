@@ -169,6 +169,11 @@
     (assoc t target (map #(mapping %) (property m)))
     t))
 
+(defn assoc-object-list [t m target property mapping]
+  (if (some? (property m))
+    (assoc t target {"@list" (mapv #(mapping %) (flatten [(property m)]))})
+    t))
+
 (defn extract-nested-resources [node]
   (->> node
        (filter (fn [[k v]]

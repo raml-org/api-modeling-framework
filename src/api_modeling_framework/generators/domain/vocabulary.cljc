@@ -10,16 +10,18 @@
              [debug]]))
 
 (defn id-term [term {:keys [vocabularies]}]
-  (let [term (utils/safe-str term)
-        alias-prefix (->> vocabularies
-                          (filter (fn [[prefix vocab]] (= 0 (string/index-of term vocab))))
-                          first)]
-    (if (some? alias-prefix)
-      (let [[alias prefix] alias-prefix]
-        (if (= alias "")
-          (string/replace term prefix "")
-          (str (utils/safe-str alias) "." (string/replace term prefix ""))))
-      term)))
+  (if (nil? term)
+    nil
+    (let [term (utils/safe-str term)
+          alias-prefix (->> vocabularies
+                            (filter (fn [[prefix vocab]] (= 0 (string/index-of term vocab))))
+                            first)]
+      (if (some? alias-prefix)
+        (let [[alias prefix] alias-prefix]
+          (if (= alias "")
+            (string/replace term prefix "")
+            (str (utils/safe-str alias) "." (string/replace term prefix ""))))
+        term))))
 
 (defn generate-property-range [range {:keys [base] :as context}]
   (condp = range
@@ -42,7 +44,12 @@
            {:displayName name
             :description description
             :extends (if (= 1 (count extends)) (first extends) extends)
-            :range range})]))
+            :range range
+            :same-as (id-term (domain/same-as property-model) ctx)
+            :inverse-of (id-term (domain/inverse-of property-model) ctx)
+            :transitive (id-term (domain/transitive property-model) ctx)
+            :property-chain (let [chain (mapv #(id-term % ctx) (domain/property-chain property-model))]
+                              (if (empty? chain) nil chain))})]))
 
 (defn class-domains-map [properties]
   (->> properties

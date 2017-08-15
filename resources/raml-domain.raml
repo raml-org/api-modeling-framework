@@ -1,0 +1,56 @@
+#%RAML 1.0 Library
+
+(base): "http://raml.org/vocabularies/domain#"
+
+usage: Building blocks for RAML vocabularies
+
+
+types:
+  uri: string
+
+annotationTypes:
+
+  uses-external:
+    type: object
+
+  class:
+    type: string
+
+  property:
+    type: string
+
+  base:
+    type: string
+
+  domain:
+    type: any
+
+  range:
+    type: any
+
+  inherits:
+    type: any
+
+  id:
+    type: uri
+
+  nodeTypes:
+    type: any
+
+  literalProperties:
+    type: uri[]
+
+  objectProperties:
+    type: uri[]
+
+  indexedProperty:
+    type: any
+
+  key:
+    type: string
+
+  displayName:
+    type: string
+
+  description:
+    type: string

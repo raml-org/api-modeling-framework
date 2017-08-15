@@ -265,9 +265,15 @@
 
 (defmethod to-jsonld :PropertyTerm [m context]
   (-> {"@id" (document/id m)
-       "@type" (if (= "object" (domain/property-type m)) [(v/owl-ns "ObjectProperty")] [(v/owl-ns "DatatypeProperty")])}
+       "@type" (let [type (if (= "object" (domain/property-type m)) [(v/owl-ns "ObjectProperty")] [(v/owl-ns "DatatypeProperty")])]
+                 (if (domain/transitive m)
+                   (flatten [type (v/owl-ns "TransitiveProperty")])
+                   type))}
       (utils/assoc-objects m (v/rdfs-ns "domain") domain/domain (fn [x] {"@id" x}))
       (utils/assoc-object m (v/rdfs-ns "range") domain/range (fn [x] {"@id" x}))
+      (utils/assoc-object m (v/owl-ns "sameAs") domain/same-as (fn [x] {"@id" x}))
+      (utils/assoc-object m (v/owl-ns "inverseOf") domain/inverse-of (fn [x] {"@id" x}))
+      (utils/assoc-object-list m (v/owl-ns "propertyChainAxiom") domain/property-chain (fn [x] {"@id" x}))
       (with-node-properties m context)
       (utils/clean-nils)))
 
