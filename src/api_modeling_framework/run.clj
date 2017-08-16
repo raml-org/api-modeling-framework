@@ -25,15 +25,23 @@
     (RDFDataMgr/write writer m RDFFormat/JSONLD_EXPAND_PRETTY)
     (.toString writer)))
 
+(defn check-error [x]
+  (when-let [e (or (some? (:err x)) (some? (:error x)))]
+    (if (instance? Throwable x)
+      (throw x)
+      (throw (Exception. (str x))))))
+
 (defn -main [format path & args]
   (println "Parsing vocabulary at " path " generating " format)
   (let [parser (core/->RAMLParser)
         model (<!! (utils/cb->chan (partial core/parse-file parser path)))
+        _ (check-error model)
         output-model (core/document-model model)
         jsonld-generator (core/->APIModelGenerator)
         output-jsonld (<!! (utils/cb->chan (partial core/generate-string jsonld-generator path
                                                     output-model
                                                     {:source-maps? false})))]
+    (check-error output-jsonld)
     (println (condp = format
                "n3"     (to-n3 output-jsonld)
                "jsonld" (to-jsonld output-jsonld)))))
