@@ -258,7 +258,7 @@
 
 (defmethod to-jsonld :ClassTerm [m context]
   (-> {"@id" (document/id m)
-       "@type" [(v/owl-ns "Class")]}
+       "@type" (concat [(v/owl-ns "Class")] (document/extends m))}
       (utils/assoc-objects m (v/meta-ns "syntax") domain/syntax-rules (fn [x] (to-jsonld x context)))
       (with-node-properties m context)
       (utils/clean-nils)))

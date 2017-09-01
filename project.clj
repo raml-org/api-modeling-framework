@@ -1,4 +1,4 @@
-(defproject api-modeling-framework "0.1.8-SNAPSHOT"
+(defproject api-modeling-framework "0.1.9-SNAPSHOT"
 
   :description "API and domain modeling tools for RAML, OpenAPI (Swagger) and RDF"
 
@@ -9,18 +9,20 @@
 
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.293"]
-                 [org.clojure/core.async "0.3.442"]
+                 [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
                  [instaparse "1.4.2"]
                  [com.lucasbradstreet/instaparse-cljs "1.4.1.2"]
                  [com.cemerick/url "0.1.1"]
                  [com.taoensso/timbre "4.8.0"]
                  [org.yaml/snakeyaml "1.12"]
-                 [org.topbraid/shacl "0.0.2-SNAPSHOT"]
+                 [org.topbraid/shacl "1.0.0"]
                  ;; dev only
                  [difform "1.1.2"]]
 
-  :aot [api-modeling-framework.model.domain]
+
+  :aot :all
+  :main api-modeling-framework.run
 
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-npm "0.6.2"]

@@ -456,7 +456,7 @@
          (domain-model [_]
            (if (some? @domain-cache)
              @domain-cache
-             (let [res (resolution/resolve res {})]
+             (let [res (resolution/resolve-domain-element res {})]
                (reset! domain-cache res)
                res)))
 

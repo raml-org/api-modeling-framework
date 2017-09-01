@@ -45,7 +45,7 @@
                                                                                :responses {"200" {:description "200 response"}
                                                                                            "400" {:description "400 response"}}}}}}}
         parsed (raml-parser/parse-ast input {})
-        document-resolved (resolution/resolve parsed {})
+        document-resolved (resolution/resolve-domain-element parsed {})
         resolved (document/encodes document-resolved)
         generated-jsonld (jsonld-generator/to-jsonld resolved {})
         generated-raml (raml-generator/to-raml resolved {})
