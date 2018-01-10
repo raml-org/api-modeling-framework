@@ -1,4 +1,8 @@
-# API Modeling Framework ![Build Status](https://travis-ci.com/raml-org/api-modeling-framework.svg?token=ueejPvNfLJQ28ZqmJyUt&branch=master)
+IMPORTANT NOTE (1/9/2018): This version has been deprecated. A new implementation is in the works which will replace this one. Stay tuned.
+
+***
+
+# API Modeling Framework
 
 This project aims to provide a common programming interface that lets developers interact with any API specification, whether it is written in OpenAPI Specification (OAS) or RAML, in a similar way to how the HTML DOM allows programmatic interaction with an HTML document.
 
