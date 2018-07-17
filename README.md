@@ -1,4 +1,6 @@
-IMPORTANT NOTE (1/9/2018): This version has been deprecated. A new implementation is in the works which will replace this one. Stay tuned.
+IMPORTANT NOTES:
+- 1/9/2018: This version has been deprecated. A new implementation is in the works which will replace this one. Stay tuned.
+- 7/17/2018: Check-out the new implementation sources [here](https://github.com/aml-org/amf) and the project introduction [here](https://a.ml).
 
 ***
 
@@ -12,7 +14,7 @@ MuleSoft provides a [playground website](https://mulesoft-labs.github.io/amf-pla
 
 The API Modeling Framework (AMF) allows users to formally describe different kind of APIs, parse and generate instances of those APIS as sets of modular documents and to store those connected descriptions into a single unified data graph.
 
-![Overview](https://raw.githubusercontent.com/raml-org/api-modeling-framework/gh-pages/images/diagram.png)
+![Overview](https://raw.githubusercontent.com/raml-org/api-modeling-framework/master/images/diagram.png)
 
 ## Status
 
