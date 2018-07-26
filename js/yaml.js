@@ -6,6 +6,7 @@ var json_ast = require("./json_ast");
 
 global.FRAGMENTS_CACHE = {};
 global.PENDING_LIBRARIES = [];
+global.SHACL = require("shacl").validate;
 
 var ensureFileUri = function (uri) {
     if (uri.indexOf("://") === -1) {
@@ -151,7 +152,7 @@ var collectLibraries = function (fragment, location) {
     for (var p in libraries) {
         if (p !== "__location__") {
             var value = libraries[p];
-            if (typeof(value) === "object" && value["amf-lexical-token"]) {
+            if (typeof (value) === "object" && value["amf-lexical-token"]) {
                 value = value["amf-lexical-token"];
             }
             var resolvedLocation = resolvePath(location, value);

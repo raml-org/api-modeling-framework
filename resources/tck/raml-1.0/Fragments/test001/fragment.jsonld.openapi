@@ -28,7 +28,7 @@
                             "@id": "http://raml.org/vocabularies/shapes#anon/prop1"
                         }
                     ],
-                    "http://www.w3.org/ns/shacl#dataType": [
+                    "http://www.w3.org/ns/shacl#datatype": [
                         {
                             "@id": "http://www.w3.org/2001/XMLSchema#float"
                         }

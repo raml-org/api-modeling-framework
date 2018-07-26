@@ -183,13 +183,13 @@
     (is (= 1 (-> parsed domain/request domain/headers count)))
     (is (= "Zencoder-Api-Key" (-> parsed domain/request domain/headers first document/name)))
     (is (= (v/xsd-ns "string")
-           (-> parsed domain/request domain/headers first domain/shape (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))
+           (-> parsed domain/request domain/headers first domain/shape (utils/extract-jsonld (v/sh-ns "datatype") #(get % "@id")))))
     (is (= ["page" "per_page"] (->> parsed domain/request domain/parameters (map document/name))))
     (is (= [(v/xsd-ns "integer") (v/xsd-ns "integer")])
         (->> parsed domain/request domain/parameters (map #(-> % domain/shape
-                                                               (utils/extract-jsonld (v/sh-ns "dataType") (fn [t] (get t "@id")))))))
+                                                               (utils/extract-jsonld (v/sh-ns "datatype") (fn [t] (get t "@id")))))))
     (is (= (v/xsd-ns "string")
-           (-> parsed domain/request domain/payloads first  domain/schema (domain/shape) (utils/extract-jsonld (v/sh-ns "dataType") #(get % "@id")))))))
+           (-> parsed domain/request domain/payloads first  domain/schema (domain/shape) (utils/extract-jsonld (v/sh-ns "datatype") #(get % "@id")))))))
 
 
 (deftest parser-ast-type-scalars
