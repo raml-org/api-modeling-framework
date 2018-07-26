@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/../target/classes" />
+    <output-test url="file://$MODULE_DIR$/../target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="Maven: api-modeling-framework:api-modeling-framework:0.1.2-SNAPSHOT">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../target/api-modeling-framework-0.1.2-SNAPSHOT-standalone.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="api-modeling-framework-0.1.2-SNAPSHOT-standalone" level="project" />
+  </component>
+</module>

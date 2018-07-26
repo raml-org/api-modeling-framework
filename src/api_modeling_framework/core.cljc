@@ -1,6 +1,6 @@
 (ns api-modeling-framework.core
   #?(:cljs (:require-macros [cljs.core.async.macros :refer [go]]))
-  #?(:clj (:require [clojure.core.async :refer [<! >! go chan] :as async]
+  #?(:clj (:require [clojure.core.async :refer [<! >! <!! go chan] :as async]
                     [api-modeling-framework.model.syntax :as syntax]
                     [api-modeling-framework.model.document :as document]
                     [api-modeling-framework.resolution :as resolution]
@@ -63,6 +63,7 @@
     model))
 
 (defprotocol Model
+  (^:export unit-kind [this] "Kind of unit in the AMF model")
   (^:export location [this] "Location of the model if any")
   (^:export document-model [this] "returns the domain model for the parsed document")
   (^:export domain-model [this] "Resolves the document model generating a domain model")
@@ -74,6 +75,9 @@
   (^:export lexical-info-for-unit [model unit-id] "Finds lexical information for a particular unit for a particular syntax (\"raml\", \"openapi\")"))
 
 (defprotocol Parser
+  (^:export parse-file-sync
+    [this uri]
+    [this uri options])
   (^:export parse-file
    [this uri cb]
    [this uri options cb]
@@ -81,16 +85,46 @@
   (^:export parse-string
    [this uri string cb]
    [this uri string options cb]
-   "Parses a raw string with document URI identifier and builds a model"))
+   "Parses a raw string with document URI identifier and builds a model")
+  (^:export parse-string-sync
+   [this uri string]
+   [this uri string options]))
 
 (defprotocol Generator
   (^:export generate-string [this uri model options cb]
    "Serialises a model into a string")
   (^:export generate-file [this uri model options cb]
-   "Serialises a model into a file located at the provided URI"))
+   "Serialises a model into a file located at the provided URI")
+  (generate-string-sync [this uri model options])
+  (generate-file-sync [this uri model options]))
+
+#?(:cljs (defprotocol DomainBuilder
+           (^:export build [this constructor args])
+           (^:export update [this instance prop value])))
+
+#?(:cljs (defrecord ^:export JSDomainBuilder []
+             DomainBuilder
+           (build [this constructorFn id]
+             (constructorFn {:id id}))
+           (update [this instance prop value]
+             (assoc instance prop value))))
+
+
+(defn cb->sync [f]
+  #?(:cljs (throw (js/Error "Synchronous version not supported"))
+     :clj (<!! (let [c (chan)]
+                 (f (fn [e res]
+                      (go (if (some? e)
+                            (>! c e)
+                            (>! c res)))))
+                 c))))
 
 (defrecord ^:export RAMLParser []
   Parser
+  (parse-file-sync [this uri]
+    (cb->sync (partial parse-file this uri)))
+  (parse-file-sync [this uri options]
+    (cb->sync (partial parse-file this uri options)))
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
     (go (let [res (<! (yaml-parser/parse-file uri options))]
@@ -98,7 +132,11 @@
             (cb (platform/<-clj res) nil)
             (try (cb nil (to-model (raml-document-parser/parse-ast res {})))
                  (catch #?(:clj Exception :cljs js/Error) ex
-                        (cb (platform/<-clj ex) nil)))))))
+                   (cb (platform/<-clj ex) nil)))))))
+  (parse-string-sync [this uri string]
+    (cb->sync (partial parse-string this uri string)))
+  (parse-string-sync [this uri string options]
+    (cb->sync (partial parse-string this uri string options)))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
     (go (let [res (<! (yaml-parser/parse-string uri string options))]
@@ -108,8 +146,13 @@
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil))))))))
 
+
 (defrecord ^:export OpenAPIParser []
   Parser
+  (parse-file-sync [this uri]
+    (cb->sync (partial parse-file this uri)))
+  (parse-file-sync [this uri options]
+    (cb->sync (partial parse-file this uri options)))
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
     (go (let [res (<! (json-parser/parse-file uri))]
@@ -118,6 +161,10 @@
             (try (cb nil (to-model (openapi-document-parser/parse-ast res {})))
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil)))))))
+  (parse-string-sync [this uri string]
+    (cb->sync (partial parse-string this uri string)))
+  (parse-string-sync [this uri string options]
+    (cb->sync (partial parse-string this uri string options)))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
     (go (let [res (<! (json-parser/parse-string uri string))]
@@ -129,6 +176,10 @@
 
 (defrecord ^:export APIModelParser []
   Parser
+  (parse-file-sync [this uri]
+    (cb->sync (partial parse-file this uri)))
+  (parse-file-sync [this uri options]
+    (cb->sync (partial parse-file this uri options)))
   (parse-file [this uri cb] (parse-file this uri {} cb))
   (parse-file [this uri options cb]
     (debug "Parsing APIModel file")
@@ -138,6 +189,10 @@
             (try (cb nil (to-model (jsonld-document-parser/from-jsonld res)))
                  (catch #?(:clj Exception :cljs js/Error) ex
                    (cb (platform/<-clj ex) nil)))))))
+  (parse-string-sync [this uri string]
+    (cb->sync (partial parse-string this uri string)))
+  (parse-string-sync [this uri string options]
+    (cb->sync (partial parse-string this uri string options)))
   (parse-string [this uri string cb] (parse-string this uri string {} cb))
   (parse-string [this uri string options cb]
     (debug "Parsing APIModel string")
@@ -150,6 +205,8 @@
 
 (defrecord ^:export APIModelGenerator []
   Generator
+  (generate-string-sync [this uri model options] (cb->sync (partial generate-string this uri model options)))
+  (generate-file-sync [this uri model options] (cb->sync (partial generate-file this uri model options)))
   (generate-string [this uri model options cb]
     (debug "Generating APIModel string")
     (go (try (let [options (keywordize-keys options)
@@ -178,6 +235,8 @@
 
 (defrecord ^:export RAMLGenerator []
   Generator
+  (generate-string-sync [this uri model options] (cb->sync (partial generate-string this uri model options)))
+  (generate-file-sync [this uri model options] (cb->sync (partial generate-file this uri model options)))
   (generate-string [this uri model options cb]
     (debug "Generating RAML string")
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
@@ -207,6 +266,8 @@
 
 (defrecord ^:export OpenAPIGenerator []
   Generator
+  (generate-string-sync [this uri model options] (cb->sync (partial generate-string this uri model options)))
+  (generate-file-sync [this uri model options] (cb->sync (partial generate-file this uri model options)))
   (generate-string [this uri model options cb]
     (debug "Generating OpenAPI string")
     (go (try (let [options (keywordize-keys (merge (or (platform/->clj options) {})
@@ -278,6 +339,13 @@
      (let [domain-cache (atom nil)
            lexical-cache-raml (atom {})]
        (reify Model
+         (unit-kind [_]
+           (cond
+             (and (satisfies? document/Module res)
+                  (satisfies? document/Fragment res)) "document"
+             (satisfies? document/Module res)         "module"
+             (satisfies? document/Fragment res)       "fragment"
+             :else                                    "unit"))
          (location [_] (document/location res))
 
          (document-model [_] res)

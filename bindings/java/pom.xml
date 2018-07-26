@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.raml</groupId>
+    <artifactId>amf-java</artifactId>
+    <packaging>jar</packaging>
+    <version>0.1.2-SNAPSHOT</version>
+    <name>api-modeling-framework java bindings</name>
+    <description>API and domain modeling tools for RAML, OpenAPI (Swagger) and RDF</description>
+    <url>https://github.com/mulesoft-labs/api-modeling-framework</url>
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>http://www.eclipse.org/legal/epl-v10.html</url>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:git://github.com/raml-org/api-modelling-framework.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/raml-org/api-modelling-framework.git</developerConnection>
+        <tag>61a8011ec87cd6a09be6bcdaa7c37de34c5a538c
+        </tag>
+        <url>https://github.com/raml-org/api-modelling-framework</url>
+    </scm>
+    <properties>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+        <directory>../../target</directory>
+        <outputDirectory>../../target/classes</outputDirectory>
+        <plugins/>
+    </build>
+    <dependencyManagement>
+        <dependencies/>
+    </dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>api-modeling-framework</groupId>
+            <artifactId>api-modeling-framework</artifactId>
+            <version>0.1.2-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../../target/api-modeling-framework-0.1.2-SNAPSHOT-standalone.jar</systemPath>
+        </dependency>
+    </dependencies>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.4</version>
+                <configuration>
+                    <additionalparam>-Xdoclint:none</additionalparam>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+</project>

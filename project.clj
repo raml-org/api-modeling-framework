@@ -19,6 +19,8 @@
                  ;; dev only
                  [difform "1.1.2"]]
 
+  :aot [api-modeling-framework.model.domain]
+
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-npm "0.6.2"]
             [lein-doo "0.1.7"]]
@@ -27,10 +29,15 @@
                        [json-to-ast "2.0.0-alpha1.2"]]}
 
   :profiles {:build {:source-paths ["build"]
-                     :main api-modeling-framework.build}}
+                     :main api-modeling-framework.build}
+             :precomp {:aot [api-modeling-framework.model.domain] }
+             :java-compile {:source-paths []
+                            :java-source-paths ["java/src"]}}
 
   :aliases {"node" ["with-profile" "build" "run" "node"]
             "web" ["with-profile" "build" "run" "web"]
+            "js-bindings-web" ["with-profile" "build" "run" "js-bindings-web"]
+            "js-bindings-node" ["with-profile" "build" "run" "js-bindings-node"]
             "test-js" ["doo" "node" "test" "once"]}
 
   :cljsbuild {:builds {
@@ -53,6 +60,21 @@
                                             :asset-path "/js"
                                             ;:optimizations :whitespace
                                             :optimizations :advanced
+                                            :foreign-libs [{:file "js/js-support-bundle.js"
+                                                            :provides ["api_modeling_framework.js-support"]}]
+                                            :externs ["js/externs.js"]
+                                            :pretty-print true}}
+
+                       :bindings {:source-paths ["src"]
+                                 :figwheel true
+                                 :compiler {:main api-modeling-framework.core
+
+                                            :output-dir "output/bindings/"
+                                            :output-to "output/bindings/amf.js"
+                                            :optimizations :simple,
+                                            :target :nodejs
+
+                                            :asset-path "/js"
                                             :foreign-libs [{:file "js/js-support-bundle.js"
                                                             :provides ["api_modeling_framework.js-support"]}]
                                             :externs ["js/externs.js"]
